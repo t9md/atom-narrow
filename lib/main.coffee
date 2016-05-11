@@ -14,7 +14,6 @@ module.exports =
     @input = new Input
 
     @subscribe atom.commands.add 'atom-workspace',
-      'narrow:test': -> console.log(new Narrow().test())
       'narrow:lines': => new Lines(@getNarrow())
       'narrow:fold': => new Fold(@getNarrow())
       'narrow:search': =>
