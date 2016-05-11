@@ -5,6 +5,9 @@
 
 module.exports =
 class Base
+  getTitle: ->
+    @constructor.name
+    
   constructor: (@narrow, @options={}) ->
     @editor = atom.workspace.getActiveTextEditor()
     @pane = atom.workspace.getActivePane()

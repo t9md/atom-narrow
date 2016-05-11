@@ -3,6 +3,24 @@
 narrow something.  
 similar to unite.vim, emacs-helm  
 
+# Development status
+
+alpha
+
+# Gifs
+
+`narrow:lines`
+
+![line](https://raw.githubusercontent.com/t9md/t9md/e294456412d24208b48d623508cd5e8d39ab83fe/img/atom-narrow/line.gif)
+
+`narrow:fold`
+
+![fold](https://raw.githubusercontent.com/t9md/t9md/e294456412d24208b48d623508cd5e8d39ab83fe/img/atom-narrow/fold.gif)
+
+`narrow:search` (require `ag`)
+
+![search](https://raw.githubusercontent.com/t9md/t9md/e294456412d24208b48d623508cd5e8d39ab83fe/img/atom-narrow/search.gif)
+
 # Commands
 
 ### global
@@ -35,6 +53,7 @@ No default keymap.
 ```
 
 - Mine(vim-mode-plus user)
+
 ```coffeescript
 'atom-text-editor.narrow.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'

@@ -33,7 +33,7 @@ class Narrow
       if @isAutoReveal() and (oldBufferPosition.row isnt newBufferPosition.row)
         @confirm(reveal: true)
 
-    @editor.getTitle = -> ["Narrow", params.title].join(' ')
+    @editor.getTitle = => ["Narrow", @provider?.getTitle()].join(' ')
     @editor.isModified = -> false
 
   registerCommands: ->
