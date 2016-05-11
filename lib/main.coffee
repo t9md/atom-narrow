@@ -20,6 +20,8 @@ module.exports =
       'narrow:search': =>
         @input.readInput().then (input) =>
           @search(input) if input
+      'narrow:focus': =>
+        @narrow.show()
 
   subscribe: (arg) ->
     @subscriptions.add arg
@@ -27,14 +29,15 @@ module.exports =
   search: (word=null) ->
     reutrn unless word
     narrow = @getNarrow(initialKeyword: word)
-    new Search(narrow, word)
+    new Search(narrow, {word})
 
   deactivate: ->
     @subscriptions?.dispose()
     {@subscriptions} = {}
 
   getNarrow: (options={}) ->
-    new Narrow(options)
+    @narrow = new Narrow(options)
+    return @narrow
 
   provideNarrow: ->
     getNarrow: @getNarrow.bind(this)

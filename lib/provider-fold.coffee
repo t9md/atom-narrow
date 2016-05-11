@@ -1,4 +1,5 @@
 _ = require 'underscore-plus'
+Base = require './base'
 
 getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
   rows = [0..editor.getLastBufferRow()]
@@ -11,26 +12,19 @@ getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
   .filter (startRow) ->
     editor.indentationForBufferRow(startRow) < indentLevel
 
-
 module.exports =
-class Fold
-  constructor: (@narrow) ->
-    @editor = atom.workspace.getActiveTextEditor()
+class Fold extends Base
+  initialize: ->
     @editor.onDidStopChanging =>
       @items = null
       @narrow.refresh()
 
-    @narrow.start(this)
-
-  getFilterKey: ->
-    "text"
-
   getItems: ->
     return @items if @items?
+
     @items = []
     startRows = getCodeFoldStartRowsAtIndentLevel(@editor, 2)
     rows = _.sortBy(_.uniq(startRows), (row) -> row)
-
     filePath = @editor.getPath()
     for row, i in rows
       item = {
@@ -42,7 +36,4 @@ class Fold
     @items
 
   viewForItem: (item) ->
-    width = String(@editor.getLastBufferRow()).length
-    row = item.point[0] + 1
-    padding = " ".repeat(width - String(row).length + 1)
-    padding + row + ':' + item.text
+    "  " + item.text

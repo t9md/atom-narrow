@@ -1,12 +1,13 @@
 {BufferedProcess} = require 'atom'
+path = require 'path'
+
+Base = require './base'
+{decorateRange, smartScrollToBufferPosition} = require './utils'
 _ = require 'underscore-plus'
 
 module.exports =
-class Search
+class Search extends Base
   searchersRunning: []
-  constructor: (@narrow, @word=null) ->
-    @narrow.start(this)
-
   getFilterKey: ->
     "text"
 
@@ -19,22 +20,31 @@ class Search
   parseLine: (line) ->
     m = line.match(/^(.*?):(\d+):(\d+):(.*)$/)
     if m?
+      point = [parseInt(m[2]) - 1, parseInt(m[3])]
       {
         filePath: m[1]
-        point: [m[2], m[3]]
+        point: point
         text: m[4]
       }
     else
-      console.log 'nmatch!', line
-      {}
+      null
 
   outputterForProject: (project, items) ->
+    header = "#" + path.basename(project)
     ({data}) =>
+      if header?
+        items.push({text: header})
+        header = null
+
       lines = data.split("\n")
-      for line in lines when line.length
-        entry = @parseLine(line)
-        entry.project = project
-        items.push(entry)
+
+      currentFilePath = null
+      for line in lines when item = @parseLine(line)
+        if currentFile isnt item.filePath
+          items.push(text: "##" + (currentFile = item.filePath))
+
+        item.project = project
+        items.push(item)
 
   getItems: ->
     items = []
@@ -50,7 +60,7 @@ class Search
         else
           console.log "#{finished} yet finished"
 
-      pattern = _.escapeRegExp(@word)
+      pattern = _.escapeRegExp(@options.word)
       for project, i in projects
         onData = @outputterForProject(project, items)
         @searchersRunning.push(@search(pattern, {cwd: project, onData, onFinish}))
@@ -67,8 +77,38 @@ class Search
       handle()
     process
 
+  confirmed: (item, options={}) ->
+    return unless item.point?
+
+    {project, filePath, point} = item
+    fullPath = path.join(project, filePath)
+
+    @pane.activate()
+
+    flash = (editor, point) ->
+      range = editor.bufferRangeForBufferRow(point[0])
+      decorateRange(editor, range, {class: 'narrow-flash', timeout: 200})
+
+    if options.reveal?
+      openOptions =
+        activatePane: false
+        pending: true
+      atom.workspace.open(fullPath, openOptions).then (editor) =>
+        smartScrollToBufferPosition(editor, point)
+        flash(editor, point)
+        @narrow.pane.activate()
+    else
+      openOptions =
+        pending: true
+      atom.workspace.open(fullPath, openOptions).then (editor) ->
+        editor.setCursorBufferPosition(point)
+        flash(editor, point)
+
   viewForItem: (item) ->
-    {text, point} = item
-    [row, column] = point
-    row += 1
-    "#{row}:#{column}:#{text}"
+    unless item.point?
+      item.text
+    else
+      {text, point} = item
+      [row, column] = point
+      row += 1
+      "  #{row}:#{column}:#{text}"

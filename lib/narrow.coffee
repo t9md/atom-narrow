@@ -9,10 +9,13 @@ path = require 'path'
 
 module.exports =
 class Narrow
-  @fromProvider: (provider) ->
-    narrow = new this
-    Promise.resolve(provider.getItems()).then (items) ->
-      narrow.setItems(items)
+  show: ->
+    if @isAlive()
+      @pane.activate()
+      @pane.activateItem(@editor)
+
+  isAlive: ->
+    @editor?.isAlive?()
 
   buildEditor: (params={}) ->
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
@@ -24,15 +27,34 @@ class Narrow
     @editorElement.classList.add('narrow')
     @editorElement.classList.add(params.class) if params.class
 
+    @editor.onDidChangeCur
+    @editor.onDidChangeCursorPosition ({oldBufferPosition, newBufferPosition, textChanged}) =>
+      return if textChanged
+      if @isAutoReveal() and (oldBufferPosition.row isnt newBufferPosition.row)
+        @confirm(reveal: true)
+
     @editor.getTitle = -> ["Narrow", params.title].join(' ')
     @editor.isModified = -> false
+
+  registerCommands: ->
+    atom.commands.add @editorElement,
+      'core:confirm': => @confirm()
+      'narrow:reveal': => @confirm(reveal: true)
+      'narrow:toggle-auto-reveal': => @toggleAutoReveal()
+      'core:cancel': => @refresh()
+
+  autoReveal: null
+  isAutoReveal: ->
+    @autoReveal
+  toggleAutoReveal: ->
+    @autoReveal = not @autoReveal
 
   getItems: ->
     Promise.resolve(@provider.getItems())
 
   start: (@provider) ->
     direction = settings.get('directionToOpen')
-    openItemInAdjacentPane(@editor, direction)
+    @pane = openItemInAdjacentPane(@editor, direction)
     @getItems().then (items) =>
       @setItems(items)
 
@@ -65,6 +87,15 @@ class Narrow
   # clearEditor: ->
   #   range = [[1, 0], @editor.getEofBufferPosition()]
   #   @editor.setTextInBufferRange(range, "")
+  confirm: (options) ->
+    point = @editor.getCursorBufferPosition()
+    index = if point.row is 0
+      0
+    else
+      point.row - 1
+    @provider.confirmed(@items[index] ? {}, options)
+    # else
+    #   @provider.confirmed(@items[point.row - 1] ? {})
 
   appendText: (text) ->
     range = [[1, 0], @editor.getEofBufferPosition()]
@@ -76,16 +107,18 @@ class Narrow
     @buildEditor(params)
     @editor.insertText("\n")
     @editor.setCursorBufferPosition([0, 0])
+    @registerCommands()
     @updateGrammar(@editor)
     @observeInputChange(@editor)
 
-  setItems: (items) ->
+  setItems: (@items) ->
     lines = []
-    lines.push(@provider.viewForItem(item)) for item in items
+    lines.push(@provider.viewForItem(item)) for item in @items
     @appendText(lines.join("\n"))
 
   renderItems: (items) ->
-    # initialRow = if replace then 1 else editor.getLastBufferRow()
+    initialRow = @editor.getLastBufferRow()
+
     @rowToItem = {}
     lines = []
     for item, i in items
@@ -127,7 +160,7 @@ class Narrow
     if pattern
       rawPatterns.push(
         match: "(?i:#{pattern})"
-        name: 'keyword.search.search-and-replace'
+        name: 'keyword.narrow'
       )
     if rawPatterns.length
       @grammarObject.patterns.push(rawPatterns...)
@@ -136,10 +169,6 @@ class Narrow
     atom.grammars.addGrammar(grammar)
     editor.setGrammar(grammar)
 
-  autoReveal: null
-  isAutoReveal: -> @autoReveal
-  toggleAutoReveal: ->
-    @autoReveal = not @autoReveal
 
   renderCandidate: (editor, candidates, {replace, showHeader}={}) ->
     @locked = true

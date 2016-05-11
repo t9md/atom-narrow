@@ -1,4 +1,4 @@
-{Range} = require 'atom'
+{Range, Disposable, CompositeDisposable} = require 'atom'
 _ = require 'underscore-plus'
 
 getAdjacentPaneForPane = (pane) ->
@@ -22,9 +22,35 @@ openItemInAdjacentPane = (item, direction) ->
     pane.activateItem(item)
     pane.activate()
   else
-    switch direction
+    pane = switch direction
       when 'right' then activePane.splitRight(items: [item])
       when 'down' then activePane.splitDown(items: [item])
+  pane
+
+# options is object with following keys
+#  timeout: number (msec)
+#  class: css class
+flashDisposable = null
+decorateRange = (editor, range, options) ->
+  flashDisposable?.dispose()
+  marker = editor.markBufferRange range,
+    invalidate: options.invalidate ? 'never'
+    persistent: options.persistent ? false
+
+  editor.decorateMarker marker,
+    type: 'highlight'
+    class: options.class
+
+  if options.timeout?
+    timeoutID = setTimeout ->
+      marker.destroy()
+    , options.timeout
+
+    flashDisposable = new Disposable ->
+      clearTimeout(timeoutID)
+      marker?.destroy()
+      flashDisposable = null
+  marker
 
 getView = (model) ->
   atom.views.getView(model)
@@ -36,9 +62,21 @@ getVisibleBufferRange = (editor) ->
   endRow = editor.bufferRowForScreenRow(endRow)
   new Range([startRow, 0], [endRow, Infinity])
 
+smartScrollToBufferPosition = (editor, point) ->
+  editorElement = atom.views.getView(editor)
+  editorAreaHeight = editor.getLineHeightInPixels() * (editor.getRowsPerPage() - 1)
+  onePageUp = editorElement.getScrollTop() - editorAreaHeight # No need to limit to min=0
+  onePageDown = editorElement.getScrollBottom() + editorAreaHeight
+  target = editorElement.pixelPositionForBufferPosition(point).top
+
+  center = (onePageDown < target) or (target < onePageUp)
+  editor.scrollToBufferPosition(point, {center})
+
 module.exports = {
   getView
   getAdjacentPaneForPane
   getVisibleBufferRange
   openItemInAdjacentPane
+  decorateRange
+  smartScrollToBufferPosition
 }

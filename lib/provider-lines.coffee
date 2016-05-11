@@ -1,20 +1,16 @@
+Base = require './base'
+
 module.exports =
-class Lines
-  constructor: (@narrow) ->
-    @editor = atom.workspace.getActiveTextEditor()
+class Lines extends Base
+  initialize: ->
     @editor.onDidStopChanging =>
       @items = null
       @narrow.refresh()
-      
-    @narrow.start(this)
-
-  getFilterKey: ->
-    "text"
 
   getItems: ->
     return @items if @items?
-    @items = []
 
+    @items = []
     filePath = @editor.getPath()
     for line, i in @editor.getBuffer().getLines()
       item = {path: filePath, point: [i, 0], text: line}
