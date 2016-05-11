@@ -2,8 +2,8 @@
   "name": "narrow",
   "main": "./lib/main",
   "version": "0.1.0",
-  "description": "experiment",
-  "keywords": [],
+  "description": "narrow down to target",
+  "keywords": ["unite.vim", "emacs-helm"],
   "repository": "https://github.com/t9md/atom-narrow",
   "license": "MIT",
   "engines": {

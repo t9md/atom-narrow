@@ -9,6 +9,7 @@ path = require 'path'
 
 module.exports =
 class Narrow
+  autoReveal: null
   show: ->
     if @isAlive()
       @pane.activate()
@@ -27,7 +28,6 @@ class Narrow
     @editorElement.classList.add('narrow')
     @editorElement.classList.add(params.class) if params.class
 
-    @editor.onDidChangeCur
     @editor.onDidChangeCursorPosition ({oldBufferPosition, newBufferPosition, textChanged}) =>
       return if textChanged
       if @isAutoReveal() and (oldBufferPosition.row isnt newBufferPosition.row)
@@ -43,11 +43,8 @@ class Narrow
       'narrow-ui:toggle-auto-reveal': => @toggleAutoReveal()
       # 'core:cancel': => @refresh()
 
-  autoReveal: null
-  isAutoReveal: ->
-    @autoReveal
-  toggleAutoReveal: ->
-    @autoReveal = not @autoReveal
+  isAutoReveal: -> @autoReveal
+  toggleAutoReveal: -> @autoReveal = not @autoReveal
 
   getItems: ->
     Promise.resolve(@provider.getItems())
@@ -84,9 +81,6 @@ class Narrow
       return unless (newRange.start.row is 0)
       @refresh()
 
-  # clearEditor: ->
-  #   range = [[1, 0], @editor.getEofBufferPosition()]
-  #   @editor.setTextInBufferRange(range, "")
   confirm: (options) ->
     point = @editor.getCursorBufferPosition()
     index = if point.row is 0
@@ -94,8 +88,6 @@ class Narrow
     else
       point.row - 1
     @provider.confirmed(@items[index] ? {}, options)
-    # else
-    #   @provider.confirmed(@items[point.row - 1] ? {})
 
   appendText: (text) ->
     range = [[1, 0], @editor.getEofBufferPosition()]
@@ -115,33 +107,6 @@ class Narrow
     lines = []
     lines.push(@provider.viewForItem(item)) for item in @items
     @appendText(lines.join("\n"))
-
-  renderItems: (items) ->
-    initialRow = @editor.getLastBufferRow()
-
-    @rowToItem = {}
-    lines = []
-    for item, i in items
-      @rowToItem[i+1] = item
-      lines.push(@provider.viewForItem(item))
-    @appendText(lines.join("\n"))
-
-    # for item in items
-    #   if showHeader
-    #     if item.project isnt currentProject
-    #       currentProject = item.project
-    #       lines.push("# #{path.basename(currentProject)}")
-    #
-    #     if item.filePath isnt currentFile
-    #       currentFile = item.filePath
-    #       lines.push("## #{currentFile}")
-    #     lines.push(" " + @formatLine(item))
-    #   else
-    #     lines.push(@formatLine(item))
-    #   @rowToEntry[initialRow + (lines.length - 1)] = item
-    #
-    # range = [[initialRow, 0], editor.getEofBufferPosition()]
-    # editor.setTextInBufferRange(range, lines.join("\n") + "\n")
 
   OriginalGrammarNumberOfPattern = 3
   updateGrammar: (editor, pattern=null) ->
@@ -168,36 +133,3 @@ class Narrow
     grammar = atom.grammars.createGrammar(filePath, @grammarObject)
     atom.grammars.addGrammar(grammar)
     editor.setGrammar(grammar)
-
-
-  renderCandidate: (editor, candidates, {replace, showHeader}={}) ->
-    @locked = true
-    try
-      replace ?= false
-      if replace
-        @rowToEntry = {}
-      else
-        @rowToEntry ?= {}
-
-      lines = []
-      currentProject = null
-      currentFile = null
-      initialRow = if replace then 1 else editor.getLastBufferRow()
-      for entry in candidates
-        if showHeader
-          if entry.project isnt currentProject
-            currentProject = entry.project
-            lines.push("# #{path.basename(currentProject)}")
-
-          if entry.filePath isnt currentFile
-            currentFile = entry.filePath
-            lines.push("## #{currentFile}")
-          lines.push(" " + @formatLine(entry))
-        else
-          lines.push(@formatLine(entry))
-        @rowToEntry[initialRow + (lines.length - 1)] = entry
-
-      range = [[initialRow, 0], editor.getEofBufferPosition()]
-      editor.setTextInBufferRange(range, lines.join("\n") + "\n")
-    finally
-      @locked = false
