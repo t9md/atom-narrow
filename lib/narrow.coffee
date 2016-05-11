@@ -1,5 +1,4 @@
 _ = require 'underscore-plus'
-{emitter, Emitter} = require 'atom'
 {getAdjacentPaneForPane, getVisibleBufferRange} = require './utils'
 CSON = null
 path = require 'path'
@@ -10,12 +9,6 @@ class Narrow
     narrow = new this
     Promise.resolve(provider.getItems()).then (items) ->
       narrow.setItems(items)
-
-  onDidInputChange: (fn) -> @emitter.on 'did-input-change', fn
-  emitDidInputChange: (event) -> @emitter.emit('did-input-change', event)
-
-  onDidItemSelected: (fn) -> @emitter.on 'did-item-selected', fn
-  emitDidItemSelected: (event) -> @emitter.emit('did-item-selected', event)
 
   buildEditor: (params={}) ->
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
@@ -38,17 +31,8 @@ class Narrow
       pane = activePane.splitRight(items: [@editor])
     pane.activate()
 
-  init: ->
-    # @editor.insertText(" > \n")
-    @editor.insertText("\n")
-    @editor.setCursorBufferPosition([0, 0])
-    @updateGrammar(@editor)
-    @observeInputChange(@editor)
-
   getItems: ->
     Promise.resolve(@provider.getItems())
-    # .then (items) =>
-    #   @setItems(items)
 
   start: (@provider) ->
     @openInAdjacentPane()
@@ -76,6 +60,7 @@ class Narrow
 
         items = _.filter items, (item) ->
           item[filterKey].match(///#{pattern}///i)
+
       # @updateGrammar(@editor, patterns.join('|'))
       @setItems(items)
       pattern = ///#{patterns.join('|')}///gi
@@ -89,27 +74,52 @@ class Narrow
       return unless (newRange.start.row is 0)
       @refresh()
 
-  clearEditor: ->
-    range = [[1, 0], @editor.getEofBufferPosition()]
-    @editor.setTextInBufferRange(range, "")
+  # clearEditor: ->
+  #   range = [[1, 0], @editor.getEofBufferPosition()]
+  #   @editor.setTextInBufferRange(range, "")
 
   appendText: (text) ->
     range = [[1, 0], @editor.getEofBufferPosition()]
     @editor.setTextInBufferRange(range, text)
 
-  constructor: (params) ->
-    @emitter = new Emitter
+  constructor: (params={}) ->
     # markerLayerOptions = if @editor.displayLayer? then {persistent: true} else {maintainHistory: true}
     @buildEditor(params)
-
-    @init()
+    @editor.insertText("\n")
+    @editor.setCursorBufferPosition([0, 0])
+    @updateGrammar(@editor, params.grammarKeyword)
+    @observeInputChange(@editor)
 
   setItems: (items) ->
     lines = []
     lines.push(@provider.viewForItem(item)) for item in items
     @appendText(lines.join("\n"))
 
-  render: (items) ->
+  renderItems: (items) ->
+    # initialRow = if replace then 1 else editor.getLastBufferRow()
+    @rowToItem = {}
+    lines = []
+    for item, i in items
+      @rowToItem[i+1] = item
+      lines.push(@provider.viewForItem(item))
+    @appendText(lines.join("\n"))
+
+    # for item in items
+    #   if showHeader
+    #     if item.project isnt currentProject
+    #       currentProject = item.project
+    #       lines.push("# #{path.basename(currentProject)}")
+    #
+    #     if item.filePath isnt currentFile
+    #       currentFile = item.filePath
+    #       lines.push("## #{currentFile}")
+    #     lines.push(" " + @formatLine(item))
+    #   else
+    #     lines.push(@formatLine(item))
+    #   @rowToEntry[initialRow + (lines.length - 1)] = item
+    #
+    # range = [[initialRow, 0], editor.getEofBufferPosition()]
+    # editor.setTextInBufferRange(range, lines.join("\n") + "\n")
 
   readGrammarFile: (filePath) ->
     CSON ?= require 'season'
