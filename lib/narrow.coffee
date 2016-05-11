@@ -12,7 +12,6 @@ class Narrow
   buildEditor: (params={}) ->
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     @editor.onDidDestroy =>
-      # @markerLayer?.destroy()
       @provider?.destroy?()
 
     @editorElement = atom.views.getView(@editor)
@@ -47,11 +46,6 @@ class Narrow
     filterKey = @provider.getFilterKey()
 
     @getItems().then (items) =>
-      # @markerLayer?.destroy()
-      # @decorationLayer?.destroy()
-      # @markerLayer = @editor.addMarkerLayer()
-      # @decorationLayer = @editor.decorateMarkerLayer(@markerLayer, {type: 'highlight', class: 'narrow-match'})
-
       patterns = []
       for word in words
         pattern = _.escapeRegExp(word)
@@ -62,10 +56,6 @@ class Narrow
 
       @updateGrammar(@editor, patterns.join('|'))
       @setItems(items)
-      # pattern = ///#{patterns.join('|')}///gi
-      # scanRange = getVisibleBufferRange(@editor)
-      # @editor.scanInBufferRange pattern, scanRange, ({range}) =>
-      #   @markerLayer.markBufferRange(range)
 
   observeInputChange: (editor) ->
     buffer = editor.getBuffer()
