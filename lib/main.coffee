@@ -6,6 +6,9 @@ module.exports =
 
   activate: ->
     @subscriptions = new CompositeDisposable
+    atom.commands.add 'atom-workspace',
+      'narrow:test': ->
+        console.log(new Narrow().test())
 
   deactivate: ->
     @subscriptions?.dispose()

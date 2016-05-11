@@ -1,6 +1,5 @@
 _ = require 'underscore-plus'
 {getAdjacentPaneForPane, getVisibleBufferRange} = require './utils'
-CSON = null
 path = require 'path'
 
 module.exports =
@@ -13,7 +12,7 @@ class Narrow
   buildEditor: (params={}) ->
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     @editor.onDidDestroy =>
-      @markerLayer?.destroy()
+      # @markerLayer?.destroy()
       @provider?.destroy?()
 
     @editorElement = atom.views.getView(@editor)
@@ -48,10 +47,10 @@ class Narrow
     filterKey = @provider.getFilterKey()
 
     @getItems().then (items) =>
-      @markerLayer?.destroy()
-      @decorationLayer?.destroy()
-      @markerLayer = @editor.addMarkerLayer()
-      @decorationLayer = @editor.decorateMarkerLayer(@markerLayer, {type: 'highlight', class: 'narrow-match'})
+      # @markerLayer?.destroy()
+      # @decorationLayer?.destroy()
+      # @markerLayer = @editor.addMarkerLayer()
+      # @decorationLayer = @editor.decorateMarkerLayer(@markerLayer, {type: 'highlight', class: 'narrow-match'})
 
       patterns = []
       for word in words
@@ -61,12 +60,12 @@ class Narrow
         items = _.filter items, (item) ->
           item[filterKey].match(///#{pattern}///i)
 
-      # @updateGrammar(@editor, patterns.join('|'))
+      @updateGrammar(@editor, patterns.join('|'))
       @setItems(items)
-      pattern = ///#{patterns.join('|')}///gi
-      scanRange = getVisibleBufferRange(@editor)
-      @editor.scanInBufferRange pattern, scanRange, ({range}) =>
-        @markerLayer.markBufferRange(range)
+      # pattern = ///#{patterns.join('|')}///gi
+      # scanRange = getVisibleBufferRange(@editor)
+      # @editor.scanInBufferRange pattern, scanRange, ({range}) =>
+      #   @markerLayer.markBufferRange(range)
 
   observeInputChange: (editor) ->
     buffer = editor.getBuffer()
@@ -121,18 +120,24 @@ class Narrow
     # range = [[initialRow, 0], editor.getEofBufferPosition()]
     # editor.setTextInBufferRange(range, lines.join("\n") + "\n")
 
-  readGrammarFile: (filePath) ->
-    CSON ?= require 'season'
-    CSON.readFileSync(filePath)
-
+  OriginalGrammarNumberOfPattern = 3
   updateGrammar: (editor, pattern=null) ->
+    {inspect} = require 'util'
+    p = (args...) -> console.log inspect(args...)
+    console.log 'patt', inspect(pattern)
     filePath = path.join(__dirname, 'grammar', 'narrow.cson')
-    @grammarObject ?= @readGrammarFile(filePath)
+
+    @grammarObject ?= require './grammar'
     atom.grammars.removeGrammarForScopeName('source.narrow')
-    if pattern?
-      @grammarObject.patterns[0].match = "(?i:#{pattern})"
-    else
-      @grammarObject.patterns[0].match = '$a'
+    @grammarObject.patterns.splice(OriginalGrammarNumberOfPattern)
+
+    if pattern
+      rawPattern =
+        match: "(?i:#{pattern})"
+        name: 'entity.name.function.narrow'
+        # name: 'keyword.search.search-and-replace'
+      @grammarObject.patterns.push(rawPattern)
+
     grammar = atom.grammars.createGrammar(filePath, @grammarObject)
     atom.grammars.addGrammar(grammar)
     editor.setGrammar(grammar)
