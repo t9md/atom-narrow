@@ -1,5 +1,9 @@
 _ = require 'underscore-plus'
-{getAdjacentPaneForPane, getVisibleBufferRange} = require './utils'
+{
+  getAdjacentPaneForPane
+  getVisibleBufferRange
+  openItemInAdjacentPane
+} = require './utils'
 path = require 'path'
 
 module.exports =
@@ -12,6 +16,7 @@ class Narrow
   buildEditor: (params={}) ->
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     @editor.onDidDestroy =>
+      @originalPane.activate()
       @provider?.destroy?()
 
     @editorElement = atom.views.getView(@editor)
@@ -21,19 +26,11 @@ class Narrow
     @editor.getTitle = -> ["Narrow", params.title].join(' ')
     @editor.isModified = -> false
 
-  openInAdjacentPane: ->
-    activePane = atom.workspace.getActivePane()
-    if pane = getAdjacentPaneForPane(activePane)
-      pane.activateItem(@editor)
-    else
-      pane = activePane.splitRight(items: [@editor])
-    pane.activate()
-
   getItems: ->
     Promise.resolve(@provider.getItems())
 
   start: (@provider) ->
-    @openInAdjacentPane()
+    openItemInAdjacentPane(@editor)
     @getItems().then (items) =>
       @setItems(items)
 
@@ -72,11 +69,12 @@ class Narrow
     @editor.setTextInBufferRange(range, text)
 
   constructor: (params={}) ->
-    # markerLayerOptions = if @editor.displayLayer? then {persistent: true} else {maintainHistory: true}
+    {@initialKeyword} = params
+    @originalPane = atom.workspace.getActivePane()
     @buildEditor(params)
     @editor.insertText("\n")
     @editor.setCursorBufferPosition([0, 0])
-    @updateGrammar(@editor, params.grammarKeyword)
+    @updateGrammar(@editor)
     @observeInputChange(@editor)
 
   setItems: (items) ->
@@ -112,21 +110,25 @@ class Narrow
 
   OriginalGrammarNumberOfPattern = 3
   updateGrammar: (editor, pattern=null) ->
-    {inspect} = require 'util'
-    p = (args...) -> console.log inspect(args...)
-    console.log 'patt', inspect(pattern)
     filePath = path.join(__dirname, 'grammar', 'narrow.cson')
 
     @grammarObject ?= require './grammar'
     atom.grammars.removeGrammarForScopeName('source.narrow')
     @grammarObject.patterns.splice(OriginalGrammarNumberOfPattern)
 
-    if pattern
-      rawPattern =
-        match: "(?i:#{pattern})"
+    rawPatterns = []
+    if @initialKeyword?
+      rawPatterns.push(
+        match: "(?i:#{_.escapeRegExp(@initialKeyword)})"
         name: 'entity.name.function.narrow'
-        # name: 'keyword.search.search-and-replace'
-      @grammarObject.patterns.push(rawPattern)
+      )
+    if pattern
+      rawPatterns.push(
+        match: "(?i:#{pattern})"
+        name: 'keyword.search.search-and-replace'
+      )
+    if rawPatterns.length
+      @grammarObject.patterns.push(rawPatterns...)
 
     grammar = atom.grammars.createGrammar(filePath, @grammarObject)
     atom.grammars.addGrammar(grammar)

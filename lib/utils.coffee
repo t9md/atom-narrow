@@ -12,6 +12,14 @@ getAdjacentPaneForPane = (pane) ->
     .last()
     .value()
 
+openItemInAdjacentPane = (item) ->
+  activePane = atom.workspace.getActivePane()
+  if pane = getAdjacentPaneForPane(activePane)
+    pane.activateItem(item)
+    pane.activate()
+  else
+    activePane.splitRight(items: [item])
+
 getView = (model) ->
   atom.views.getView(model)
 
@@ -26,4 +34,5 @@ module.exports = {
   getView
   getAdjacentPaneForPane
   getVisibleBufferRange
+  openItemInAdjacentPane
 }

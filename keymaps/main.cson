@@ -1,0 +1,17 @@
+# 'atom-text-editor.narrow[data-grammar="source narrow"]':
+#   'q': 'core:close'
+#   'o': 'narrow:jump'
+#   'O': 'narrow:reveal'
+#   'r': 'narrow:toggle-auto-reveal'
+#
+'atom-text-editor.narrow.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
+  'q': 'core:close'
+  # 'enter': 'narrow:jump'
+  # 'O': 'narrow:reveal'
+  # 'o': 'narrow:reveal'
+  'o': 'narrow:jump-with-keep-result'
+  'u': 'narrow:reveal'
+  'r': 'narrow:toggle-auto-reveal'
+
+'atom-text-editor.narrow.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
+  'enter': 'narrow:jump'
