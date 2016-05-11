@@ -1,0 +1,23 @@
+{
+  "name": "narrow",
+  "main": "./lib/main",
+  "version": "0.0.0",
+  "description": "experiment",
+  "keywords": [],
+  "repository": "https://github.com/t9md/atom-narrow",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=0.174.0 <2.0.0"
+  },
+  "providedServices": {
+    "narrow": {
+      "description": "",
+      "versions": {
+        "0.1.0": "provideNarrow"
+      }
+    }
+  },
+  "dependencies": {
+    "underscore-plus": "^1.6.6"
+  }
+}

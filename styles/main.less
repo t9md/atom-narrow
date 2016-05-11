@@ -1,0 +1,20 @@
+@import "ui-variables";
+@import "syntax-variables";
+.narrow {
+  &.round-box {
+    box-sizing: border-box;
+    border-radius: @component-border-radius;
+  }
+}
+atom-text-editor::shadow {
+  .narrow-flash .region {
+    .narrow.round-box;
+    background-color: @syntax-selection-flash-color;
+    // background-color: transparent;
+    // border: 1px solid @syntax-result-marker-color;
+  }
+  // .project-find-navigation-flash .region {
+  //   .project-find-navigation.round-box;
+  //   background-color: @syntax-selection-flash-color;
+  // }
+}
