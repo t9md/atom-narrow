@@ -39,8 +39,8 @@ class Narrow
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
-      'narrow:ui:reveal-item': => @confirm(reveal: true)
-      'narrow:ui:toggle-auto-reveal': => @toggleAutoReveal()
+      'narrow-ui:reveal-item': => @confirm(reveal: true)
+      'narrow-ui:toggle-auto-reveal': => @toggleAutoReveal()
       # 'core:cancel': => @refresh()
 
   autoReveal: null

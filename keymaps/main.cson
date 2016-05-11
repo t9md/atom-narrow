@@ -1,14 +1,15 @@
+# Need improve following example for normal user.
 'atom-text-editor.narrow[data-grammar="source narrow"]':
   'enter': 'core:confirm'
-  # 'ctrl-u': 'narrow:ui:reveal-item'
-  'ctrl-r': 'narrow:ui:toggle-auto-reveal'
+  # 'ctrl-u': 'narrow-ui:reveal-item'
+  'ctrl-r': 'narrow-ui:toggle-auto-reveal'
 
 'atom-text-editor.narrow.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'
   'q': 'core:close'
   'o': 'core:confirm'
-  'u': 'narrow:ui:reveal-item'
-  'r': 'narrow:ui:toggle-auto-reveal'
+  'u': 'narrow-ui:reveal-item'
+  'r': 'narrow-ui:toggle-auto-reveal'
 
 'atom-text-editor.narrow.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'
