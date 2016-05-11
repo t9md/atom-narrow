@@ -20,6 +20,8 @@ class Fold
       @items = null
       @narrow.refresh()
 
+    @narrow.start(this)
+
   getFilterKey: ->
     "text"
 

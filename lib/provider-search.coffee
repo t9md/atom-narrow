@@ -4,7 +4,8 @@ _ = require 'underscore-plus'
 module.exports =
 class Search
   searchersRunning: []
-  constructor: (@narrow, @word) ->
+  constructor: (@narrow, @word=null) ->
+    @narrow.start(this)
 
   getFilterKey: ->
     "text"

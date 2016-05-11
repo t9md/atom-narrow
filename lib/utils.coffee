@@ -12,13 +12,19 @@ getAdjacentPaneForPane = (pane) ->
     .last()
     .value()
 
-openItemInAdjacentPane = (item) ->
+openItemInAdjacentPane = (item, direction) ->
   activePane = atom.workspace.getActivePane()
+  if direction is 'here'
+    activePane.activateItem(item)
+    return
+
   if pane = getAdjacentPaneForPane(activePane)
     pane.activateItem(item)
     pane.activate()
   else
-    activePane.splitRight(items: [item])
+    switch direction
+      when 'right' then activePane.splitRight(items: [item])
+      when 'down' then activePane.splitDown(items: [item])
 
 getView = (model) ->
   atom.views.getView(model)

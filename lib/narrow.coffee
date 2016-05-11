@@ -4,6 +4,7 @@ _ = require 'underscore-plus'
   getVisibleBufferRange
   openItemInAdjacentPane
 } = require './utils'
+settings = require './settings'
 path = require 'path'
 
 module.exports =
@@ -30,7 +31,8 @@ class Narrow
     Promise.resolve(@provider.getItems())
 
   start: (@provider) ->
-    openItemInAdjacentPane(@editor)
+    direction = settings.get('directionToOpen')
+    openItemInAdjacentPane(@editor, direction)
     @getItems().then (items) =>
       @setItems(items)
 

@@ -4,9 +4,10 @@ Lines = require './provider-lines'
 Search = require './provider-search'
 Fold = require './provider-fold'
 Input = require './input'
+settings = require './settings'
 
 module.exports =
-  commandsDisposable: null
+  config: settings.config
 
   activate: ->
     @subscriptions = new CompositeDisposable
@@ -14,28 +15,27 @@ module.exports =
 
     @subscribe atom.commands.add 'atom-workspace',
       'narrow:test': -> console.log(new Narrow().test())
-      'narrow:lines': ->
-        narrow = new Narrow()
-        narrow.start(new Lines(narrow))
+      'narrow:lines': => new Lines(@getNarrow())
+      'narrow:fold': => new Fold(@getNarrow())
       'narrow:search': =>
         @input.readInput().then (input) =>
-          return unless input
-          @search(input)
-      'narrow:fold': ->
-        narrow = new Narrow()
-        narrow.start(new Fold(narrow))
+          @search(input) if input
 
   subscribe: (arg) ->
     @subscriptions.add arg
 
   search: (word=null) ->
-    narrow = new Narrow({initialKeyword: word})
-    narrow.start(new Search(narrow, word))
+    reutrn unless word
+    narrow = @getNarrow(initialKeyword: word)
+    new Search(narrow, word)
 
   deactivate: ->
     @subscriptions?.dispose()
     {@subscriptions} = {}
 
+  getNarrow: (options={}) ->
+    new Narrow(options)
+
   provideNarrow: ->
-    Narrow: Narrow
+    getNarrow: @getNarrow.bind(this)
     search: @search.bind(this)
