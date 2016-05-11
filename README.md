@@ -109,6 +109,26 @@ keymap.cson
   'ctrl-o': 'user:narrow-search'
 ```
 
+# Other config
+
+config.cson
+
+```coffeescript
+"*":
+  "autocomplete-plus":
+    suppressActivationForEditorClasses: [
+      # snip
+      "narrow"
+    ]
+  "vim-mode-plus":
+    highlightSearchExcludeScopes: [
+      "narrow"
+    ]
+    startInInsertModeScopes: [
+      "narrow"
+    ]
+```
+
 # TODOs
 
 lots of todo.
