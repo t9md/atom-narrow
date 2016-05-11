@@ -12,4 +12,4 @@ module.exports =
     {@subscriptions} = {}
 
   provideNarrow: ->
-    Narrow: Narrow
+    return {Narrow}
