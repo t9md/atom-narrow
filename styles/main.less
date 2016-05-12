@@ -17,5 +17,16 @@ atom-text-editor::shadow {
   .narrow-flash .region {
     // .round-box;
     background-color: @syntax-selection-flash-color;
+    background-color: @syntax-selection-color;
+  }
+  .narrow-result .region {
+    // .round-box;
+    background-color: @syntax-selection-flash-color;
+  }
+
+  .line {
+    &.narrow-result {
+      background-color: @syntax-selection-color;
+    }
   }
 }

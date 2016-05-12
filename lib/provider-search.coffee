@@ -1,4 +1,4 @@
-{BufferedProcess} = require 'atom'
+{Point, BufferedProcess} = require 'atom'
 path = require 'path'
 
 Base = require './base'
@@ -7,6 +7,7 @@ _ = require 'underscore-plus'
 
 module.exports =
 class Search extends Base
+  items: null
   searchersRunning: []
 
   search: (text, {cwd, onData, onFinish}) ->
@@ -28,10 +29,12 @@ class Search extends Base
       null
 
   outputterForProject: (project, items) ->
-    header = "#" + path.basename(project)
+    header = "# " + path.basename(project)
     ({data}) =>
       if header?
-        items.push({text: header})
+        # FIXME persit is special, which is not hiden when narrowed.
+        # but this kind of magic property is bad practice.
+        items.push({header})
         header = null
 
       lines = data.split("\n")
@@ -39,28 +42,30 @@ class Search extends Base
       currentFilePath = null
       for line in lines when item = @parseLine(line)
         if currentFile isnt item.filePath
-          items.push(text: "##" + (currentFile = item.filePath))
+          currentFile = item.filePath
+          items.push({header: "## #{currentFile}"})
         # update filePath to fullPath
         item.filePath = path.join(project, item.filePath)
         items.push(item)
 
   getItems: ->
-    items = []
+    return @items if @items?
+    @items = []
     projects = atom.project.getPaths()
 
     finished = 0
     new Promise (resolve) =>
-      onFinish = (code) ->
+      onFinish = (code) =>
         finished++
         if finished is projects.length
-          resolve(items)
+          resolve(@items)
           console.log "#{finished} finished"
         else
           console.log "#{finished} yet finished"
 
       pattern = _.escapeRegExp(@options.word)
       for project, i in projects
-        onData = @outputterForProject(project, items)
+        onData = @outputterForProject(project, @items)
         @searchersRunning.push(@search(pattern, {cwd: project, onData, onFinish}))
 
   runCommand: ({command, args, options, onData, onFinish}) ->
@@ -76,34 +81,28 @@ class Search extends Base
     process
 
   confirmed: (item, options={}) ->
+    @marker?.destroy()
     return unless item.point?
 
     {project, filePath, point} = item
+    point = Point.fromObject(point)
 
     @pane.activate()
 
-    flash = (editor, point) ->
-      range = editor.bufferRangeForBufferRow(point[0])
-      decorateRange(editor, range, {class: 'narrow-flash', timeout: 200})
-
     if options.reveal?
-      openOptions =
-        activatePane: false
-        pending: true
+      openOptions = {activatePane: false, pending: true}
       atom.workspace.open(filePath, openOptions).then (editor) =>
         editor.scrollToBufferPosition(point, center: true)
-        flash(editor, point)
+        @marker = @highlightRow(editor, point.row)
         @narrow.pane.activate()
     else
-      openOptions =
-        pending: true
+      openOptions = {pending: true}
       atom.workspace.open(filePath, openOptions).then (editor) ->
         editor.setCursorBufferPosition(point)
-        flash(editor, point)
 
   viewForItem: (item) ->
-    unless item.point?
-      item.text
+    unless item.text?
+      item.header
     else
       {text, point} = item
       [row, column] = point

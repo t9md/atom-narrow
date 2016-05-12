@@ -15,7 +15,7 @@ getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
 module.exports =
 class Fold extends Base
   autoReveal: true
-  
+
   initialize: ->
     @editor.onDidStopChanging =>
       @items = null # invalidate cache

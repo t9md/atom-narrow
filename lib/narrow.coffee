@@ -71,7 +71,11 @@ class Narrow
         patterns.push(pattern)
 
         items = _.filter items, (item) ->
-          item[filterKey].match(///#{pattern}///i)
+          if filterKey of item
+            item[filterKey].match(///#{pattern}///i)
+          else
+            # When item has no filterKey, it is special, always displayed.
+            true
 
       @updateGrammar(@editor, patterns.join('|'))
       @setItems(items)
@@ -98,8 +102,10 @@ class Narrow
     {@initialKeyword} = params
     @originalPane = atom.workspace.getActivePane()
     @buildEditor(params)
-    @editor.insertText("\n")
-    @editor.setCursorBufferPosition([0, 0])
+    # [FIXME?] With just "\n", narrow:line fail to syntax highlight
+    # with custom grammar on initial open.s
+    @editor.insertText("\n ")
+    @editor.setCursorBufferPosition([0, Infinity])
     @registerCommands()
     @updateGrammar(@editor)
     @observeInputChange(@editor)

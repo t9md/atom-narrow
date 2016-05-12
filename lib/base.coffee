@@ -1,3 +1,4 @@
+{Point} = require 'atom'
 {decorateRange} = require './utils'
 
 module.exports =
@@ -16,17 +17,23 @@ class Base
   getFilterKey: ->
     "text"
 
-  confirmed: ({point}, options={}) ->
-    return unless point?
+  highlightRow: (editor, row) ->
+    range = [[row, 0], [row, 0]]
+    decorateRange(editor, range, {type: 'line', class: 'narrow-result'})
 
+  destroy: ->
+    @marker?.destroy()
+
+  confirmed: ({point}, options={}) ->
+    @marker?.destroy()
+    return unless point?
+    point = Point.fromObject(point)
     @editor.scrollToBufferPosition(point, center: true)
 
     if options.reveal?
       @pane.activateItem(@editor)
+      @marker = @highlightRow(@editor, point.row)
     else
       @editor.setCursorBufferPosition(point)
       @pane.activate()
       @pane.activateItem(@editor)
-
-    range = @editor.bufferRangeForBufferRow(point[0])
-    decorateRange(@editor, range, {class: 'narrow-flash', timeout: 200})

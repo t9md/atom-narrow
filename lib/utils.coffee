@@ -38,7 +38,7 @@ decorateRange = (editor, range, options) ->
     persistent: options.persistent ? false
 
   editor.decorateMarker marker,
-    type: 'highlight'
+    type: options.type ? 'highlight'
     class: options.class
 
   if options.timeout?
