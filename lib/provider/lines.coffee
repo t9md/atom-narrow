@@ -1,5 +1,5 @@
 Base = require './base'
-{padStringLeft} = require './utils'
+{padStringLeft} = require '../utils'
 
 module.exports =
 class Lines extends Base

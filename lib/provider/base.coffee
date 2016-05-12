@@ -1,5 +1,5 @@
 {Point} = require 'atom'
-{decorateRange} = require './utils'
+{decorateRange} = require '../utils'
 
 module.exports =
 class Base

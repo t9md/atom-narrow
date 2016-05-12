@@ -40,7 +40,7 @@ Start narrowing by invoking one of following command.
 
 # Keymaps
 
-No keyamp to invoke global command(e.g `narrow:lines`).
+No keyamp to invoke global command(e.g `narrow:lines`).  
 narrow-ui have limited default keymap, see [default keymap](https://github.com/t9md/atom-narrow/blob/master/keymaps/main.cson).
 
 - Mine(vim-mode-plus user) for global command.
@@ -111,4 +111,4 @@ config.cson
 
 lots of todo.
 - [ ] improve grammar modification, avoid flickering.
-- [ ] Confirm then close narrow editor?
+- [x] Confirm then close narrow editor?

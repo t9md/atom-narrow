@@ -2,7 +2,7 @@
 path = require 'path'
 
 Base = require './base'
-{decorateRange} = require './utils'
+{decorateRange} = require '../utils'
 _ = require 'underscore-plus'
 
 module.exports =

@@ -1,8 +1,8 @@
 {CompositeDisposable} = require 'atom'
-Narrow = require './narrow'
-Lines = require './provider-lines'
-Search = require './provider-search'
-Fold = require './provider-fold'
+UI = require './narrow'
+Lines = require './provider/lines'
+Search = require './provider/search'
+Fold = require './provider/fold'
 Input = require './input'
 settings = require './settings'
 
