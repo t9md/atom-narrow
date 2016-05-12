@@ -14,7 +14,7 @@ getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
 
 module.exports =
 class Fold extends Base
-  autoReveal: true
+  autoPreview: true
 
   initialize: ->
     @editor.onDidStopChanging =>

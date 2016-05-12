@@ -89,7 +89,7 @@ class Search extends Base
 
     @pane.activate()
 
-    if options.reveal?
+    if options.preview?
       openOptions = {activatePane: false, pending: true}
       atom.workspace.open(filePath, openOptions).then (editor) =>
         editor.scrollToBufferPosition(point, center: true)

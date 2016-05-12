@@ -25,7 +25,7 @@ class Input extends HTMLElement
   readInput: ->
     unless @editorElement
       @editorElement = @firstChild
-      @editor= @editorElement.getModel()
+      @editor = @editorElement.getModel()
 
     @finished = false
     @panel.show()

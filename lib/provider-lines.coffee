@@ -3,7 +3,7 @@ Base = require './base'
 
 module.exports =
 class Lines extends Base
-  autoReveal: true
+  autoPreview: true
 
   initialize: ->
     @editor.onDidStopChanging =>

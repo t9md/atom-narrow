@@ -3,7 +3,7 @@
 
 module.exports =
 class Base
-  autoReveal: false
+  autoPreview: false
 
   getTitle: ->
     @constructor.name
@@ -30,7 +30,7 @@ class Base
     point = Point.fromObject(point)
     @editor.scrollToBufferPosition(point, center: true)
 
-    if options.reveal?
+    if options.preview?
       @pane.activateItem(@editor)
       @marker = @highlightRow(@editor, point.row)
     else

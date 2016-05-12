@@ -35,8 +35,8 @@ Start narrowing by invoking one of following command.
 ### narrow-ui
 
 - `core:confirm`
-- `narrow-ui:reveal-item`
-- `narrow-ui:toggle-auto-reveal`
+- `narrow-ui:preview-item`
+- `narrow-ui:toggle-auto-preview`
 
 # Keymaps
 

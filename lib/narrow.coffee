@@ -9,7 +9,7 @@ path = require 'path'
 
 module.exports =
 class Narrow
-  autoReveal: null
+  autoPreview: null
   show: ->
     if @isAlive()
       @pane.activate()
@@ -30,8 +30,8 @@ class Narrow
 
     @editor.onDidChangeCursorPosition ({oldBufferPosition, newBufferPosition, textChanged}) =>
       return if textChanged
-      if @isAutoReveal() and (oldBufferPosition.row isnt newBufferPosition.row)
-        @confirm(reveal: true)
+      if @isAutoPreview() and (oldBufferPosition.row isnt newBufferPosition.row)
+        @confirm(preview: true)
 
     @editor.getTitle = => ["Narrow", @provider?.getTitle()].join(' ')
     @editor.isModified = -> false
@@ -39,18 +39,18 @@ class Narrow
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
-      'narrow-ui:reveal-item': => @confirm(reveal: true)
-      'narrow-ui:toggle-auto-reveal': => @toggleAutoReveal()
+      'narrow-ui:preview-item': => @confirm(preview: true)
+      'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       # 'core:cancel': => @refresh()
 
-  isAutoReveal: -> @autoReveal
-  toggleAutoReveal: -> @autoReveal = not @autoReveal
+  isAutoPreview: -> @autoPreview
+  toggleAutoPreview: -> @autoPreview = not @autoPreview
 
   getItems: ->
     Promise.resolve(@provider.getItems())
 
   start: (@provider) ->
-    @autoReveal = @provider.autoReveal
+    @autoPreview = @provider.autoPreview
     direction = settings.get('directionToOpen')
     @pane = openItemInAdjacentPane(@editor, direction)
     @getItems().then (items) =>
@@ -93,7 +93,7 @@ class Narrow
     else
       point.row - 1
     @provider.confirmed(@items[index] ? {}, options)
-    unless options.reveal ? false
+    unless options.preview ? false
       @editor.destroy()
 
   appendText: (text) ->
