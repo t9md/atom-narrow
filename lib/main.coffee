@@ -14,7 +14,7 @@ module.exports =
     @input = new Input
 
     @subscribe atom.commands.add 'atom-workspace',
-      'narrow:lines': => new Lines(@getNarrow())
+      'narrow:lines': => @lines()
       'narrow:fold': => new Fold(@getNarrow())
       'narrow:search': =>
         @input.readInput().then (input) =>
@@ -24,6 +24,10 @@ module.exports =
 
   subscribe: (arg) ->
     @subscriptions.add arg
+
+  lines: (word=null) ->
+    narrow = @getNarrow(initialInput: word)
+    new Lines(narrow)
 
   search: (word=null) ->
     reutrn unless word
@@ -41,3 +45,4 @@ module.exports =
   provideNarrow: ->
     getNarrow: @getNarrow.bind(this)
     search: @search.bind(this)
+    lines: @lines.bind(this)

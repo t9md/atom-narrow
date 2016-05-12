@@ -1,11 +1,26 @@
 @import "ui-variables";
 @import "syntax-variables";
 
+@red-color: @syntax-color-removed;
+@green-color: @syntax-color-added;
+@blue-color: @syntax-color-renamed;
+
 .round-box () {
   box-sizing: border-box;
   border-radius: @component-border-radius;
   border-width: 1px;
   border-style: solid;
+}
+
+// Bollowed from linter
+atom-text-editor::shadow .narrow-row {
+  /* Take up the full allowed width */
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: @green-color;
 }
 
 atom-text-editor::shadow {

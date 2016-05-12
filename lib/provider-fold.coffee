@@ -33,5 +33,5 @@ class Fold extends Base
       @items.push(item)
     @items
 
-  viewForItem: (item) ->
-    "  " + item.text
+  viewForItem: ({text}) ->
+    text

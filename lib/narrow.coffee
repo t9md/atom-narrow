@@ -9,7 +9,7 @@ path = require 'path'
 
 module.exports =
 class Narrow
-  autoPreview: null
+  autoPreview: false
   show: ->
     if @isAlive()
       @pane.activate()
@@ -20,6 +20,7 @@ class Narrow
 
   buildEditor: (params={}) ->
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    @gutter = @editor.addGutter(name: 'narrow')
     @editor.onDidDestroy =>
       @originalPane.activate()
       @provider?.destroy?()
@@ -30,11 +31,21 @@ class Narrow
 
     @editor.onDidChangeCursorPosition ({oldBufferPosition, newBufferPosition, textChanged}) =>
       return if textChanged
+      @updateGutter(newBufferPosition)
       if @isAutoPreview() and (oldBufferPosition.row isnt newBufferPosition.row)
         @confirm(preview: true)
 
     @editor.getTitle = => ["Narrow", @provider?.getTitle()].join(' ')
     @editor.isModified = -> false
+
+  updateGutter: (point) ->
+    if point.row is 0
+      point.row = 1
+    @gutterMarker?.destroy()
+    @gutterMarker = @editor.markBufferPosition(point)
+    item = document.createElement('span')
+    item.textContent = " > "
+    @gutter.decorateMarker(@gutterMarker, {class: "narrow-row", item})
 
   registerCommands: ->
     atom.commands.add @editorElement,
@@ -55,6 +66,8 @@ class Narrow
     @pane = openItemInAdjacentPane(@editor, direction)
     @getItems().then (items) =>
       @setItems(items)
+      if @initialInput
+        @editor.insertText(@initialInput)
 
   getNarrowQuery: ->
     @editor.lineTextForBufferRow(0)
@@ -79,6 +92,7 @@ class Narrow
 
       @updateGrammar(@editor, patterns.join('|'))
       @setItems(items)
+      @updateGutter(@editor.getCursorBufferPosition())
 
   observeInputChange: (editor) ->
     buffer = editor.getBuffer()
@@ -101,7 +115,7 @@ class Narrow
     @editor.setTextInBufferRange(range, text)
 
   constructor: (params={}) ->
-    {@initialKeyword} = params
+    {@initialKeyword, @initialInput} = params
     @originalPane = atom.workspace.getActivePane()
     @buildEditor(params)
     # [FIXME?] With just "\n", narrow:line fail to syntax highlight
