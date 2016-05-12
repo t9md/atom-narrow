@@ -46,3 +46,18 @@ module.exports =
     getUI: @getUI.bind(this)
     search: @search.bind(this)
     lines: @lines.bind(this)
+
+  consumeVim: ({getEditorState}) ->
+    narrowSearch = @search.bind(this)
+    narrowLines = @lines.bind(this)
+
+    confirmSearch = -> # return search text
+      editor = atom.workspace.getActiveTextEditor()
+      vimState = getEditorState(editor)
+      text = vimState.searchInput.editor.getText()
+      vimState.searchInput.confirm()
+      text
+
+    @subscribe atom.commands.add 'atom-text-editor.vim-mode-plus-search',
+      'vim-mode-plus-user:narrow-lines-from-search': -> narrowLines(confirmSearch())
+      'vim-mode-plus-user:narrow-search-from-search': -> narrowSearch(confirmSearch())

@@ -19,6 +19,13 @@
       }
     }
   },
+  "consumedServices": {
+    "vim-mode-plus": {
+      "versions": {
+        "^0.1.0": "consumeVim"
+      }
+    }
+  },
   "dependencies": {
     "underscore-plus": "^1.6.6"
   }

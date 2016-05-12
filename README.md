@@ -11,15 +11,16 @@ alpha
 
 `narrow:lines`
 
-![line](https://raw.githubusercontent.com/t9md/t9md/e294456412d24208b48d623508cd5e8d39ab83fe/img/atom-narrow/line.gif)
+![line](https://raw.githubusercontent.com/t9md/t9md/43b393e7e87bc36ee9dc309e9525050b95ec07ed/img/atom-narrow/lines.gif)
+
 
 `narrow:fold`
 
-![fold](https://raw.githubusercontent.com/t9md/t9md/e294456412d24208b48d623508cd5e8d39ab83fe/img/atom-narrow/fold.gif)
+![fold](https://raw.githubusercontent.com/t9md/t9md/43b393e7e87bc36ee9dc309e9525050b95ec07ed/img/atom-narrow/fold.gif)
 
 `narrow:search` (require `ag`)
 
-![search](https://raw.githubusercontent.com/t9md/t9md/e294456412d24208b48d623508cd5e8d39ab83fe/img/atom-narrow/search.gif)
+![search](https://raw.githubusercontent.com/t9md/t9md/43b393e7e87bc36ee9dc309e9525050b95ec07ed/img/atom-narrow/search.gif)
 
 # Commands
 
@@ -53,41 +54,29 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
   'f9': 'narrow:focus'
 ```
 
-# Advanced
+# vim-mode-plus integration.
 
-init.coffee
+If you are [vim-mode-plus](https://atom.io/packages/vim-mode-plus) user, following commands are provided.  
+Both are directly invoke `lines` ore `search` form `vim-mode-plus:search` UI.
 
-```coffeescript
-consumeService = (packageName, providerName, fn) ->
-  disposable = atom.packages.onDidActivatePackage (pack) ->
-    return unless pack.name is packageName
-    service = pack.mainModule[providerName]()
-    fn(service)
-    disposable.dispose()
+- `vim-mode-plus-user:narrow-lines-from-search`
+- `vim-mode-plus-user:narrow-search-from-search`
 
-narrowSearch = null
-consumeService 'narrow', 'provideNarrow', ({search}) ->
-  narrowSearch = search
-
-narrowSearchFromVimModePlusSearch = ->
-  vimState = getEditorState(atom.workspace.getActiveTextEditor())
-  text = vimState.searchInput.editor.getText()
-  vimState.searchInput.confirm()
-  console.log 'searching', text
-  narrowSearch(text)
-
-atom.commands.add 'atom-workspace',
-  'user:narrow-search': -> narrowSearchFromVimModePlusSearch()
-```
-
-keymap.cson
+Currently following keymap are defined(might be removed in future).
 
 ```coffeescript
 'atom-text-editor.vim-mode-plus-search':
-  'ctrl-o': 'user:narrow-search'
+  'ctrl-o': 'vim-mode-plus-user:narrow-lines-from-search'
+  'ctrl-cmd-o': 'vim-mode-plus-user:narrow-search-from-search'
 ```
 
+So you can search `/` then type `abc` then `ctrl-o`, open `narrow:lines` with initial narrowing keyword `abc`.  
+`ctrl-cmd-o` is `narrow:search` version of this.  
+
 # Other config
+
+If you want to start `insert-mode` for narrow-ui, refer following configuration.
+
 
 config.cson
 
@@ -111,4 +100,6 @@ config.cson
 
 lots of todo.
 - [ ] improve grammar modification, avoid flickering.
+- [ ] More granular control by each narrow-provider such as auto-preview, where to open ui.
 - [x] Confirm then close narrow editor?
+- [ ] Add default providers for `recent-files,` `projects` etc.

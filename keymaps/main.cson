@@ -13,3 +13,8 @@
 
 'atom-text-editor.narrow.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'
+
+# For vim-mode-plus integration
+'atom-text-editor.vim-mode-plus-search':
+  'ctrl-o': 'vim-mode-plus-user:narrow-lines-from-search'
+  'ctrl-cmd-o': 'vim-mode-plus-user:narrow-search-from-search'
