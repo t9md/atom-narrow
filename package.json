@@ -2,7 +2,7 @@
   "name": "narrow",
   "main": "./lib/main",
   "version": "0.1.1",
-  "description": "narrow down to target",
+  "description": "narrow something",
   "keywords": [
     "unite.vim",
     "emacs-helm"
