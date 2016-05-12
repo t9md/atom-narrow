@@ -8,7 +8,7 @@ settings = require './settings'
 path = require 'path'
 
 module.exports =
-class Narrow
+class UI
   autoPreview: false
   show: ->
     if @isAlive()
