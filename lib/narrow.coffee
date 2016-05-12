@@ -86,13 +86,15 @@ class Narrow
       return unless (newRange.start.row is 0)
       @refresh()
 
-  confirm: (options) ->
+  confirm: (options={}) ->
     point = @editor.getCursorBufferPosition()
     index = if point.row is 0
       0
     else
       point.row - 1
     @provider.confirmed(@items[index] ? {}, options)
+    unless options.reveal ? false
+      @editor.destroy()
 
   appendText: (text) ->
     range = [[1, 0], @editor.getEofBufferPosition()]
