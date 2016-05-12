@@ -22,8 +22,7 @@ class UI
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     @gutter = @editor.addGutter(name: 'narrow')
     @editor.onDidDestroy =>
-      @originalPane.activate()
-      @provider?.destroy?()
+      @destroy()
 
     @editorElement = atom.views.getView(@editor)
     @editorElement.classList.add('narrow')
@@ -37,6 +36,11 @@ class UI
 
     @editor.getTitle = => ["Narrow", @provider?.getTitle()].join(' ')
     @editor.isModified = -> false
+
+  destroy: ->
+    @originalPane.activate()
+    @provider?.destroy?()
+    @gutterMarker?.destroy()
 
   updateGutter: (point) ->
     if point.row is 0
