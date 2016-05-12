@@ -72,6 +72,10 @@ smartScrollToBufferPosition = (editor, point) ->
   center = (onePageDown < target) or (target < onePageUp)
   editor.scrollToBufferPosition(point, {center})
 
+padStringLeft = (string, targetLength) ->
+  padding = " ".repeat(targetLength - string.length)
+  padding + string
+
 module.exports = {
   getView
   getAdjacentPaneForPane
@@ -79,4 +83,5 @@ module.exports = {
   openItemInAdjacentPane
   decorateRange
   smartScrollToBufferPosition
+  padStringLeft
 }

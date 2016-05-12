@@ -2,14 +2,12 @@
 path = require 'path'
 
 Base = require './base'
-{decorateRange, smartScrollToBufferPosition} = require './utils'
+{decorateRange} = require './utils'
 _ = require 'underscore-plus'
 
 module.exports =
 class Search extends Base
   searchersRunning: []
-  getFilterKey: ->
-    "text"
 
   search: (text, {cwd, onData, onFinish}) ->
     command = 'ag'
@@ -42,8 +40,8 @@ class Search extends Base
       for line in lines when item = @parseLine(line)
         if currentFile isnt item.filePath
           items.push(text: "##" + (currentFile = item.filePath))
-
-        item.project = project
+        # update filePath to fullPath
+        item.filePath = path.join(project, item.filePath)
         items.push(item)
 
   getItems: ->
@@ -81,7 +79,6 @@ class Search extends Base
     return unless item.point?
 
     {project, filePath, point} = item
-    fullPath = path.join(project, filePath)
 
     @pane.activate()
 
@@ -93,14 +90,14 @@ class Search extends Base
       openOptions =
         activatePane: false
         pending: true
-      atom.workspace.open(fullPath, openOptions).then (editor) =>
-        smartScrollToBufferPosition(editor, point)
+      atom.workspace.open(filePath, openOptions).then (editor) =>
+        editor.scrollToBufferPosition(point, center: true)
         flash(editor, point)
         @narrow.pane.activate()
     else
       openOptions =
         pending: true
-      atom.workspace.open(fullPath, openOptions).then (editor) ->
+      atom.workspace.open(filePath, openOptions).then (editor) ->
         editor.setCursorBufferPosition(point)
         flash(editor, point)
 

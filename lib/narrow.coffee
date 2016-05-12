@@ -50,6 +50,7 @@ class Narrow
     Promise.resolve(@provider.getItems())
 
   start: (@provider) ->
+    @autoReveal = @provider.autoReveal
     direction = settings.get('directionToOpen')
     @pane = openItemInAdjacentPane(@editor, direction)
     @getItems().then (items) =>

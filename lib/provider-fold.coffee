@@ -14,9 +14,11 @@ getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
 
 module.exports =
 class Fold extends Base
+  autoReveal: true
+  
   initialize: ->
     @editor.onDidStopChanging =>
-      @items = null
+      @items = null # invalidate cache
       @narrow.refresh()
 
   getItems: ->
@@ -27,11 +29,7 @@ class Fold extends Base
     rows = _.sortBy(_.uniq(startRows), (row) -> row)
     filePath = @editor.getPath()
     for row, i in rows
-      item = {
-        path: filePath
-        point: [row, 0]
-        text: @editor.lineTextForBufferRow(row)
-      }
+      item = {filePath, point: [row, 0], text: @editor.lineTextForBufferRow(row)}
       @items.push(item)
     @items
 

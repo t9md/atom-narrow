@@ -1,13 +1,12 @@
-{
-  decorateRange
-  smartScrollToBufferPosition
-} = require './utils'
+{decorateRange} = require './utils'
 
 module.exports =
 class Base
+  autoReveal: false
+
   getTitle: ->
     @constructor.name
-    
+
   constructor: (@narrow, @options={}) ->
     @editor = atom.workspace.getActiveTextEditor()
     @pane = atom.workspace.getActivePane()
@@ -20,8 +19,9 @@ class Base
   confirmed: ({point}, options={}) ->
     return unless point?
 
+    @editor.scrollToBufferPosition(point, center: true)
+
     if options.reveal?
-      smartScrollToBufferPosition(@editor, point)
       @pane.activateItem(@editor)
     else
       @editor.setCursorBufferPosition(point)
