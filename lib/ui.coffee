@@ -10,7 +10,7 @@ path = require 'path'
 module.exports =
 class UI
   autoPreview: false
-  show: ->
+  focus: ->
     if @isAlive()
       @pane.activate()
       @pane.activateItem(@editor)

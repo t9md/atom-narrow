@@ -34,7 +34,7 @@ class Search extends Base
       if header?
         # FIXME persit is special, which is not hiden when narrowed.
         # but this kind of magic property is bad practice.
-        items.push({header})
+        items.push({header, itemType: 'blockDecoration'})
         header = null
 
       lines = data.split("\n")
@@ -43,7 +43,9 @@ class Search extends Base
       for line in lines when item = @parseLine(line)
         if currentFile isnt item.filePath
           currentFile = item.filePath
-          items.push({header: "## #{currentFile}"})
+          header = "## #{currentFile}"
+          items.push({header, itemType: 'blockDecoration'})
+
         # update filePath to fullPath
         item.filePath = path.join(project, item.filePath)
         items.push(item)
@@ -94,7 +96,7 @@ class Search extends Base
       atom.workspace.open(filePath, openOptions).then (editor) =>
         editor.scrollToBufferPosition(point, center: true)
         @marker = @highlightRow(editor, point.row)
-        @narrow.pane.activate()
+        @ui.pane.activate()
     else
       openOptions = {pending: true}
       atom.workspace.open(filePath, openOptions).then (editor) ->

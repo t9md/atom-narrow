@@ -8,7 +8,7 @@ class Lines extends Base
   initialize: ->
     @editor.onDidStopChanging =>
       @items = null # invalidate cache.
-      @narrow.refresh()
+      @ui.refresh()
 
   getItems: ->
     return @items if @items?

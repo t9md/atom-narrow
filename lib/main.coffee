@@ -20,8 +20,7 @@ module.exports =
       'narrow:search': =>
         @input.readInput().then (input) =>
           @search(input) if input
-      'narrow:focus': =>
-        @narrow.show()
+      'narrow:focus': => @ui.focus()
 
   subscribe: (arg) ->
     @subscriptions.add arg
@@ -40,7 +39,8 @@ module.exports =
     {@subscriptions} = {}
 
   getUI: (options={}) ->
-    new UI(options)
+    # [FIXME] make UI instance instance
+    @ui = new UI(options)
 
   provideNarrow: ->
     getUI: @getUI.bind(this)

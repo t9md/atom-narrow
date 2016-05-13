@@ -99,6 +99,8 @@ config.cson
 # TODOs
 
 lots of todo.
+- [ ] Use block decoration to show header
+- [ ] Use block decoration to read narrow input?
 - [ ] improve grammar modification, avoid flickering.
 - [ ] More granular control by each narrow-provider such as auto-preview, where to open ui.
 - [x] Confirm then close narrow editor?

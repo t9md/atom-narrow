@@ -8,11 +8,11 @@ class Base
   getTitle: ->
     @constructor.name
 
-  constructor: (@narrow, @options={}) ->
+  constructor: (@ui, @options={}) ->
     @editor = atom.workspace.getActiveTextEditor()
     @pane = atom.workspace.getActivePane()
     @initialize?()
-    @narrow.start(this)
+    @ui.start(this)
 
   getFilterKey: ->
     "text"
