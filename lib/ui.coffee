@@ -128,6 +128,10 @@ class UI
   preview: ->
     @confirm(preview: true)
 
+  isValidItem: (item) ->
+    filterKey = @provider.getFilterKey()
+    return (filterKey of item)
+
   confirm: (options={}) ->
     point = @editor.getCursorBufferPosition()
     index = if point.row is 0
@@ -135,6 +139,7 @@ class UI
     else
       point.row - 1
     item = @items[index] ? {}
+    return unless @isValidItem(item)
     @provider.confirmed(@items[index] ? {}, options)
     unless options.preview ? false
       @editor.destroy()

@@ -32,9 +32,8 @@ class Search extends Base
     header = "# " + path.basename(project)
     ({data}) =>
       if header?
-        # FIXME persit is special, which is not hiden when narrowed.
-        # but this kind of magic property is bad practice.
-        items.push(@ui.blockDecorationItemForText(header, classList: ['narrow-section']))
+        # items.push(@ui.blockDecorationItemForText(header, classList: ['narrow-section']))
+        items.push({header})
         header = null
 
       lines = data.split("\n")
@@ -43,7 +42,9 @@ class Search extends Base
       for line in lines when item = @parseLine(line)
         if currentFile isnt item.filePath
           currentFile = item.filePath
-          items.push(@ui.blockDecorationItemForText("## #{currentFile}", classList: ['narrow-section']))
+          items.push({header: "## #{currentFile}"})
+
+          # items.push(@ui.blockDecorationItemForText("## #{currentFile}", classList: ['narrow-section']))
 
         # update filePath to fullPath
         item.filePath = path.join(project, item.filePath)
@@ -102,7 +103,14 @@ class Search extends Base
         editor.setCursorBufferPosition(point)
 
   viewForItem: (item) ->
-    {text, point} = item
-    [row, column] = point
-    row += 1
-    "  #{row}:#{column}:#{text}"
+    unless item.text?
+      item.header
+    else
+      {text, point} = item
+      [row, column] = point
+      row += 1
+      "  #{row}:#{column}:#{text}"
+    # {text, point} = item
+    # [row, column] = point
+    # row += 1
+    # "  #{row}:#{column}:#{text}"
