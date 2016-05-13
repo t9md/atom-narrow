@@ -1,45 +1,65 @@
+path = require 'path'
+_ = require 'underscore-plus'
+
 module.exports =
-  name: 'Narrow buffer'
+class NarrowGrammar
+  filePath: path.join(__dirname, 'grammar', 'narrow.cson')
   scopeName: 'source.narrow'
-  fileTypes: []
-  patterns: [
-    {
-      match: '^\\s*(\\d+):(?:(\\d+):)*'
-      name: 'location.narrow'
-      captures:
-        '1':
-          name: 'constant.numeric.line.narrow'
-        '2':
-          name: 'constant.numeric.column.narrow'
-    }
-    {
-      begin: '^(#{2})(\\s*)'
-      end: '$'
-      name: 'markup.heading.heading-2.narrow'
-      captures:
-        '1':
-          name: 'markup.heading.marker.narrow'
-        '2':
-          name: 'markup.heading.space.narrow'
-      patterns: [
+
+  constructor: (@editor, options={}) ->
+    {@initialKeyword, @includeHeaderRules} = options
+
+  activate: (rule = @getRule()) ->
+    atom.grammars.removeGrammarForScopeName(@scopeName)
+    grammar = atom.grammars.createGrammar(@filePath, rule)
+    atom.grammars.addGrammar(grammar)
+    @editor.setGrammar(grammar)
+
+  update: ({pattern}) ->
+    rule = @getRule()
+    if pattern
+      rule.patterns.push(
+        match: "(?i:#{pattern})"
+        name: 'keyword.narrow'
+      )
+    @activate(rule)
+
+  getRule: ->
+    rule =
+      {
+        name: 'Narrow buffer'
+        scopeName: @scopeName
+        fileTypes: []
+        patterns: [
+          {
+            match: '^\\s*(\\d+):(?:(\\d+):)*'
+            name: 'location.narrow'
+            captures:
+              '1':
+                name: 'constant.numeric.line.narrow'
+              '2':
+                name: 'constant.numeric.column.narrow'
+          }
+        ]
+      }
+    if @includeHeaderRules
+      rule.patterns.push(
         {
-          include: '$self'
+          begin: '^  .'
+          end: '$'
+          name: 'markup.heading.heading-2.narrow'
         }
-      ]
-    }
-    {
-      begin: '^(#{1})(\\s*)'
-      end: '$'
-      name: 'markup.heading.heading-1.narrow'
-      captures:
-        '1':
-          name: 'markup.heading.marker.narrow'
-        '2':
-          name: 'markup.heading.space.narrow'
-      patterns: [
+      )
+      rule.patterns.push(
         {
-          include: '$self'
+          begin: '^.'
+          end: '$'
+          name: 'markup.heading.heading-1.narrow'
         }
-      ]
-    }
-  ]
+      )
+    if @initialKeyword
+      rule.patterns.push(
+        match: "(?i:#{_.escapeRegExp(@initialKeyword)})"
+        name: 'entity.name.function.narrow'
+      )
+    rule

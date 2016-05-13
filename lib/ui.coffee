@@ -6,6 +6,7 @@ _ = require 'underscore-plus'
 } = require './utils'
 settings = require './settings'
 path = require 'path'
+NarrowGrammar = require './grammar'
 
 module.exports =
 class UI
@@ -69,6 +70,11 @@ class UI
     Promise.resolve(@provider.getItems())
 
   start: (@provider) ->
+    if @provider.constructor.name is 'Search'
+      includeHeaderRules = true
+    @grammar = new NarrowGrammar(@editor, {@initialKeyword, includeHeaderRules})
+    @grammar.activate()
+
     @autoPreview = @provider.autoPreview
     direction = settings.get('directionToOpen')
     @pane = openItemInAdjacentPane(@editor, direction)
@@ -91,7 +97,8 @@ class UI
     words = _.compact(query.split(/\s+/))
 
     @getItems().then (items) =>
-      @updateGrammar(@editor, words.map(_.escapeRegExp).join('|'))
+      # @updateGrammar(@editor, words.map(_.escapeRegExp).join('|'))
+      @grammar.update(pattern: words.map(_.escapeRegExp).join('|'))
       @clearText()
       @setItems(@filterItems(items, words))
       @updateGutter(@editor.getCursorBufferPosition())
@@ -164,7 +171,6 @@ class UI
     @editor.insertText("\n ")
     @editor.setCursorBufferPosition([0, Infinity])
     @registerCommands()
-    @updateGrammar(@editor)
     @observeInputChange(@editor)
 
   blockDecorationItemForText: (text, options={}) ->
@@ -194,29 +200,3 @@ class UI
     )
     for [row, item] in itemsForDecoration
       @addBlockDecorationForBufferRow(row, item)
-
-  OriginalGrammarNumberOfPattern = 3
-  updateGrammar: (editor, pattern=null) ->
-    filePath = path.join(__dirname, 'grammar', 'narrow.cson')
-
-    @grammarObject ?= require './grammar'
-    atom.grammars.removeGrammarForScopeName('source.narrow')
-    @grammarObject.patterns.splice(OriginalGrammarNumberOfPattern)
-
-    rawPatterns = []
-    if @initialKeyword?
-      rawPatterns.push(
-        match: "(?i:#{_.escapeRegExp(@initialKeyword)})"
-        name: 'entity.name.function.narrow'
-      )
-    if pattern
-      rawPatterns.push(
-        match: "(?i:#{pattern})"
-        name: 'keyword.narrow'
-      )
-    if rawPatterns.length
-      @grammarObject.patterns.push(rawPatterns...)
-
-    grammar = atom.grammars.createGrammar(filePath, @grammarObject)
-    atom.grammars.addGrammar(grammar)
-    editor.setGrammar(grammar)
