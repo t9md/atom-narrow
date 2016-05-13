@@ -10,6 +10,8 @@ path = require 'path'
 module.exports =
 class UI
   autoPreview: false
+  blockDecorations: null
+
   focus: ->
     if @isAlive()
       @pane.activate()
@@ -76,7 +78,13 @@ class UI
   getNarrowQuery: ->
     @editor.lineTextForBufferRow(0)
 
+  clearBlockDecorations: ->
+    for decoration in @blockDecorations ? []
+      decoration.getMarker().destroy()
+    @blockDecorations = null
+
   refresh: ->
+    @clearBlockDecorations()
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
     filterKey = @provider.getFilterKey()
@@ -95,8 +103,16 @@ class UI
             true
 
       @updateGrammar(@editor, patterns.join('|'))
+      @clearText()
       @setItems(items)
       @updateGutter(@editor.getCursorBufferPosition())
+
+  addBlockDecorationForBufferRow: (row, item) ->
+    @blockDecorations ?= []
+    @blockDecorations.push @editor.decorateMarker(
+      @editor.markScreenPosition([row, 0], invalidate: "touch"),
+      type: "block", item: item, position: "before"
+    )
 
   observeInputChange: (editor) ->
     buffer = editor.getBuffer()
@@ -110,12 +126,20 @@ class UI
       0
     else
       point.row - 1
+    item = @items[index] ? {}
     @provider.confirmed(@items[index] ? {}, options)
     unless options.preview ? false
       @editor.destroy()
 
+  clearText: ->
+    start = [1, 0]
+    end = @editor.getEofBufferPosition()
+    range = [start, end]
+    @editor.setTextInBufferRange(range, '')
+
   appendText: (text) ->
-    range = [[1, 0], @editor.getEofBufferPosition()]
+    row = @editor.getLastBufferRow()
+    range = [[row, 0], [row, Infinity]]
     @editor.setTextInBufferRange(range, text)
 
   constructor: (params={}) ->
@@ -130,10 +154,33 @@ class UI
     @updateGrammar(@editor)
     @observeInputChange(@editor)
 
-  setItems: (@items) ->
-    lines = []
-    lines.push(@provider.viewForItem(item)) for item in @items
-    @appendText(lines.join("\n"))
+  blockDecorationItemForText: (text, options={}) ->
+    {classList} = options
+    item = document.createElement("div")
+    item.textContent = text
+    item.classList.add(classList...) if classList?
+    console.log item
+    {itemType: 'blockDecoration', item}
+
+  setItems: (items) ->
+    @items = []
+    itemsForDecoration = []
+
+    decorationRow = 1
+    for item, i in items
+      if item.itemType is 'blockDecoration'
+        itemsForDecoration.push([decorationRow, item.item])
+      else
+        decorationRow = i
+        @items.push(item)
+
+    @appendText(
+      @items.map (item) =>
+        @provider.viewForItem(item)
+      .join("\n")
+    )
+    for [row, item] in itemsForDecoration
+      @addBlockDecorationForBufferRow(row, item)
 
   OriginalGrammarNumberOfPattern = 3
   updateGrammar: (editor, pattern=null) ->
