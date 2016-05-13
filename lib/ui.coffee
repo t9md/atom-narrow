@@ -34,7 +34,7 @@ class UI
       return if textChanged
       @updateGutter(newBufferPosition)
       if @isAutoPreview() and (oldBufferPosition.row isnt newBufferPosition.row)
-        @confirm(preview: true)
+        @preview()
 
     @editor.getTitle = => ["Narrow", @provider?.getTitle()].join(' ')
     @editor.isModified = -> false
@@ -56,12 +56,14 @@ class UI
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
-      'narrow-ui:preview-item': => @confirm(preview: true)
+      'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       # 'core:cancel': => @refresh()
 
   isAutoPreview: -> @autoPreview
-  toggleAutoPreview: -> @autoPreview = not @autoPreview
+  toggleAutoPreview: ->
+    if @autoPreview = not @autoPreview
+      @preview()
 
   getItems: ->
     Promise.resolve(@provider.getItems())
@@ -87,25 +89,28 @@ class UI
     @clearBlockDecorations()
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
-    filterKey = @provider.getFilterKey()
 
     @getItems().then (items) =>
-      patterns = []
-      for word in words
-        pattern = _.escapeRegExp(word)
-        patterns.push(pattern)
-
-        items = _.filter items, (item) ->
-          if filterKey of item
-            item[filterKey].match(///#{pattern}///i)
-          else
-            # When item has no filterKey, it is special, always displayed.
-            true
-
-      @updateGrammar(@editor, patterns.join('|'))
+      @updateGrammar(@editor, words.map(_.escapeRegExp).join('|'))
       @clearText()
-      @setItems(items)
+      @setItems(@filterItems(items, words))
       @updateGutter(@editor.getCursorBufferPosition())
+
+  filterItems: (items, words) ->
+    filterKey = @provider.getFilterKey()
+
+    filter = (items, pattern) ->
+      _.filter items, (item) ->
+        if filterKey of item
+          item[filterKey].match(///#{pattern}///i)
+        else
+          # When item has no filterKey, it is special, always displayed.
+          true
+
+    for pattern in words.map(_.escapeRegExp)
+      items = filter(items, pattern)
+    items
+
 
   addBlockDecorationForBufferRow: (row, item) ->
     @blockDecorations ?= []
@@ -119,6 +124,9 @@ class UI
     buffer.onDidChange ({newRange}) =>
       return unless (newRange.start.row is 0)
       @refresh()
+
+  preview: ->
+    @confirm(preview: true)
 
   confirm: (options={}) ->
     point = @editor.getCursorBufferPosition()
