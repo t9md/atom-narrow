@@ -28,12 +28,13 @@ class Base
     @marker?.destroy()
     return unless point?
     point = Point.fromObject(point)
-    @editor.scrollToBufferPosition(point, center: true)
 
     if options.preview?
       @pane.activateItem(@editor)
       @marker = @highlightRow(@editor, point.row)
     else
-      @editor.setCursorBufferPosition(point)
+      @editor.setCursorBufferPosition(point, autoscroll: false)
       @pane.activate()
       @pane.activateItem(@editor)
+
+    @editor.scrollToBufferPosition(point, center: true)
