@@ -103,7 +103,8 @@ class Search extends Base
     else
       openOptions = {pending: true}
       atom.workspace.open(filePath, openOptions).then (editor) ->
-        editor.setCursorBufferPosition(point)
+        editor.setCursorBufferPosition(point, autoscroll: false)
+        editor.scrollToBufferPosition(point, center: true)
 
   filterItems: (items, words) ->
     filterKey = @getFilterKey()

@@ -1,3 +1,6 @@
+# 0.3.1:
+- Improve: cursor position centering
+
 # 0.3.0:
 - Fix: `narrow:focus`, just because forgotten to rename from old to new name.
 - Improve: grammar highlight
