@@ -11,7 +11,7 @@ NarrowGrammar = require './grammar'
 module.exports =
 class UI
   autoPreview: false
-  blockDecorations: null
+  items: []
 
   focus: ->
     if @isAlive()
@@ -24,20 +24,13 @@ class UI
   buildEditor: (params={}) ->
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     @gutter = @editor.addGutter(name: 'narrow')
-    @editor.onDidDestroy =>
-      @destroy()
+    @editor.onDidDestroy => @destroy()
 
     @editorElement = atom.views.getView(@editor)
     @editorElement.classList.add('narrow')
     @editorElement.classList.add(params.class) if params.class
 
-    @editor.onDidChangeCursorPosition ({oldBufferPosition, newBufferPosition, textChanged}) =>
-      return if textChanged
-      @updateGutter(newBufferPosition)
-      if @isAutoPreview() and (oldBufferPosition.row isnt newBufferPosition.row)
-        @preview()
-
-    @editor.getTitle = => ["Narrow", @provider?.getTitle()].join(' ')
+    @editor.getTitle = => @provider?.getTitle()
     @editor.isModified = -> false
 
   destroy: ->
@@ -45,21 +38,11 @@ class UI
     @provider?.destroy?()
     @gutterMarker?.destroy()
 
-  updateGutter: (point) ->
-    if point.row is 0
-      point.row = 1
-    @gutterMarker?.destroy()
-    @gutterMarker = @editor.markBufferPosition(point)
-    item = document.createElement('span')
-    item.textContent = " > "
-    @gutter.decorateMarker(@gutterMarker, {class: "narrow-row", item})
-
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
-      # 'core:cancel': => @refresh()
 
   isAutoPreview: -> @autoPreview
   toggleAutoPreview: ->
@@ -86,13 +69,8 @@ class UI
   getNarrowQuery: ->
     @editor.lineTextForBufferRow(0)
 
-  clearBlockDecorations: ->
-    for decoration in @blockDecorations ? []
-      decoration.getMarker().destroy()
-    @blockDecorations = null
-
   refresh: ->
-    @clearBlockDecorations()
+    # @clearBlockDecorations()
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
 
@@ -101,7 +79,7 @@ class UI
       @grammar.update(pattern: words.map(_.escapeRegExp).join('|'))
       @clearText()
       @setItems(@filterItems(items, words))
-      @updateGutter(@editor.getCursorBufferPosition())
+      # @updateGutter(@editor.getCursorBufferPosition())
 
   filterItems: (items, words) ->
     filterKey = @provider.getFilterKey()
@@ -118,19 +96,18 @@ class UI
       items = filter(items, pattern)
     items
 
-
-  addBlockDecorationForBufferRow: (row, item) ->
-    @blockDecorations ?= []
-    @blockDecorations.push @editor.decorateMarker(
-      @editor.markScreenPosition([row, 0], invalidate: "touch"),
-      type: "block", item: item, position: "before"
-    )
-
-  observeInputChange: (editor) ->
-    buffer = editor.getBuffer()
+  observeInputChange: ->
+    buffer = @editor.getBuffer()
     buffer.onDidChange ({newRange}) =>
       return unless (newRange.start.row is 0)
       @refresh()
+
+  observeCursorPositionChange: ->
+    @editor.onDidChangeCursorPosition ({oldBufferPosition, newBufferPosition, textChanged}) =>
+      return if textChanged
+      @selectFirstValidItem(newBufferPosition.row)
+      if @isAutoPreview() and (oldBufferPosition.row isnt newBufferPosition.row)
+        @preview()
 
   preview: ->
     @confirm(preview: true)
@@ -139,15 +116,20 @@ class UI
     filterKey = @provider.getFilterKey()
     return (filterKey of item)
 
+  getItemForRow: (row) ->
+    index = if row is 0 then 0 else (row - 1)
+    @items[index] ? {}
+
+  setGutterMarkerToRow: (row) ->
+    @gutterMarker?.destroy()
+    @gutterMarker = @editor.markBufferPosition([row, 0])
+    item = document.createElement('span')
+    item.textContent = " > "
+    @gutter.decorateMarker(@gutterMarker, {class: "narrow-row", item})
+
   confirm: (options={}) ->
-    point = @editor.getCursorBufferPosition()
-    index = if point.row is 0
-      0
-    else
-      point.row - 1
-    item = @items[index] ? {}
-    return unless @isValidItem(item)
-    @provider.confirmed(@items[index] ? {}, options)
+    return unless @isValidItem(item = @getSelectedItem())
+    @provider.confirmed(item, options)
     unless options.preview ? false
       @editor.destroy()
 
@@ -166,37 +148,29 @@ class UI
     {@initialKeyword, @initialInput} = params
     @originalPane = atom.workspace.getActivePane()
     @buildEditor(params)
+
     # [FIXME?] With just "\n", narrow:line fail to syntax highlight
     # with custom grammar on initial open.s
     @editor.insertText("\n ")
     @editor.setCursorBufferPosition([0, Infinity])
+
     @registerCommands()
-    @observeInputChange(@editor)
+    @observeInputChange()
+    @observeCursorPositionChange()
 
-  blockDecorationItemForText: (text, options={}) ->
-    {classList} = options
-    item = document.createElement("div")
-    item.textContent = text
-    item.classList.add(classList...) if classList?
-    console.log item
-    {itemType: 'blockDecoration', item}
+  selectFirstValidItem: (startRow) ->
+    skip = Math.max(startRow - 1, 0)
+    for item, i in @items.slice(skip) when @isValidItem(item)
+      row = i + skip + 1
+      break
 
-  setItems: (items) ->
-    @items = []
-    itemsForDecoration = []
+    @setGutterMarkerToRow(row)
+    @selectedItem = @getItemForRow(row)
 
-    decorationRow = 1
-    for item, i in items
-      if item.itemType is 'blockDecoration'
-        itemsForDecoration.push([decorationRow, item.item])
-      else
-        decorationRow = i
-        @items.push(item)
+  getSelectedItem: ->
+    @selectedItem ? {}
 
-    @appendText(
-      @items.map (item) =>
-        @provider.viewForItem(item)
-      .join("\n")
-    )
-    for [row, item] in itemsForDecoration
-      @addBlockDecorationForBufferRow(row, item)
+  setItems: (@items) ->
+    text = (@provider.viewForItem(item) for item in @items).join("\n")
+    @appendText(text)
+    @selectFirstValidItem(1)
