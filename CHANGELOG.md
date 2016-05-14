@@ -1,3 +1,14 @@
+# 0.3.0:
+- Fix: `narrow:focus`, just because forgotten to rename from old to new name.
+- Improve: grammar highlight
+- Improve: `narrow:search` header is indented so that foldable.
+- Improve: `narrow:search` hide header for filtered outed item.
+- Improve: ui select first valid item at startup.
+
+# 0.2.5: [not released]
+- experimented blockDecoration to display file, project header in `narrow:search`.
+  but decided not to use because of ux.
+
 # 0.2.0:
 - UI inproved.
 - `narrow:line` and `narrow:fold` have `autoPreview` enabled on start.
