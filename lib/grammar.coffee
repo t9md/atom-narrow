@@ -45,14 +45,14 @@ class NarrowGrammar
     if @includeHeaderRules
       rule.patterns.push(
         {
-          begin: '^  .'
+          begin: '^  #'
           end: '$'
           name: 'markup.heading.heading-2.narrow'
         }
       )
       rule.patterns.push(
         {
-          begin: '^.'
+          begin: '^#'
           end: '$'
           name: 'markup.heading.heading-1.narrow'
         }

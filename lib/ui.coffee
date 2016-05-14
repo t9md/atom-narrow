@@ -75,11 +75,14 @@ class UI
     words = _.compact(query.split(/\s+/))
 
     @getItems().then (items) =>
-      # @updateGrammar(@editor, words.map(_.escapeRegExp).join('|'))
       @grammar.update(pattern: words.map(_.escapeRegExp).join('|'))
       @clearText()
-      @setItems(@filterItems(items, words))
-      # @updateGutter(@editor.getCursorBufferPosition())
+
+      items = if @provider.filterItems?
+        @provider.filterItems(items, words)
+      else
+        @filterItems(items, words)
+      @setItems(items)
 
   filterItems: (items, words) ->
     filterKey = @provider.getFilterKey()
@@ -105,7 +108,7 @@ class UI
   observeCursorPositionChange: ->
     @editor.onDidChangeCursorPosition ({oldBufferPosition, newBufferPosition, textChanged}) =>
       return if textChanged
-      @selectFirstValidItem(newBufferPosition.row)
+      @selectItemForRow(newBufferPosition.row)
       if @isAutoPreview() and (oldBufferPosition.row isnt newBufferPosition.row)
         @preview()
 
@@ -115,10 +118,6 @@ class UI
   isValidItem: (item) ->
     filterKey = @provider.getFilterKey()
     return (filterKey of item)
-
-  getItemForRow: (row) ->
-    index = if row is 0 then 0 else (row - 1)
-    @items[index] ? {}
 
   setGutterMarkerToRow: (row) ->
     @gutterMarker?.destroy()
@@ -164,8 +163,13 @@ class UI
       row = i + skip + 1
       break
 
-    @setGutterMarkerToRow(row)
-    @selectedItem = @getItemForRow(row)
+    @selectItemForRow(row)
+
+  selectItemForRow: (row) ->
+    item = @items[row - 1]
+    if item? and @isValidItem(item)
+      @setGutterMarkerToRow(row)
+      @selectedItem = item
 
   getSelectedItem: ->
     @selectedItem ? {}
@@ -174,3 +178,4 @@ class UI
     text = (@provider.viewForItem(item) for item in @items).join("\n")
     @appendText(text)
     @selectFirstValidItem(1)
+    # @selectFirstValidItem(1)

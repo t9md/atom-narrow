@@ -1,9 +1,9 @@
 {Point, BufferedProcess} = require 'atom'
 path = require 'path'
+_ = require 'underscore-plus'
 
 Base = require './base'
 {decorateRange} = require '../utils'
-_ = require 'underscore-plus'
 
 module.exports =
 class Search extends Base
@@ -21,7 +21,7 @@ class Search extends Base
     if m?
       point = [parseInt(m[2]) - 1, parseInt(m[3])]
       {
-        filePath: m[1]
+        relativePath: m[1]
         point: point
         text: m[4]
       }
@@ -29,22 +29,28 @@ class Search extends Base
       null
 
   outputterForProject: (project, items) ->
-    header = path.basename(project)
+    projectName = path.basename(project)
+    header = '# ' + projectName
     ({data}) =>
       if header?
-        items.push({header})
+        items.push({header, projectName, projectHeader: true})
         header = null
 
       lines = data.split("\n")
 
       currentFilePath = null
       for line in lines when item = @parseLine(line)
-        if currentFile isnt item.filePath
-          currentFile = item.filePath
-          items.push(header: "  " + currentFile)
+        {relativePath} = item
+        fullPath = path.join(project, relativePath)
 
-        # update filePath to fullPath
-        item.filePath = path.join(project, item.filePath)
+        if currentFile isnt relativePath
+          currentFile = relativePath
+          header = "  # " + currentFile
+          headerItem = {header, projectName, filePath: fullPath}
+          items.push(headerItem)
+
+        item.filePath = fullPath
+        item.projectName = projectName
         items.push(item)
 
   getItems: ->
@@ -98,6 +104,34 @@ class Search extends Base
       openOptions = {pending: true}
       atom.workspace.open(filePath, openOptions).then (editor) ->
         editor.setCursorBufferPosition(point)
+
+  filterItems: (items, words) ->
+    filterKey = @getFilterKey()
+    filter = (items, pattern) ->
+      _.filter items, (item) ->
+        if filterKey of item
+          item[filterKey].match(///#{pattern}///i)
+        else
+          # When item has no filterKey, it is special, always displayed.
+          true
+
+    for pattern in words.map(_.escapeRegExp)
+      items = filter(items, pattern)
+
+    nonHeaderItems = _.filter items, (item) -> not item.header?
+    filePaths = _.uniq(_.pluck(nonHeaderItems, "filePath"))
+    projectNames = _.uniq(_.pluck(nonHeaderItems, "projectName"))
+
+    items = _.filter items, (item) ->
+      if item.header?
+        if item.projectHeader
+          item.projectName in projectNames
+        else
+          item.filePath in filePaths
+      else
+        true
+
+    items
 
   viewForItem: (item) ->
     unless item.text?
