@@ -42,6 +42,7 @@ class UI
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
+      'narrow-ui:open-without-close': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
 
@@ -156,7 +157,7 @@ class UI
   confirm: (options={}) ->
     return unless @isValidItem(item = @getSelectedItem())
     @provider.confirmed(item, options)
-    unless options.preview ? false
+    unless options.preview or options.keepOpen
       @editor.destroy()
 
   clearText: ->

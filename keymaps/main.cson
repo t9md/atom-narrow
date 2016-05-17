@@ -6,8 +6,8 @@
 
 'atom-text-editor.narrow.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'
+  'o': 'narrow-ui:open-without-close'
   'q': 'core:close'
-  'o': 'core:confirm'
   'u': 'narrow-ui:preview-item'
   'r': 'narrow-ui:toggle-auto-preview'
 
