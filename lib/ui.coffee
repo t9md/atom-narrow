@@ -105,19 +105,40 @@ class UI
       return unless (newRange.start.row is 0)
       @refresh()
 
+
+  locked: false
+  isLocked: -> @locked
+  withLock: (fn) ->
+    @locked = true
+    fn()
+    @locked = false
+
   observeCursorPositionChange: ->
-    @editor.onDidChangeCursorPosition ({oldBufferPosition, newBufferPosition, textChanged}) =>
-      return if textChanged
-      @selectItemForRow(newBufferPosition.row)
-      if @isAutoPreview() and (oldBufferPosition.row isnt newBufferPosition.row)
-        @preview()
+    @editor.onDidChangeCursorPosition (event) =>
+      {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
+      return if @isLocked() or textChanged
+      return if (oldBufferPosition.row is newBufferPosition.row)
+
+      if (newBufferPosition.row - oldBufferPosition.row) > 0
+        direction = 'next'
+      else
+        direction = 'previous'
+
+      {row, column} = newBufferPosition
+      if (row = @selectFirstValidItem(row, direction))?
+        @withLock -> cursor.setBufferPosition([row, column])
+      else if direction is 'previous'
+        cursor.setBufferPosition([row, column])
+
+      @preview() if @isAutoPreview()
 
   preview: ->
     @confirm(preview: true)
 
   isValidItem: (item) ->
-    filterKey = @provider.getFilterKey()
-    return (filterKey of item)
+    not item.skip
+    # filterKey = @provider.getFilterKey()
+    # return (filterKey of item)
 
   setGutterMarkerToRow: (row) ->
     @gutterMarker?.destroy()
@@ -157,16 +178,19 @@ class UI
     @observeInputChange()
     @observeCursorPositionChange()
 
-  selectFirstValidItem: (startRow) ->
-    skip = Math.max(startRow - 1, 0)
-    for item, i in @items.slice(skip) when @isValidItem(item)
-      row = i + skip + 1
-      break
+  selectFirstValidItem: (startRow, direction) ->
+    maxRow = @items.length - 1
+    rows = if direction is 'next'
+      [startRow..maxRow]
+    else
+      [startRow..0]
 
-    @selectItemForRow(row)
+    for row in rows when @isValidItem(@items[row])
+      @selectItemForRow(row)
+      return row
 
   selectItemForRow: (row) ->
-    item = @items[row - 1]
+    item = @items[row]
     if item? and @isValidItem(item)
       @setGutterMarkerToRow(row)
       @selectedItem = item
@@ -174,8 +198,8 @@ class UI
   getSelectedItem: ->
     @selectedItem ? {}
 
-  setItems: (@items) ->
-    text = (@provider.viewForItem(item) for item in @items).join("\n")
+  setItems: (items) ->
+    @items = [{_prompt: true, skip: true}, items...]
+    text = (@provider.viewForItem(item) for item in items).join("\n")
     @appendText(text)
-    @selectFirstValidItem(1)
-    # @selectFirstValidItem(1)
+    @selectFirstValidItem(1, 'next')

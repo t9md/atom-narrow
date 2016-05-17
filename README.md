@@ -73,6 +73,10 @@ Currently following keymap are defined(might be removed in future).
 So you can search `/` then type `abc` then `ctrl-o`, open `narrow:lines` with initial narrowing keyword `abc`.  
 `ctrl-cmd-o` is `narrow:search` version of this.  
 
+### vmpStartInInsertModeForUI settings.
+
+default: `true`.
+
 # Other config
 
 If you want to start `insert-mode` for narrow-ui, refer following configuration.
@@ -89,9 +93,6 @@ config.cson
     ]
   "vim-mode-plus":
     highlightSearchExcludeScopes: [
-      "narrow"
-    ]
-    startInInsertModeScopes: [
       "narrow"
     ]
 ```

@@ -33,7 +33,7 @@ class Search extends Base
     header = '# ' + projectName
     ({data}) =>
       if header?
-        items.push({header, projectName, projectHeader: true})
+        items.push({header, projectName, projectHeader: true, skip: true})
         header = null
 
       lines = data.split("\n")
@@ -46,7 +46,7 @@ class Search extends Base
         if currentFile isnt relativePath
           currentFile = relativePath
           header = "  # " + currentFile
-          headerItem = {header, projectName, filePath: fullPath}
+          headerItem = {header, projectName, filePath: fullPath, skip: true}
           items.push(headerItem)
 
         item.filePath = fullPath

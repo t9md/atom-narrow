@@ -20,3 +20,7 @@ module.exports = new Settings 'narrow',
     default: 'right'
     enum: ['right', 'down', 'here']
     description: "Where to open"
+  vmpStartInInsertModeForUI:
+    order: 1
+    type: 'boolean'
+    default: true
