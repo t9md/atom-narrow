@@ -63,13 +63,23 @@ module.exports =
     search: @search.bind(this)
     lines: @lines.bind(this)
 
-  consumeVim: ({getEditorState, onDidAddVimState}) ->
-    startInInsertModeForUI = (vimState) ->
-      if not vimState.isMode('insert') and vimState.editorElement.classList.contains('narrow')
+  consumeVim: ({getEditorState, observeVimStates}) ->
+    isNarrowEditor = (vimState) ->
+      vimState.editorElement.classList.contains('narrow')
+
+    subscribe = @subscribe.bind(this)
+
+    @subscribe observeVimStates (vimState) ->
+      return unless isNarrowEditor(vimState)
+
+      if settings.get('vmpStartInInsertModeForUI') and not vimState.isMode('insert')
         vimState.activate('insert')
 
-    @subscribe onDidAddVimState (vimState) ->
-      startInInsertModeForUI(vimState) if settings.get('vmpStartInInsertModeForUI')
+      do (vimState) ->
+        editor = vimState.editor
+        subscribe vimState.modeManager.onDidActivateMode ({mode, submode}) ->
+          if mode is 'insert' and editor.getCursorBufferPosition().row isnt 0
+            editor.setCursorBufferPosition([0, Infinity])
 
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()
