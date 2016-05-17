@@ -3,6 +3,13 @@
 narrow something.  
 similar to unite.vim, emacs-helm  
 
+# Features
+
+- Support fuzzy narrowing for Lines, Fold via fuzzaldrin.
+- Search across project via `ag`.
+- autoPreview items under cursor.
+- [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration.
+
 # Development status
 
 alpha
