@@ -30,11 +30,10 @@ class Search extends Base
 
   outputterForProject: (project, items) ->
     projectName = path.basename(project)
-    console.log "CALLED for #{projectName}"
     projectHeaderAdded = false
     currentFile = null
     ({data}) =>
-      unless projectHeaderAdded?
+      unless projectHeaderAdded
         items.push({header: '# ' + projectName, projectName, projectHeader: true, skip: true})
         projectHeaderAdded = true
 
@@ -55,8 +54,8 @@ class Search extends Base
 
   getItems: ->
     return @items if @items?
+    projects = @options.projects
     @items = []
-    projects = atom.project.getPaths()
 
     finished = 0
     new Promise (resolve) =>

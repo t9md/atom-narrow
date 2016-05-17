@@ -5,7 +5,9 @@
 class Input extends HTMLElement
   createdCallback: ->
     @innerHTML = """
-      <atom-text-editor mini class="narrow-search-input"></atom-text-editor>
+    <div class='narrow-search-container'>
+      <atom-text-editor mini id="narrow-search-input"></atom-text-editor>
+    </div>
     """
     @panel = atom.workspace.addBottomPanel(item: this, visible: false)
     this
@@ -24,7 +26,7 @@ class Input extends HTMLElement
 
   readInput: ->
     unless @editorElement
-      @editorElement = @firstChild
+      @editorElement = document.getElementById("narrow-search-input")
       @editor = @editorElement.getModel()
 
     @finished = false

@@ -17,4 +17,5 @@
 # For vim-mode-plus integration
 'atom-text-editor.vim-mode-plus-search':
   'ctrl-o': 'vim-mode-plus-user:narrow-lines-from-search'
-  'ctrl-cmd-o': 'vim-mode-plus-user:narrow-search-from-search'
+  'ctrl-cmd-o': 'vim-mode-plus-user:narrow-search'
+  'cmd-shift-o': 'vim-mode-plus-user:narrow-search-current-project'

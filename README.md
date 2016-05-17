@@ -38,6 +38,7 @@ Start narrowing by invoking one of following command.
 - `narrow:lines`: Lines of current buffer.
 - `narrow:fold`: Fold start rows.
 - `narrow:search`: [ag](https://github.com/ggreer/the_silver_searcher) search. need install by your self.
+- `narrow:search-current-project`: `narrow:search` in the project active editor belongs.
 - `narrow:focus`: Focus narrow editor. use this directly focus from other pane item.
 
 ### narrow-ui
@@ -57,7 +58,8 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
   'space n l': 'narrow:lines'
   'space n f': 'narrow:fold'
   'space o': 'narrow:fold'
-  'space n s': 'narrow:search'
+  'space n s c': 'narrow:search-current-project'
+  'space n s s': 'narrow:search'
   'f9': 'narrow:focus'
 ```
 
@@ -66,8 +68,8 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
 If you are [vim-mode-plus](https://atom.io/packages/vim-mode-plus) user, following commands are provided.  
 Both are directly invoke `lines` ore `search` form `vim-mode-plus:search` UI.
 
-- `vim-mode-plus-user:narrow-lines-from-search`
-- `vim-mode-plus-user:narrow-search-from-search`
+- `vim-mode-plus-user:narrow-search-current-project`
+- `vim-mode-plus-user:narrow-search-projects`
 
 Currently following keymap are defined(might be removed in future).
 
