@@ -1,3 +1,7 @@
+# 0.5.0:
+- Fix: Several bugs.
+- New: `narrow:search-current-project` and default `cmd-shift-o` for vim-mode-plus user.
+
 # 0.4.0:
 - Fix: Search duplicates file headers.
 - Improve: Skip header item when cursor move up and down.
