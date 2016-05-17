@@ -1,3 +1,8 @@
+# 0.4.0:
+- Improve: Skip header item when cursor move up and down.
+- Improve: Better integration with vim-mode-plus `vmpStartInInsertModeForUI` control intial vim's mode.
+- New: Support fuzzy search for Lines and Fold.
+
 # 0.3.1:
 - Improve: cursor position centering
 
