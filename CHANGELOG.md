@@ -1,3 +1,6 @@
+# 0.5.1:
+- Fix: No longer throw error when original Pane is destroyed before narrow-ui is closed. #1.
+
 # 0.5.0:
 - Fix: Several bugs.
 - New: `narrow:search-current-project` and default `cmd-shift-o` for vim-mode-plus user.
