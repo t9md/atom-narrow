@@ -35,7 +35,7 @@ class UI
     @editor.isModified = -> false
 
   destroy: ->
-    @originalPane.activate()
+    @originalPane.activate() if @originalPane.isAlive()
     @provider?.destroy?()
     @gutterMarker?.destroy()
 
