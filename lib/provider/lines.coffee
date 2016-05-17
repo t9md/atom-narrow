@@ -1,5 +1,6 @@
 Base = require './base'
 {padStringLeft} = require '../utils'
+settings = require '../settings'
 
 module.exports =
 class Lines extends Base
@@ -9,6 +10,12 @@ class Lines extends Base
     @editor.onDidStopChanging =>
       @items = null # invalidate cache.
       @ui.refresh()
+
+  useFuzzyFilter: ->
+    settings.get('LinesUseFuzzyFilter')
+
+  keepItemsOrderOnFuzzyFilter: ->
+    settings.get('LinesKeepItemsOrderOnFuzzyFilter')
 
   getItems: ->
     return @items if @items?

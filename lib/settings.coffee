@@ -24,3 +24,19 @@ module.exports = new Settings 'narrow',
     order: 1
     type: 'boolean'
     default: true
+  LinesUseFuzzyFilter:
+    order: 2
+    type: 'boolean'
+    default: false
+  LinesKeepItemsOrderOnFuzzyFilter:
+    order: 3
+    type: 'boolean'
+    default: false
+  FoldUseFuzzyFilter:
+    order: 4
+    type: 'boolean'
+    default: false
+  FoldKeepItemsOrderOnFuzzyFilter:
+    order: 5
+    type: 'boolean'
+    default: false

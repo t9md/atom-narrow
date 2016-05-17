@@ -1,5 +1,6 @@
 _ = require 'underscore-plus'
 Base = require './base'
+settings = require '../settings'
 
 getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
   rows = [0..editor.getLastBufferRow()]
@@ -20,6 +21,12 @@ class Fold extends Base
     @editor.onDidStopChanging =>
       @items = null # invalidate cache
       @ui.refresh()
+
+  useFuzzyFilter: ->
+    settings.get('FoldUseFuzzyFilter')
+
+  keepItemsOrderOnFuzzyFilter: ->
+    settings.get('FoldKeepItemsOrderOnFuzzyFilter')
 
   getItems: ->
     return @items if @items?
