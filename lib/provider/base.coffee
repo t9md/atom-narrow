@@ -10,6 +10,7 @@ class Base
 
   constructor: (@ui, @options={}) ->
     @editor = atom.workspace.getActiveTextEditor()
+    @editorElement = atom.views.getView(@editor)
     @pane = atom.workspace.getActivePane()
     @initialize?()
     @ui.start(this)
@@ -29,6 +30,7 @@ class Base
 
   destroy: ->
     @marker?.destroy()
+    {@editor, @editorElement, @marker} = {}
 
   confirmed: ({point}, options={}) ->
     @marker?.destroy()
@@ -44,3 +46,4 @@ class Base
       @pane.activateItem(@editor)
 
     @editor.scrollToBufferPosition(point, center: true)
+    @editorElement.component.updateSync()

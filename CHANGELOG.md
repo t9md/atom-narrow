@@ -1,3 +1,6 @@
+# 0.5.2:
+- Fix: correctly set selected position on center of screen on `core:confirm`.
+
 # 0.5.1:
 - Fix: No longer throw error when original Pane is destroyed before narrow-ui is closed. #1.
 
