@@ -30,23 +30,23 @@ class Search extends Base
 
   outputterForProject: (project, items) ->
     projectName = path.basename(project)
-    header = '# ' + projectName
+    console.log "CALLED for #{projectName}"
+    projectHeaderAdded = false
+    currentFile = null
     ({data}) =>
-      if header?
-        items.push({header, projectName, projectHeader: true, skip: true})
-        header = null
+      unless projectHeaderAdded?
+        items.push({header: '# ' + projectName, projectName, projectHeader: true, skip: true})
+        projectHeaderAdded = true
 
       lines = data.split("\n")
 
-      currentFilePath = null
       for line in lines when item = @parseLine(line)
         {relativePath} = item
         fullPath = path.join(project, relativePath)
 
         if currentFile isnt relativePath
           currentFile = relativePath
-          header = "  # " + currentFile
-          headerItem = {header, projectName, filePath: fullPath, skip: true}
+          headerItem = {header: "  # " + currentFile, projectName, filePath: fullPath, skip: true}
           items.push(headerItem)
 
         item.filePath = fullPath
@@ -62,16 +62,12 @@ class Search extends Base
     new Promise (resolve) =>
       onFinish = (code) =>
         finished++
-        if finished is projects.length
-          resolve(@items)
-          console.log "#{finished} finished"
-        else
-          console.log "#{finished} yet finished"
+        resolve(@items) if finished is projects.length
 
       pattern = _.escapeRegExp(@options.word)
-      for project, i in projects
+      for project in projects
         onData = @outputterForProject(project, @items)
-        @searchersRunning.push(@search(pattern, {cwd: project, onData, onFinish}))
+        @search(pattern, {cwd: project, onData, onFinish})
 
   runCommand: ({command, args, options, onData, onFinish}) ->
     stdout = (output) -> onData({data: output})
@@ -110,32 +106,27 @@ class Search extends Base
     filterKey = @getFilterKey()
     filter = (items, pattern) ->
       _.filter items, (item) ->
-        if filterKey of item
-          item[filterKey].match(///#{pattern}///i)
-        else
-          # When item has no filterKey, it is special, always displayed.
-          true
+        item.skip or item[filterKey].match(///#{pattern}///i)
 
     for pattern in words.map(_.escapeRegExp)
       items = filter(items, pattern)
 
-    nonHeaderItems = _.filter items, (item) -> not item.header?
-    filePaths = _.uniq(_.pluck(nonHeaderItems, "filePath"))
-    projectNames = _.uniq(_.pluck(nonHeaderItems, "projectName"))
+    normalItems = _.filter(items, (item) -> not item.header?)
+    allFilePaths = _.uniq(_.pluck(normalItems, "filePath"))
+    allProjectNames = _.uniq(_.pluck(normalItems, "projectName"))
 
     items = _.filter items, (item) ->
       if item.header?
         if item.projectHeader
-          item.projectName in projectNames
+          item.projectName in allProjectNames
         else
-          item.filePath in filePaths
+          item.filePath in allFilePaths
       else
         true
-
     items
 
   viewForItem: (item) ->
-    unless item.text?
+    if item.header?
       item.header
     else
       {text, point} = item
