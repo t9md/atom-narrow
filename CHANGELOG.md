@@ -1,6 +1,7 @@
 # 0.5.0:
 - Fix: Several bugs.
 - New: `narrow:search-current-project` and default `cmd-shift-o` for vim-mode-plus user.
+- New: Better vim-mode-plus integration when enter `insert-mode` in narrow-ui, it move cursor to row 0.
 
 # 0.4.0:
 - Fix: Search duplicates file headers.
