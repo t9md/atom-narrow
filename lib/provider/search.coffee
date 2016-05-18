@@ -94,7 +94,6 @@ class Search extends Base
       atom.workspace.open(filePath, openOptions).then (editor) =>
         editor.scrollToBufferPosition(point, center: true)
         @marker = @highlightRow(editor, point.row)
-        @ui.pane.activate()
     else
       openOptions = {pending: true}
       atom.workspace.open(filePath, openOptions).then (editor) ->

@@ -141,6 +141,7 @@ class UI
 
   preview: ->
     @confirm(preview: true)
+    @focus()
 
   isValidItem: (item) ->
     item? and not item.skip
@@ -154,7 +155,6 @@ class UI
 
   confirm: (options={}) ->
     item = @getSelectedItem()
-    return unless @isValidItem(item)
     @provider.confirmed(item, options)
     unless options.preview or options.keepOpen
       @editor.destroy()
