@@ -69,8 +69,7 @@ class Search extends Base
         @search(pattern, {cwd: project, onData, onFinish})
 
   runCommand: ({command, args, options, onData, onFinish}) ->
-    stdout = (output) -> onData({data: output})
-    stderr = (output) -> onData({data: output})
+    stdout = stderr = (output) -> onData(data: output)
     exit = (code) -> onFinish(code)
 
     process = new BufferedProcess {command, args, options, stdout, stderr, exit}
