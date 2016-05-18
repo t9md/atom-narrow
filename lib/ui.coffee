@@ -72,7 +72,6 @@ class UI
     @editor.lineTextForBufferRow(0)
 
   refresh: ->
-    # @clearBlockDecorations()
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
 
@@ -125,19 +124,18 @@ class UI
   observeCursorPositionChange: ->
     @editor.onDidChangeCursorPosition (event) =>
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
-      return if @isLocked() or textChanged
-      return if (oldBufferPosition.row is newBufferPosition.row)
+      return if @isLocked() or
+        textChanged or
+        (newBufferPosition.row is 0) or
+        (oldBufferPosition.row is newBufferPosition.row)
 
-      if (newBufferPosition.row - oldBufferPosition.row) > 0
-        direction = 'next'
-      else
-        direction = 'previous'
-
+      direction = if (newBufferPosition.row - oldBufferPosition.row) > 0 then 'next' else 'previous'
       {row, column} = newBufferPosition
-      if (row = @selectFirstValidItem(row, direction))?
-        @withLock -> cursor.setBufferPosition([row, column])
-      else if direction is 'previous'
-        cursor.setBufferPosition([row, column])
+      @withLock =>
+        if (row = @selectFirstValidItem(row, direction))?
+          cursor.setBufferPosition([row, column])
+        else if direction is 'previous'
+          cursor.setBufferPosition([0, column])
 
       @preview() if @isAutoPreview()
 
@@ -152,10 +150,11 @@ class UI
     @gutterMarker = @editor.markBufferPosition([row, 0])
     item = document.createElement('span')
     item.textContent = " > "
-    @gutter.decorateMarker(@gutterMarker, {class: "narrow-row", item})
+    @gutter.decorateMarker(@gutterMarker, {class: "narrow-ui-row", item})
 
   confirm: (options={}) ->
-    return unless @isValidItem(item = @getSelectedItem())
+    item = @getSelectedItem()
+    return unless @isValidItem(item)
     @provider.confirmed(item, options)
     unless options.preview or options.keepOpen
       @editor.destroy()
@@ -185,6 +184,7 @@ class UI
     @observeInputChange()
     @observeCursorPositionChange()
 
+  # Return row
   selectFirstValidItem: (startRow, direction) ->
     maxRow = @items.length - 1
     rows = if direction is 'next'

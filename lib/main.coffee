@@ -31,6 +31,7 @@ module.exports =
   searchCurrentProject: (word) ->
     projects = null
     editor = atom.workspace.getActiveTextEditor()
+    return unless editor?
     for dir in atom.project.getDirectories() when dir.contains(editor.getPath())
       projects = [dir.getPath()]
       break
