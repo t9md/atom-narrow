@@ -1,4 +1,4 @@
-{Point} = require 'atom'
+{Point, CompositeDisposable} = require 'atom'
 {decorateRange} = require '../utils'
 
 module.exports =
@@ -9,11 +9,15 @@ class Base
     @constructor.name
 
   constructor: (@ui, @options={}) ->
+    @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
     @editorElement = atom.views.getView(@editor)
     @pane = atom.workspace.getActivePane()
     @initialize?()
     @ui.start(this)
+
+  subscribe: (args...) ->
+    @subscriptions.add(args...)
 
   getFilterKey: ->
     "text"
@@ -30,7 +34,8 @@ class Base
 
   destroy: ->
     @marker?.destroy()
-    {@editor, @editorElement, @marker} = {}
+    @subscriptions.dispose()
+    {@editor, @editorElement, @marker, @subscriptions} = {}
 
   confirmed: ({point}, options={}) ->
     @marker?.destroy()

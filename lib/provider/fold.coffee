@@ -18,7 +18,7 @@ class Fold extends Base
   autoPreview: true
 
   initialize: ->
-    @editor.onDidStopChanging =>
+    @subscribe @editor.onDidStopChanging =>
       @items = null # invalidate cache
       @ui.refresh()
 
