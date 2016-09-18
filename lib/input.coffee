@@ -36,7 +36,7 @@ class Input extends HTMLElement
 
     # Cancel on tab switch
     disposable = atom.workspace.onDidChangeActivePaneItem =>
-      disposable.dispose()
+      disposable?.dispose()
       @cancel() unless @finished
 
     new Promise (resolve) =>
