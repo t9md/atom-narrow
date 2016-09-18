@@ -1,3 +1,6 @@
+# 0.5.3:
+- Fix: When `narrow:line`, window closed by `q` it throw error.
+
 # 0.5.2:
 - Fix: correctly set selected position on center of screen on `core:confirm`.
 
