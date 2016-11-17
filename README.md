@@ -30,15 +30,17 @@ alpha
 
 # Commands
 
-### global
+### global Commands
 
-Start narrowing by invoking one of following command.
-
-- `narrow:lines`: Lines of current buffer.
-- `narrow:fold`: Fold start rows.
+- `narrow:lines`
+- `narrow:lines-by-current-word`
+- `narrow:fold`
+- `narrow:fold-by-current-word`
 - `narrow:search`: [ag](https://github.com/ggreer/the_silver_searcher) search. need install by your self.
-- `narrow:search-current-project`: `narrow:search` in the project active editor belongs.
-- `narrow:focus`: Focus narrow editor. use this directly focus from other pane item.
+- `narrow:search-by-current-word`
+- `narrow:search-current-project`
+- `narrow:search-current-project-by-current-word`
+- `narrow:focus`
 
 ### narrow-ui
 
@@ -54,11 +56,10 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
 - Mine(vim-mode-plus user) for global command.
 ```coffeescript
 'atom-text-editor.vim-mode-plus.normal-mode':
-  'space n l': 'narrow:lines'
+  'space n l': 'narrow:lines-by-current-word'
   'space n f': 'narrow:fold'
-  'space o': 'narrow:fold'
-  'space n s c': 'narrow:search-current-project'
-  'space n s s': 'narrow:search'
+  'space n s': 'narrow:search-current-project-by-current-word'
+  'space n S': 'narrow:search'
   'f9': 'narrow:focus'
 ```
 

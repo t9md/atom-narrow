@@ -15,19 +15,48 @@ module.exports =
     settings.removeDeprecated()
     @input = new Input
 
+    currentWord = @getCurrentWord.bind(this)
     @subscribe atom.commands.add 'atom-workspace',
       'narrow:lines': => @lines()
-      'narrow:fold': => new Fold(@getUI())
+      'narrow:lines-by-current-word': => @lines(currentWord())
+
+      'narrow:fold': => @fold()
+      'narrow:fold-by-current-word': => @fold(currentWord())
+
       'narrow:search': => @search()
+      'narrow:search-by-current-word': => @search(currentWord())
+
       'narrow:search-current-project': => @searchCurrentProject()
+      'narrow:search-current-project-by-current-word': => @searchCurrentProject(currentWord())
+
       'narrow:focus': => @ui.focus()
 
   subscribe: (arg) ->
     @subscriptions.add arg
 
-  lines: (word=null) ->
-    ui = @getUI(initialInput: word)
+  # Return currently selected text or word under cursor.
+  getCurrentWord: ->
+    editor = atom.workspace.getActiveTextEditor()
+    selection = editor.getLastSelection()
+    {cursor} = selection
+
+    if selection.isEmpty()
+      text = null
+      point = cursor.getBufferPosition()
+      selection.selectWord()
+      text = selection.getText()
+      cursor.setBufferPosition(point)
+      text
+    else
+      selection.getText()
+
+  lines: (initialInput) ->
+    ui = @getUI({initialInput})
     new Lines(ui)
+
+  fold: (initialInput) ->
+    ui = @getUI({initialInput})
+    new Fold(ui)
 
   searchCurrentProject: (word) ->
     projects = null
