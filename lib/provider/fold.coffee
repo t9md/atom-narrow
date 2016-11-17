@@ -20,12 +20,6 @@ class Fold extends Base
       @items = null # invalidate cache
       @ui.refresh()
 
-  useFuzzyFilter: ->
-    settings.get('FoldUseFuzzyFilter')
-
-  keepItemsOrderOnFuzzyFilter: ->
-    settings.get('FoldKeepItemsOrderOnFuzzyFilter')
-
   getItems: ->
     return @items if @items?
 

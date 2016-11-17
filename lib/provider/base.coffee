@@ -23,12 +23,6 @@ class Base
   getFilterKey: ->
     "text"
 
-  useFuzzyFilter: ->
-    false
-
-  keepItemsOrderOnFuzzyFilter: ->
-    true
-
   highlightRow: (editor, row) ->
     range = [[row, 0], [row, 0]]
     decorateRange(editor, range, {type: 'line', class: 'narrow-result'})

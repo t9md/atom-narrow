@@ -1,5 +1,4 @@
 _ = require 'underscore-plus'
-fuzzaldrin = require 'fuzzaldrin'
 {
   getAdjacentPaneForPane
   getVisibleBufferRange
@@ -83,14 +82,7 @@ class UI
       items = if @provider.filterItems?
         @provider.filterItems(items, words)
       else
-        if @provider.useFuzzyFilter()
-          filteredItems = fuzzaldrin.filter(items.slice(), query, key: @provider.getFilterKey())
-          if @provider.keepItemsOrderOnFuzzyFilter()
-            items = items.filter((item) -> item in filteredItems)
-          else
-            filteredItems
-        else
-          @filterItems(items, words)
+        @filterItems(items, words)
       @setItems(items)
 
   filterItems: (items, words) ->

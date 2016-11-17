@@ -9,12 +9,6 @@ class Lines extends Base
       @items = null # invalidate cache.
       @ui.refresh()
 
-  useFuzzyFilter: ->
-    settings.get('LinesUseFuzzyFilter')
-
-  keepItemsOrderOnFuzzyFilter: ->
-    settings.get('LinesKeepItemsOrderOnFuzzyFilter')
-
   getItems: ->
     return @items if @items?
     @items = []

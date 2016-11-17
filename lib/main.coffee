@@ -12,6 +12,7 @@ module.exports =
 
   activate: ->
     @subscriptions = new CompositeDisposable
+    settings.removeDeprecated()
     @input = new Input
 
     @subscribe atom.commands.add 'atom-workspace',
