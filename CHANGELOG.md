@@ -1,3 +1,7 @@
+# 0.6.0:
+- New: Config option to control default `autoPreview` of each provider. And the default is `true` for all provider #18.
+- Breaking: Remove fuzzy search feature. Since it was confusing.
+
 # 0.5.3:
 - Fix: When `narrow:line`, window closed by `q` it throw error.
 
