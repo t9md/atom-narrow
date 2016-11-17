@@ -1,3 +1,9 @@
+# 0.7.1:
+- Fix: prep for `::shadow` boundary removal
+- Fix: When `directionToOpen` was `here` autoPreview throw error, to fix this when `here`, disable autoPreview #12.
+- New: `by-current-word` suffixed version of commands for each provider #15, #6.
+- Improve: Change style for narrow's line-highlight to underline to avoid covering existing highlight #14.
+
 # 0.7.0:
 - New: Config option to control default `autoPreview` of each provider. And the default is `true` for all provider #18.
 - Breaking: Remove fuzzy search feature. Since it was confusing.
