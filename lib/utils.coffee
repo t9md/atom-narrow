@@ -4,7 +4,6 @@ _ = require 'underscore-plus'
 getAdjacentPaneForPane = (pane) ->
   return unless children = pane.getParent().getChildren?()
   index = children.indexOf(pane)
-  options = {split: 'left', activatePane: false}
 
   _.chain([children[index-1], children[index+1]])
     .filter (pane) ->
@@ -12,19 +11,14 @@ getAdjacentPaneForPane = (pane) ->
     .last()
     .value()
 
-openItemInAdjacentPane = (item, direction) ->
-  activePane = atom.workspace.getActivePane()
-  if direction is 'here'
-    activePane.activateItem(item)
-    return
-
-  if pane = getAdjacentPaneForPane(activePane)
+openItemInAdjacentPaneForPane = (basePane, item, direction) ->
+  if pane = getAdjacentPaneForPane(basePane)
     pane.activateItem(item)
     pane.activate()
   else
     pane = switch direction
-      when 'right' then activePane.splitRight(items: [item])
-      when 'down' then activePane.splitDown(items: [item])
+      when 'right' then basePane.splitRight(items: [item])
+      when 'down' then basePane.splitDown(items: [item])
   pane
 
 # options is object with following keys
@@ -80,7 +74,7 @@ module.exports = {
   getView
   getAdjacentPaneForPane
   getVisibleBufferRange
-  openItemInAdjacentPane
+  openItemInAdjacentPaneForPane
   decorateRange
   smartScrollToBufferPosition
   padStringLeft

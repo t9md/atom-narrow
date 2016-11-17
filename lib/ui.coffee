@@ -2,7 +2,7 @@ _ = require 'underscore-plus'
 {
   getAdjacentPaneForPane
   getVisibleBufferRange
-  openItemInAdjacentPane
+  openItemInAdjacentPaneForPane
 } = require './utils'
 settings = require './settings'
 path = require 'path'
@@ -59,10 +59,16 @@ class UI
     @grammar = new NarrowGrammar(@editor, {@initialKeyword, includeHeaderRules})
     @grammar.activate()
 
-    defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
-    @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
+    activePane = atom.workspace.getActivePane()
     direction = settings.get('directionToOpen')
-    @pane = openItemInAdjacentPane(@editor, direction)
+    if direction is 'here'
+      @pane = activePane.activateItem(@editor)
+      @autoPreview = false
+    else
+      @pane = openItemInAdjacentPaneForPane(activePane, @editor, direction)
+      defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
+      @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
+
     @getItems().then (items) =>
       @setItems(items)
       if @initialInput
