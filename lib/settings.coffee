@@ -36,7 +36,7 @@ module.exports = new Settings 'narrow',
     enum: ['right', 'down', 'here']
     description: "Where to open"
   vmpStartInInsertModeForUI: true
-  LinesUseFuzzyFilter: true
-  LinesKeepItemsOrderOnFuzzyFilter: false
+  LinesUseFuzzyFilter: false
+  LinesKeepItemsOrderOnFuzzyFilter: true
   FoldUseFuzzyFilter: false
   FoldKeepItemsOrderOnFuzzyFilter: false
