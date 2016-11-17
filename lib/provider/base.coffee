@@ -3,7 +3,8 @@
 
 module.exports =
 class Base
-  autoPreview: false
+  getName: ->
+    @constructor.name
 
   getTitle: ->
     @constructor.name

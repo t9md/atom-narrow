@@ -11,11 +11,13 @@ class Settings
     for name, i in Object.keys(@config)
       @config[name].order = i
 
+    # Automatically infer and inject `type` of each config parameter.
+    # skip if value which aleady have `type` field.
+    # Also translate bare `boolean` value to {default: `boolean`} object
     for key in Object.keys(@config)
       if typeof(@config[key]) is 'boolean'
         @config[key] = {default: @config[key]}
-      value = @config[key]
-      unless value.type?
+      unless (value = @config[key]).type?
         value.type = inferType(value.default)
 
   get: (param) ->
@@ -38,5 +40,8 @@ module.exports = new Settings 'narrow',
   vmpStartInInsertModeForUI: true
   LinesUseFuzzyFilter: false
   LinesKeepItemsOrderOnFuzzyFilter: true
+  LinesDefaultAutoPreview: true
   FoldUseFuzzyFilter: false
   FoldKeepItemsOrderOnFuzzyFilter: false
+  FoldDefaultAutoPreview: true
+  SearchDefaultAutoPreview: true

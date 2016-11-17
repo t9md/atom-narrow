@@ -60,7 +60,8 @@ class UI
     @grammar = new NarrowGrammar(@editor, {@initialKeyword, includeHeaderRules})
     @grammar.activate()
 
-    @autoPreview = @provider.autoPreview
+    defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
+    @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
     direction = settings.get('directionToOpen')
     @pane = openItemInAdjacentPane(@editor, direction)
     @getItems().then (items) =>

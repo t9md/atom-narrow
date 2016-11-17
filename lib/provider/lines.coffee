@@ -4,8 +4,6 @@ settings = require '../settings'
 
 module.exports =
 class Lines extends Base
-  autoPreview: true
-
   initialize: ->
     @subscribe @editor.onDidStopChanging =>
       @items = null # invalidate cache.
