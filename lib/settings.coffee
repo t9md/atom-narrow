@@ -1,5 +1,22 @@
+inferType = (value) ->
+  switch
+    when Number.isInteger(value) then 'integer'
+    when typeof(value) is 'boolean' then 'boolean'
+    when typeof(value) is 'string' then 'string'
+    when Array.isArray(value) then 'array'
+
 class Settings
   constructor: (@scope, @config) ->
+    # Inject order props to display orderd in setting-view
+    for name, i in Object.keys(@config)
+      @config[name].order = i
+
+    for key in Object.keys(@config)
+      if typeof(@config[key]) is 'boolean'
+        @config[key] = {default: @config[key]}
+      value = @config[key]
+      unless value.type?
+        value.type = inferType(value.default)
 
   get: (param) ->
     atom.config.get "#{@scope}.#{param}"
@@ -15,28 +32,11 @@ class Settings
 
 module.exports = new Settings 'narrow',
   directionToOpen:
-    order: 0
-    type: 'string'
     default: 'right'
     enum: ['right', 'down', 'here']
     description: "Where to open"
-  vmpStartInInsertModeForUI:
-    order: 1
-    type: 'boolean'
-    default: true
-  LinesUseFuzzyFilter:
-    order: 2
-    type: 'boolean'
-    default: false
-  LinesKeepItemsOrderOnFuzzyFilter:
-    order: 3
-    type: 'boolean'
-    default: false
-  FoldUseFuzzyFilter:
-    order: 4
-    type: 'boolean'
-    default: false
-  FoldKeepItemsOrderOnFuzzyFilter:
-    order: 5
-    type: 'boolean'
-    default: false
+  vmpStartInInsertModeForUI: true
+  LinesUseFuzzyFilter: true
+  LinesKeepItemsOrderOnFuzzyFilter: false
+  FoldUseFuzzyFilter: false
+  FoldKeepItemsOrderOnFuzzyFilter: false
