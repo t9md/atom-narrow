@@ -27,7 +27,9 @@ atom-text-editor::shadow .narrow-ui-row {
   color: @green-color;
 }
 
-atom-text-editor::shadow {
+atom-text-editor,
+atom-text-editor::shadow,
+{
   .narrow-match .region {
     .round-box;
     background-color: transparent;
@@ -44,7 +46,9 @@ atom-text-editor::shadow {
 
   .line {
     &.narrow-result {
-      background-color: @syntax-result-marker-color;
+      border-bottom-width: 1px;
+      border-color: @syntax-result-marker-color-selected;
+      border-bottom-style: ridge;
     }
   }
 }
