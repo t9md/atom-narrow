@@ -1,4 +1,5 @@
 {Disposable, CompositeDisposable} = require 'atom'
+{registerElement} = require './utils'
 
 # InputBase, InputElementBase
 # -------------------------
@@ -54,6 +55,5 @@ class Input extends HTMLElement
     @editor.setText ''
     @panel?.hide()
 
-module.exports = document.registerElement 'narrow-search-input',
-  extends: 'div'
+module.exports = registerElement 'narrow-search-input',
   prototype: Input.prototype

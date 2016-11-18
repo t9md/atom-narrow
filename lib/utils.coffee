@@ -70,6 +70,17 @@ padStringLeft = (string, targetLength) ->
   padding = " ".repeat(targetLength - string.length)
   padding + string
 
+# Reloadable registerElement
+registerElement = (name, options) ->
+  element = document.createElement(name)
+  # if constructor is HTMLElement, we haven't registerd yet
+  if element.constructor is HTMLElement
+    Element = document.registerElement(name, options)
+  else
+    Element = element.constructor
+    Element.prototype = options.prototype if options.prototype?
+  Element
+
 module.exports = {
   getView
   getAdjacentPaneForPane
@@ -78,4 +89,5 @@ module.exports = {
   decorateRange
   smartScrollToBufferPosition
   padStringLeft
+  registerElement
 }
