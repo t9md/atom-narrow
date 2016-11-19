@@ -56,10 +56,11 @@ class UI
     Promise.resolve(@provider.getItems())
 
   start: (@provider) ->
-    if @provider.constructor.name is 'Search'
+    if @provider.getName() is 'Search'
       includeHeaderRules = true
     @grammar = new NarrowGrammar(@narrowEditor, {@initialKeyword, includeHeaderRules})
     @grammar.activate()
+    @narrowEditorElement.classList.add(_.dasherize(@provider.getName()))
 
     activePane = atom.workspace.getActivePane()
     direction = settings.get('directionToOpen')
