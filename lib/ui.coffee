@@ -26,7 +26,7 @@ class UI
     @gutter = @editor.addGutter(name: 'narrow')
     @editor.onDidDestroy => @destroy()
 
-    @editorElement = atom.views.getView(@editor)
+    @editorElement = @editor.element
     @editorElement.classList.add('narrow')
     @editorElement.classList.add(params.class) if params.class
 
@@ -45,10 +45,12 @@ class UI
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
 
-  isAutoPreview: -> @autoPreview
+  isAutoPreview: ->
+    @autoPreview
+
   toggleAutoPreview: ->
-    if @autoPreview = not @autoPreview
-      @preview()
+    @autoPreview = not @autoPreview
+    @preview() if @isAutoPreview()
 
   getItems: ->
     Promise.resolve(@provider.getItems())
@@ -80,10 +82,11 @@ class UI
   refresh: ->
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
+    pattern = words.map(_.escapeRegExp).join('|')
 
     @getItems().then (items) =>
-      @grammar.update(pattern: words.map(_.escapeRegExp).join('|'))
-      @clearText()
+      @grammar.update({pattern})
+      @clearItemsText()
 
       items = if @provider.filterItems?
         @provider.filterItems(items, words)
@@ -109,9 +112,8 @@ class UI
   observeInputChange: ->
     buffer = @editor.getBuffer()
     buffer.onDidChange ({newRange}) =>
-      return unless (newRange.start.row is 0)
-      @refresh()
-
+      if newRange.start.row is 0
+        @refresh()
 
   locked: false
   isLocked: -> @locked
@@ -158,7 +160,8 @@ class UI
     unless options.preview or options.keepOpen
       @editor.destroy()
 
-  clearText: ->
+  # clear text from  2nd row to last row.
+  clearItemsText: ->
     start = [1, 0]
     end = @editor.getEofBufferPosition()
     range = [start, end]

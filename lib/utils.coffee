@@ -46,18 +46,15 @@ decorateRange = (editor, range, options) ->
       flashDisposable = null
   marker
 
-getView = (model) ->
-  atom.views.getView(model)
-
 getVisibleBufferRange = (editor) ->
-  [startRow, endRow] = getView(editor).getVisibleRowRange()
+  [startRow, endRow] = editor.element.getVisibleRowRange()
   return null unless (startRow? and endRow?)
   startRow = editor.bufferRowForScreenRow(startRow)
   endRow = editor.bufferRowForScreenRow(endRow)
   new Range([startRow, 0], [endRow, Infinity])
 
 smartScrollToBufferPosition = (editor, point) ->
-  editorElement = atom.views.getView(editor)
+  editorElement = editor.element
   editorAreaHeight = editor.getLineHeightInPixels() * (editor.getRowsPerPage() - 1)
   onePageUp = editorElement.getScrollTop() - editorAreaHeight # No need to limit to min=0
   onePageDown = editorElement.getScrollBottom() + editorAreaHeight
@@ -82,7 +79,6 @@ registerElement = (name, options) ->
   Element
 
 module.exports = {
-  getView
   getAdjacentPaneForPane
   getVisibleBufferRange
   openItemInAdjacentPaneForPane

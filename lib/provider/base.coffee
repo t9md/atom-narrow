@@ -1,3 +1,4 @@
+_ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
 {decorateRange} = require '../utils'
 
@@ -25,7 +26,7 @@ class Base
 
   highlightRow: (editor, row) ->
     range = [[row, 0], [row, 0]]
-    decorateRange(editor, range, {type: 'line', class: 'narrow-result'})
+    decorateRange(editor, range, type: 'line', class: 'narrow-result')
 
   destroy: ->
     @marker?.destroy()

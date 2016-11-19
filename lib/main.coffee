@@ -41,7 +41,6 @@ module.exports =
     {cursor} = selection
 
     if selection.isEmpty()
-      text = null
       point = cursor.getBufferPosition()
       selection.selectWord()
       text = selection.getText()
@@ -86,7 +85,6 @@ module.exports =
     {@subscriptions} = {}
 
   getUI: (options={}) ->
-    # [FIXME] make UI instance instance
     @ui = new UI(options)
 
   provideNarrow: ->
@@ -94,23 +92,22 @@ module.exports =
     search: @search.bind(this)
     lines: @lines.bind(this)
 
-  consumeVim: ({getEditorState, observeVimStates}) ->
-    isNarrowEditor = (vimState) ->
-      vimState.editorElement.classList.contains('narrow')
+  isNarrowEditor: (editor) ->
+    editor.element.classList.contains('narrow')
 
+  consumeVim: ({getEditorState, observeVimStates}) ->
     subscribe = @subscribe.bind(this)
 
-    @subscribe observeVimStates (vimState) ->
-      return unless isNarrowEditor(vimState)
+    @subscribe observeVimStates (vimState) =>
+      {editor} = vimState
+      return unless @isNarrowEditor(editor)
 
       if settings.get('vmpStartInInsertModeForUI') and not vimState.isMode('insert')
         vimState.activate('insert')
 
-      do (vimState) ->
-        editor = vimState.editor
-        subscribe vimState.modeManager.onDidActivateMode ({mode, submode}) ->
-          if mode is 'insert' and editor.getCursorBufferPosition().row isnt 0
-            editor.setCursorBufferPosition([0, Infinity])
+      subscribe vimState.modeManager.onDidActivateMode ({mode, submode}) ->
+        if mode is 'insert' and editor.getCursorBufferPosition().row isnt 0
+          editor.setCursorBufferPosition([0, Infinity]) # auto move to EOL of first line.
 
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()
