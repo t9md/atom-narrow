@@ -16,22 +16,22 @@ class UI
   focus: ->
     if @isAlive()
       @pane.activate()
-      @pane.activateItem(@editor)
+      @pane.activateItem(@narrowEditor)
 
   isAlive: ->
-    @editor?.isAlive?()
+    @narrowEditor?.isAlive?()
 
   buildEditor: (params={}) ->
-    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
-    @gutter = @editor.addGutter(name: 'narrow')
-    @editor.onDidDestroy => @destroy()
+    @narrowEditor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    @gutter = @narrowEditor.addGutter(name: 'narrow')
+    @narrowEditor.onDidDestroy => @destroy()
 
-    @editorElement = @editor.element
-    @editorElement.classList.add('narrow')
-    @editorElement.classList.add(params.class) if params.class
+    @narrowEditorElement = @narrowEditor.element
+    @narrowEditorElement.classList.add('narrow')
+    @narrowEditorElement.classList.add(params.class) if params.class
 
-    @editor.getTitle = => @provider?.getTitle()
-    @editor.isModified = -> false
+    @narrowEditor.getTitle = => @provider?.getTitle()
+    @narrowEditor.isModified = -> false
 
   destroy: ->
     @originalPane.activate() if @originalPane.isAlive()
@@ -39,7 +39,7 @@ class UI
     @gutterMarker?.destroy()
 
   registerCommands: ->
-    atom.commands.add @editorElement,
+    atom.commands.add @narrowEditorElement,
       'core:confirm': => @confirm()
       'narrow-ui:open-without-close': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
@@ -58,26 +58,26 @@ class UI
   start: (@provider) ->
     if @provider.constructor.name is 'Search'
       includeHeaderRules = true
-    @grammar = new NarrowGrammar(@editor, {@initialKeyword, includeHeaderRules})
+    @grammar = new NarrowGrammar(@narrowEditor, {@initialKeyword, includeHeaderRules})
     @grammar.activate()
 
     activePane = atom.workspace.getActivePane()
     direction = settings.get('directionToOpen')
     if direction is 'here'
-      @pane = activePane.activateItem(@editor)
+      @pane = activePane.activateItem(@narrowEditor)
       @autoPreview = false
     else
-      @pane = openItemInAdjacentPaneForPane(activePane, @editor, direction)
+      @pane = openItemInAdjacentPaneForPane(activePane, @narrowEditor, direction)
       defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
       @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
 
     @getItems().then (items) =>
       @setItems(items)
       if @initialInput
-        @editor.insertText(@initialInput)
+        @narrowEditor.insertText(@initialInput)
 
   getNarrowQuery: ->
-    @editor.lineTextForBufferRow(0)
+    @narrowEditor.lineTextForBufferRow(0)
 
   refresh: ->
     query = @getNarrowQuery()
@@ -90,7 +90,7 @@ class UI
       @setItems(@provider.filterItems(items, words))
 
   observeInputChange: ->
-    buffer = @editor.getBuffer()
+    buffer = @narrowEditor.getBuffer()
     buffer.onDidChange ({newRange}) =>
       if newRange.start.row is 0
         @refresh()
@@ -103,7 +103,7 @@ class UI
     @locked = false
 
   observeCursorPositionChange: ->
-    @editor.onDidChangeCursorPosition (event) =>
+    @narrowEditor.onDidChangeCursorPosition (event) =>
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
       return if @isLocked() or
         textChanged or
@@ -138,7 +138,7 @@ class UI
 
   setGutterMarkerToRow: (row) ->
     @gutterMarker?.destroy()
-    @gutterMarker = @editor.markBufferPosition([row, 0])
+    @gutterMarker = @narrowEditor.markBufferPosition([row, 0])
     @gutter.decorateMarker @gutterMarker,
       class: "narrow-ui-row"
       item: @getGutterItem()
@@ -146,19 +146,19 @@ class UI
   confirm: (options={}) ->
     @provider.confirmed(@getSelectedItem(), options)
     unless options.preview or options.keepOpen
-      @editor.destroy()
+      @narrowEditor.destroy()
 
   # clear text from  2nd row to last row.
   clearItemsText: ->
     start = [1, 0]
-    end = @editor.getEofBufferPosition()
+    end = @narrowEditor.getEofBufferPosition()
     range = [start, end]
-    @editor.setTextInBufferRange(range, '')
+    @narrowEditor.setTextInBufferRange(range, '')
 
   appendText: (text) ->
-    row = @editor.getLastBufferRow()
+    row = @narrowEditor.getLastBufferRow()
     range = [[row, 0], [row, Infinity]]
-    @editor.setTextInBufferRange(range, text)
+    @narrowEditor.setTextInBufferRange(range, text)
 
   constructor: (params={}) ->
     {@initialKeyword, @initialInput} = params
@@ -167,8 +167,8 @@ class UI
 
     # [FIXME?] With just "\n", narrow:line fail to syntax highlight
     # with custom grammar on initial open.s
-    @editor.insertText("\n ")
-    @editor.setCursorBufferPosition([0, Infinity])
+    @narrowEditor.insertText("\n ")
+    @narrowEditor.setCursorBufferPosition([0, Infinity])
 
     @registerCommands()
     @observeInputChange()
