@@ -6,9 +6,11 @@ settings = require '../settings'
 module.exports =
 class Lines extends Base
   initialize: ->
-    @subscribe @editor.onDidStopChanging =>
-      [@items, @width] = []  # invalidate cache.
-      @ui.refresh()
+    @subscribe @editor.onDidStopChanging(@refresh.bind(this))
+
+  @refresh: ->
+    [@items, @width] = []  # invalidate cache.
+    @ui.refresh()
 
   getItems: ->
     if @items?

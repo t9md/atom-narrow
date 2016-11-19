@@ -17,6 +17,7 @@ getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
 module.exports =
 class Fold extends Base
   foldLevel: 2
+
   initialize: ->
     @subscribe @editor.onDidStopChanging(@refresh.bind(this))
     @registerCommands()
