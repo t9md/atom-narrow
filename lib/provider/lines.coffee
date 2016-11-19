@@ -1,4 +1,5 @@
 Base = require './base'
+{Point} = require 'atom'
 {padStringLeft} = require '../utils'
 settings = require '../settings'
 
@@ -6,20 +7,18 @@ module.exports =
 class Lines extends Base
   initialize: ->
     @subscribe @editor.onDidStopChanging =>
-      @items = null # invalidate cache.
+      [@items, @width] = []  # invalidate cache.
       @ui.refresh()
 
   getItems: ->
-    return @items if @items?
-    @items = []
-    filePath = @editor.getPath()
-    for line, i in @editor.getBuffer().getLines()
-      point = [i, 0]
-      text = line
-      @items.push({filePath, point, text})
-    @items
+    if @items?
+      @items
+    else
+      filePath = @editor.getPath()
+      @items = @editor.getBuffer().getLines().map (text, i) ->
+        {filePath, point: new Point(i, 0), text}
 
   viewForItem: (item) ->
-    width = String(@editor.getLastBufferRow()).length
-    row = item.point[0] + 1
-    padStringLeft(String(row), width) + ':' + item.text
+    @width ?= String(@editor.getLastBufferRow()).length
+    padString = padStringLeft(String(item.point.row + 1), @width)
+    "#{padString}:#{item.text}"
