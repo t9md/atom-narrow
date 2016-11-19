@@ -28,7 +28,7 @@ class UI
 
     @narrowEditorElement = @narrowEditor.element
     @narrowEditorElement.classList.add('narrow')
-    @narrowEditorElement.classList.add(params.class) if params.class
+    # @narrowEditorElement.classList.add(params.class) if params.class
 
     @narrowEditor.getTitle = => @provider?.getTitle()
     @narrowEditor.isModified = -> false
