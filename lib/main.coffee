@@ -15,19 +15,19 @@ module.exports =
     settings.removeDeprecated()
     @input = new Input
 
-    currentWord = @getCurrentWord.bind(this)
+    getCurrentWord = @getCurrentWord.bind(this)
     @subscribe atom.commands.add 'atom-workspace',
       'narrow:lines': => @lines()
-      'narrow:lines-by-current-word': => @lines(currentWord())
+      'narrow:lines-by-current-word': => @lines(getCurrentWord())
 
       'narrow:fold': => @fold()
-      'narrow:fold-by-current-word': => @fold(currentWord())
+      'narrow:fold-by-current-word': => @fold(getCurrentWord())
 
       'narrow:search': => @search()
-      'narrow:search-by-current-word': => @search(currentWord())
+      'narrow:search-by-current-word': => @search(getCurrentWord())
 
       'narrow:search-current-project': => @searchCurrentProject()
-      'narrow:search-current-project-by-current-word': => @searchCurrentProject(currentWord())
+      'narrow:search-current-project-by-current-word': => @searchCurrentProject(getCurrentWord())
 
       'narrow:focus': => @ui.focus()
 
