@@ -11,6 +11,10 @@
   'u': 'narrow-ui:preview-item'
   'r': 'narrow-ui:toggle-auto-preview'
 
+'atom-text-editor.narrow.fold[data-grammar="source narrow"]':
+  'cmd-]': 'narrow-ui:fold:increase-fold-level'
+  'cmd-[': 'narrow-ui:fold:decrease-fold-level'
+
 'atom-text-editor.narrow.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'
 

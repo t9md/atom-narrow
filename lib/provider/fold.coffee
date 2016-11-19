@@ -15,22 +15,37 @@ getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
 
 module.exports =
 class Fold extends Base
+  foldLevel: 2
   initialize: ->
-    @subscribe @editor.onDidStopChanging =>
-      @items = null # invalidate cache
-      @ui.refresh()
+    @subscribe @editor.onDidStopChanging(@refresh.bind(this))
+    @registerCommands()
+
+  registerCommands: ->
+    atom.commands.add @ui.narrowEditorElement,
+      'narrow-ui:fold:increase-fold-level': => @updateFoldLevel(+1)
+      'narrow-ui:fold:decrease-fold-level': => @updateFoldLevel(-1)
+
+  refresh: ->
+    @items = null # invalidate cache
+    @ui.refresh()
+
+  updateFoldLevel: (relativeLevel) ->
+    newFoldLevel = @foldLevel + relativeLevel
+    @foldLevel = Math.max(0, newFoldLevel)
+    @refresh()
 
   getItems: ->
-    return @items if @items?
-
-    @items = []
-    startRows = getCodeFoldStartRowsAtIndentLevel(@editor, 2)
-    rows = _.sortBy(_.uniq(startRows), (row) -> row)
-    filePath = @editor.getPath()
-    for row, i in rows
-      item = {filePath, point: [row, 0], text: @editor.lineTextForBufferRow(row)}
-      @items.push(item)
-    @items
+    if @items?
+      @items
+    else
+      @items = []
+      startRows = getCodeFoldStartRowsAtIndentLevel(@editor, @foldLevel)
+      rows = _.sortBy(_.uniq(startRows), (row) -> row)
+      filePath = @editor.getPath()
+      for row, i in rows
+        item = {filePath, point: [row, 0], text: @editor.lineTextForBufferRow(row)}
+        @items.push(item)
+      @items
 
   viewForItem: ({text}) ->
     text
