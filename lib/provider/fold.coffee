@@ -1,6 +1,7 @@
 _ = require 'underscore-plus'
 Base = require './base'
 settings = require '../settings'
+{Point} = require 'atom'
 
 getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
   rows = [0..editor.getLastBufferRow()]
@@ -30,22 +31,18 @@ class Fold extends Base
     @ui.refresh()
 
   updateFoldLevel: (relativeLevel) ->
-    newFoldLevel = @foldLevel + relativeLevel
-    @foldLevel = Math.max(0, newFoldLevel)
+    @foldLevel = Math.max(0, @foldLevel + relativeLevel)
     @refresh()
 
   getItems: ->
     if @items?
       @items
     else
-      @items = []
       startRows = getCodeFoldStartRowsAtIndentLevel(@editor, @foldLevel)
-      rows = _.sortBy(_.uniq(startRows), (row) -> row)
       filePath = @editor.getPath()
-      for row, i in rows
-        item = {filePath, point: [row, 0], text: @editor.lineTextForBufferRow(row)}
-        @items.push(item)
-      @items
+      rows = _.sortBy(_.uniq(startRows), (row) -> row)
+      @items = rows.map (row) =>
+        {filePath, point: new Point(row, 0), text: @editor.lineTextForBufferRow(row)}
 
   viewForItem: ({text}) ->
     text
