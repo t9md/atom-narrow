@@ -78,6 +78,17 @@ registerElement = (name, options) ->
     Element.prototype = options.prototype if options.prototype?
   Element
 
+# Return function to restore editor's scrollTop and fold state.
+saveEditorState = (editor) ->
+  editorElement = editor.element
+  scrollTop = editorElement.getScrollTop()
+
+  foldStartRows = editor.displayLayer.findFoldMarkers({}).map (m) -> m.getStartPosition().row
+  ->
+    for row in foldStartRows.reverse() when not editor.isFoldedAtBufferRow(row)
+      editor.foldBufferRow(row)
+    editorElement.setScrollTop(scrollTop)
+
 module.exports = {
   getAdjacentPaneForPane
   getVisibleBufferRange
@@ -86,4 +97,5 @@ module.exports = {
   smartScrollToBufferPosition
   padStringLeft
   registerElement
+  saveEditorState
 }

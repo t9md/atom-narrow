@@ -87,27 +87,7 @@ class UI
     @getItems().then (items) =>
       @grammar.update({pattern})
       @clearItemsText()
-
-      items = if @provider.filterItems?
-        @provider.filterItems(items, words)
-      else
-        @filterItems(items, words)
-      @setItems(items)
-
-  filterItems: (items, words) ->
-    filterKey = @provider.getFilterKey()
-
-    filter = (items, pattern) ->
-      _.filter items, (item) ->
-        if filterKey of item
-          item[filterKey].match(///#{pattern}///i)
-        else
-          # When item has no filterKey, it is special, always displayed.
-          true
-
-    for pattern in words.map(_.escapeRegExp)
-      items = filter(items, pattern)
-    items
+      @setItems(@provider.filterItems(items, words))
 
   observeInputChange: ->
     buffer = @editor.getBuffer()
@@ -133,7 +113,9 @@ class UI
       direction = if (newBufferPosition.row - oldBufferPosition.row) > 0 then 'next' else 'previous'
       {row, column} = newBufferPosition
       @withLock =>
-        if (row = @selectFirstValidItem(row, direction))?
+        row = @findValidItem(row, direction)
+        if row? # row might be '0'
+          @selectItemForRow(row)
           cursor.setBufferPosition([row, column])
         else if direction is 'previous'
           cursor.setBufferPosition([0, column])
@@ -147,16 +129,22 @@ class UI
   isValidItem: (item) ->
     item? and not item.skip
 
+  getGutterItem: ->
+    @gutterItem ?= (
+      item = document.createElement('span')
+      item.textContent = " > "
+      item
+    )
+
   setGutterMarkerToRow: (row) ->
     @gutterMarker?.destroy()
     @gutterMarker = @editor.markBufferPosition([row, 0])
-    item = document.createElement('span')
-    item.textContent = " > "
-    @gutter.decorateMarker(@gutterMarker, {class: "narrow-ui-row", item})
+    @gutter.decorateMarker @gutterMarker,
+      class: "narrow-ui-row"
+      item: @getGutterItem()
 
   confirm: (options={}) ->
-    item = @getSelectedItem()
-    @provider.confirmed(item, options)
+    @provider.confirmed(@getSelectedItem(), options)
     unless options.preview or options.keepOpen
       @editor.destroy()
 
@@ -187,7 +175,7 @@ class UI
     @observeCursorPositionChange()
 
   # Return row
-  selectFirstValidItem: (startRow, direction) ->
+  findValidItem: (startRow, direction) ->
     maxRow = @items.length - 1
     rows = if direction is 'next'
       [startRow..maxRow]
@@ -195,8 +183,8 @@ class UI
       [startRow..0]
 
     for row in rows when @isValidItem(@items[row])
-      @selectItemForRow(row)
       return row
+    null
 
   selectItemForRow: (row) ->
     item = @items[row]
@@ -211,4 +199,4 @@ class UI
     @items = [{_prompt: true, skip: true}, items...]
     text = (@provider.viewForItem(item) for item in items).join("\n")
     @appendText(text)
-    @selectFirstValidItem(1, 'next')
+    @selectItemForRow(@findValidItem(1, 'next'))
