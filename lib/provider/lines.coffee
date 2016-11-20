@@ -8,7 +8,7 @@ class Lines extends Base
   initialize: ->
     @subscribe @editor.onDidStopChanging(@refresh.bind(this))
 
-  @refresh: ->
+  refresh: ->
     [@items, @width] = []  # invalidate cache.
     @ui.refresh()
 
