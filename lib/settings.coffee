@@ -51,7 +51,7 @@ class Settings
 
     content = [
       "#{@scope}: Config options deprecated.  ",
-      "Automatically removed from your `connfig.cson`  "
+      "Automatically removed from your `config.cson`  "
     ]
     for param in paramsToDelete
       @delete(param)
