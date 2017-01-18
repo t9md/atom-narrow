@@ -1,27 +1,30 @@
 {CompositeDisposable} = require 'atom'
 
 UI = require './ui'
-Lines = require './provider/lines'
 Search = require './provider/search'
-Fold = require './provider/fold'
 Input = require './input'
 settings = require './settings'
 
 module.exports =
   config: settings.config
+  providers: []
 
   activate: ->
     @subscriptions = new CompositeDisposable
     settings.removeDeprecated()
     @input = new Input
 
+    getUiOptions = =>
+      uiOptions:
+        initialInput: @getCurrentWord()
+
     getCurrentWord = @getCurrentWord.bind(this)
     @subscriptions.add atom.commands.add 'atom-workspace',
-      'narrow:lines': => @lines()
-      'narrow:lines-by-current-word': => @lines(getCurrentWord())
+      'narrow:lines': => @narrow('lines')
+      'narrow:lines-by-current-word': => @narrow('lines', getUiOptions())
 
-      'narrow:fold': => @fold()
-      'narrow:fold-by-current-word': => @fold(getCurrentWord())
+      'narrow:fold': => @narrow('fold')
+      'narrow:fold-by-current-word': => @narrow('fold', getUiOptions())
 
       'narrow:search': => @search()
       'narrow:search-by-current-word': => @search(getCurrentWord())
@@ -46,16 +49,11 @@ module.exports =
     else
       selection.getText()
 
-  # narrow: (providerName, word=null) ->
-  #   provider = require
-
-  lines: (initialInput) ->
-    ui = @getUI({initialInput})
-    new Lines(ui)
-
-  fold: (initialInput) ->
-    ui = @getUI({initialInput})
-    new Fold(ui)
+  narrow: (providerName, {uiOptions, providerOptions}={}) ->
+    if providerName not of @providers
+      @providers[providerName] = require("./provider/#{providerName}")
+    klass = @providers[providerName]
+    new klass(@getUI(uiOptions), providerOptions)
 
   searchCurrentProject: (word) ->
     projects = null
@@ -109,7 +107,11 @@ module.exports =
       vimState.searchInput.confirm()
       return text
 
+    getUiOptions = ->
+      uiOptions:
+        initialInput: confirmSearch()
+
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
-      'vim-mode-plus-user:narrow-lines-from-search': => @lines(confirmSearch())
+      'vim-mode-plus-user:narrow-lines-from-search': => @narrow('lines', getUiOptions())
       'vim-mode-plus-user:narrow-search': => @search(confirmSearch())
       'vim-mode-plus-user:narrow-search-current-project': => @searchCurrentProject(confirmSearch())
