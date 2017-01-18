@@ -1,4 +1,4 @@
-{Range, Disposable, CompositeDisposable} = require 'atom'
+{Disposable} = require 'atom'
 _ = require 'underscore-plus'
 
 getAdjacentPaneForPane = (pane) ->
@@ -46,13 +46,6 @@ decorateRange = (editor, range, options) ->
       flashDisposable = null
   marker
 
-getVisibleBufferRange = (editor) ->
-  [startRow, endRow] = editor.element.getVisibleRowRange()
-  return null unless (startRow? and endRow?)
-  startRow = editor.bufferRowForScreenRow(startRow)
-  endRow = editor.bufferRowForScreenRow(endRow)
-  new Range([startRow, 0], [endRow, Infinity])
-
 smartScrollToBufferPosition = (editor, point) ->
   editorElement = editor.element
   editorAreaHeight = editor.getLineHeightInPixels() * (editor.getRowsPerPage() - 1)
@@ -78,12 +71,11 @@ registerElement = (name, options) ->
     Element.prototype = options.prototype if options.prototype?
   Element
 
-# Return function to restore editor's scrollTop and fold state.
 saveEditorState = (editor) ->
   editorElement = editor.element
   scrollTop = editorElement.getScrollTop()
 
-  foldStartRows = editor.displayLayer.findFoldMarkers({}).map (m) -> m.getStartPosition().row
+  foldStartRows = editor.displayLayer.foldsMarkerLayer.findMarkers({}).map (m) -> m.getStartPosition().row
   ->
     for row in foldStartRows.reverse() when not editor.isFoldedAtBufferRow(row)
       editor.foldBufferRow(row)
@@ -91,7 +83,6 @@ saveEditorState = (editor) ->
 
 module.exports = {
   getAdjacentPaneForPane
-  getVisibleBufferRange
   openItemInAdjacentPaneForPane
   decorateRange
   smartScrollToBufferPosition
