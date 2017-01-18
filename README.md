@@ -3,15 +3,29 @@
 narrow something.  
 similar to unite.vim, emacs-helm  
 
+# Development status
+
+alpha
+
 # Features
 
 - Search across project via `ag`.
 - autoPreview items under cursor.
 - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration.
 
-# Development status
+# Architecture(not settled yet)
 
-alpha
+- `narrow:ui`: handles user input and update view.
+- `narrow-provider`: Provide items to narrow and action to jump to item selected.
+
+# Bundled providers
+
+- lines: narrow current editors lines
+- fold: provide fold-starting rows as item.
+- search: provide matched text as items via `ag` search.
+- git-diff: for core git-diff package
+- bookmarks: for core bookmarks package
+- symbols: provide symbols as item, equivalent to core symbols-views package's `toggle-file-symbols` command.
 
 # Gifs
 
@@ -41,6 +55,9 @@ alpha
 - `narrow:search-current-project`
 - `narrow:search-current-project-by-current-word`
 - `narrow:focus`
+- `narrow:symbols`
+- `narrow:bookmarks`
+- `narrow:git-iff`
 
 ### narrow-ui
 
@@ -56,11 +73,12 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
 - Mine(vim-mode-plus user) for global command.
 ```coffeescript
 'atom-text-editor.vim-mode-plus.normal-mode':
-  'space n l': 'narrow:lines-by-current-word'
-  'space n f': 'narrow:fold'
-  'space n s': 'narrow:search-current-project-by-current-word'
-  'space n S': 'narrow:search'
-  'f9': 'narrow:focus'
+  'space o': 'narrow:fold'
+  'space l': 'narrow:lines'
+  'space s': 'narrow:search-current-project'
+  'space S': 'narrow:symbols'
+  'space G': 'narrow:git-diff'
+  'space B': 'narrow:bookmarks'
 ```
 
 # vim-mode-plus integration.

@@ -1,3 +1,9 @@
+# 0.8.0: Still experimenting!!
+- Update style
+- New: `narrow:symbols`
+- New: `narrow:git-diff`
+- New: `narrow:bookmarks`
+
 # 0.7.1:
 - Fix: prep for `::shadow` boundary removal
 - Fix: When `directionToOpen` was `here` autoPreview throw error, to fix this when `here`, disable autoPreview #12.
