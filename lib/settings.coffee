@@ -69,3 +69,4 @@ module.exports = new Settings 'narrow',
   SearchDefaultAutoPreview: true
   SymbolsDefaultAutoPreview: true
   GitDiffDefaultAutoPreview: true
+  BookmarksDefaultAutoPreview: true

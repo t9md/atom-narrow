@@ -28,6 +28,7 @@ module.exports =
 
       'narrow:symbols': => @narrow('symbols')
       'narrow:git-diff': => @narrow('git-diff')
+      'narrow:bookmarks': => @narrow('bookmarks')
 
       'narrow:search': => @search()
       'narrow:search-by-current-word': => @search(getCurrentWord())

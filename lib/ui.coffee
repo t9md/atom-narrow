@@ -55,7 +55,7 @@ class UI
     Promise.resolve(@provider.getItems())
 
   start: (@provider) ->
-    if @provider.getName() is 'Search'
+    if @provider.getName() in ['Search', 'Bookmarks']
       includeHeaderRules = true
     @grammar = new NarrowGrammar(@narrowEditor, {@initialKeyword, includeHeaderRules})
     @grammar.activate()
