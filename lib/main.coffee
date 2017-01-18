@@ -27,6 +27,7 @@ module.exports =
       'narrow:fold-by-current-word': => @narrow('fold', getUiOptions())
 
       'narrow:symbols': => @narrow('symbols')
+      'narrow:git-diff': => @narrow('git-diff')
 
       'narrow:search': => @search()
       'narrow:search-by-current-word': => @search(getCurrentWord())

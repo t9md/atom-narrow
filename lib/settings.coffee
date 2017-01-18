@@ -68,3 +68,4 @@ module.exports = new Settings 'narrow',
   FoldDefaultAutoPreview: true
   SearchDefaultAutoPreview: true
   SymbolsDefaultAutoPreview: true
+  GitDiffDefaultAutoPreview: true
