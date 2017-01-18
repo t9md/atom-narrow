@@ -81,6 +81,10 @@ saveEditorState = (editor) ->
       editor.foldBufferRow(row)
     editorElement.setScrollTop(scrollTop)
 
+requireFrom = (pack, path) ->
+  packPath = atom.packages.resolvePackagePath(pack)
+  require "#{packPath}/lib/#{path}"
+
 module.exports = {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
@@ -89,4 +93,5 @@ module.exports = {
   padStringLeft
   registerElement
   saveEditorState
+  requireFrom
 }

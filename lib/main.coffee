@@ -26,6 +26,8 @@ module.exports =
       'narrow:fold': => @narrow('fold')
       'narrow:fold-by-current-word': => @narrow('fold', getUiOptions())
 
+      'narrow:symbols': => @narrow('symbols')
+
       'narrow:search': => @search()
       'narrow:search-by-current-word': => @search(getCurrentWord())
 

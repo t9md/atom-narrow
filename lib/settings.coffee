@@ -67,3 +67,4 @@ module.exports = new Settings 'narrow',
   LinesDefaultAutoPreview: true
   FoldDefaultAutoPreview: true
   SearchDefaultAutoPreview: true
+  SymbolsDefaultAutoPreview: true
