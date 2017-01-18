@@ -7,9 +7,9 @@ TagGenerator = requireFrom('symbols-view', 'tag-generator')
 module.exports =
 class Symbols extends ProviderBase
   initialize: ->
-    @subscribe @editor.onDidSave(@refresh.bind(this))
+    @subscribe @editor.onDidSave(@refresh)
 
-  refresh: ->
+  refresh: =>
     @items = null # invalidate cache.
     @ui.refresh()
 
@@ -17,17 +17,12 @@ class Symbols extends ProviderBase
     if @items?
       @items
     else
-      filePath = @editor.getPath()
-      scopeName = @editor.getGrammar().scopeName
-      new TagGenerator(filePath, scopeName).generate().then (tags) =>
+      new TagGenerator(@editor.getPath(), @editor.getGrammar().scopeName).generate().then (tags) =>
         # We show full line text of symbol's line, so just care for which line have symbols.
-        @items = []
-        for {position} in _.uniq(tags, (tag) -> tag.position.row)
-          @items.push(
-            point: position
-            text: @editor.lineTextForBufferRow(position.row)
-          )
-        @items
+        tags = _.uniq(tags, (tag) -> tag.position.row)
+        @items = tags.map ({position}) =>
+          point: position
+          text: @editor.lineTextForBufferRow(position.row)
 
   viewForItem: ({text, point}) ->
     @getLineNumberText(point.row) + ":" + text

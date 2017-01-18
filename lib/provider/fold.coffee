@@ -2,9 +2,8 @@ _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 {Point} = require 'atom'
 
-getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
-  rows = [0..editor.getLastBufferRow()]
-  rows.map (row) ->
+getCodeFoldStartRows = (editor, indentLevel) ->
+  [0..editor.getLastBufferRow()].map (row) ->
     editor.languageMode.rowRangeForCodeFoldAtBufferRow(row)
   .filter (rowRange) ->
     (rowRange? and rowRange[0]? and rowRange[1]?)
@@ -38,11 +37,12 @@ class Fold extends ProviderBase
     if @items?
       @items
     else
-      startRows = getCodeFoldStartRowsAtIndentLevel(@editor, @foldLevel)
       filePath = @editor.getPath()
-      rows = _.sortBy(_.uniq(startRows), (row) -> row)
+      rows = getCodeFoldStartRows(@editor, @foldLevel)
       @items = rows.map (row) =>
-        {filePath, point: new Point(row, 0), text: @editor.lineTextForBufferRow(row)}
+        point: new Point(row, 0)
+        text: @editor.lineTextForBufferRow(row)
+        filePath: filePath
 
   viewForItem: ({text}) ->
     text

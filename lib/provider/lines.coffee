@@ -11,7 +11,9 @@ class Lines extends ProviderBase
     @ui.refresh()
 
   getItems: ->
-    @items ?= ({point: new Point(i, 0), text} for text, i in @editor.getBuffer().getLines())
+    @items ?= @editor.buffer.getLines().map (text, i) ->
+      point: new Point(i, 0)
+      text: text
 
   viewForItem: ({text, point}) ->
     @getLineNumberText(point.row) + ":" + text

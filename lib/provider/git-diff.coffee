@@ -1,5 +1,6 @@
 ProviderBase = require './provider-base'
 {Point} = require 'atom'
+{limitNumber} = require '../utils'
 
 # Borrowed from git-diff core pacakge.
 repositoryForPath = (goalPath) ->
@@ -21,7 +22,7 @@ class GitDiff extends ProviderBase
       filePath = @editor.getPath()
       diffs = repositoryForPath(filePath)?.getLineDiffs(filePath, @editor.getText()) ? []
       for diff in diffs
-        bufferRow = if diff.newStart > 0 then diff.newStart - 1 else diff.newStart
+        bufferRow = limitNumber(diff.newStart - 1, min: 0)
         diff.point = new Point(bufferRow, 0)
         diff.text = @editor.lineTextForBufferRow(bufferRow)
       @items = diffs

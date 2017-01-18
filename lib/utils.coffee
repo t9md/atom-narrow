@@ -85,6 +85,11 @@ requireFrom = (pack, path) ->
   packPath = atom.packages.resolvePackagePath(pack)
   require "#{packPath}/lib/#{path}"
 
+limitNumber = (number, {max, min}={}) ->
+  number = Math.min(number, max) if max?
+  number = Math.max(number, min) if min?
+  number
+
 module.exports = {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
@@ -94,4 +99,5 @@ module.exports = {
   registerElement
   saveEditorState
   requireFrom
+  limitNumber
 }
