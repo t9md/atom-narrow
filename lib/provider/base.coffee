@@ -3,26 +3,35 @@ _ = require 'underscore-plus'
 {
   decorateRange
   saveEditorState
+  padStringLeft
 } = require '../utils'
 
 module.exports =
 class Base
   wasConfirmed: false
+  lastRowNumberTextLength: null
+
   getName: ->
     @constructor.name
 
   getTitle: ->
-    @constructor.name
+    _.dasherize(@getName())
 
   constructor: (@ui, @options={}) ->
     @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
+
+    @subscribe @editor.onDidStopChanging(@invalidateState)
+
     @editorElement = atom.views.getView(@editor)
     @pane = atom.workspace.getActivePane()
     @restoreEditorState = saveEditorState(@editor)
 
     @initialize?()
     @ui.start(this)
+
+  invalidateState: =>
+    @lastRowNumberTextLength = null
 
   subscribe: (args...) ->
     @subscriptions.add(args...)
@@ -71,3 +80,7 @@ class Base
 
     @editor.scrollToBufferPosition(point, center: true)
     @editorElement.component.updateSync()
+
+  getTextForRow: (row) ->
+    @lastRowNumberTextLength ?= String(@editor.getLastBufferRow()).length
+    padStringLeft(String(row + 1), @lastRowNumberTextLength)
