@@ -1,8 +1,5 @@
-_ = require 'underscore-plus'
 Base = require './base'
 {Point} = require 'atom'
-{padStringLeft, requireFrom} = require '../utils'
-settings = require '../settings'
 
 # Borrowed from git-diff core pacakge.
 repositoryForPath = (goalPath) ->
@@ -29,8 +26,5 @@ class GitDiff extends Base
         diff.text = @editor.lineTextForBufferRow(bufferRow)
       @items = diffs
 
-  viewForItem: (item) ->
-    {point, text} = item
-    @width ?= String(@editor.getLastBufferRow()).length
-    padString = padStringLeft(String(point.row + 1), @width)
-    "#{padString}:#{text}"
+  viewForItem: ({text, point}) ->
+    @getTextForRow(point.row) + ":" + text

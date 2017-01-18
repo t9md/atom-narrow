@@ -1,6 +1,5 @@
 _ = require 'underscore-plus'
 Base = require './base'
-settings = require '../settings'
 {Point} = require 'atom'
 
 getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
