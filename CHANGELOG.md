@@ -1,4 +1,5 @@
 # 0.8.0: Still experimenting!!
+- New: `narrow:fold` buffer's keymaps `cmd-[`, `cmd-]` to change foldLevel to filter items.
 - Update style
 - New: `narrow:symbols`
 - New: `narrow:git-diff`
