@@ -12,13 +12,6 @@
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
   },
-  "providedServices": {
-    "narrow": {
-      "versions": {
-        "0.1.0": "provideNarrow"
-      }
-    }
-  },
   "consumedServices": {
     "vim-mode-plus": {
       "versions": {

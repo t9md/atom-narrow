@@ -16,7 +16,7 @@ module.exports =
     @input = new Input
 
     getCurrentWord = @getCurrentWord.bind(this)
-    @subscribe atom.commands.add 'atom-workspace',
+    @subscriptions.add atom.commands.add 'atom-workspace',
       'narrow:lines': => @lines()
       'narrow:lines-by-current-word': => @lines(getCurrentWord())
 
@@ -30,9 +30,6 @@ module.exports =
       'narrow:search-current-project-by-current-word': => @searchCurrentProject(getCurrentWord())
 
       'narrow:focus': => @ui.focus()
-
-  subscribe: (arg) ->
-    @subscriptions.add arg
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
@@ -48,6 +45,9 @@ module.exports =
       text
     else
       selection.getText()
+
+  # narrow: (providerName, word=null) ->
+  #   provider = require
 
   lines: (initialInput) ->
     ui = @getUI({initialInput})
@@ -87,25 +87,18 @@ module.exports =
   getUI: (options={}) ->
     @ui = new UI(options)
 
-  provideNarrow: ->
-    getUI: @getUI.bind(this)
-    search: @search.bind(this)
-    lines: @lines.bind(this)
-
   isNarrowEditor: (editor) ->
     editor.element.classList.contains('narrow')
 
   consumeVim: ({getEditorState, observeVimStates}) ->
-    subscribe = @subscribe.bind(this)
-
-    @subscribe observeVimStates (vimState) =>
+    @subscriptions.add observeVimStates (vimState) =>
       {editor} = vimState
       return unless @isNarrowEditor(editor)
 
       if settings.get('vmpStartInInsertModeForUI') and not vimState.isMode('insert')
         vimState.activate('insert')
 
-      subscribe vimState.modeManager.onDidActivateMode ({mode, submode}) ->
+      @subscriptions.add vimState.modeManager.onDidActivateMode ({mode, submode}) ->
         if mode is 'insert' and editor.getCursorBufferPosition().row isnt 0
           editor.setCursorBufferPosition([0, Infinity]) # auto move to EOL of first line.
 
@@ -116,7 +109,7 @@ module.exports =
       vimState.searchInput.confirm()
       return text
 
-    @subscribe atom.commands.add 'atom-text-editor.vim-mode-plus-search',
+    @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
       'vim-mode-plus-user:narrow-lines-from-search': => @lines(confirmSearch())
       'vim-mode-plus-user:narrow-search': => @search(confirmSearch())
       'vim-mode-plus-user:narrow-search-current-project': => @searchCurrentProject(confirmSearch())

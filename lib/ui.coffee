@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 {
   getAdjacentPaneForPane
-  getVisibleBufferRange
   openItemInAdjacentPaneForPane
 } = require './utils'
 settings = require './settings'
