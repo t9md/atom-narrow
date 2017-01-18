@@ -27,6 +27,10 @@ atom-text-editor::shadow .narrow-ui-row {
   color: @green-color;
 }
 
+@line-marker: fadeout(lighten(@syntax-color-added, 0%), 20%);
+// @line-marker: lighten(@syntax-color-added, 0%);
+// @line-marker: fadeout(@syntax-color-modified, 60%);
+
 atom-text-editor,
 atom-text-editor::shadow,
 {
@@ -46,9 +50,7 @@ atom-text-editor::shadow,
 
   .line {
     &.narrow-result {
-      border-bottom-width: 1px;
-      border-color: @syntax-result-marker-color-selected;
-      border-bottom-style: ridge;
+      box-shadow:0 -8px 0 -6px @line-marker inset;
     }
   }
 }
