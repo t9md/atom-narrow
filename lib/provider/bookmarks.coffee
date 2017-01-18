@@ -18,7 +18,7 @@ getBookmarks = ->
 
 module.exports =
 class Bookmarks extends ProviderBase
-  getItemsInEditor: (editor, markerLayer) ->
+  getItemsForEditor: (editor, markerLayer) ->
     filePath = editor.getPath()
     textWidthForLastRow = String(editor.getLastBufferRow()).length
     items = []
@@ -32,25 +32,20 @@ class Bookmarks extends ProviderBase
   getItems: ->
     items = []
     for {editor, markerLayer} in getBookmarks() when markerLayer.getMarkerCount() > 0
-      filePath = editor.getPath()
-      items.push(header: "# #{filePath}", skip: true)
-      items.push(@getItemsInEditor(editor, markerLayer)...)
+      items.push(header: "# #{editor.getPath()}", skip: true)
+      items.push(@getItemsForEditor(editor, markerLayer)...)
     items
 
-  confirmed: ({filePath, point}, options={}) ->
+  confirmed: (item, {preview}={}) ->
+    {filePath, point} = item
     @marker?.destroy()
     @pane.activate()
 
-    if options.preview?
-      openOptions = {activatePane: false, pending: true}
-      atom.workspace.open(filePath, openOptions).then (editor) =>
-        editor.scrollToBufferPosition(point, center: true)
-        @marker = @highlightRow(editor, point.row)
-    else
-      openOptions = {pending: true}
-      atom.workspace.open(filePath, openOptions).then (editor) ->
-        editor.setCursorBufferPosition(point, autoscroll: false)
-        editor.scrollToBufferPosition(point, center: true)
+    openOptions = {activatePane: not preview, pending: true}
+    atom.workspace.open(filePath, openOptions).then (editor) =>
+      editor.setCursorBufferPosition(point, autoscroll: false) unless preview
+      editor.scrollToBufferPosition(point, center: true)
+      @marker = @highlightRow(editor, point.row) if preview
 
   viewForItem: ({header, text, point, textWidthForLastRow}) ->
     if header?
