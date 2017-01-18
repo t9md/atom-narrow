@@ -57,7 +57,7 @@ alpha
 - `narrow:focus`
 - `narrow:symbols`
 - `narrow:bookmarks`
-- `narrow:git-iff`
+- `narrow:git-diff`
 
 ### narrow-ui
 
