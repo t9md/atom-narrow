@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-Base = require './base'
+ProviderBase = require './provider-base'
 {requireFrom, padStringLeft} = require '../utils'
 
 # HACK: Core bookmarks package
@@ -17,7 +17,7 @@ getBookmarks = ->
   bookmarks
 
 module.exports =
-class Bookmarks extends Base
+class Bookmarks extends ProviderBase
   getItemsInEditor: (editor, markerLayer) ->
     filePath = editor.getPath()
     lastRowNumberTextLength = String(editor.getLastBufferRow()).length

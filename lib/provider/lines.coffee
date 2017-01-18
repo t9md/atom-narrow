@@ -1,8 +1,8 @@
-Base = require './base'
+ProviderBase = require './provider-base'
 {Point} = require 'atom'
 
 module.exports =
-class Lines extends Base
+class Lines extends ProviderBase
   initialize: ->
     @subscribe @editor.onDidStopChanging(@refresh)
 

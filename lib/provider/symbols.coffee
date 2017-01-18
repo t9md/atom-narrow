@@ -1,11 +1,11 @@
 _ = require 'underscore-plus'
-Base = require './base'
+ProviderBase = require './provider-base'
 {requireFrom} = require '../utils'
 
 TagGenerator = requireFrom('symbols-view', 'tag-generator')
 
 module.exports =
-class Symbols extends Base
+class Symbols extends ProviderBase
   initialize: ->
     @subscribe @editor.onDidSave(@refresh.bind(this))
 

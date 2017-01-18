@@ -1,4 +1,4 @@
-Base = require './base'
+ProviderBase = require './provider-base'
 {Point} = require 'atom'
 
 # Borrowed from git-diff core pacakge.
@@ -9,7 +9,7 @@ repositoryForPath = (goalPath) ->
   null
 
 module.exports =
-class GitDiff extends Base
+class GitDiff extends ProviderBase
   refresh: ->
     @items = []
     @ui.refresh()

@@ -7,7 +7,7 @@ _ = require 'underscore-plus'
 } = require '../utils'
 
 module.exports =
-class Base
+class ProviderBase
   wasConfirmed: false
   lastRowNumberTextLength: null
 

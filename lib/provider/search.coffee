@@ -2,11 +2,11 @@
 path = require 'path'
 _ = require 'underscore-plus'
 
-Base = require './base'
+ProviderBase = require './provider-base'
 {decorateRange} = require '../utils'
 
 module.exports =
-class Search extends Base
+class Search extends ProviderBase
   items: null
   searchersRunning: []
 

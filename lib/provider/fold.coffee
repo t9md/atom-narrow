@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-Base = require './base'
+ProviderBase = require './provider-base'
 {Point} = require 'atom'
 
 getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
@@ -14,7 +14,7 @@ getCodeFoldStartRowsAtIndentLevel = (editor, indentLevel) ->
     editor.indentationForBufferRow(startRow) < indentLevel
 
 module.exports =
-class Fold extends Base
+class Fold extends ProviderBase
   foldLevel: 2
 
   initialize: ->
