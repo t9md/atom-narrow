@@ -9,7 +9,7 @@ _ = require 'underscore-plus'
 module.exports =
 class ProviderBase
   wasConfirmed: false
-  lastRowNumberTextLength: null
+  textWidthForLastRow: null
 
   getName: ->
     @constructor.name
@@ -31,7 +31,7 @@ class ProviderBase
     @ui.start(this)
 
   invalidateState: =>
-    @lastRowNumberTextLength = null
+    @textWidthForLastRow = null
 
   subscribe: (args...) ->
     @subscriptions.add(args...)
@@ -81,6 +81,6 @@ class ProviderBase
     @editor.scrollToBufferPosition(point, center: true)
     @editorElement.component.updateSync()
 
-  getTextForRow: (row) ->
-    @lastRowNumberTextLength ?= String(@editor.getLastBufferRow()).length
-    padStringLeft(String(row + 1), @lastRowNumberTextLength)
+  getLineNumberText: (row) ->
+    @textWidthForLastRow ?= String(@editor.getLastBufferRow()).length
+    padStringLeft(String(row + 1), @textWidthForLastRow)

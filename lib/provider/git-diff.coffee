@@ -27,4 +27,4 @@ class GitDiff extends ProviderBase
       @items = diffs
 
   viewForItem: ({text, point}) ->
-    @getTextForRow(point.row) + ":" + text
+    @getLineNumberText(point.row) + ":" + text

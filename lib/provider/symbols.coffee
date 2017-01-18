@@ -30,4 +30,4 @@ class Symbols extends ProviderBase
         @items
 
   viewForItem: ({text, point}) ->
-    @getTextForRow(point.row) + ":" + text
+    @getLineNumberText(point.row) + ":" + text

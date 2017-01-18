@@ -20,12 +20,12 @@ module.exports =
 class Bookmarks extends ProviderBase
   getItemsInEditor: (editor, markerLayer) ->
     filePath = editor.getPath()
-    lastRowNumberTextLength = String(editor.getLastBufferRow()).length
+    textWidthForLastRow = String(editor.getLastBufferRow()).length
     items = []
     for marker in markerLayer.getMarkers()
       point = marker.getStartBufferPosition()
       text = editor.lineTextForBufferRow(point.row)
-      items.push({point, text, filePath, lastRowNumberTextLength})
+      items.push({point, text, filePath, textWidthForLastRow})
 
     _.sortBy(items, ({point}) -> point.row)
 
@@ -52,9 +52,9 @@ class Bookmarks extends ProviderBase
         editor.setCursorBufferPosition(point, autoscroll: false)
         editor.scrollToBufferPosition(point, center: true)
 
-  viewForItem: ({header, text, point, lastRowNumberTextLength}) ->
+  viewForItem: ({header, text, point, textWidthForLastRow}) ->
     if header?
       header
     else
-      rowText = padStringLeft(String(point.row + 1), lastRowNumberTextLength)
+      rowText = padStringLeft(String(point.row + 1), textWidthForLastRow)
       "  " + rowText + ":"  + text
