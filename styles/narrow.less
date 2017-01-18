@@ -17,7 +17,7 @@ div.narrow-section {
   color: lighten(@text-color-success, 5%);
 }
 
-atom-text-editor::shadow .narrow-ui-row {
+atom-text-editor .narrow-ui-row {
   /* Take up the full allowed width */
   left: 0;
   right: 0;
@@ -31,9 +31,7 @@ atom-text-editor::shadow .narrow-ui-row {
 // @line-marker: lighten(@syntax-color-added, 0%);
 // @line-marker: fadeout(@syntax-color-modified, 60%);
 
-atom-text-editor,
-atom-text-editor::shadow,
-{
+atom-text-editor {
   .narrow-match .region {
     .round-box;
     background-color: transparent;
