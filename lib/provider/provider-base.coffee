@@ -76,6 +76,7 @@ class ProviderBase
       @marker = @highlightRow(@editor, point.row)
     else
       @editor.setCursorBufferPosition(point, autoscroll: false)
+      @editor.moveToFirstCharacterOfLine()
       @pane.activate()
       @pane.activateItem(@editor)
 
