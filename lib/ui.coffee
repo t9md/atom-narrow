@@ -44,6 +44,14 @@ class UI
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
 
+  nextItem: ->
+    @narrowEditor.moveDown()
+    @confirm(keepOpen: true)
+
+  previousItem: ->
+    @narrowEditor.moveUp()
+    @confirm(keepOpen: true)
+
   isAutoPreview: ->
     @autoPreview
 

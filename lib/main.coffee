@@ -37,6 +37,8 @@ module.exports =
       'narrow:search-current-project-by-current-word': => @searchCurrentProject(getCurrentWord())
 
       'narrow:focus': => @ui.focus()
+      'narrow:next-item': => @ui.nextItem()
+      'narrow:previous-item': => @ui.previousItem()
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
