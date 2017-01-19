@@ -21,31 +21,6 @@ openItemInAdjacentPaneForPane = (basePane, item, direction) ->
       when 'down' then basePane.splitDown(items: [item])
   pane
 
-# options is object with following keys
-#  timeout: number (msec)
-#  class: css class
-flashDisposable = null
-decorateRange = (editor, range, options) ->
-  flashDisposable?.dispose()
-  marker = editor.markBufferRange range,
-    invalidate: options.invalidate ? 'never'
-    persistent: options.persistent ? false
-
-  editor.decorateMarker marker,
-    type: options.type ? 'highlight'
-    class: options.class
-
-  if options.timeout?
-    timeoutID = setTimeout ->
-      marker.destroy()
-    , options.timeout
-
-    flashDisposable = new Disposable ->
-      clearTimeout(timeoutID)
-      marker?.destroy()
-      flashDisposable = null
-  marker
-
 smartScrollToBufferPosition = (editor, point) ->
   editorElement = editor.element
   editorAreaHeight = editor.getLineHeightInPixels() * (editor.getRowsPerPage() - 1)
@@ -93,7 +68,6 @@ limitNumber = (number, {max, min}={}) ->
 module.exports = {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
-  decorateRange
   smartScrollToBufferPosition
   padStringLeft
   registerElement

@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
 {
-  decorateRange
   saveEditorState
   padStringLeft
 } = require '../utils'
@@ -54,8 +53,10 @@ class ProviderBase
     items
 
   highlightRow: (editor, row) ->
-    range = [[row, 0], [row, 0]]
-    decorateRange(editor, range, type: 'line', class: 'narrow-result')
+    point = [row, 0]
+    marker = editor.markBufferRange([point, point])
+    editor.decorateMarker(marker, type: 'line', class: 'narrow-result')
+    marker
 
   destroy: ->
     @marker?.destroy()

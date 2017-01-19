@@ -3,7 +3,6 @@ path = require 'path'
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
-{decorateRange} = require '../utils'
 
 module.exports =
 class Search extends ProviderBase
