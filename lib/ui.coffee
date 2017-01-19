@@ -106,6 +106,7 @@ class UI
     @narrowEditor.onDidChangeCursorPosition (event) =>
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
       return if @isLocked() or
+        not cursor.selection.isEmpty()
         textChanged or
         (newBufferPosition.row is 0) or
         (oldBufferPosition.row is newBufferPosition.row)
