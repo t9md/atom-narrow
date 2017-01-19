@@ -11,8 +11,11 @@ repositoryForPath = (goalPath) ->
 
 module.exports =
 class GitDiff extends ProviderBase
-  refresh: ->
-    @items = []
+  initialize: ->
+    @subscribe @editor.onDidStopChanging(@refresh)
+
+  refresh: =>
+    @items = null
     @ui.refresh()
 
   getItems: ->
