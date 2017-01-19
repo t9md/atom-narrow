@@ -1,4 +1,5 @@
 _ = require 'underscore-plus'
+{Point, CompositeDisposable} = require 'atom'
 {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
@@ -33,6 +34,7 @@ class UI
     @narrowEditor.isModified = -> false
 
   destroy: ->
+    @disposables.dispose()
     @originalPane.activate() if @originalPane.isAlive()
     @provider?.destroy?()
     @gutterMarker?.destroy()
@@ -45,10 +47,14 @@ class UI
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
 
   nextItem: ->
+    if (row = @getRowForSelectedItem()) >= 0
+      @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
     @narrowEditor.moveDown()
     @confirm(keepOpen: true)
 
   previousItem: ->
+    if (row = @getRowForSelectedItem()) >= 0
+      @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
     @narrowEditor.moveUp()
     @confirm(keepOpen: true)
 
@@ -69,6 +75,11 @@ class UI
     @grammar.activate()
     @narrowEditorElement.classList.add(_.dasherize(@provider.getName()))
 
+    if @provider.editor?
+      @disposables.add @provider.editor.onDidChangeCursorPosition =>
+        if @items.length and item = @findNearestItem(@items)
+          @selectItem(item)
+
     activePane = atom.workspace.getActivePane()
     direction = settings.get('directionToOpen')
     if direction is 'here'
@@ -83,6 +94,15 @@ class UI
       @setItems(items)
       if @initialInput
         @narrowEditor.insertText(@initialInput)
+
+  findNearestItem: (items) ->
+    cursorPosition = @provider.editor.getCursorBufferPosition()
+    # Detect item
+    # - cursor position is equal or greather than that item.
+    for item, i in items by -1 when item.point?
+      itemPoint = Point.fromObject(item.point)
+      break if itemPoint.isLessThanOrEqual(cursorPosition)
+    return item
 
   getNarrowQuery: ->
     @narrowEditor.lineTextForBufferRow(0)
@@ -110,11 +130,11 @@ class UI
     fn()
     @locked = false
 
-  observeCursorPositionChange: ->
+  observeCursorPositionChangeForNarrowEditor: ->
     @narrowEditor.onDidChangeCursorPosition (event) =>
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
       return if @isLocked() or
-        not cursor.selection.isEmpty()
+        not cursor.selection.isEmpty() or
         textChanged or
         (newBufferPosition.row is 0) or
         (oldBufferPosition.row is newBufferPosition.row)
@@ -170,6 +190,7 @@ class UI
     @narrowEditor.setTextInBufferRange(range, text)
 
   constructor: (params={}) ->
+    @disposables = new CompositeDisposable
     {@initialKeyword, @initialInput} = params
     @originalPane = atom.workspace.getActivePane()
     @buildEditor(params)
@@ -181,7 +202,7 @@ class UI
 
     @registerCommands()
     @observeInputChange()
-    @observeCursorPositionChange()
+    @observeCursorPositionChangeForNarrowEditor()
 
   # Return row
   findValidItem: (startRow, direction) ->
@@ -194,6 +215,17 @@ class UI
     for row in rows when @isValidItem(@items[row])
       return row
     null
+
+  getRowForSelectedItem: ->
+    @getRowForItem(@getSelectedItem())
+
+  getRowForItem: (item) ->
+    @items.indexOf(item)
+
+  selectItem: (item) ->
+    row = @items.indexOf(item)
+    if row >= 0
+      @selectItemForRow(row)
 
   selectItemForRow: (row) ->
     item = @items[row]
@@ -208,4 +240,8 @@ class UI
     @items = [{_prompt: true, skip: true}, items...]
     text = (@provider.viewForItem(item) for item in items).join("\n")
     @appendText(text)
-    @selectItemForRow(@findValidItem(1, 'next'))
+
+    if @provider.editor? and item = @findNearestItem(items)
+      @selectItem(item)
+    else
+      @selectItemForRow(@findValidItem(1, 'next'))
