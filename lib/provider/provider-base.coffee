@@ -22,7 +22,7 @@ class ProviderBase
 
     @subscribe @editor.onDidStopChanging(@invalidateState)
 
-    @editorElement = atom.views.getView(@editor)
+    @editorElement = @editor.element
     @pane = atom.workspace.getActivePane()
     @restoreEditorState = saveEditorState(@editor)
 
