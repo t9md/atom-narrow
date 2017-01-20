@@ -4,6 +4,7 @@ _ = require 'underscore-plus'
   saveEditorState
   padStringLeft
 } = require '../utils'
+UI = require '../ui'
 
 module.exports =
 class ProviderBase
@@ -16,7 +17,7 @@ class ProviderBase
   getTitle: ->
     _.dasherize(@getName())
 
-  constructor: (@ui, @options={}) ->
+  constructor: (uiOptions, @options={}) ->
     @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
 
@@ -26,6 +27,7 @@ class ProviderBase
     @pane = atom.workspace.getActivePane()
     @restoreEditorState = saveEditorState(@editor)
 
+    @ui = new UI(uiOptions)
     @initialize?()
     @ui.start(this)
 

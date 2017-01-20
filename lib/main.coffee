@@ -1,12 +1,13 @@
 {CompositeDisposable} = require 'atom'
 
-UI = require './ui'
 Search = require './provider/search'
 Input = require './input'
 settings = require './settings'
+UI = null
 
 module.exports =
   config: settings.config
+  currentNarrowEditor: null
   providers: []
 
   activate: ->
@@ -19,6 +20,10 @@ module.exports =
         initialInput: @getCurrentWord()
 
     getCurrentWord = @getCurrentWord.bind(this)
+    @subscriptions.add atom.workspace.observeActivePaneItem (item) =>
+      if atom.workspace.isTextEditor(item) and @isNarrowEditor(item)
+        @currentNarrowEditor = item
+
     @subscriptions.add atom.commands.add 'atom-workspace',
       'narrow:lines': => @narrow('lines')
       'narrow:lines-by-current-word': => @narrow('lines', getUiOptions())
@@ -36,9 +41,13 @@ module.exports =
       'narrow:search-current-project': => @searchCurrentProject()
       'narrow:search-current-project-by-current-word': => @searchCurrentProject(getCurrentWord())
 
-      'narrow:focus': => @ui.focus()
-      'narrow:next-item': => @ui.nextItem()
-      'narrow:previous-item': => @ui.previousItem()
+      'narrow:focus': => @getUI()?.focus()
+      'narrow:next-item': => @getUI()?.nextItem()
+      'narrow:previous-item': => @getUI()?.previousItem()
+
+  getUI: (narrowEditor) ->
+    UI ?= require './ui'
+    UI.uiByNarrowEditor.get(@currentNarrowEditor)
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
@@ -59,7 +68,7 @@ module.exports =
     if providerName not of @providers
       @providers[providerName] = require("./provider/#{providerName}")
     klass = @providers[providerName]
-    new klass(@getUI(uiOptions), providerOptions)
+    new klass(uiOptions, providerOptions)
 
   searchCurrentProject: (word) ->
     projects = null
@@ -81,15 +90,11 @@ module.exports =
         @search(input, projects)
 
     return unless word
-    ui = @getUI(initialKeyword: word)
-    new Search(ui, {word, projects})
+    new Search(initialKeyword: word, {word, projects})
 
   deactivate: ->
     @subscriptions?.dispose()
     {@subscriptions} = {}
-
-  getUI: (options={}) ->
-    @ui = new UI(options)
 
   isNarrowEditor: (editor) ->
     editor.element.classList.contains('narrow')

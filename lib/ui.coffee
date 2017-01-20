@@ -10,8 +10,21 @@ NarrowGrammar = require './grammar'
 
 module.exports =
 class UI
+  @uiByNarrowEditor: new Map()
   autoPreview: false
   items: []
+
+  @unregisterUI: (narrowEditor) ->
+    @uiByNarrowEditor.delete(narrowEditor)
+    @updateWorkspaceClassList()
+
+  @registerUI: (narrowEditor, ui) ->
+    @uiByNarrowEditor.set(narrowEditor, ui)
+    @updateWorkspaceClassList()
+
+  @updateWorkspaceClassList: ->
+    workspaceElement = atom.views.getView(atom.workspace)
+    workspaceElement.classList.toggle('has-narrow', @uiByNarrowEditor.size)
 
   focus: ->
     if @isAlive()
@@ -38,6 +51,7 @@ class UI
     @originalPane.activate() if @originalPane.isAlive()
     @provider?.destroy?()
     @gutterMarker?.destroy()
+    @constructor.unregisterUI(@narrowEditor)
 
   registerCommands: ->
     atom.commands.add @narrowEditorElement,
@@ -203,6 +217,7 @@ class UI
     @registerCommands()
     @observeInputChange()
     @observeCursorPositionChangeForNarrowEditor()
+    @constructor.registerUI(@narrowEditor, this)
 
   # Return row
   findValidItem: (startRow, direction) ->
