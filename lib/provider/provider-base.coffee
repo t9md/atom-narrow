@@ -16,6 +16,9 @@ class ProviderBase
   getName: ->
     @constructor.name
 
+  invalidateCachedItem: ->
+    @items = null
+
   getDashName: ->
     _.dasherize(@getName())
 
@@ -30,6 +33,13 @@ class ProviderBase
     @subscribe @editor.onDidStopChanging(@invalidateState)
 
     @ui = new UI(this, uiOptions)
+    
+    if @boundToEditor
+      @subscribe @editor.onDidStopChanging =>
+        @items = null
+        @ui.refresh().then =>
+          @ui.syncToProviderEditor()
+
     @initialize?()
     @ui.start()
 

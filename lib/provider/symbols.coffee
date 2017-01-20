@@ -8,13 +8,6 @@ module.exports =
 class Symbols extends ProviderBase
   boundToEditor: true
 
-  initialize: ->
-    @subscribe @editor.onDidSave(@refresh)
-
-  refresh: =>
-    @items = null # invalidate cache.
-    @ui.refresh()
-
   getItems: ->
     if @items?
       @items
@@ -28,5 +21,5 @@ class Symbols extends ProviderBase
           point: position
           text: @editor.lineTextForBufferRow(position.row)
 
-  viewForItem: ({text, point}) ->
-    @getLineNumberText(point.row) + ":" + text
+  viewForItem: ({text}) ->
+    text

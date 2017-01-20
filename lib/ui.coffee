@@ -41,9 +41,6 @@ class UI
     @narrowEditor.getTitle = -> dashName
     @narrowEditor.isModified = -> false
     @narrowEditor.onDidDestroy(@destroy.bind(this))
-    @narrowEditor.insertText("\n")
-    @narrowEditor.setCursorBufferPosition([0, Infinity])
-
     @narrowEditorElement = @narrowEditor.element
     @narrowEditorElement.classList.add('narrow', dashName)
 
@@ -78,6 +75,8 @@ class UI
       defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
       @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
 
+    @narrowEditor.insertText("\n")
+    @narrowEditor.setCursorBufferPosition([0, Infinity])
     if @input
       @narrowEditor.insertText(@input)
     else
@@ -109,6 +108,7 @@ class UI
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
+      'narrow-ui:force-refresh': => @forceRefresh()
 
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -140,7 +140,14 @@ class UI
   getNarrowQuery: ->
     @narrowEditor.lineTextForBufferRow(0)
 
+  forceRefresh: ->
+    @provider.invalidateCachedItem()
+    @narrowEditor.setCursorBufferPosition([0, Infinity])
+    @refresh()
+
+  refreshing: false
   refresh: ->
+    @refreshing = true
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
     pattern = words.map(_.escapeRegExp).join('|')
@@ -149,11 +156,15 @@ class UI
     Promise.resolve(@provider.getItems()).then (items) =>
       @clearItemsText()
       @setItems(@provider.filterItems(items, words))
+      @refreshing = false
 
   observeInputChange: ->
-    @narrowEditor.buffer.onDidChange ({newRange}) =>
-      if newRange.start.row is 0
-        @refresh()
+    @narrowEditor.buffer.onDidChange ({newRange, oldRange}) =>
+      if not newRange.isEmpty() and (newRange.start.row is 0) and (newRange.end.row is 0)
+        return @refresh()
+
+      if not oldRange.isEmpty() and (oldRange.start.row is 0) and (oldRange.end.row is 0)
+        return @refresh()
 
   locked: false
   isLocked: -> @locked
@@ -240,6 +251,9 @@ class UI
 
   appendText: (text) ->
     eof = @narrowEditor.getEofBufferPosition()
+    if eof.isLessThan([1, 0])
+      eof = @narrowEditor.getLastSelection().insertText("\n").end
+      @narrowEditor.setCursorBufferPosition([0, Infinity])
     @narrowEditor.setTextInBufferRange([eof, eof], text)
 
   # Return row

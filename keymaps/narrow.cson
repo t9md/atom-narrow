@@ -3,13 +3,15 @@
   'enter': 'core:confirm'
   # 'ctrl-u': 'narrow-ui:preview-item'
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
+  'f5': 'narrow-ui:force-refresh'
 
 'atom-text-editor.narrow.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'
   'q': 'core:close'
   'o': 'narrow-ui:confirm-keep-open'
-  'u': 'narrow-ui:preview-item'
+  # 'u': 'narrow-ui:preview-item'
   'r': 'narrow-ui:toggle-auto-preview'
+  'ctrl-r': 'narrow-ui:force-refresh'
 
 'atom-text-editor.narrow.fold[data-grammar="source narrow"]':
   'cmd-]': 'narrow-ui:fold:increase-fold-level'
@@ -20,6 +22,6 @@
 
 # For vim-mode-plus integration
 'atom-text-editor.vim-mode-plus-search':
-  'ctrl-o': 'vim-mode-plus-user:narrow-lines-from-search'
-  'ctrl-cmd-o': 'vim-mode-plus-user:narrow-search'
-  'cmd-shift-o': 'vim-mode-plus-user:narrow-search-current-project'
+  'ctrl-l': 'vim-mode-plus-user:narrow-lines-from-search'
+  'cmd-/': 'vim-mode-plus-user:narrow-search'
+  'ctrl-cmd-/': 'vim-mode-plus-user:narrow-search-current-project'

@@ -9,8 +9,8 @@ alpha
 
 # Features
 
-- Search across project via `ag`.
 - autoPreview items under cursor.
+- Auto sync narrow-bounded-editor's cursor position to selected intem on narrow UI.
 - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration.
 
 # Architecture(not settled yet)
@@ -20,9 +20,9 @@ alpha
 
 # Bundled providers
 
+- search: provide matched text as items via `ag` search.
 - lines: narrow current editors lines
 - fold: provide fold-starting rows as item.
-- search: provide matched text as items via `ag` search.
 - git-diff: for core git-diff package
 - bookmarks: for core bookmarks package
 - symbols: provide symbols as item, equivalent to core symbols-views package's `toggle-file-symbols` command.
@@ -74,9 +74,12 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
 ```coffeescript
 'atom-text-editor.vim-mode-plus.normal-mode':
   'space o': 'narrow:fold'
+  'space O': 'narrow:symbols'
   'space l': 'narrow:lines'
+  'space L': 'narrow:lines-by-current-word'
   'space s': 'narrow:search-current-project'
-  'space S': 'narrow:symbols'
+  'space S': 'narrow:search-by-current-word'
+  # 'space S': 'narrow:symbols'
   'space G': 'narrow:git-diff'
   'space B': 'narrow:bookmarks'
 
@@ -91,22 +94,10 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
 
 # vim-mode-plus integration.
 
-If you are [vim-mode-plus](https://atom.io/packages/vim-mode-plus) user, following commands are provided.  
-Both are directly invoke `lines` ore `search` form `vim-mode-plus:search` UI.
+If you are [vim-mode-plus](https://atom.io/packages/vim-mode-plus) user,
+you can invoke `lines`, `search` directly from vim-mode-plus's search form.
 
-- `vim-mode-plus-user:narrow-search-current-project`
-- `vim-mode-plus-user:narrow-search-projects`
-
-Currently following keymap are defined(might be removed in future).
-
-```coffeescript
-'atom-text-editor.vim-mode-plus-search':
-  'ctrl-o': 'vim-mode-plus-user:narrow-lines-from-search'
-  'ctrl-cmd-o': 'vim-mode-plus-user:narrow-search-from-search'
-```
-
-So you can search `/` then type `abc` then `ctrl-o`, open `narrow:lines` with initial narrowing keyword `abc`.  
-`ctrl-cmd-o` is `narrow:search` version of this.  
+Check [keymap definition](https://github.com/t9md/atom-narrow/blob/make-it-stable/keymaps/narrow.cson)
 
 ### vmpStartInInsertModeForUI settings.
 
