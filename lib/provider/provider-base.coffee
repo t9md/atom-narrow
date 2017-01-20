@@ -43,15 +43,12 @@ class ProviderBase
   filterItems: (items, words) ->
     filterKey = @getFilterKey()
 
-    matchPattern = (item) ->
-      text = item[filterKey]
-      if text?
-        text.match(///#{pattern}///i)
-      else
-        true # When without filterKey is always displayed.
-
     for pattern, i in words.map(_.escapeRegExp)
-      items = items.filter(matchPattern)
+      items = items.filter (item) ->
+        if (text = item[filterKey])?
+          text.match(///#{pattern}///i)
+        else
+          true # items without filterKey is always displayed.
     items
 
   destroy: ->
