@@ -59,18 +59,31 @@ class UI
       'narrow-ui:open-without-close': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
+      'core:move-down': (event) =>
+        event.stopImmediatePropagation()
+        @nextItem(preview: true)
+      'core:move-up': (event) =>
+        event.stopImmediatePropagation()
+        @previousItem(preview: true)
 
-  nextItem: ->
+  moveUpDown: (direction, {preview}={}) ->
     if (row = @getRowForSelectedItem()) >= 0
       @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
-    @narrowEditor.moveDown()
-    @confirm(keepOpen: true)
 
-  previousItem: ->
-    if (row = @getRowForSelectedItem()) >= 0
-      @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
-    @narrowEditor.moveUp()
-    @confirm(keepOpen: true)
+    switch direction
+      when 'up' then @narrowEditor.moveUp()
+      when 'down' then @narrowEditor.moveDown()
+
+    if preview
+      @preview()
+    else
+      @confirm(keepOpen: true)
+
+  nextItem: (options) ->
+    @moveUpDown('down', options)
+
+  previousItem: (options) ->
+    @moveUpDown('up', options)
 
   isAutoPreview: ->
     @autoPreview
