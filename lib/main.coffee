@@ -1,9 +1,7 @@
 {CompositeDisposable} = require 'atom'
-
-Search = require './provider/search'
-Input = require './input'
 settings = require './settings'
 UI = null
+getCurrentWord = null # delay
 
 module.exports =
   config: settings.config
@@ -13,33 +11,27 @@ module.exports =
   activate: ->
     @subscriptions = new CompositeDisposable
     settings.removeDeprecated()
-    @input = new Input
 
-    getUiOptions = =>
-      uiOptions:
-        initialInput: @getCurrentWord()
-
-    getCurrentWord = @getCurrentWord.bind(this)
     @subscriptions.add atom.workspace.observeActivePaneItem (item) =>
       if atom.workspace.isTextEditor(item) and @isNarrowEditor(item)
         @currentNarrowEditor = item
 
     @subscriptions.add atom.commands.add 'atom-text-editor',
       'narrow:lines': => @narrow('lines')
-      'narrow:lines-by-current-word': => @narrow('lines', getUiOptions())
+      'narrow:lines-by-current-word': => @narrow('lines', input: @getCurrentWord())
 
       'narrow:fold': => @narrow('fold')
-      'narrow:fold-by-current-word': => @narrow('fold', getUiOptions())
+      'narrow:fold-by-current-word': => @narrow('fold', input: @getCurrentWord())
 
       'narrow:symbols': => @narrow('symbols')
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:bookmarks': => @narrow('bookmarks')
 
       'narrow:search': => @search()
-      'narrow:search-by-current-word': => @search(getCurrentWord())
+      'narrow:search-by-current-word': => @search(@getCurrentWord())
 
       'narrow:search-current-project': => @searchCurrentProject()
-      'narrow:search-current-project-by-current-word': => @searchCurrentProject(getCurrentWord())
+      'narrow:search-current-project-by-current-word': => @searchCurrentProject(@getCurrentWord())
 
       'narrow:focus': => @getUI()?.focus()
       'narrow:next-item': => @getUI()?.nextItem()
@@ -51,20 +43,10 @@ module.exports =
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
-    editor = atom.workspace.getActiveTextEditor()
-    selection = editor.getLastSelection()
-    {cursor} = selection
+    getCurrentWord ?= require('./utils').getCurrentWord
+    getCurrentWord(atom.workspace.getActiveTextEditor())
 
-    if selection.isEmpty()
-      point = cursor.getBufferPosition()
-      selection.selectWord()
-      text = selection.getText()
-      cursor.setBufferPosition(point)
-      text
-    else
-      selection.getText()
-
-  narrow: (providerName, {uiOptions, providerOptions}={}) ->
+  narrow: (providerName, uiOptions, providerOptions) ->
     if providerName not of @providers
       @providers[providerName] = require("./provider/#{providerName}")
     klass = @providers[providerName]
@@ -84,13 +66,15 @@ module.exports =
       return
     @search(word, projects)
 
-  search: (word=null, projects=atom.project.getPaths()) ->
-    unless word?
-      @input.readInput().then (input) =>
-        @search(input, projects)
+  search: (word = null, projects = atom.project.getPaths()) ->
+    if word?
+      @narrow('search', initialKeyword: word, {word, projects})
+    else
+      @readInput().then (input) => @search(input, projects)
 
-    return unless word
-    new Search(initialKeyword: word, {word, projects})
+  readInput: ->
+    @input ?= new(require './input')
+    @input.readInput()
 
   deactivate: ->
     @subscriptions?.dispose()
@@ -118,11 +102,7 @@ module.exports =
       vimState.searchInput.confirm()
       return text
 
-    getUiOptions = ->
-      uiOptions:
-        initialInput: confirmSearch()
-
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
-      'vim-mode-plus-user:narrow-lines-from-search': => @narrow('lines', getUiOptions())
+      'vim-mode-plus-user:narrow-lines-from-search': => @narrow('lines', input: confirmSearch())
       'vim-mode-plus-user:narrow-search': => @search(confirmSearch())
       'vim-mode-plus-user:narrow-search-current-project': => @searchCurrentProject(confirmSearch())

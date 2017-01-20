@@ -30,7 +30,7 @@ class UI
 
   constructor: (@provider, params={}) ->
     @disposables = new CompositeDisposable
-    {@initialKeyword, @initialInput} = params
+    {@initialKeyword, @input} = params
 
     @originalPane = atom.workspace.getActivePane()
     @gutterItem = document.createElement('span')
@@ -75,7 +75,7 @@ class UI
   registerCommands: ->
     atom.commands.add @narrowEditorElement,
       'core:confirm': => @confirm()
-      'narrow-ui:open-without-close': => @confirm(keepOpen: true)
+      'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
 
@@ -145,8 +145,8 @@ class UI
 
     @getItems().then (items) =>
       @setItems(items)
-      if @initialInput
-        @narrowEditor.insertText(@initialInput)
+      if @input
+        @narrowEditor.insertText(@input)
 
   findNearestItem: (items) ->
     cursorPosition = @provider.editor.getCursorBufferPosition()
@@ -211,7 +211,7 @@ class UI
   preview: ->
     @confirm(keepOpen: true).then ({editor, item}) =>
       @rowMarker = @highlightRow(editor, Point.fromObject(item.point).row)
-    @focus()
+      @focus()
 
   isValidItem: (item) ->
     item? and not item.skip
@@ -283,8 +283,4 @@ class UI
     @items = [{_prompt: true, skip: true}, items...]
     texts = items.map (item) => @provider.viewForItem(item)
     @appendText(texts.join("\n"))
-
-    # if @provider.syncToEditor and item = @findNearestItem(items)
-    #   @selectItem(item)
-    # else
     @selectItemForRow(@findValidItem(1, 'next'))
