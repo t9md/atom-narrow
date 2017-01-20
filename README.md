@@ -79,6 +79,11 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
   'space S': 'narrow:symbols'
   'space G': 'narrow:git-diff'
   'space B': 'narrow:bookmarks'
+
+'atom-workspace.has-narrow': # available only when some narrow was opened.
+  'ctrl-cmd-f': 'narrow:focus'
+  'ctrl-cmd-n': 'narrow:next-item'
+  'ctrl-cmd-p': 'narrow:previous-item'
 ```
 
 # vim-mode-plus integration.
