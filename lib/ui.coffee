@@ -108,8 +108,8 @@ class UI
         if @items.length and item = @findNearestItem(@items)
           @selectItem(item)
 
-    @disposables.add atom.workspace.observeActivePaneItem (item) =>
-      if item is @provider.editor
+    @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      if item isnt @narrowEditor
         @rowMarker?.destroy()
 
     activePane = atom.workspace.getActivePane()
@@ -215,11 +215,9 @@ class UI
     item = @getSelectedItem()
     done = @provider.confirmed(item, options)
     if options.preview and item.point and @provider.editor?
-      if done instanceof Promise
-        done.then =>
-          @rowMarker = @highlightRow(@provider.editor, Point.fromObject(item.point).row)
-      else
-        @rowMarker = @highlightRow(@provider.editor, Point.fromObject(item.point).row)
+      done = Promise.resolve(@provider.editor) unless done instanceof Promise
+      done.then (editor) =>
+        @rowMarker = @highlightRow(editor, Point.fromObject(item.point).row)
 
     unless options.preview or options.keepOpen
       @narrowEditor.destroy()

@@ -90,6 +90,7 @@ class Search extends ProviderBase
     atom.workspace.open(filePath, openOptions).then (editor) ->
       editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
+      editor
 
   filterItems: (items, words) ->
     filterKey = @getFilterKey()
