@@ -4,12 +4,6 @@ ProviderBase = require './provider-base'
 module.exports =
 class Lines extends ProviderBase
   boundToEditor: true
-  initialize: ->
-    @subscribe @editor.onDidStopChanging(@refresh)
-
-  refresh: =>
-    @items = null
-    @ui.refresh()
 
   getItems: ->
     @items ?= @editor.buffer.getLines().map (text, i) ->

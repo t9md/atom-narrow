@@ -74,6 +74,7 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
 ```coffeescript
 'atom-text-editor.vim-mode-plus.normal-mode':
   'space o': 'narrow:fold'
+  'space O': 'narrow:symbols'
   'space l': 'narrow:lines'
   'space L': 'narrow:lines-by-current-word'
   'space s': 'narrow:search-current-project'

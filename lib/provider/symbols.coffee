@@ -8,13 +8,6 @@ module.exports =
 class Symbols extends ProviderBase
   boundToEditor: true
 
-  initialize: ->
-    @subscribe @editor.onDidSave(@refresh)
-
-  refresh: =>
-    @items = null # invalidate cache.
-    @ui.refresh()
-
   getItems: ->
     if @items?
       @items

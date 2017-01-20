@@ -15,21 +15,12 @@ getCodeFoldStartRows = (editor, indentLevel) ->
 module.exports =
 class Fold extends ProviderBase
   boundToEditor: true
-  
   foldLevel: 2
 
   initialize: ->
-    @subscribe @editor.onDidStopChanging(@refresh.bind(this))
-    @registerCommands()
-
-  registerCommands: ->
     atom.commands.add @ui.narrowEditorElement,
       'narrow-ui:fold:increase-fold-level': => @updateFoldLevel(+1)
       'narrow-ui:fold:decrease-fold-level': => @updateFoldLevel(-1)
-
-  refresh: ->
-    @items = null # invalidate cache
-    @ui.refresh()
 
   updateFoldLevel: (relativeLevel) ->
     @foldLevel = Math.max(0, @foldLevel + relativeLevel)

@@ -13,13 +13,6 @@ module.exports =
 class GitDiff extends ProviderBase
   boundToEditor: true
 
-  initialize: ->
-    @subscribe @editor.onDidStopChanging(@refresh)
-
-  refresh: =>
-    @items = null
-    @ui.refresh()
-
   getItems: ->
     if @items?
       @items
