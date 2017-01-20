@@ -1,33 +1,37 @@
 _ = require 'underscore-plus'
-{Point, CompositeDisposable} = require 'atom'
+{Point, CompositeDisposable, Emitter} = require 'atom'
 {
   saveEditorState
   padStringLeft
 } = require '../utils'
+UI = require '../ui'
 
 module.exports =
 class ProviderBase
   wasConfirmed: false
   textWidthForLastRow: null
+  boundToEditor: false
+  includeHeaderGrammarRules: false
 
   getName: ->
     @constructor.name
 
-  getTitle: ->
+  getDashName: ->
     _.dasherize(@getName())
 
-  constructor: (@ui, @options={}) ->
+  constructor: (uiOptions, @options={}) ->
     @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
+    @editorElement = @editor.element
+    @pane = atom.workspace.paneForItem(@editor)
+    @restoreEditorState = saveEditorState(@editor)
+    @emitter = new Emitter
 
     @subscribe @editor.onDidStopChanging(@invalidateState)
 
-    @editorElement = @editor.element
-    @pane = atom.workspace.getActivePane()
-    @restoreEditorState = saveEditorState(@editor)
-
+    @ui = new UI(this, uiOptions)
     @initialize?()
-    @ui.start(this)
+    @ui.start()
 
   invalidateState: =>
     @textWidthForLastRow = null
@@ -41,47 +45,34 @@ class ProviderBase
   filterItems: (items, words) ->
     filterKey = @getFilterKey()
 
-    matchPattern = (item) ->
-      text = item[filterKey]
-      if text?
-        text.match(///#{pattern}///i)
-      else
-        true # When without filterKey is always displayed.
-
     for pattern, i in words.map(_.escapeRegExp)
-      items = items.filter(matchPattern)
+      items = items.filter (item) ->
+        if (text = item[filterKey])?
+          text.match(///#{pattern}///i)
+        else
+          true # items without filterKey is always displayed.
     items
 
-  highlightRow: (editor, row) ->
-    point = [row, 0]
-    marker = editor.markBufferRange([point, point])
-    editor.decorateMarker(marker, type: 'line', class: 'narrow-result')
-    marker
-
   destroy: ->
-    @marker?.destroy()
     @subscriptions.dispose()
-    @restoreEditorState() unless @wasConfirmed
-    {@editor, @editorElement, @marker, @subscriptions} = {}
+    if @editor.isAlive() and not @wasConfirmed
+      @restoreEditorState()
+    {@editor, @editorElement, @subscriptions} = {}
 
-  confirmed: ({point}, options={}) ->
-    unless options.preview
-      @wasConfirmed = true
-    @marker?.destroy()
+  confirmed: ({point}) ->
+    @wasConfirmed = true
     return unless point?
     point = Point.fromObject(point)
 
-    if options.preview?
-      @pane.activateItem(@editor)
-      @marker = @highlightRow(@editor, point.row)
-    else
-      @editor.setCursorBufferPosition(point, autoscroll: false)
-      @editor.moveToFirstCharacterOfLine()
-      @pane.activate()
-      @pane.activateItem(@editor)
+    @editor.setCursorBufferPosition(point, autoscroll: false)
+    @editor.moveToFirstCharacterOfLine()
+    @pane.activate()
+    @pane.activateItem(@editor)
 
     @editor.scrollToBufferPosition(point, center: true)
     @editorElement.component.updateSync()
+
+    return {@editor, point}
 
   getLineNumberText: (row) ->
     @textWidthForLastRow ?= String(@editor.getLastBufferRow()).length

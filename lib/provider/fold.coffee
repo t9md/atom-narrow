@@ -14,6 +14,8 @@ getCodeFoldStartRows = (editor, indentLevel) ->
 
 module.exports =
 class Fold extends ProviderBase
+  boundToEditor: true
+  
   foldLevel: 2
 
   initialize: ->

@@ -65,6 +65,20 @@ limitNumber = (number, {max, min}={}) ->
   number = Math.max(number, min) if min?
   number
 
+getCurrentWord = (editor) ->
+  editor = atom.workspace.getActiveTextEditor()
+  selection = editor.getLastSelection()
+  {cursor} = selection
+
+  if selection.isEmpty()
+    point = cursor.getBufferPosition()
+    selection.selectWord()
+    text = selection.getText()
+    cursor.setBufferPosition(point)
+    text
+  else
+    selection.getText()
+
 module.exports = {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
@@ -74,4 +88,5 @@ module.exports = {
   saveEditorState
   requireFrom
   limitNumber
+  getCurrentWord
 }

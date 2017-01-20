@@ -18,6 +18,8 @@ getBookmarks = ->
 
 module.exports =
 class Bookmarks extends ProviderBase
+  includeHeaderGrammarRules: true
+
   getItemsForEditor: (editor, markerLayer) ->
     filePath = editor.getPath()
     textWidthForLastRow = String(editor.getLastBufferRow()).length
@@ -36,16 +38,13 @@ class Bookmarks extends ProviderBase
       items.push(@getItemsForEditor(editor, markerLayer)...)
     items
 
-  confirmed: (item, {preview}={}) ->
+  confirmed: (item) ->
     {filePath, point} = item
-    @marker?.destroy()
     @pane.activate()
-
-    openOptions = {activatePane: not preview, pending: true}
-    atom.workspace.open(filePath, openOptions).then (editor) =>
-      editor.setCursorBufferPosition(point, autoscroll: false) unless preview
+    atom.workspace.open(filePath, pending: true).then (editor) ->
+      editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
-      @marker = @highlightRow(editor, point.row) if preview
+      return {editor, point}
 
   viewForItem: ({header, text, point, textWidthForLastRow}) ->
     if header?
