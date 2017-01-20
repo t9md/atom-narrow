@@ -41,7 +41,6 @@ class UI
 
     @narrowEditorElement = @narrowEditor.element
     @narrowEditorElement.classList.add('narrow')
-    # @narrowEditorElement.classList.add(params.class) if params.class
 
     @narrowEditor.getTitle = => @provider?.getTitle()
     @narrowEditor.isModified = -> false
@@ -75,10 +74,9 @@ class UI
       when 'up' then @narrowEditor.moveUp()
       when 'down' then @narrowEditor.moveDown()
 
-    if preview
-      @preview()
-    else
-      @confirm(keepOpen: true)
+    unless preview
+      @confirm(keepOpen: true).then =>
+        @rowMarker?.destroy() # FIXME
 
   nextItem: (options) ->
     @moveUpDown('down', options)
@@ -185,7 +183,6 @@ class UI
 
   preview: ->
     @confirm(preview: true)
-    @focus()
 
   isValidItem: (item) ->
     item? and not item.skip
@@ -214,13 +211,15 @@ class UI
     @rowMarker?.destroy()
     item = @getSelectedItem()
     done = @provider.confirmed(item, options)
-    if options.preview and item.point and @provider.editor?
-      done = Promise.resolve(@provider.editor) unless done instanceof Promise
-      done.then (editor) =>
+    unless done instanceof Promise
+      done = Promise.resolve(@provider.editor)
+
+    done.then (editor) =>
+      if options.preview
         @rowMarker = @highlightRow(editor, Point.fromObject(item.point).row)
 
-    unless options.preview or options.keepOpen
-      @narrowEditor.destroy()
+      unless options.preview or options.keepOpen
+        @narrowEditor.destroy()
 
   # clear text from  2nd row to last row.
   clearItemsText: ->
