@@ -11,7 +11,7 @@ repositoryForPath = (goalPath) ->
 
 module.exports =
 class GitDiff extends ProviderBase
-  syncToEditor: true
+  boundToEditor: true
 
   initialize: ->
     @subscribe @editor.onDidStopChanging(@refresh)

@@ -10,7 +10,8 @@ module.exports =
 class ProviderBase
   wasConfirmed: false
   textWidthForLastRow: null
-  syncToEditor: false
+  boundToEditor: false
+  includeHeaderGrammarRules: false
 
   getName: ->
     @constructor.name
@@ -70,6 +71,8 @@ class ProviderBase
 
     @editor.scrollToBufferPosition(point, center: true)
     @editorElement.component.updateSync()
+
+    return {@editor, point}
 
   getLineNumberText: (row) ->
     @textWidthForLastRow ?= String(@editor.getLastBufferRow()).length

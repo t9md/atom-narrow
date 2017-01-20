@@ -6,7 +6,7 @@ TagGenerator = requireFrom('symbols-view', 'tag-generator')
 
 module.exports =
 class Symbols extends ProviderBase
-  syncToEditor: true
+  boundToEditor: true
 
   initialize: ->
     @subscribe @editor.onDidSave(@refresh)

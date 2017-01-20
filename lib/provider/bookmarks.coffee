@@ -18,6 +18,8 @@ getBookmarks = ->
 
 module.exports =
 class Bookmarks extends ProviderBase
+  includeHeaderGrammarRules: true
+
   getItemsForEditor: (editor, markerLayer) ->
     filePath = editor.getPath()
     textWidthForLastRow = String(editor.getLastBufferRow()).length
@@ -42,7 +44,7 @@ class Bookmarks extends ProviderBase
     atom.workspace.open(filePath, pending: true).then (editor) ->
       editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
-      editor
+      return {editor, point}
 
   viewForItem: ({header, text, point, textWidthForLastRow}) ->
     if header?

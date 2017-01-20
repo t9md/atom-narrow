@@ -45,6 +45,8 @@ getOutputterForProject = (project, items) ->
 module.exports =
 class Search extends ProviderBase
   items: null
+  includeHeaderGrammarRules: true
+
   getItems: ->
     if @items?
       @items
@@ -74,7 +76,7 @@ class Search extends ProviderBase
     atom.workspace.open(filePath, pending: true).then (editor) ->
       editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
-      editor
+      return {editor, point}
 
   filterItems: (items, words) ->
     filterKey = @getFilterKey()

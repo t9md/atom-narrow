@@ -37,20 +37,51 @@ class UI
     @gutterItem.textContent = " > "
 
     @narrowEditor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
-    @narrowEditor.getTitle = => @provider.getDashName()
+    dashName = @provider.getDashName()
+    @narrowEditor.getTitle = -> dashName
     @narrowEditor.isModified = -> false
-    @narrowEditor.onDidDestroy => @destroy()
-    @narrowEditorElement = @narrowEditor.element
-    @narrowEditorElement.classList.add('narrow')
-    @gutter = @narrowEditor.addGutter(name: 'narrow')
-
+    @narrowEditor.onDidDestroy(@destroy.bind(this))
     @narrowEditor.insertText("\n")
     @narrowEditor.setCursorBufferPosition([0, Infinity])
+
+    @narrowEditorElement = @narrowEditor.element
+    @narrowEditorElement.classList.add('narrow', dashName)
+
+    @gutter = @narrowEditor.addGutter(name: 'narrow')
+
+    includeHeaderRules = @provider.includeHeaderGrammarRules
+    @grammar = new NarrowGrammar(@narrowEditor, {@initialKeyword, includeHeaderRules})
+    @grammar.activate()
 
     @registerCommands()
     @disposables.add(@observeInputChange())
     @observeCursorPositionChangeForNarrowEditor()
+
+    @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      @rowMarker?.destroy() if item isnt @narrowEditor
+
+    if @provider.boundToEditor
+      providerEditor = @provider.editor
+      @disposables.add providerEditor.onDidChangeCursorPosition(@syncToProviderEditor.bind(this))
+      @disposables.add providerEditor.onDidDestroy(@destroy.bind(this))
+
     @constructor.registerUI(@narrowEditor, this)
+
+  start: ->
+    activePane = atom.workspace.getActivePane()
+    direction = settings.get('directionToOpen')
+    if direction is 'here'
+      @pane = activePane.activateItem(@narrowEditor)
+      @autoPreview = false
+    else
+      @pane = openItemInAdjacentPaneForPane(activePane, @narrowEditor, direction)
+      defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
+      @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
+
+    if @input
+      @narrowEditor.insertText(@input)
+    else
+      @refresh()
 
   focus: ->
     if @isAlive()
@@ -106,57 +137,6 @@ class UI
     @autoPreview = not @autoPreview
     @preview() if @isAutoPreview()
 
-  getItems: ->
-    Promise.resolve(@provider.getItems())
-
-  start: ->
-    if @provider.getName() in ['Search', 'Bookmarks']
-      includeHeaderRules = true
-
-    @grammar = new NarrowGrammar(@narrowEditor, {@initialKeyword, includeHeaderRules})
-    @grammar.activate()
-    @narrowEditorElement.classList.add(@provider.getDashName())
-
-    if @provider.syncToEditor
-      @disposables.add @provider.editor.onDidChangeCursorPosition =>
-        if @items.length and item = @findNearestItem(@items)
-          @selectItem(item)
-          if (row = @getRowForSelectedItem()) >= 0
-            unless @narrowEditor.getCursorBufferPosition().row is row
-              @withLock =>
-                @narrowEditor.setCursorBufferPosition([row, 0])
-
-      @disposables.add @provider.editor.onDidDestroy =>
-        @destroy()
-
-    @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      if item isnt @narrowEditor
-        @rowMarker?.destroy()
-
-    activePane = atom.workspace.getActivePane()
-    direction = settings.get('directionToOpen')
-    if direction is 'here'
-      @pane = activePane.activateItem(@narrowEditor)
-      @autoPreview = false
-    else
-      @pane = openItemInAdjacentPaneForPane(activePane, @narrowEditor, direction)
-      defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
-      @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
-
-    @getItems().then (items) =>
-      @setItems(items)
-      if @input
-        @narrowEditor.insertText(@input)
-
-  findNearestItem: (items) ->
-    cursorPosition = @provider.editor.getCursorBufferPosition()
-    # Detect item
-    # - cursor position is equal or greather than that item.
-    for item, i in items by -1 when item.point?
-      itemPoint = Point.fromObject(item.point)
-      break if itemPoint.isLessThanOrEqual(cursorPosition)
-    return item
-
   getNarrowQuery: ->
     @narrowEditor.lineTextForBufferRow(0)
 
@@ -166,7 +146,7 @@ class UI
     pattern = words.map(_.escapeRegExp).join('|')
     @grammar.update({pattern})
 
-    @getItems().then (items) =>
+    Promise.resolve(@provider.getItems()).then (items) =>
       @clearItemsText()
       @setItems(@provider.filterItems(items, words))
 
@@ -208,9 +188,25 @@ class UI
 
       @preview() if @isAutoPreview()
 
+  syncToProviderEditor: ->
+    cursorPosition = @provider.editor.getCursorBufferPosition()
+    # Detect item
+    # - cursor position is equal or greather than that item.
+    foundItem = null
+    for item in @items by -1 when item.point?
+      itemPoint = Point.fromObject(item.point)
+      if itemPoint.isLessThanOrEqual(cursorPosition)
+        foundItem = item
+        break
+    return unless foundItem?
+
+    @selectItem(foundItem)
+    unless (row = @getRowForSelectedItem()) is @narrowEditor.getCursorBufferPosition().row
+      @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
+
   preview: ->
-    @confirm(keepOpen: true).then ({editor, item}) =>
-      @rowMarker = @highlightRow(editor, Point.fromObject(item.point).row)
+    @confirm(keepOpen: true).then ({editor, point}) =>
+      @rowMarker = @highlightRow(editor, Point.fromObject(point).row)
       @focus()
 
   isValidItem: (item) ->
@@ -232,12 +228,10 @@ class UI
   confirm: (options={}) ->
     @rowMarker?.destroy()
     item = @getSelectedItem()
-    done = @provider.confirmed(item)
-    done = Promise.resolve(@provider.editor) unless done instanceof Promise
-    done.then (editor) =>
+    Promise.resolve(@provider.confirmed(item)).then ({editor, point}) =>
       unless options.keepOpen
         @narrowEditor.destroy()
-      {editor, item}
+      {editor, point}
 
   # clear text from  2nd row to last row.
   clearItemsText: ->
