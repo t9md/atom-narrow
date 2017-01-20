@@ -55,15 +55,13 @@ class ProviderBase
     items
 
   destroy: ->
-    @marker?.destroy()
     @subscriptions.dispose()
     @restoreEditorState() unless @wasConfirmed
-    {@editor, @editorElement, @marker, @subscriptions} = {}
+    {@editor, @editorElement, @subscriptions} = {}
 
   confirmed: ({point}, options={}) ->
     unless options.preview
       @wasConfirmed = true
-    @marker?.destroy()
     return unless point?
     point = Point.fromObject(point)
 

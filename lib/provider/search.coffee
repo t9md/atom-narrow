@@ -7,8 +7,6 @@ ProviderBase = require './provider-base'
 module.exports =
 class Search extends ProviderBase
   items: null
-  searchersRunning: []
-
   search: (text, {cwd, onData, onFinish}) ->
     command = 'ag'
     args = ['--nocolor', '--column', text]
@@ -79,7 +77,6 @@ class Search extends ProviderBase
     process
 
   confirmed: (item, {preview}={}) ->
-    @marker?.destroy()
     return unless item.point?
 
     {filePath, point} = item

@@ -38,14 +38,13 @@ class Bookmarks extends ProviderBase
 
   confirmed: (item, {preview}={}) ->
     {filePath, point} = item
-    @marker?.destroy()
     @pane.activate()
 
     openOptions = {activatePane: not preview, pending: true}
-    atom.workspace.open(filePath, openOptions).then (editor) =>
+    atom.workspace.open(filePath, openOptions).then (editor) ->
       editor.setCursorBufferPosition(point, autoscroll: false) unless preview
       editor.scrollToBufferPosition(point, center: true)
-      @marker = @highlightRow(editor, point.row) if preview
+      editor
 
   viewForItem: ({header, text, point, textWidthForLastRow}) ->
     if header?
