@@ -183,6 +183,7 @@ class UI
 
   preview: ->
     @confirm(preview: true)
+    @focus()
 
   isValidItem: (item) ->
     item? and not item.skip
