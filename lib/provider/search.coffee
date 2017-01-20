@@ -50,8 +50,7 @@ class Search extends ProviderBase
     if @items?
       @items
     else
-      pattern = _.escapeRegExp(@options.word)
-      search = @search.bind(null, pattern)
+      search = @search.bind(null, _.escapeRegExp(@options.word))
       Promise.all(@options.projects.map(search)).then (values) =>
         @items = _.flatten(values)
 
