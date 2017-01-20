@@ -16,6 +16,9 @@ class ProviderBase
   getName: ->
     @constructor.name
 
+  invalidateCachedItem: ->
+    @items = null
+
   getDashName: ->
     _.dasherize(@getName())
 

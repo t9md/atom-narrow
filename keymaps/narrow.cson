@@ -10,6 +10,7 @@
   'o': 'narrow-ui:confirm-keep-open'
   'u': 'narrow-ui:preview-item'
   'r': 'narrow-ui:toggle-auto-preview'
+  'ctrl-r': 'narrow-ui:force-refresh'
 
 'atom-text-editor.narrow.fold[data-grammar="source narrow"]':
   'cmd-]': 'narrow-ui:fold:increase-fold-level'
