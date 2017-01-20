@@ -4,77 +4,71 @@ _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
 
+runCommand = (options) ->
+  new BufferedProcess(options).onWillThrowError ({error, handle}) ->
+    if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
+      console.log "ERROR"
+    handle()
+
+parseLine = (line) ->
+  m = line.match(/^(.*?):(\d+):(\d+):(.*)$/)
+  if m?
+    {
+      relativePath: m[1]
+      point: new Point(parseInt(m[2]) - 1, parseInt(m[3]))
+      text: m[4]
+    }
+  else
+    null
+
+getOutputterForProject = (project, items) ->
+  projectName = path.basename(project)
+  projectHeaderAdded = false
+  currentFilePath = null
+  (data) ->
+    unless projectHeaderAdded
+      header = "# #{projectName}"
+      items.push({header, projectName, projectHeader: true, skip: true})
+      projectHeaderAdded = true
+
+    for line in data.split("\n") when parsed = parseLine(line)
+      {relativePath, point, text} = parsed
+      filePath = path.join(project, relativePath)
+
+      if currentFilePath isnt filePath
+        currentFilePath = filePath
+        header = "  # #{relativePath}"
+        items.push({header, projectName, filePath, skip: true})
+
+      items.push({point, text, filePath, projectName})
+
 module.exports =
 class Search extends ProviderBase
   items: null
-  search: (text, {cwd, onData, onFinish}) ->
-    command = 'ag'
-    args = ['--nocolor', '--column', text]
-    options = {cwd: cwd, env: process.env}
-    @runCommand {command, args, options, onData, onFinish}
-
-  parseLine: (line) ->
-    m = line.match(/^(.*?):(\d+):(\d+):(.*)$/)
-    if m?
-      point = [parseInt(m[2]) - 1, parseInt(m[3])]
-      {
-        relativePath: m[1]
-        point: point
-        text: m[4]
-      }
-    else
-      null
-
-  outputterForProject: (project, items) ->
-    projectName = path.basename(project)
-    projectHeaderAdded = false
-    currentFile = null
-    ({data}) =>
-      unless projectHeaderAdded
-        items.push({header: '# ' + projectName, projectName, projectHeader: true, skip: true})
-        projectHeaderAdded = true
-
-      lines = data.split("\n")
-
-      for line in lines when item = @parseLine(line)
-        {relativePath} = item
-        fullPath = path.join(project, relativePath)
-
-        if currentFile isnt relativePath
-          currentFile = relativePath
-          headerItem = {header: "  # " + currentFile, projectName, filePath: fullPath, skip: true}
-          items.push(headerItem)
-
-        item.filePath = fullPath
-        item.projectName = projectName
-        items.push(item)
 
   getItems: ->
-    return @items if @items?
-    projects = @options.projects
-    @items = []
-
-    finished = 0
-    new Promise (resolve) =>
-      onFinish = (code) =>
-        finished++
-        resolve(@items) if finished is projects.length
-
+    if @items?
+      @items
+    else
       pattern = _.escapeRegExp(@options.word)
-      for project in projects
-        onData = @outputterForProject(project, @items)
-        @search(pattern, {cwd: project, onData, onFinish})
+      search = @search.bind(null, pattern)
+      Promise.all(@options.projects.map(search)).then (values) =>
+        @items = _.flatten(values)
 
-  runCommand: ({command, args, options, onData, onFinish}) ->
-    stdout = stderr = (output) -> onData(data: output)
-    exit = (code) -> onFinish(code)
-
-    process = new BufferedProcess {command, args, options, stdout, stderr, exit}
-    process.onWillThrowError ({error, handle}) ->
-      if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
-        console.log "ERROR"
-      handle()
-    process
+  search: (pattern, project) ->
+    items = []
+    stdout = stderr = getOutputterForProject(project, items)
+    new Promise (resolve) ->
+      runCommand(
+        command: 'ag'
+        args: ['--nocolor', '--column', pattern]
+        stdout: stdout
+        stderr: stderr
+        exit: -> resolve(items)
+        options:
+          cwd: project
+          env: process.env
+      )
 
   confirmed: (item, {preview}={}) ->
     return unless item.point?
@@ -91,32 +85,25 @@ class Search extends ProviderBase
 
   filterItems: (items, words) ->
     filterKey = @getFilterKey()
-    filter = (items, pattern) ->
-      _.filter items, (item) ->
+    for pattern in words.map(_.escapeRegExp)
+      items = items.filter (item) ->
         item.skip or item[filterKey].match(///#{pattern}///i)
 
-    for pattern in words.map(_.escapeRegExp)
-      items = filter(items, pattern)
-
     normalItems = _.filter(items, (item) -> not item.header?)
-    allFilePaths = _.uniq(_.pluck(normalItems, "filePath"))
-    allProjectNames = _.uniq(_.pluck(normalItems, "projectName"))
+    filePaths = _.uniq(_.pluck(normalItems, "filePath"))
+    projectNames = _.uniq(_.pluck(normalItems, "projectName"))
 
-    items = _.filter items, (item) ->
+    _.filter items, (item) ->
       if item.header?
-        if item.projectHeader
-          item.projectName in allProjectNames
+        if item.projectHeader?
+          item.projectName in projectNames
         else
-          item.filePath in allFilePaths
+          item.filePath in filePaths
       else
         true
-    items
 
   viewForItem: (item) ->
     if item.header?
       item.header
     else
-      {text, point} = item
-      [row, column] = point
-      row += 1
-      "    #{row}:#{column}:#{text}"
+      "    #{item.point.row + 1}:#{item.point.column}:#{item.text}"
