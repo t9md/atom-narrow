@@ -17,8 +17,10 @@ class Symbols extends ProviderBase
     if @items?
       @items
     else
-      new TagGenerator(@editor.getPath(), @editor.getGrammar().scopeName).generate().then (tags) =>
-        # We show full line text of symbol's line, so just care for which line have symbols.
+      # We show full line text of symbol's line, so just care for which line have symbol.
+      filePath = @editor.getPath()
+      scopeName = @editor.getGrammar().scopeName
+      new TagGenerator(filePath, scopeName).generate().then (tags) =>
         tags = _.uniq(tags, (tag) -> tag.position.row)
         @items = tags.map ({position}) =>
           point: position

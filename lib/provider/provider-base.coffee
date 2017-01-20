@@ -20,12 +20,11 @@ class ProviderBase
   constructor: (uiOptions, @options={}) ->
     @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
+    @editorElement = @editor.element
+    @pane = atom.workspace.paneForItem(@editor)
+    @restoreEditorState = saveEditorState(@editor)
 
     @subscribe @editor.onDidStopChanging(@invalidateState)
-
-    @editorElement = @editor.element
-    @pane = atom.workspace.getActivePane()
-    @restoreEditorState = saveEditorState(@editor)
 
     @ui = new UI(uiOptions)
     @initialize?()

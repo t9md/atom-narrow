@@ -26,6 +26,30 @@ class UI
     workspaceElement = atom.views.getView(atom.workspace)
     workspaceElement.classList.toggle('has-narrow', @uiByNarrowEditor.size)
 
+  constructor: (params={}) ->
+    @disposables = new CompositeDisposable
+    {@initialKeyword, @initialInput} = params
+
+    @originalPane = atom.workspace.getActivePane()
+    @gutterItem = document.createElement('span')
+    @gutterItem.textContent = " > "
+
+    @narrowEditor = @buildEditor()
+    @narrowEditor.onDidDestroy => @destroy()
+    @narrowEditorElement = @narrowEditor.element
+    @narrowEditorElement.classList.add('narrow')
+    @gutter = @narrowEditor.addGutter(name: 'narrow')
+
+    # [FIXME?] With just "\n", narrow:line fail to syntax highlight
+    # with custom grammar on initial open
+    @narrowEditor.insertText("\n ")
+    @narrowEditor.setCursorBufferPosition([0, Infinity])
+
+    @registerCommands()
+    @observeInputChange()
+    @observeCursorPositionChangeForNarrowEditor()
+    @constructor.registerUI(@narrowEditor, this)
+
   focus: ->
     if @isAlive()
       @pane.activate()
@@ -34,16 +58,11 @@ class UI
   isAlive: ->
     @narrowEditor?.isAlive?()
 
-  buildEditor: (params={}) ->
-    @narrowEditor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
-    @gutter = @narrowEditor.addGutter(name: 'narrow')
-    @narrowEditor.onDidDestroy => @destroy()
-
-    @narrowEditorElement = @narrowEditor.element
-    @narrowEditorElement.classList.add('narrow')
-
-    @narrowEditor.getTitle = => @provider?.getTitle()
-    @narrowEditor.isModified = -> false
+  buildEditor: ->
+    editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    editor.getTitle = => @provider?.getTitle()
+    editor.isModified = -> false
+    editor
 
   destroy: ->
     @disposables.dispose()
@@ -188,19 +207,12 @@ class UI
   isValidItem: (item) ->
     item? and not item.skip
 
-  getGutterItem: ->
-    @gutterItem ?= (
-      item = document.createElement('span')
-      item.textContent = " > "
-      item
-    )
-
   setGutterMarkerToRow: (row) ->
     @gutterMarker?.destroy()
     @gutterMarker = @narrowEditor.markBufferPosition([row, 0])
     @gutter.decorateMarker @gutterMarker,
       class: "narrow-ui-row"
-      item: @getGutterItem()
+      item: @gutterItem
 
   highlightRow: (editor, row) ->
     point = [row, 0]
@@ -233,22 +245,6 @@ class UI
     row = @narrowEditor.getLastBufferRow()
     range = [[row, 0], [row, Infinity]]
     @narrowEditor.setTextInBufferRange(range, text)
-
-  constructor: (params={}) ->
-    @disposables = new CompositeDisposable
-    {@initialKeyword, @initialInput} = params
-    @originalPane = atom.workspace.getActivePane()
-    @buildEditor(params)
-
-    # [FIXME?] With just "\n", narrow:line fail to syntax highlight
-    # with custom grammar on initial open.s
-    @narrowEditor.insertText("\n ")
-    @narrowEditor.setCursorBufferPosition([0, Infinity])
-
-    @registerCommands()
-    @observeInputChange()
-    @observeCursorPositionChangeForNarrowEditor()
-    @constructor.registerUI(@narrowEditor, this)
 
   # Return row
   findValidItem: (startRow, direction) ->
