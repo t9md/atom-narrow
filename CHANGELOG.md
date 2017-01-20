@@ -1,3 +1,14 @@
+# 0.9.0: Still experimenting!!
+- New: Auto sync selected items on narrowUI with bounded editor's cursor position.
+  - Enabled on following providers
+    - `Fold`, `GitDiff`, `Lines`, `Symbols`
+- New: `narrow:next-item`, `narrow:preview-item` to move to next item without focusing narrowEditor(UI).
+- Improve: GitDiff provider auto-refresh items on bound-editor's change.
+- Improve: Currectly track last focused UI for `narrow:focus`.
+- Improve: Clear row-marker when focus lost from narrowEditor.
+- Breaking: Command rename `narrow-ui:open-without-close` to `narrow-ui:confirm-keep-open`.
+- Breaking: Default keymap on vim-mode-plus's search-form was change.
+
 # 0.8.0: Still experimenting!!
 - New: `narrow:fold` buffer's keymaps `cmd-[`, `cmd-]` to change foldLevel to filter items.
 - Update style
