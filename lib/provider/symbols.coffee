@@ -28,5 +28,5 @@ class Symbols extends ProviderBase
           point: position
           text: @editor.lineTextForBufferRow(position.row)
 
-  viewForItem: ({text, point}) ->
-    @getLineNumberText(point.row) + ":" + text
+  viewForItem: ({text}) ->
+    text
