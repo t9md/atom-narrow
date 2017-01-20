@@ -8,6 +8,7 @@
 - Improve: Clear row-marker when focus lost from narrowEditor.
 - Breaking: Command rename `narrow-ui:open-without-close` to `narrow-ui:confirm-keep-open`.
 - Breaking: Default keymap on vim-mode-plus's search-form was change.
+- Breaking: `Symbols` provider no longer display line number.
 
 # 0.8.0: Still experimenting!!
 - New: `narrow:fold` buffer's keymaps `cmd-[`, `cmd-]` to change foldLevel to filter items.
