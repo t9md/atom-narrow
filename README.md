@@ -92,7 +92,7 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
 # vim-mode-plus integration.
 
 If you are [vim-mode-plus](https://atom.io/packages/vim-mode-plus) user, following commands are provided.  
-Both are directly invoke `lines` ore `search` form `vim-mode-plus:search` UI.
+Both are directly invoke `lines` or `search` form `vim-mode-plus:search` UI.
 
 - `vim-mode-plus-user:narrow-search-current-project`
 - `vim-mode-plus-user:narrow-search-projects`
