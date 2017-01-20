@@ -1,22 +1,6 @@
 @import "ui-variables";
 @import "syntax-variables";
 
-@red-color: @syntax-color-removed;
-@green-color: @syntax-color-added;
-@blue-color: @syntax-color-renamed;
-
-.round-box () {
-  box-sizing: border-box;
-  border-radius: @component-border-radius;
-  border-width: 1px;
-  border-style: solid;
-}
-
-// Bollowed from linter
-div.narrow-section {
-  color: lighten(@text-color-success, 5%);
-}
-
 atom-text-editor .narrow-ui-row {
   /* Take up the full allowed width */
   left: 0;
@@ -24,28 +8,12 @@ atom-text-editor .narrow-ui-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: @green-color;
+  color: @syntax-color-added;
 }
 
 @line-marker: fadeout(lighten(@syntax-color-added, 0%), 20%);
-// @line-marker: lighten(@syntax-color-added, 0%);
-// @line-marker: fadeout(@syntax-color-modified, 60%);
 
 atom-text-editor {
-  .narrow-match .region {
-    .round-box;
-    background-color: transparent;
-    border: 1px solid @syntax-result-marker-color;
-  }
-  .narrow-flash .region {
-    // .round-box;
-    background-color: @syntax-selection-color;
-  }
-  .narrow-result .region {
-    // .round-box;
-    background-color: @syntax-selection-flash-color;
-  }
-
   .line {
     &.narrow-result {
       box-shadow:0 -8px 0 -6px @line-marker inset;
