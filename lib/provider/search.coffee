@@ -45,7 +45,6 @@ getOutputterForProject = (project, items) ->
 module.exports =
 class Search extends ProviderBase
   items: null
-
   getItems: ->
     if @items?
       @items
@@ -69,15 +68,10 @@ class Search extends ProviderBase
           env: process.env
       )
 
-  confirmed: (item, {preview}={}) ->
-    return unless item.point?
-
-    {filePath, point} = item
-    point = Point.fromObject(point)
-
+  confirmed: ({filePath, point}) ->
+    return unless point?
     @pane.activate()
-    openOptions = {activatePane: not preview, pending: true}
-    atom.workspace.open(filePath, openOptions).then (editor) ->
+    atom.workspace.open(filePath, pending: true).then (editor) ->
       editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
       editor

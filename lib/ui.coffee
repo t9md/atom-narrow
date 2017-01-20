@@ -12,6 +12,8 @@ module.exports =
 class UI
   @uiByNarrowEditor: new Map()
   autoPreview: false
+  preventAutoPreview: false
+  destroyed: false
   items: []
 
   @unregisterUI: (narrowEditor) ->
@@ -26,7 +28,7 @@ class UI
     workspaceElement = atom.views.getView(atom.workspace)
     workspaceElement.classList.toggle('has-narrow', @uiByNarrowEditor.size)
 
-  constructor: (params={}) ->
+  constructor: (@provider, params={}) ->
     @disposables = new CompositeDisposable
     {@initialKeyword, @initialInput} = params
 
@@ -34,19 +36,19 @@ class UI
     @gutterItem = document.createElement('span')
     @gutterItem.textContent = " > "
 
-    @narrowEditor = @buildEditor()
+    @narrowEditor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    @narrowEditor.getTitle = => @provider.getDashName()
+    @narrowEditor.isModified = -> false
     @narrowEditor.onDidDestroy => @destroy()
     @narrowEditorElement = @narrowEditor.element
     @narrowEditorElement.classList.add('narrow')
     @gutter = @narrowEditor.addGutter(name: 'narrow')
 
-    # [FIXME?] With just "\n", narrow:line fail to syntax highlight
-    # with custom grammar on initial open
-    @narrowEditor.insertText("\n ")
+    @narrowEditor.insertText("\n")
     @narrowEditor.setCursorBufferPosition([0, Infinity])
 
     @registerCommands()
-    @observeInputChange()
+    @disposables.add(@observeInputChange())
     @observeCursorPositionChangeForNarrowEditor()
     @constructor.registerUI(@narrowEditor, this)
 
@@ -58,14 +60,12 @@ class UI
   isAlive: ->
     @narrowEditor?.isAlive?()
 
-  buildEditor: ->
-    editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
-    editor.getTitle = => @provider?.getTitle()
-    editor.isModified = -> false
-    editor
-
   destroy: ->
+    return if @destroyed
+    @destroyed = true
+
     @disposables.dispose()
+    @narrowEditor.destroy()
     @originalPane.activate() if @originalPane.isAlive()
     @provider?.destroy?()
     @gutterMarker?.destroy()
@@ -78,24 +78,17 @@ class UI
       'narrow-ui:open-without-close': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
-      'core:move-down': (event) =>
-        event.stopImmediatePropagation()
-        @nextItem(preview: true)
-      'core:move-up': (event) =>
-        event.stopImmediatePropagation()
-        @previousItem(preview: true)
 
-  moveUpDown: (direction, {preview}={}) ->
+  moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
       @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
 
-    switch direction
-      when 'up' then @narrowEditor.moveUp()
-      when 'down' then @narrowEditor.moveDown()
+    @withPreventAutoPreview =>
+      switch direction
+        when 'up' then @narrowEditor.moveUp()
+        when 'down' then @narrowEditor.moveDown()
 
-    unless preview
-      @confirm(keepOpen: true).then =>
-        @rowMarker?.destroy() # FIXME
+    @confirm(keepOpen: true)
 
   nextItem: (options) ->
     @moveUpDown('down', options)
@@ -104,7 +97,10 @@ class UI
     @moveUpDown('up', options)
 
   isAutoPreview: ->
-    @autoPreview
+    if @preventAutoPreview
+      false
+    else
+      @autoPreview
 
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
@@ -113,17 +109,25 @@ class UI
   getItems: ->
     Promise.resolve(@provider.getItems())
 
-  start: (@provider) ->
+  start: ->
     if @provider.getName() in ['Search', 'Bookmarks']
       includeHeaderRules = true
+
     @grammar = new NarrowGrammar(@narrowEditor, {@initialKeyword, includeHeaderRules})
     @grammar.activate()
-    @narrowEditorElement.classList.add(_.dasherize(@provider.getName()))
+    @narrowEditorElement.classList.add(@provider.getDashName())
 
-    if @provider.editor?
+    if @provider.syncToEditor
       @disposables.add @provider.editor.onDidChangeCursorPosition =>
         if @items.length and item = @findNearestItem(@items)
           @selectItem(item)
+          if (row = @getRowForSelectedItem()) >= 0
+            unless @narrowEditor.getCursorBufferPosition().row is row
+              @withLock =>
+                @narrowEditor.setCursorBufferPosition([row, 0])
+
+      @disposables.add @provider.editor.onDidDestroy =>
+        @destroy()
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       if item isnt @narrowEditor
@@ -160,15 +164,14 @@ class UI
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
     pattern = words.map(_.escapeRegExp).join('|')
+    @grammar.update({pattern})
 
     @getItems().then (items) =>
-      @grammar.update({pattern})
       @clearItemsText()
       @setItems(@provider.filterItems(items, words))
 
   observeInputChange: ->
-    buffer = @narrowEditor.getBuffer()
-    buffer.onDidChange ({newRange}) =>
+    @narrowEditor.buffer.onDidChange ({newRange}) =>
       if newRange.start.row is 0
         @refresh()
 
@@ -178,6 +181,11 @@ class UI
     @locked = true
     fn()
     @locked = false
+
+  withPreventAutoPreview: (fn) ->
+    @preventAutoPreview = true
+    fn()
+    @preventAutoPreview = false
 
   observeCursorPositionChangeForNarrowEditor: ->
     @narrowEditor.onDidChangeCursorPosition (event) =>
@@ -201,7 +209,8 @@ class UI
       @preview() if @isAutoPreview()
 
   preview: ->
-    @confirm(preview: true)
+    @confirm(keepOpen: true).then ({editor, item}) =>
+      @rowMarker = @highlightRow(editor, Point.fromObject(item.point).row)
     @focus()
 
   isValidItem: (item) ->
@@ -223,28 +232,21 @@ class UI
   confirm: (options={}) ->
     @rowMarker?.destroy()
     item = @getSelectedItem()
-    done = @provider.confirmed(item, options)
-    unless done instanceof Promise
-      done = Promise.resolve(@provider.editor)
-
+    done = @provider.confirmed(item)
+    done = Promise.resolve(@provider.editor) unless done instanceof Promise
     done.then (editor) =>
-      if options.preview
-        @rowMarker = @highlightRow(editor, Point.fromObject(item.point).row)
-
-      unless options.preview or options.keepOpen
+      unless options.keepOpen
         @narrowEditor.destroy()
+      {editor, item}
 
   # clear text from  2nd row to last row.
   clearItemsText: ->
-    start = [1, 0]
-    end = @narrowEditor.getEofBufferPosition()
-    range = [start, end]
+    range = [[1, 0], @narrowEditor.getEofBufferPosition()]
     @narrowEditor.setTextInBufferRange(range, '')
 
   appendText: (text) ->
-    row = @narrowEditor.getLastBufferRow()
-    range = [[row, 0], [row, Infinity]]
-    @narrowEditor.setTextInBufferRange(range, text)
+    eof = @narrowEditor.getEofBufferPosition()
+    @narrowEditor.setTextInBufferRange([eof, eof], text)
 
   # Return row
   findValidItem: (startRow, direction) ->
@@ -265,13 +267,12 @@ class UI
     @items.indexOf(item)
 
   selectItem: (item) ->
-    row = @items.indexOf(item)
-    if row >= 0
+    if (row = @items.indexOf(item) ) >= 0
       @selectItemForRow(row)
 
   selectItemForRow: (row) ->
     item = @items[row]
-    if item? and @isValidItem(item)
+    if @isValidItem(item)
       @setGutterMarkerToRow(row)
       @selectedItem = item
 
@@ -280,10 +281,10 @@ class UI
 
   setItems: (items) ->
     @items = [{_prompt: true, skip: true}, items...]
-    text = (@provider.viewForItem(item) for item in items).join("\n")
-    @appendText(text)
+    texts = items.map (item) => @provider.viewForItem(item)
+    @appendText(texts.join("\n"))
 
-    if @provider.editor? and item = @findNearestItem(items)
-      @selectItem(item)
-    else
-      @selectItemForRow(@findValidItem(1, 'next'))
+    # if @provider.syncToEditor and item = @findNearestItem(items)
+    #   @selectItem(item)
+    # else
+    @selectItemForRow(@findValidItem(1, 'next'))

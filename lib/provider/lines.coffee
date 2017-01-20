@@ -3,6 +3,7 @@ ProviderBase = require './provider-base'
 
 module.exports =
 class Lines extends ProviderBase
+  syncToEditor: true
   initialize: ->
     @subscribe @editor.onDidStopChanging(@refresh)
 

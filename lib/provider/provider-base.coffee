@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-{Point, CompositeDisposable} = require 'atom'
+{Point, CompositeDisposable, Emitter} = require 'atom'
 {
   saveEditorState
   padStringLeft
@@ -10,11 +10,12 @@ module.exports =
 class ProviderBase
   wasConfirmed: false
   textWidthForLastRow: null
+  syncToEditor: false
 
   getName: ->
     @constructor.name
 
-  getTitle: ->
+  getDashName: ->
     _.dasherize(@getName())
 
   constructor: (uiOptions, @options={}) ->
@@ -23,12 +24,13 @@ class ProviderBase
     @editorElement = @editor.element
     @pane = atom.workspace.paneForItem(@editor)
     @restoreEditorState = saveEditorState(@editor)
+    @emitter = new Emitter
 
     @subscribe @editor.onDidStopChanging(@invalidateState)
 
-    @ui = new UI(uiOptions)
+    @ui = new UI(this, uiOptions)
     @initialize?()
-    @ui.start(this)
+    @ui.start()
 
   invalidateState: =>
     @textWidthForLastRow = null
@@ -52,22 +54,19 @@ class ProviderBase
 
   destroy: ->
     @subscriptions.dispose()
-    @restoreEditorState() unless @wasConfirmed
+    if @editor.isAlive() and not @wasConfirmed
+      @restoreEditorState()
     {@editor, @editorElement, @subscriptions} = {}
 
-  confirmed: ({point}, options={}) ->
-    unless options.preview
-      @wasConfirmed = true
+  confirmed: ({point}) ->
+    @wasConfirmed = true
     return unless point?
     point = Point.fromObject(point)
 
-    if options.preview?
-      @pane.activateItem(@editor)
-    else
-      @editor.setCursorBufferPosition(point, autoscroll: false)
-      @editor.moveToFirstCharacterOfLine()
-      @pane.activate()
-      @pane.activateItem(@editor)
+    @editor.setCursorBufferPosition(point, autoscroll: false)
+    @editor.moveToFirstCharacterOfLine()
+    @pane.activate()
+    @pane.activateItem(@editor)
 
     @editor.scrollToBufferPosition(point, center: true)
     @editorElement.component.updateSync()
