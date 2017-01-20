@@ -54,12 +54,6 @@ class ProviderBase
       items = items.filter(matchPattern)
     items
 
-  highlightRow: (editor, row) ->
-    point = [row, 0]
-    marker = editor.markBufferRange([point, point])
-    editor.decorateMarker(marker, type: 'line', class: 'narrow-result')
-    marker
-
   destroy: ->
     @marker?.destroy()
     @subscriptions.dispose()
@@ -75,7 +69,6 @@ class ProviderBase
 
     if options.preview?
       @pane.activateItem(@editor)
-      @marker = @highlightRow(@editor, point.row)
     else
       @editor.setCursorBufferPosition(point, autoscroll: false)
       @editor.moveToFirstCharacterOfLine()

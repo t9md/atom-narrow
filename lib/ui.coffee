@@ -52,6 +52,7 @@ class UI
     @provider?.destroy?()
     @gutterMarker?.destroy()
     @constructor.unregisterUI(@narrowEditor)
+    @rowMarker?.destroy()
 
   registerCommands: ->
     atom.commands.add @narrowEditorElement,
@@ -106,6 +107,10 @@ class UI
       @disposables.add @provider.editor.onDidChangeCursorPosition =>
         if @items.length and item = @findNearestItem(@items)
           @selectItem(item)
+
+    @disposables.add atom.workspace.observeActivePaneItem (item) =>
+      if item is @provider.editor
+        @rowMarker?.destroy()
 
     activePane = atom.workspace.getActivePane()
     direction = settings.get('directionToOpen')
@@ -199,8 +204,23 @@ class UI
       class: "narrow-ui-row"
       item: @getGutterItem()
 
+  highlightRow: (editor, row) ->
+    point = [row, 0]
+    marker = editor.markBufferRange([point, point])
+    editor.decorateMarker(marker, type: 'line', class: 'narrow-result')
+    marker
+
   confirm: (options={}) ->
-    @provider.confirmed(@getSelectedItem(), options)
+    @rowMarker?.destroy()
+    item = @getSelectedItem()
+    done = @provider.confirmed(item, options)
+    if options.preview and item.point and @provider.editor?
+      if done instanceof Promise
+        done.then =>
+          @rowMarker = @highlightRow(@provider.editor, Point.fromObject(item.point).row)
+      else
+        @rowMarker = @highlightRow(@provider.editor, Point.fromObject(item.point).row)
+
     unless options.preview or options.keepOpen
       @narrowEditor.destroy()
 

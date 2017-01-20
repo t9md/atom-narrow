@@ -78,25 +78,18 @@ class Search extends ProviderBase
       handle()
     process
 
-  confirmed: (item, options={}) ->
+  confirmed: (item, {preview}={}) ->
     @marker?.destroy()
     return unless item.point?
 
-    {project, filePath, point} = item
+    {filePath, point} = item
     point = Point.fromObject(point)
 
     @pane.activate()
-
-    if options.preview?
-      openOptions = {activatePane: false, pending: true}
-      atom.workspace.open(filePath, openOptions).then (editor) =>
-        editor.scrollToBufferPosition(point, center: true)
-        @marker = @highlightRow(editor, point.row)
-    else
-      openOptions = {pending: true}
-      atom.workspace.open(filePath, openOptions).then (editor) ->
-        editor.setCursorBufferPosition(point, autoscroll: false)
-        editor.scrollToBufferPosition(point, center: true)
+    openOptions = {activatePane: not preview, pending: true}
+    atom.workspace.open(filePath, openOptions).then (editor) ->
+      editor.setCursorBufferPosition(point, autoscroll: false)
+      editor.scrollToBufferPosition(point, center: true)
 
   filterItems: (items, words) ->
     filterKey = @getFilterKey()
