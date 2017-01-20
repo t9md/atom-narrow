@@ -24,7 +24,7 @@ module.exports =
       if atom.workspace.isTextEditor(item) and @isNarrowEditor(item)
         @currentNarrowEditor = item
 
-    @subscriptions.add atom.commands.add 'atom-workspace',
+    @subscriptions.add atom.commands.add 'atom-text-editor',
       'narrow:lines': => @narrow('lines')
       'narrow:lines-by-current-word': => @narrow('lines', getUiOptions())
 
