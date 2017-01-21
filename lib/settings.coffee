@@ -67,6 +67,14 @@ module.exports = new Settings 'narrow',
   LinesDefaultAutoPreview: true
   FoldDefaultAutoPreview: true
   SearchDefaultAutoPreview: true
+  SearchAgCommandArgs:
+    default: "--nocolor --column"
+    description: """
+    By default args, full command became..<br>
+    `ag --nocolor --column PATTERN`<br>
+    Be careful narrow don't support every possible combination of args.<br>
+    Pick only if it worked.
+    """
   SymbolsDefaultAutoPreview: true
   GitDiffDefaultAutoPreview: true
   BookmarksDefaultAutoPreview: true

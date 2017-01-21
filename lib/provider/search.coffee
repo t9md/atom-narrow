@@ -56,12 +56,15 @@ class Search extends ProviderBase
         @items = _.flatten(values)
 
   search: (pattern, project) ->
+    console.log pattern
     items = []
     stdout = stderr = getOutputterForProject(project, items)
+    args = settings.get('SearchAgCommandArgs').split(/\s+/)
+    args.push(pattern)
     new Promise (resolve) ->
       runCommand(
         command: 'ag'
-        args: ['--nocolor', '--column', pattern]
+        args: args
         stdout: stdout
         stderr: stderr
         exit: -> resolve(items)
