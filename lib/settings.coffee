@@ -73,7 +73,11 @@ module.exports = new Settings 'narrow',
     By default args, full command became..<br>
     `ag --nocolor --column PATTERN`<br>
     Be careful narrow don't support every possible combination of args.<br>
-    Pick only if it worked.
+    Pick only if it worked.<br>
+    e.g.<br>
+      Case sensitive: `ag --nocolor --column -s PATTERN`<br>
+      Smart case: `ag --nocolor --column -S PATTERN`<br>
+      Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
     """
   SymbolsDefaultAutoPreview: true
   GitDiffDefaultAutoPreview: true

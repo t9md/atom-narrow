@@ -3,6 +3,7 @@ path = require 'path'
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
+settings = require '../settings'
 
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
