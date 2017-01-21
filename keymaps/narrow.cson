@@ -3,6 +3,7 @@
   'enter': 'core:confirm'
   # 'ctrl-u': 'narrow-ui:preview-item'
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
+  'tab': 'narrow-ui:move-to-query-or-current-item'
   'f5': 'narrow-ui:force-refresh'
 
 'atom-text-editor.narrow.vim-mode-plus.normal-mode[data-grammar="source narrow"]':

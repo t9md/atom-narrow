@@ -109,6 +109,8 @@ class UI
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:force-refresh': => @forceRefresh()
+      'narrow-ui:move-to-query-or-current-item': => @moveToQueryOrCurrentItem()
+
 
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -267,6 +269,15 @@ class UI
     for row in rows when @isValidItem(@items[row])
       return row
     null
+
+  moveToQueryOrCurrentItem: ->
+    row = @getRowForSelectedItem()
+    if row is @narrowEditor.getCursorBufferPosition().row
+      # move to query
+      @narrowEditor.setCursorBufferPosition([0, Infinity])
+    else
+      # move to current item
+      @narrowEditor.setCursorBufferPosition([row, 0])
 
   getRowForSelectedItem: ->
     @getRowForItem(@getSelectedItem())
