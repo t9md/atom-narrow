@@ -56,7 +56,6 @@ class Search extends ProviderBase
         @items = _.flatten(values)
 
   search: (pattern, project) ->
-    console.log pattern
     items = []
     stdout = stderr = getOutputterForProject(project, items)
     args = settings.get('SearchAgCommandArgs').split(/\s+/)
