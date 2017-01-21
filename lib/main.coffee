@@ -34,6 +34,7 @@ module.exports =
       'narrow:search-current-project-by-current-word': => @searchCurrentProject(@getCurrentWord())
 
       'narrow:focus': => @getUI()?.focus()
+      'narrow:close': => @getUI()?.destroy()
       'narrow:next-item': => @getUI()?.nextItem()
       'narrow:previous-item': => @getUI()?.previousItem()
 
