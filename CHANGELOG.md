@@ -1,3 +1,6 @@
+# 0.10.1:
+- Eval: tryout to fix `ag` search not work on windows #9.
+
 # 0.10.0: Still experimenting!!
 - New: `narrow:close` command.(no keymap by default)
 - New: `narrow-ui:move-to-query-or-current-item` command, available in `narrow-editor`(=`ui`).
