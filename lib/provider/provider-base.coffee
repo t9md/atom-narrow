@@ -67,7 +67,7 @@ class ProviderBase
   filterItems: (items, regexps) ->
     filterKey = @getFilterKey()
     for regexp in regexps
-      items = items.filter (item) =>
+      items = items.filter (item) ->
         if (text = item[filterKey])?
           regexp.test(text)
         else
@@ -85,13 +85,17 @@ class ProviderBase
     return unless point?
     point = Point.fromObject(point)
 
-    @editor.setCursorBufferPosition(point, autoscroll: false)
-    @editor.moveToFirstCharacterOfLine()
+    newPoint = @adjustPoint?(point)
+    if newPoint?
+      @editor.setCursorBufferPosition(newPoint, autoscroll: false)
+    else
+      @editor.setCursorBufferPosition(point, autoscroll: false)
+      @editor.moveToFirstCharacterOfLine()
+
     @pane.activate()
     @pane.activateItem(@editor)
 
     @editor.scrollToBufferPosition(point, center: true)
-    @editorElement.component.updateSync()
 
     return {@editor, point}
 

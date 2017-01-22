@@ -1,3 +1,4 @@
+_ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 {Point} = require 'atom'
 settings = require '../settings'
@@ -14,6 +15,21 @@ class Lines extends ProviderBase
 
   getRowHeaderForItem: ({point}) ->
     @getLineNumberText(point.row) + ":"
+
+  filterItems: (items, regexps) ->
+    @regexps = regexps
+    super(items, regexps)
+
+  adjustPoint: (point) ->
+    return null if @regexps.length is 0
+
+    scanRange = @editor.bufferRangeForBufferRow(point.row)
+    points = []
+    for regexp in @regexps
+      @editor.scanInBufferRange regexp, scanRange, ({range}) ->
+        points.push(range.start)
+
+    return _.min(points, (point) -> point.column)
 
   viewForItem: (item) ->
     @getRowHeaderForItem(item) + item.text
