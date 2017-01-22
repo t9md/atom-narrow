@@ -129,6 +129,15 @@ class UI
       'narrow-ui:move-to-query-or-current-item': => @moveToQueryOrCurrentItem()
       'narrow-ui:update-real-file': => @updateRealFile()
 
+  updateRealFile: ->
+    return unless @provider.supportDirectEdit
+    states = []
+    for lineText, row in @narrowEditor.buffer.getLines()
+      continue if row is 0
+      if @isValidItem(item = @items[row])
+        states.push({row: row - 1, item, text: lineText})
+    @provider.updateRealFile(states)
+
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
       @withLock => @narrowEditor.setCursorBufferPosition([row, 0])

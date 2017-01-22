@@ -5,6 +5,7 @@
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
   'tab': 'narrow-ui:move-to-query-or-current-item'
   'f5': 'narrow-ui:force-refresh'
+  # 'ctrl-cmd-s': 'narrow-ui:update-real-file'
 
 'atom-text-editor.narrow.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'

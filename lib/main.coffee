@@ -92,9 +92,9 @@ module.exports =
       if settings.get('vmpStartInInsertModeForUI') and not vimState.isMode('insert')
         vimState.activate('insert')
 
-      @subscriptions.add vimState.modeManager.onDidActivateMode ({mode, submode}) ->
-        if mode is 'insert' and editor.getCursorBufferPosition().row isnt 0
-          editor.setCursorBufferPosition([0, Infinity]) # auto move to EOL of first line.
+      # @subscriptions.add vimState.modeManager.onDidActivateMode ({mode, submode}) ->
+      #   if mode is 'insert' and editor.getCursorBufferPosition().row isnt 0
+      #     editor.setCursorBufferPosition([0, Infinity]) # auto move to EOL of first line.
 
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()

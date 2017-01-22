@@ -13,6 +13,7 @@ class ProviderBase
   textWidthForLastRow: null
   boundToEditor: false
   includeHeaderGrammarRules: false
+  supportDirectEdit: false
 
   getName: ->
     @constructor.name
