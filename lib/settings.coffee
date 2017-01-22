@@ -63,6 +63,10 @@ module.exports = new Settings 'narrow',
     default: 'right'
     enum: ['right', 'down', 'here']
     description: "Where to open"
+  caseSensitivityForNarrowQuery:
+    default: 'smartcase'
+    enum: ['smartcase', 'sensitive', 'insensitive']
+    description: "Case sensitivity of your query in narrowEditor"
   vmpStartInInsertModeForUI: true
   LinesDefaultAutoPreview: true
   FoldDefaultAutoPreview: true

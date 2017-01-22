@@ -5,6 +5,7 @@ _ = require 'underscore-plus'
   padStringLeft
 } = require '../utils'
 UI = require '../ui'
+settings = require '../settings'
 
 module.exports =
 class ProviderBase
@@ -54,13 +55,12 @@ class ProviderBase
   getFilterKey: ->
     "text"
 
-  filterItems: (items, words) ->
+  filterItems: (items, regexps) ->
     filterKey = @getFilterKey()
-
-    for pattern, i in words.map(_.escapeRegExp)
-      items = items.filter (item) ->
+    for regexp in regexps
+      items = items.filter (item) =>
         if (text = item[filterKey])?
-          text.match(///#{pattern}///i)
+          regexp.test(text)
         else
           true # items without filterKey is always displayed.
     items

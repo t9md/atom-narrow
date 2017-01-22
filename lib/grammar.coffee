@@ -15,11 +15,17 @@ class NarrowGrammar
     atom.grammars.addGrammar(grammar)
     @editor.setGrammar(grammar)
 
-  update: ({pattern}) ->
+  update: (regexps) ->
     rule = @getRule()
-    if pattern
+    for regexp in regexps ? []
+      source = regexp.source
+      if regexp.ignoreCase
+        match = "(?i:#{source})"
+      else
+        match = "(#{source})"
+
       rule.patterns.push(
-        match: "(?i:#{pattern})"
+        match: match
         name: 'keyword.narrow'
       )
     @activate(rule)

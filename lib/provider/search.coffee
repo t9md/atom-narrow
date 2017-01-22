@@ -81,11 +81,11 @@ class Search extends ProviderBase
       editor.scrollToBufferPosition(point, center: true)
       return {editor, point}
 
-  filterItems: (items, words) ->
+  filterItems: (items, regexps) ->
     filterKey = @getFilterKey()
-    for pattern in words.map(_.escapeRegExp)
+    for regexp in regexps
       items = items.filter (item) ->
-        item.skip or item[filterKey].match(///#{pattern}///i)
+        item.skip or regexp.test(item[filterKey])
 
     normalItems = _.filter(items, (item) -> not item.header?)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))
