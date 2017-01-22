@@ -11,7 +11,7 @@
   - Providers global/not per-provider basis.
   - `smartcase`-tivity is handled query per-word(separated by white-space).
   - Eg. For query "hello World": hello=case-insensitive, World=case-sensitive.
-  - Fold
+- Fix: Provider.Fold `increase-fold-level`, `decrease-fold-level` didn't worked(I believe) by regression in v0.9.0.
 
 # 0.9.0: Still experimenting!!
 - New: Auto sync selected items on narrowUI with bounded editor's cursor position.
