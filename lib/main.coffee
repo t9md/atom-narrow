@@ -27,6 +27,9 @@ module.exports =
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:bookmarks': => @narrow('bookmarks')
 
+      'narrow:atom-scan': => @atomScan()
+      'narrow:atom-scan-by-current-word': => @atomScan(@getCurrentWord())
+
       'narrow:search': => @search()
       'narrow:search-by-current-word': => @search(@getCurrentWord())
 
@@ -72,6 +75,12 @@ module.exports =
       @narrow('search', initialKeyword: word, {word, projects})
     else
       @readInput().then (input) => @search(input, projects)
+
+  atomScan: (word = null) ->
+    if word?
+      @narrow('atom-scan', initialKeyword: word, {word})
+    else
+      @readInput().then (input) => @atomScan(input)
 
   readInput: ->
     @input ?= new(require './input')

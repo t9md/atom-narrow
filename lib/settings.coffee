@@ -85,6 +85,8 @@ module.exports = new Settings 'narrow',
       Smart case: `ag --nocolor --column -S PATTERN`<br>
       Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
     """
+  AtomScanDefaultAutoPreview: true
+  AtomScanSaveAfterDirectEdit: false
   SymbolsDefaultAutoPreview: true
   GitDiffDefaultAutoPreview: true
   BookmarksDefaultAutoPreview: true
