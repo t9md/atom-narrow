@@ -6,6 +6,7 @@ _ = require 'underscore-plus'
 } = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
+Input = null
 
 module.exports =
 class ProviderBase
@@ -29,6 +30,12 @@ class ProviderBase
     @ui.refresh().then =>
       @ui.syncToProviderEditor()
 
+  initialize: ->
+    # to override
+
+  checkReady: ->
+    Promise.resolve(true)
+
   constructor: (@options={}) ->
     @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
@@ -43,8 +50,10 @@ class ProviderBase
     if @boundToEditor
       @subscribe @editor.onDidStopChanging(@refresh.bind(this))
 
-    @initialize?()
-    @ui.start()
+    @checkReady().then (ready) =>
+      if ready
+        @initialize()
+        @ui.start()
 
   invalidateState: =>
     @textWidthForLastRow = null
@@ -89,3 +98,7 @@ class ProviderBase
   getLineNumberText: (row) ->
     @textWidthForLastRow ?= String(@editor.getLastBufferRow()).length
     padStringLeft(String(row + 1), @textWidthForLastRow)
+
+  readInput: ->
+    Input ?= require '../input'
+    new Input().readInput()

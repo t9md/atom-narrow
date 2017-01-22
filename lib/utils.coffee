@@ -66,18 +66,7 @@ limitNumber = (number, {max, min}={}) ->
   number
 
 getCurrentWord = (editor) ->
-  editor = atom.workspace.getActiveTextEditor()
-  selection = editor.getLastSelection()
-  {cursor} = selection
-
-  if selection.isEmpty()
-    point = cursor.getBufferPosition()
-    selection.selectWord()
-    text = selection.getText()
-    cursor.setBufferPosition(point)
-    text
-  else
-    selection.getText()
+  getCurrentWordAndBoundary(editor).word
 
 getCurrentWordAndBoundary = (editor) ->
   editor = atom.workspace.getActiveTextEditor()

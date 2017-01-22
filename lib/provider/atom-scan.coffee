@@ -3,13 +3,26 @@ _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
 settings = require '../settings'
-{padStringLeft} = require '../utils'
+{padStringLeft, getCurrentWordAndBoundary} = require '../utils'
 
 module.exports =
 class AtomScan extends ProviderBase
   items: null
   includeHeaderGrammarRules: true
   supportDirectEdit: true
+
+  checkReady: ->
+    if @options.currentWord
+      {word, boundary} = getCurrentWordAndBoundary(@editor)
+      @options.wordOnly = boundary
+      @options.search = word
+
+    if @options.search
+      Promise.resolve(true)
+    else
+      @readInput().then (input) =>
+        @options.search = input
+        true
 
   initialize: ->
     source = _.escapeRegExp(@options.search)
@@ -29,7 +42,7 @@ class AtomScan extends ProviderBase
         regexp = ///\b#{source}\b///i
       else
         regexp = ///#{source}///i
-        
+
       scanPromise = atom.workspace.scan regexp, (result) ->
         if result?.matches?.length
           (resultsByFilePath[result.filePath] ?= []).push(result.matches...)

@@ -4,7 +4,7 @@ _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
 settings = require '../settings'
-{padStringLeft} = require '../utils'
+{padStringLeft, getCurrentWordAndBoundary} = require '../utils'
 
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
@@ -50,8 +50,30 @@ class Search extends ProviderBase
   includeHeaderGrammarRules: true
   supportDirectEdit: true
 
+  checkReady: ->
+    if @options.currentProject
+      for dir in atom.project.getDirectories() when dir.contains(@editor.getPath())
+        @options.projects = [dir.getPath()]
+        break
+
+      unless @options.projects?
+        message = "#{@editor.getPath()} not belonging to any project"
+        atom.notifications.addInfo(message, dismissable: true)
+        return Promise.resolve(false)
+
+    if @options.currentWord
+      {word, boundary} = getCurrentWordAndBoundary(@editor)
+      @options.wordOnly = boundary
+      @options.search = word
+
+    if @options.search
+      Promise.resolve(true)
+    else
+      @readInput().then (input) =>
+        @options.search = input
+        true
+
   initialize: ->
-    console.log 'init',  @options
     source = _.escapeRegExp(@options.search)
     if @options.wordOnly
       source = "\\b#{source}\\b"
@@ -81,7 +103,7 @@ class Search extends ProviderBase
     items = []
     stdout = stderr = getOutputterForProject(project, items)
     args = settings.get('SearchAgCommandArgs').split(/\s+/)
-    
+
     if @options.wordOnly and ('-w' not in args) and ('--word-regexp' not in args)
       args.push('--word-regexp')
 

@@ -1,7 +1,7 @@
 {CompositeDisposable} = require 'atom'
 settings = require './settings'
-UI = null
-getCurrentWordAndBoundary = null # delay
+Ui = null
+getCurrentWord = null # delay
 
 module.exports =
   config: settings.config
@@ -27,77 +27,34 @@ module.exports =
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:bookmarks': => @narrow('bookmarks')
 
-      'narrow:search': => @search()
-      'narrow:search-by-current-word': => @search(@searchOptionsForCurrentWord())
+      'narrow:search': => @narrow('search')
+      'narrow:search-by-current-word': => @narrow('search', currentWord: true)
 
-      'narrow:search-current-project': => @searchCurrentProject()
-      'narrow:search-current-project-by-current-word': => @searchCurrentProject(@searchOptionsForCurrentWord())
+      'narrow:search-current-project': => @narrow('search', currentProject: true)
+      'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, currentWord: true)
 
-      'narrow:atom-scan': => @atomScan()
-      'narrow:atom-scan-by-current-word': => @atomScan(@searchOptionsForCurrentWord())
+      'narrow:atom-scan': => @narrow('atom-scan')
+      'narrow:atom-scan-by-current-word': => @narrow('atom-scan', currentWord: true)
 
-      'narrow:focus': => @getUI()?.focus()
-      'narrow:close': => @getUI()?.destroy()
-      'narrow:next-item': => @getUI()?.nextItem()
-      'narrow:previous-item': => @getUI()?.previousItem()
+      'narrow:focus': => @getUi()?.focus()
+      'narrow:close': => @getUi()?.destroy()
+      'narrow:next-item': => @getUi()?.nextItem()
+      'narrow:previous-item': => @getUi()?.previousItem()
 
-  getUI: (narrowEditor) ->
-    UI ?= require './ui'
-    UI.uiByNarrowEditor.get(@currentNarrowEditor)
+  getUi: (narrowEditor) ->
+    Ui ?= require './ui'
+    Ui.uiByNarrowEditor.get(@currentNarrowEditor)
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
-    @getCurrentWordAndBoundary().word
-
-  getCurrentWordAndBoundary: ->
-    getCurrentWordAndBoundary ?= require('./utils').getCurrentWordAndBoundary
-    getCurrentWordAndBoundary(atom.workspace.getActiveTextEditor())
-
-  searchOptionsForCurrentWord: ->
-    {word, boundary} = @getCurrentWordAndBoundary()
-    {search: word, wordOnly: boundary}
+    getCurrentWord ?= require('./utils').getCurrentWord
+    getCurrentWord(atom.workspace.getActiveTextEditor())
 
   narrow: (providerName, options) ->
     if providerName not of @providers
       @providers[providerName] = require("./provider/#{providerName}")
     klass = @providers[providerName]
     new klass(options)
-
-  searchCurrentProject: (options={}) ->
-    projects = null
-    editor = atom.workspace.getActiveTextEditor()
-    return unless editor?
-    for dir in atom.project.getDirectories() when dir.contains(editor.getPath())
-      projects = [dir.getPath()]
-      break
-
-    unless projects?
-      message = "#{editor.getPath()} not belonging to any project"
-      atom.notifications.addInfo(message, dismissable: true)
-      return
-
-    options.projects = projects
-    @search(options)
-
-  search: (options = {}) ->
-    if options.search
-      if options.useAtomScan
-        delete options.useAtomScan
-        @narrow('atom-scan', options)
-      else
-        @narrow('search', options)
-    else
-      @readInput().then (input) =>
-        options.search = input
-        @search(options)
-
-  atomScan: (options = {}) ->
-    options.useAtomScan = true
-    @search(options)
-
-  readInput: ->
-    @input ?= new(require './input')
-    @input.readInput()
 
   deactivate: ->
     @subscriptions?.dispose()
@@ -126,6 +83,6 @@ module.exports =
       return text
 
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
-      'vim-mode-plus-user:narrow-lines-from-search': => @narrow('lines', input: confirmSearch())
-      'vim-mode-plus-user:narrow-search': => @search(confirmSearch())
-      'vim-mode-plus-user:narrow-search-current-project': => @searchCurrentProject(confirmSearch())
+      'vim-mode-plus-user:narrow-lines-from-search': => @narrow('lines', uiInput: confirmSearch())
+      'vim-mode-plus-user:narrow-search': => @narrow('search', search: confirmSearch())
+      'vim-mode-plus-user:narrow-search-current-project': =>  @narrow('search', search: confirmSearch(), currentProject: true)
