@@ -128,7 +128,6 @@ class UI
       'narrow-ui:force-refresh': => @forceRefresh()
       'narrow-ui:move-to-query-or-current-item': => @moveToQueryOrCurrentItem()
 
-
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
       @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
@@ -231,8 +230,11 @@ class UI
     return unless foundItem?
 
     @selectItem(foundItem)
-    unless (row = @getRowForSelectedItem()) is @narrowEditor.getCursorBufferPosition().row
-      @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
+    narrowEditorRow = @narrowEditor.getCursorBufferPosition().row
+    selectedItemRow = @getRowForSelectedItem()
+
+    if (narrowEditorRow isnt 0) and (narrowEditorRow isnt selectedItemRow)
+      @withLock => @narrowEditor.setCursorBufferPosition([selectedItemRow, 0])
 
   preview: ->
     @confirm(keepOpen: true).then ({editor, point}) =>

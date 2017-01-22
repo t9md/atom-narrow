@@ -22,6 +22,11 @@ class ProviderBase
   getDashName: ->
     _.dasherize(@getName())
 
+  refresh: ->
+    @items = null
+    @ui.refresh().then =>
+      @ui.syncToProviderEditor()
+
   constructor: (uiOptions, @options={}) ->
     @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
@@ -33,12 +38,9 @@ class ProviderBase
     @subscribe @editor.onDidStopChanging(@invalidateState)
 
     @ui = new UI(this, uiOptions)
-    
+
     if @boundToEditor
-      @subscribe @editor.onDidStopChanging =>
-        @items = null
-        @ui.refresh().then =>
-          @ui.syncToProviderEditor()
+      @subscribe @editor.onDidStopChanging(@refresh.bind(this))
 
     @initialize?()
     @ui.start()
