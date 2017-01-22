@@ -8,6 +8,23 @@ settings = require './settings'
 path = require 'path'
 NarrowGrammar = require './grammar'
 
+class PromptGutter
+  constructor: (@editor) ->
+    @gutter = @editor.addGutter(name: 'narrow-prompt', priority: 100)
+
+    @item = document.createElement('span')
+    @item.textContent = " > "
+
+  setToRow: (row) ->
+    @marker?.destroy()
+    @marker = @editor.markBufferPosition([row, 0])
+    @gutter.decorateMarker @marker,
+      class: "narrow-ui-selected-row"
+      item: @item
+
+  destroy: ->
+    @marker?.destroy()
+
 module.exports =
 class UI
   @uiByNarrowEditor: new Map()
@@ -44,7 +61,7 @@ class UI
     @narrowEditorElement = @narrowEditor.element
     @narrowEditorElement.classList.add('narrow', dashName)
 
-    @gutter = @narrowEditor.addGutter(name: 'narrow')
+    @gutterForPrompt = new PromptGutter(@narrowEditor)
 
     includeHeaderRules = @provider.includeHeaderGrammarRules
     @grammar = new NarrowGrammar(@narrowEditor, {@initialKeyword, includeHeaderRules})
@@ -98,7 +115,7 @@ class UI
     @narrowEditor.destroy()
     @originalPane.activate() if @originalPane.isAlive()
     @provider?.destroy?()
-    @gutterMarker?.destroy()
+    @gutterForPrompt?.destroy()
     @constructor.unregisterUI(@narrowEditor)
     @rowMarker?.destroy()
 
@@ -225,13 +242,6 @@ class UI
   isValidItem: (item) ->
     item? and not item.skip
 
-  setGutterMarkerToRow: (row) ->
-    @gutterMarker?.destroy()
-    @gutterMarker = @narrowEditor.markBufferPosition([row, 0])
-    @gutter.decorateMarker @gutterMarker,
-      class: "narrow-ui-row"
-      item: @gutterItem
-
   highlightRow: (editor, row) ->
     point = [row, 0]
     marker = editor.markBufferRange([point, point])
@@ -292,7 +302,7 @@ class UI
   selectItemForRow: (row) ->
     item = @items[row]
     if @isValidItem(item)
-      @setGutterMarkerToRow(row)
+      @gutterForPrompt.setToRow(row)
       @selectedItem = item
 
   getSelectedItem: ->
