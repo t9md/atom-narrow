@@ -47,6 +47,7 @@ module.exports =
 class Search extends ProviderBase
   items: null
   includeHeaderGrammarRules: true
+  supportDirectEdit: true
 
   getItems: ->
     if @items?
@@ -100,8 +101,34 @@ class Search extends ProviderBase
       else
         true
 
+  getRowHeaderForItem: (item) ->
+    "    #{item.point.row + 1}:#{item.point.column + 1}:"
+
   viewForItem: (item) ->
     if item.header?
       item.header
     else
-      "    #{item.point.row + 1}:#{item.point.column + 1}:#{item.text}"
+      @getRowHeaderForItem(item) + item.text
+
+  updateRealFile: (states) ->
+    changes = @getChangeSet(states)
+    return unless changes.length
+    @pane.activate()
+    for filePath, changes of _.groupBy(changes, 'filePath')
+      @updateFile(filePath, changes)
+
+  updateFile: (filePath, changes) ->
+    atom.workspace.open(filePath).then (editor) ->
+      editor.transact ->
+        for {row, text} in changes
+          range = editor.bufferRangeForBufferRow(row)
+          editor.setTextInBufferRange(range, text)
+
+  getChangeSet: (states) ->
+    changes = []
+    for {newText, item} in states
+      {text, filePath, point} = item
+      newText = newText[@getRowHeaderForItem(item).length...]
+      if newText isnt text
+        changes.push({row: point.row, text: newText, filePath})
+    changes

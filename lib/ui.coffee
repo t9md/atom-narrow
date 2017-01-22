@@ -127,6 +127,16 @@ class UI
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:force-refresh': => @forceRefresh()
       'narrow-ui:move-to-query-or-current-item': => @moveToQueryOrCurrentItem()
+      'narrow-ui:update-real-file': => @updateRealFile()
+
+  updateRealFile: ->
+    return unless @provider.supportDirectEdit
+    states = []
+    for lineText, row in @narrowEditor.buffer.getLines()
+      continue if row is 0
+      if @isValidItem(item = @items[row])
+        states.push({item, newText: lineText})
+    @provider.updateRealFile(states)
 
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
