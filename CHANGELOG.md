@@ -1,3 +1,18 @@
+# 0.10.0: Still experimenting!!
+- New: `narrow:close` command.
+- New: `narrow-ui:move-to-query-or-current-item` command, available in `narrow-editor`(=`ui`).
+  - `tab` is mapped. Use `tab` key to move between prompt line and current selected item quickly.
+  - This mitigate frustration of autoSync to cursor position for boundToEditor providers.
+- New: Custom command args for `ag` for `narrow:search` provider. #42.
+- Fix: `narrow:search` placed cursor one column right in previous release, but no longer.
+- Improve: skip auto-updating-cursor-position of narrowEditor when cursor is at prompt row.
+- New: `caseSensitivityForNarrowQuery` config options #44.
+  - `smartcase` is default
+  - Providers global/not per-provider basis.
+  - `smartcase`-tivity is handled query per-word(separated by white-space).
+  - Eg. For query "hello World": hello=case-insensitive, World=case-sensitive.
+  - Fold
+
 # 0.9.0: Still experimenting!!
 - New: Auto sync selected items on narrowUI with bounded editor's cursor position.
   - Enabled on following providers
