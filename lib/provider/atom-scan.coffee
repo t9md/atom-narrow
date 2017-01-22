@@ -12,7 +12,11 @@ class AtomScan extends ProviderBase
   supportDirectEdit: true
 
   initialize: ->
-    @ui.grammar.setSearchTerm(@options.search)
+    source = _.escapeRegExp(@options.search)
+    if @options.wordOnly
+      source = "\\b#{source}\\b"
+    searchTerm = "(?i:#{source})"
+    @ui.grammar.setSearchTerm(searchTerm)
 
   getItems: ->
     if @items?
@@ -21,7 +25,11 @@ class AtomScan extends ProviderBase
       resultsByFilePath = {}
 
       source = _.escapeRegExp(@options.search)
-      regexp = ///#{source}///i
+      if @options.wordOnly
+        regexp = ///\b#{source}\b///i
+      else
+        regexp = ///#{source}///i
+        
       scanPromise = atom.workspace.scan regexp, (result) ->
         if result?.matches?.length
           (resultsByFilePath[result.filePath] ?= []).push(result.matches...)

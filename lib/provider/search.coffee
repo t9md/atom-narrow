@@ -51,13 +51,19 @@ class Search extends ProviderBase
   supportDirectEdit: true
 
   initialize: ->
-    @ui.grammar.setSearchTerm(@options.search)
+    console.log 'init',  @options
+    source = _.escapeRegExp(@options.search)
+    if @options.wordOnly
+      source = "\\b#{source}\\b"
+    searchTerm = "(?i:#{source})"
+    @ui.grammar.setSearchTerm(searchTerm)
 
   getItems: ->
     if @items?
       @items
     else
-      search = @search.bind(null, _.escapeRegExp(@options.search))
+      @options.projects ?= atom.project.getPaths()
+      search = @search.bind(this, _.escapeRegExp(@options.search))
       Promise.all(@options.projects.map(search)).then (values) =>
         items = _.flatten(values)
         @injectMaxRow(items)
@@ -75,6 +81,10 @@ class Search extends ProviderBase
     items = []
     stdout = stderr = getOutputterForProject(project, items)
     args = settings.get('SearchAgCommandArgs').split(/\s+/)
+    
+    if @options.wordOnly and ('-w' not in args) and ('--word-regexp' not in args)
+      args.push('--word-regexp')
+
     args.push(pattern)
     new Promise (resolve) ->
       runCommand(

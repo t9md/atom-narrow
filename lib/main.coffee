@@ -1,7 +1,7 @@
 {CompositeDisposable} = require 'atom'
 settings = require './settings'
 UI = null
-getCurrentWord = null # delay
+getCurrentWordAndBoundary = null # delay
 
 module.exports =
   config: settings.config
@@ -27,14 +27,14 @@ module.exports =
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:bookmarks': => @narrow('bookmarks')
 
-      'narrow:atom-scan': => @atomScan()
-      'narrow:atom-scan-by-current-word': => @atomScan(search: @getCurrentWord())
-
       'narrow:search': => @search()
-      'narrow:search-by-current-word': => @search(search: @getCurrentWord())
+      'narrow:search-by-current-word': => @search(@searchOptionsForCurrentWord())
 
       'narrow:search-current-project': => @searchCurrentProject()
-      'narrow:search-current-project-by-current-word': => @searchCurrentProject(search: @getCurrentWord())
+      'narrow:search-current-project-by-current-word': => @searchCurrentProject(@searchOptionsForCurrentWord())
+
+      'narrow:atom-scan': => @atomScan()
+      'narrow:atom-scan-by-current-word': => @atomScan(@searchOptionsForCurrentWord())
 
       'narrow:focus': => @getUI()?.focus()
       'narrow:close': => @getUI()?.destroy()
@@ -47,8 +47,15 @@ module.exports =
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
-    getCurrentWord ?= require('./utils').getCurrentWord
-    getCurrentWord(atom.workspace.getActiveTextEditor())
+    @getCurrentWordAndBoundary().word
+
+  getCurrentWordAndBoundary: ->
+    getCurrentWordAndBoundary ?= require('./utils').getCurrentWordAndBoundary
+    getCurrentWordAndBoundary(atom.workspace.getActiveTextEditor())
+
+  searchOptionsForCurrentWord: ->
+    {word, boundary} = @getCurrentWordAndBoundary()
+    {search: word, wordOnly: boundary}
 
   narrow: (providerName, options) ->
     if providerName not of @providers
@@ -72,21 +79,24 @@ module.exports =
     options.projects = projects
     @search(options)
 
-  search: ({search, projects} = {}) ->
-    projects ?= atom.project.getPaths()
-    if search
-      @narrow('search', {search, projects})
+  search: (options = {}) ->
+    if options.search
+      if options.useAtomScan
+        delete options.useAtomScan
+        @narrow('atom-scan', options)
+      else
+        @narrow('search', options)
     else
-      @readInput().then (search) => @search({search, projects})
+      @readInput().then (input) =>
+        options.search = input
+        @search(options)
 
-  atomScan: ({search} = {}) ->
-    if search
-      @narrow('atom-scan', {search})
-    else
-      @readInput().then (search) => @atomScan({search})
+  atomScan: (options = {}) ->
+    options.useAtomScan = true
+    @search(options)
 
   readInput: ->
-    @uiInput ?= new(require './input')
+    @input ?= new(require './input')
     @input.readInput()
 
   deactivate: ->

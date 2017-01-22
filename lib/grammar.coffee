@@ -67,7 +67,7 @@ class NarrowGrammar
       )
     if @searchTerm
       rule.patterns.push(
-        match: "(?i:#{_.escapeRegExp(@searchTerm)})"
+        match: @searchTerm
         name: 'entity.name.function.narrow'
       )
     rule
