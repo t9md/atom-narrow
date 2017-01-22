@@ -79,6 +79,22 @@ getCurrentWord = (editor) ->
   else
     selection.getText()
 
+getCurrentWordAndBoundary = (editor) ->
+  editor = atom.workspace.getActiveTextEditor()
+  selection = editor.getLastSelection()
+  {cursor} = selection
+
+  if selection.isEmpty()
+    point = cursor.getBufferPosition()
+    selection.selectWord()
+    text = selection.getText()
+    cursor.setBufferPosition(point)
+    {word: text, boundary: true}
+  else
+    text = selection.getText()
+    {word: text, boundary: false}
+
+
 module.exports = {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
@@ -89,4 +105,5 @@ module.exports = {
   requireFrom
   limitNumber
   getCurrentWord
+  getCurrentWordAndBoundary
 }
