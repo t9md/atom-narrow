@@ -45,9 +45,8 @@ class UI
     workspaceElement = atom.views.getView(atom.workspace)
     workspaceElement.classList.toggle('has-narrow', @uiByNarrowEditor.size)
 
-  constructor: (@provider, options={}) ->
+  constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
-    {@input} = options
 
     @originalPane = atom.workspace.getActivePane()
     @gutterItem = document.createElement('span')

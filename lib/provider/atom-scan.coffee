@@ -12,15 +12,15 @@ class AtomScan extends ProviderBase
   supportDirectEdit: true
 
   initialize: ->
-    @ui.grammar.setSearchTerm(@options.word)
-    
+    @ui.grammar.setSearchTerm(@options.search)
+
   getItems: ->
     if @items?
       @items
     else
       resultsByFilePath = {}
 
-      source = _.escapeRegExp(@options.word)
+      source = _.escapeRegExp(@options.search)
       regexp = ///#{source}///i
       scanPromise = atom.workspace.scan regexp, (result) ->
         if result?.matches?.length

@@ -29,7 +29,7 @@ class ProviderBase
     @ui.refresh().then =>
       @ui.syncToProviderEditor()
 
-  constructor: (uiOptions, @options={}) ->
+  constructor: (@options={}) ->
     @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
     @editorElement = @editor.element
@@ -38,8 +38,7 @@ class ProviderBase
     @emitter = new Emitter
 
     @subscribe @editor.onDidStopChanging(@invalidateState)
-
-    @ui = new UI(this, uiOptions)
+    @ui = new UI(this, {input: @options.uiInput})
 
     if @boundToEditor
       @subscribe @editor.onDidStopChanging(@refresh.bind(this))

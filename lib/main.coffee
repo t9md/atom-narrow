@@ -18,23 +18,23 @@ module.exports =
 
     @subscriptions.add atom.commands.add 'atom-text-editor',
       'narrow:lines': => @narrow('lines')
-      'narrow:lines-by-current-word': => @narrow('lines', input: @getCurrentWord())
+      'narrow:lines-by-current-word': => @narrow('lines', uiInput: @getCurrentWord())
 
       'narrow:fold': => @narrow('fold')
-      'narrow:fold-by-current-word': => @narrow('fold', input: @getCurrentWord())
+      'narrow:fold-by-current-word': => @narrow('fold', uiInput: @getCurrentWord())
 
       'narrow:symbols': => @narrow('symbols')
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:bookmarks': => @narrow('bookmarks')
 
       'narrow:atom-scan': => @atomScan()
-      'narrow:atom-scan-by-current-word': => @atomScan(@getCurrentWord())
+      'narrow:atom-scan-by-current-word': => @atomScan(search: @getCurrentWord())
 
       'narrow:search': => @search()
-      'narrow:search-by-current-word': => @search(@getCurrentWord())
+      'narrow:search-by-current-word': => @search(search: @getCurrentWord())
 
       'narrow:search-current-project': => @searchCurrentProject()
-      'narrow:search-current-project-by-current-word': => @searchCurrentProject(@getCurrentWord())
+      'narrow:search-current-project-by-current-word': => @searchCurrentProject(search: @getCurrentWord())
 
       'narrow:focus': => @getUI()?.focus()
       'narrow:close': => @getUI()?.destroy()
@@ -50,13 +50,13 @@ module.exports =
     getCurrentWord ?= require('./utils').getCurrentWord
     getCurrentWord(atom.workspace.getActiveTextEditor())
 
-  narrow: (providerName, uiOptions, providerOptions) ->
+  narrow: (providerName, options) ->
     if providerName not of @providers
       @providers[providerName] = require("./provider/#{providerName}")
     klass = @providers[providerName]
-    new klass(uiOptions, providerOptions)
+    new klass(options)
 
-  searchCurrentProject: (word) ->
+  searchCurrentProject: (options={}) ->
     projects = null
     editor = atom.workspace.getActiveTextEditor()
     return unless editor?
@@ -68,22 +68,25 @@ module.exports =
       message = "#{editor.getPath()} not belonging to any project"
       atom.notifications.addInfo(message, dismissable: true)
       return
-    @search(word, projects)
 
-  search: (word = null, projects = atom.project.getPaths()) ->
-    if word?
-      @narrow('search', null, {word, projects})
-    else
-      @readInput().then (input) => @search(input, projects)
+    options.projects = projects
+    @search(options)
 
-  atomScan: (word = null) ->
-    if word?
-      @narrow('atom-scan', null, {word})
+  search: ({search, projects} = {}) ->
+    projects ?= atom.project.getPaths()
+    if search
+      @narrow('search', {search, projects})
     else
-      @readInput().then (input) => @atomScan(input)
+      @readInput().then (search) => @search({search, projects})
+
+  atomScan: ({search} = {}) ->
+    if search
+      @narrow('atom-scan', {search})
+    else
+      @readInput().then (search) => @atomScan({search})
 
   readInput: ->
-    @input ?= new(require './input')
+    @uiInput ?= new(require './input')
     @input.readInput()
 
   deactivate: ->

@@ -51,13 +51,13 @@ class Search extends ProviderBase
   supportDirectEdit: true
 
   initialize: ->
-    @ui.grammar.setSearchTerm(@options.word)
+    @ui.grammar.setSearchTerm(@options.search)
 
   getItems: ->
     if @items?
       @items
     else
-      search = @search.bind(null, _.escapeRegExp(@options.word))
+      search = @search.bind(null, _.escapeRegExp(@options.search))
       Promise.all(@options.projects.map(search)).then (values) =>
         items = _.flatten(values)
         @injectMaxRow(items)
