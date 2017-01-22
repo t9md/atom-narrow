@@ -11,26 +11,22 @@ class Lines extends ProviderBase
       point: new Point(i, 0)
       text: text
 
-  trimRowPart: (text) ->
-    rowPartLength = @textWidthForLastRow + 1
-    text[rowPartLength...]
+  getRowHeaderForItem: ({point}) ->
+    @getLineNumberText(point.row) + ":"
+
+  viewForItem: (item) ->
+    @getRowHeaderForItem(item) + item.text
 
   updateRealFile: (states) ->
     changes = @getChangeSet(states)
-    return unless changes.length
     for {row, text} in changes
       range = @editor.bufferRangeForBufferRow(row)
       @editor.setTextInBufferRange(range, text)
 
   getChangeSet: (states) ->
     changes = []
-    filePath = @editor.getPath()
-    for state in states
-      {row, text, item} = state
-      newText = @trimRowPart(text)
+    for {row, text, item} in states
+      newText = text[@getRowHeaderForItem(item).length...]
       if newText isnt item.text
         changes.push({row, text: newText})
     changes
-
-  viewForItem: ({text, point}) ->
-    @getLineNumberText(point.row) + ":" + text
