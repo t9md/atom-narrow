@@ -7,7 +7,7 @@ class NarrowGrammar
   scopeName: 'source.narrow'
 
   constructor: (@editor, options={}) ->
-    {@initialKeyword, @includeHeaderRules} = options
+    {@includeHeaderRules} = options
 
   activate: (rule = @getRule()) ->
     atom.grammars.removeGrammarForScopeName(@scopeName)
@@ -29,6 +29,8 @@ class NarrowGrammar
         name: 'keyword.narrow'
       )
     @activate(rule)
+
+  setSearchTerm: (@searchTerm) ->
 
   getRule: ->
     rule =
@@ -63,9 +65,9 @@ class NarrowGrammar
           name: 'markup.heading.heading-1.narrow'
         }
       )
-    if @initialKeyword
+    if @searchTerm
       rule.patterns.push(
-        match: "(?i:#{_.escapeRegExp(@initialKeyword)})"
+        match: "(?i:#{_.escapeRegExp(@searchTerm)})"
         name: 'entity.name.function.narrow'
       )
     rule

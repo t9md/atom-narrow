@@ -66,19 +66,19 @@ module.exports =
 
     unless projects?
       message = "#{editor.getPath()} not belonging to any project"
-      atom.notifications.addInfo message, dismissable: true
+      atom.notifications.addInfo(message, dismissable: true)
       return
     @search(word, projects)
 
   search: (word = null, projects = atom.project.getPaths()) ->
     if word?
-      @narrow('search', initialKeyword: word, {word, projects})
+      @narrow('search', null, {word, projects})
     else
       @readInput().then (input) => @search(input, projects)
 
   atomScan: (word = null) ->
     if word?
-      @narrow('atom-scan', initialKeyword: word, {word})
+      @narrow('atom-scan', null, {word})
     else
       @readInput().then (input) => @atomScan(input)
 

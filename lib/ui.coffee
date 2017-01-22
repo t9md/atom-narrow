@@ -45,9 +45,9 @@ class UI
     workspaceElement = atom.views.getView(atom.workspace)
     workspaceElement.classList.toggle('has-narrow', @uiByNarrowEditor.size)
 
-  constructor: (@provider, params={}) ->
+  constructor: (@provider, options={}) ->
     @disposables = new CompositeDisposable
-    {@initialKeyword, @input} = params
+    {@input} = options
 
     @originalPane = atom.workspace.getActivePane()
     @gutterItem = document.createElement('span')
@@ -64,9 +64,7 @@ class UI
     @gutterForPrompt = new PromptGutter(@narrowEditor)
 
     includeHeaderRules = @provider.includeHeaderGrammarRules
-    @grammar = new NarrowGrammar(@narrowEditor, {@initialKeyword, includeHeaderRules})
-    @grammar.activate()
-
+    @grammar = new NarrowGrammar(@narrowEditor, {includeHeaderRules})
     @registerCommands()
     @disposables.add(@observeInputChange())
     @observeCursorPositionChangeForNarrowEditor()
@@ -82,6 +80,7 @@ class UI
     @constructor.registerUI(@narrowEditor, this)
 
   start: ->
+    @grammar.activate()
     activePane = atom.workspace.getActivePane()
     direction = settings.get('directionToOpen')
     if direction is 'here'

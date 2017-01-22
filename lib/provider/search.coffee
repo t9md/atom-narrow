@@ -50,6 +50,9 @@ class Search extends ProviderBase
   includeHeaderGrammarRules: true
   supportDirectEdit: true
 
+  initialize: ->
+    @ui.grammar.setSearchTerm(@options.word)
+
   getItems: ->
     if @items?
       @items
