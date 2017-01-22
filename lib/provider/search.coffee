@@ -4,6 +4,7 @@ _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
 settings = require '../settings'
+{padStringLeft} = require '../utils'
 
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
@@ -55,7 +56,17 @@ class Search extends ProviderBase
     else
       search = @search.bind(null, _.escapeRegExp(@options.word))
       Promise.all(@options.projects.map(search)).then (values) =>
-        @items = _.flatten(values)
+        items = _.flatten(values)
+        @injectMaxRow(items)
+        @items = items
+
+  injectMaxRow: (items) ->
+    # Inject textWidthForLastRow field to each item just for make row header aligned.
+    items = items.filter((item) -> not item.skip) # normal item only
+    maxRow = Math.max((items.map (item) -> item.point.row)...)
+    textWidthForLastRow = String(maxRow + 1).length
+    for item in items
+      item.textWidthForLastRow = textWidthForLastRow
 
   search: (pattern, project) ->
     items = []
@@ -102,7 +113,7 @@ class Search extends ProviderBase
         true
 
   getRowHeaderForItem: (item) ->
-    "    #{item.point.row + 1}:#{item.point.column + 1}:"
+    "    " + padStringLeft(String(item.point.row + 1), item.textWidthForLastRow) + ":"
 
   viewForItem: (item) ->
     if item.header?
