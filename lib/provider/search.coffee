@@ -16,7 +16,7 @@ parseLine = (line) ->
   if m?
     {
       relativePath: m[1]
-      point: new Point(parseInt(m[2]) - 1, parseInt(m[3]))
+      point: new Point(parseInt(m[2]) - 1, parseInt(m[3]) - 1)
       text: m[4]
     }
   else
@@ -104,4 +104,4 @@ class Search extends ProviderBase
     if item.header?
       item.header
     else
-      "    #{item.point.row + 1}:#{item.point.column}:#{item.text}"
+      "    #{item.point.row + 1}:#{item.point.column + 1}:#{item.text}"
