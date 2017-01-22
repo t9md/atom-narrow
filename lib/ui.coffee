@@ -127,6 +127,7 @@ class UI
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:force-refresh': => @forceRefresh()
       'narrow-ui:move-to-query-or-current-item': => @moveToQueryOrCurrentItem()
+      'narrow-ui:update-real-file': => @updateRealFile()
 
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
