@@ -69,6 +69,7 @@ class Search extends ProviderBase
         stderr: stderr
         exit: -> resolve(items)
         options:
+          stdio: ['ignore', 'pipe', 'pipe']
           cwd: project
           env: process.env
       )
