@@ -123,6 +123,8 @@ class Search extends ProviderBase
         for {row, text} in changes
           range = editor.bufferRangeForBufferRow(row)
           editor.setTextInBufferRange(range, text)
+      if settings.get('SearchSaveAfterDirectEdit')
+        editor.save()
 
   getChangeSet: (states) ->
     changes = []

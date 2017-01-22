@@ -1,5 +1,6 @@
 ProviderBase = require './provider-base'
 {Point} = require 'atom'
+settings = require '../settings'
 
 module.exports =
 class Lines extends ProviderBase
@@ -19,9 +20,12 @@ class Lines extends ProviderBase
 
   updateRealFile: (states) ->
     changes = @getChangeSet(states)
-    for {row, text} in changes
-      range = @editor.bufferRangeForBufferRow(row)
-      @editor.setTextInBufferRange(range, text)
+    @editor.transact =>
+      for {row, text} in changes
+        range = @editor.bufferRangeForBufferRow(row)
+        @editor.setTextInBufferRange(range, text)
+    if settings.get('LinesSaveAfterDirectEdit')
+      @editor.save()
 
   getChangeSet: (states) ->
     changes = []

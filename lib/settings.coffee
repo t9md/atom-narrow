@@ -69,8 +69,10 @@ module.exports = new Settings 'narrow',
     description: "Case sensitivity of your query in narrowEditor"
   vmpStartInInsertModeForUI: true
   LinesDefaultAutoPreview: true
+  LinesSaveAfterDirectEdit: false
   FoldDefaultAutoPreview: true
   SearchDefaultAutoPreview: true
+  SearchSaveAfterDirectEdit: false
   SearchAgCommandArgs:
     default: "--nocolor --column"
     description: """
