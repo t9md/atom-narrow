@@ -25,8 +25,9 @@ class Lines extends ProviderBase
 
   getChangeSet: (states) ->
     changes = []
-    for {row, text, item} in states
-      newText = text[@getRowHeaderForItem(item).length...]
-      if newText isnt item.text
-        changes.push({row, text: newText})
+    for {newText, item} in states
+      {text, point} = item
+      newText = newText[@getRowHeaderForItem(item).length...]
+      if newText isnt text
+        changes.push({row: point.row, text: newText})
     changes

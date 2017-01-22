@@ -135,7 +135,7 @@ class UI
     for lineText, row in @narrowEditor.buffer.getLines()
       continue if row is 0
       if @isValidItem(item = @items[row])
-        states.push({row: row - 1, item, text: lineText})
+        states.push({item, newText: lineText})
     @provider.updateRealFile(states)
 
   moveUpDown: (direction) ->

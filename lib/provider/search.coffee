@@ -113,17 +113,22 @@ class Search extends ProviderBase
   updateRealFile: (states) ->
     changes = @getChangeSet(states)
     return unless changes.length
-    changesByFile = _.groupBy(changes, 'filePath')
     @pane.activate()
-    for filePath, {row, text} of changesByFile
-      atom.workspace.open(filePath).then (editor) ->
-        range = editor.bufferRangeForBufferRow(row)
-        editor.setTextInBufferRange(range, text)
+    for filePath, changes of _.groupBy(changes, 'filePath')
+      @updateFile(filePath, changes)
+
+  updateFile: (filePath, changes) ->
+    atom.workspace.open(filePath).then (editor) ->
+      editor.transact ->
+        for {row, text} in changes
+          range = editor.bufferRangeForBufferRow(row)
+          editor.setTextInBufferRange(range, text)
 
   getChangeSet: (states) ->
     changes = []
-    for {row, text, item} in states
-      newText = text[@getRowHeaderForItem(item).length...]
-      if newText isnt item.text
-        changes.push({row, text: newText, filePath: item.filePath})
+    for {newText, item} in states
+      {text, filePath, point} = item
+      newText = newText[@getRowHeaderForItem(item).length...]
+      if newText isnt text
+        changes.push({row: point.row, text: newText, filePath})
     changes
