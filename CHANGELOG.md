@@ -1,5 +1,5 @@
 # 0.10.0: Still experimenting!!
-- New: `narrow:close` command.
+- New: `narrow:close` command.(no keymap by default)
 - New: `narrow-ui:move-to-query-or-current-item` command, available in `narrow-editor`(=`ui`).
   - `tab` is mapped. Use `tab` key to move between prompt line and current selected item quickly.
   - This mitigate frustration of autoSync to cursor position for boundToEditor providers.
