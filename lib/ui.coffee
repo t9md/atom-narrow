@@ -251,22 +251,20 @@ class UI
     if (narrowEditorRow isnt 0) and (narrowEditorRow isnt selectedItemRow)
       @withLock => @narrowEditor.setCursorBufferPosition([selectedItemRow, 0])
 
+  setRowMarker: (editor, point) ->
+    @rowMarker?.destroy()
+    @rowMarker = editor.markBufferRange([point, point])
+    editor.decorateMarker(@rowMarker, type: 'line', class: 'narrow-result')
+
   preview: ->
     @confirm(keepOpen: true).then ({editor, point}) =>
-      @rowMarker = @highlightRow(editor, Point.fromObject(point).row)
+      @setRowMarker(editor, point)
       @focus()
 
   isValidItem: (item) ->
     item? and not item.skip
 
-  highlightRow: (editor, row) ->
-    point = [row, 0]
-    marker = editor.markBufferRange([point, point])
-    editor.decorateMarker(marker, type: 'line', class: 'narrow-result')
-    marker
-
   confirm: (options={}) ->
-    @rowMarker?.destroy()
     item = @getSelectedItem()
     Promise.resolve(@provider.confirmed(item)).then ({editor, point}) =>
       unless options.keepOpen
