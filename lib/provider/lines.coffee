@@ -13,9 +13,6 @@ class Lines extends ProviderBase
       point: new Point(i, 0)
       text: text
 
-  getRowHeaderForItem: ({point}) ->
-    @getLineNumberText(point.row) + ":"
-
   filterItems: (items, regexps) ->
     @regexps = regexps
     super(items, regexps)
@@ -32,7 +29,7 @@ class Lines extends ProviderBase
     return _.min(points, (point) -> point.column)
 
   viewForItem: (item) ->
-    @getRowHeaderForItem(item) + item.text
+    @getViewTextWithLineHeaderForItem(item, @editor)
 
   updateRealFile: (states) ->
     changes = @getChangeSet(states)
@@ -47,7 +44,8 @@ class Lines extends ProviderBase
     changes = []
     for {newText, item} in states
       {text, point} = item
-      newText = newText[@getRowHeaderForItem(item).length...]
+      lineHeaderLength = @getLineHeaderForItem(item, @editor).length
+      newText = newText[lineHeaderLength...]
       if newText isnt text
         changes.push({row: point.row, text: newText})
     changes

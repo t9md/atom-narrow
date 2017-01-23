@@ -61,16 +61,16 @@ class AtomScan extends ProviderBase
               rows.push(point.row) # ensure single item per row
               items.push({filePath, text, point})
 
-        @injectMaxRow(items)
+        @injectMaxLineTextWidth(items)
         @items = items
 
-  injectMaxRow: (items) ->
-    # Inject textWidthForLastRow field to each item just for make row header aligned.
+  injectMaxLineTextWidth: (items) ->
+    # Inject maxLineTextWidth field to each item just for make row header aligned.
     items = items.filter((item) -> not item.skip) # normal item only
     maxRow = Math.max((items.map (item) -> item.point.row)...)
-    textWidthForLastRow = String(maxRow + 1).length
+    maxLineTextWidth = String(maxRow + 1).length
     for item in items
-      item.textWidthForLastRow = textWidthForLastRow
+      item.maxLineTextWidth = maxLineTextWidth
 
   confirmed: ({filePath, point}) ->
     return unless point?
@@ -97,7 +97,7 @@ class AtomScan extends ProviderBase
         true
 
   getRowHeaderForItem: (item) ->
-    "  " + padStringLeft(String(item.point.row + 1), item.textWidthForLastRow) + ":"
+    "  " + padStringLeft(String(item.point.row + 1), item.maxLineTextWidth) + ":"
 
   viewForItem: (item) ->
     if item.header?

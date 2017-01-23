@@ -25,5 +25,5 @@ class GitDiff extends ProviderBase
         diff.text = @editor.lineTextForBufferRow(bufferRow)
       @items = diffs
 
-  viewForItem: ({text, point}) ->
-    @getLineNumberText(point.row) + ":" + text
+  viewForItem: (item) ->
+    @getViewTextWithLineHeaderForItem(item, @editor)

@@ -88,16 +88,16 @@ class Search extends ProviderBase
       search = @search.bind(this, _.escapeRegExp(@options.search))
       Promise.all(@options.projects.map(search)).then (values) =>
         items = _.flatten(values)
-        @injectMaxRow(items)
+        @injectMaxLineTextWidth(items)
         @items = items
 
-  injectMaxRow: (items) ->
-    # Inject textWidthForLastRow field to each item just for make row header aligned.
+  injectMaxLineTextWidth: (items) ->
+    # Inject maxLineTextWidth field to each item just for make row header aligned.
     items = items.filter((item) -> not item.skip) # normal item only
     maxRow = Math.max((items.map (item) -> item.point.row)...)
-    textWidthForLastRow = String(maxRow + 1).length
+    maxLineTextWidth = String(maxRow + 1).length
     for item in items
-      item.textWidthForLastRow = textWidthForLastRow
+      item.maxLineTextWidth = maxLineTextWidth
 
   search: (pattern, project) ->
     items = []
@@ -149,7 +149,7 @@ class Search extends ProviderBase
         true
 
   getRowHeaderForItem: (item) ->
-    "    " + padStringLeft(String(item.point.row + 1), item.textWidthForLastRow) + ":"
+    "    " + padStringLeft(String(item.point.row + 1), item.maxLineTextWidth) + ":"
 
   viewForItem: (item) ->
     if item.header?

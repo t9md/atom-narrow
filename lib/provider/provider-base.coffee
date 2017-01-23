@@ -11,7 +11,6 @@ Input = null
 module.exports =
 class ProviderBase
   wasConfirmed: false
-  textWidthForLastRow: null
   boundToEditor: false
   includeHeaderGrammarRules: false
   supportDirectEdit: false
@@ -44,7 +43,6 @@ class ProviderBase
     @restoreEditorState = saveEditorState(@editor)
     @emitter = new Emitter
 
-    @subscribe @editor.onDidStopChanging(@invalidateState)
     @ui = new UI(this, {input: @options.uiInput})
 
     if @boundToEditor
@@ -54,9 +52,6 @@ class ProviderBase
       if ready
         @initialize()
         @ui.start()
-
-  invalidateState: =>
-    @textWidthForLastRow = null
 
   subscribe: (args...) ->
     @subscriptions.add(args...)
@@ -99,9 +94,12 @@ class ProviderBase
 
     return {@editor, point}
 
-  getLineNumberText: (row) ->
-    @textWidthForLastRow ?= String(@editor.getLastBufferRow()).length
-    padStringLeft(String(row + 1), @textWidthForLastRow)
+  getViewTextWithLineHeaderForItem: (item, editor) ->
+    @getLineHeaderForItem(item, editor) + item.text
+
+  getLineHeaderForItem: ({text, point}, editor) ->
+    maxLineTextWidth = String(editor.getLastBufferRow() + 1).length
+    padStringLeft(String(point.row + 1), maxLineTextWidth) + ':'
 
   readInput: ->
     Input ?= require '../input'
