@@ -15,7 +15,6 @@ class ProviderBase
   includeHeaderGrammarRules: false
 
   supportDirectEdit: false
-  configForSaveAfterDirectEdit: null
 
   indentTextForLineHeader: ""
   showLineHeader: true
@@ -135,12 +134,14 @@ class ProviderBase
 
     @pane.activate()
     if @boundToEditor
-      @applyChangeSet(@editor, changes,)
+      @applyChangeSet(@editor, changes)
     else
       changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
       for filePath, changes of changesByFilePath
-        atom.workspace.open(filePath).then (editor) =>
-          @applyChangeSet(editor, changes)
+        # CRITICAL: protect `changes` replaced by outer variable.
+        do (filePath, changes) =>
+          atom.workspace.open(filePath, activateItem: false).then (editor) =>
+            @applyChangeSet(editor, changes)
 
   needSaveAfterDirectEdit: ->
     param = @getName() + 'SaveAfterDirectEdit'
