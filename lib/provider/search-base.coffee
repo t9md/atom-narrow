@@ -2,7 +2,7 @@ _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
 settings = require '../settings'
-{padStringLeft, getCurrentWordAndBoundary} = require '../utils'
+{getCurrentWordAndBoundary} = require '../utils'
 
 module.exports =
 class SearchBase extends ProviderBase
@@ -39,9 +39,6 @@ class SearchBase extends ProviderBase
     for item in items
       item.maxLineTextWidth = maxLineTextWidth
 
-  getLineHeaderForItem: (item) ->
-    @indentTextForLineHeader + padStringLeft(String(item.point.row + 1), item.maxLineTextWidth) + ":"
-
   # Direct Edit
   # -------------------------
   updateRealFile: (states) ->
@@ -55,26 +52,20 @@ class SearchBase extends ProviderBase
     changes = []
     for {newText, item} in states
       {text, filePath, point} = item
-      newText = newText[@getLineHeaderForItem(item).length...]
+      lineHeaderLength = @getLineHeaderForItem(item).length
+      newText = newText[lineHeaderLength...]
       if newText isnt text
         changes.push({row: point.row, text: newText, filePath})
     changes
 
   updateFile: (filePath, changes) ->
+    needSaveAfterEdit = settings.get(@configForSaveAfterDirectEdit)
     atom.workspace.open(filePath).then (editor) ->
       editor.transact ->
         for {row, text} in changes
           range = editor.bufferRangeForBufferRow(row)
           editor.setTextInBufferRange(range, text)
-      if settings.get(@configForSaveAfterDirectEdit)
-        editor.save()
-  # View
-  # -------------------------
-  viewForItem: (item) ->
-    if item.header?
-      item.header
-    else
-      @getLineHeaderForItem(item) + item.text
+      editor.save() if needSaveAfterEdit
 
   # Confirmed
   # -------------------------

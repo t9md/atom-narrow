@@ -19,6 +19,7 @@ getBookmarks = ->
 module.exports =
 class Bookmarks extends ProviderBase
   includeHeaderGrammarRules: true
+  indentTextForLineHeader: "  "
 
   getItemsForEditor: (editor, markerLayer) ->
     filePath = editor.getPath()
@@ -45,10 +46,3 @@ class Bookmarks extends ProviderBase
       editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
       return {editor, point}
-
-  viewForItem: ({header, text, point, maxLineTextWidth}) ->
-    if header?
-      header
-    else
-      rowText = padStringLeft(String(point.row + 1), maxLineTextWidth)
-      "  " + rowText + ":"  + text

@@ -14,6 +14,8 @@ class ProviderBase
   boundToEditor: false
   includeHeaderGrammarRules: false
   supportDirectEdit: false
+  indentTextForLineHeader: ""
+  showLineHeader: true
 
   getName: ->
     @constructor.name
@@ -97,10 +99,20 @@ class ProviderBase
   getViewTextWithLineHeaderForItem: (item, editor) ->
     @getLineHeaderForItem(item, editor) + item.text
 
-  getLineHeaderForItem: ({text, point}, editor) ->
-    maxLineTextWidth = String(editor.getLastBufferRow() + 1).length
-    padStringLeft(String(point.row + 1), maxLineTextWidth) + ':'
+  # Unless items didn't have maxLineTextWidth field, detect last line from editor.
+  getLineHeaderForItem: ({text, point, maxLineTextWidth}, editor=@editor) ->
+    maxLineTextWidth ?= String(editor.getLastBufferRow() + 1).length
+    @indentTextForLineHeader + padStringLeft(String(point.row + 1), maxLineTextWidth) + ':'
 
   readInput: ->
     Input ?= require '../input'
     new Input().readInput()
+
+  viewForItem: (item) ->
+    if item.header?
+      item.header
+    else
+      if @showLineHeader
+        @getViewTextWithLineHeaderForItem(item)
+      else
+        item.text

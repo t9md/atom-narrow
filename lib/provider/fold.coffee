@@ -16,6 +16,7 @@ module.exports =
 class Fold extends ProviderBase
   boundToEditor: true
   foldLevel: 2
+  showLineHeader: false
 
   initialize: ->
     atom.commands.add @ui.narrowEditorElement,
@@ -36,6 +37,3 @@ class Fold extends ProviderBase
         point: new Point(row, 0)
         text: @editor.lineTextForBufferRow(row)
         filePath: filePath
-
-  viewForItem: ({text}) ->
-    text
