@@ -9,7 +9,6 @@ class SearchBase extends ProviderBase
   items: null
   includeHeaderGrammarRules: true
   supportDirectEdit: true
-  indentTextForLineHeader: ""
 
   checkReady: ->
     if @options.currentWord
@@ -38,34 +37,6 @@ class SearchBase extends ProviderBase
     maxLineTextWidth = String(maxRow + 1).length
     for item in items
       item.maxLineTextWidth = maxLineTextWidth
-
-  # Direct Edit
-  # -------------------------
-  updateRealFile: (states) ->
-    changes = @getChangeSet(states)
-    return unless changes.length
-    @pane.activate()
-    for filePath, changes of _.groupBy(changes, 'filePath')
-      @updateFile(filePath, changes)
-
-  getChangeSet: (states) ->
-    changes = []
-    for {newText, item} in states
-      {text, filePath, point} = item
-      lineHeaderLength = @getLineHeaderForItem(item).length
-      newText = newText[lineHeaderLength...]
-      if newText isnt text
-        changes.push({row: point.row, text: newText, filePath})
-    changes
-
-  updateFile: (filePath, changes) ->
-    needSaveAfterEdit = settings.get(@configForSaveAfterDirectEdit)
-    atom.workspace.open(filePath).then (editor) ->
-      editor.transact ->
-        for {row, text} in changes
-          range = editor.bufferRangeForBufferRow(row)
-          editor.setTextInBufferRange(range, text)
-      editor.save() if needSaveAfterEdit
 
   # Confirmed
   # -------------------------
