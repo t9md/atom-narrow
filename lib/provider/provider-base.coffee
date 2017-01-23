@@ -50,7 +50,11 @@ class ProviderBase
     @ui = new UI(this, {input: @options.uiInput})
 
     if @boundToEditor
-      @subscribe @editor.onDidStopChanging(@refresh.bind(this))
+      @subscribe @editor.onDidStopChanging =>
+        # Skip is not activeEditor
+        # This is for skip auto-refresh on direct-edit.
+        if atom.workspace.getActiveTextEditor() is @editor
+          @refresh()
 
     @checkReady().then (ready) =>
       if ready
@@ -115,7 +119,7 @@ class ProviderBase
   # Unless items didn't have maxLineTextWidth field, detect last line from editor.
   getLineHeaderForItem: ({text, point, maxLineTextWidth}, editor=@editor) ->
     maxLineTextWidth ?= String(editor.getLastBufferRow() + 1).length
-    @indentTextForLineHeader + padStringLeft(String(point.row + 1), maxLineTextWidth) + ':'
+    @indentTextForLineHeader + padStringLeft(String(point.row + 1), maxLineTextWidth) + ': '
 
   # Direct Edit
   # -------------------------
