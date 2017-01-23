@@ -1,10 +1,8 @@
-{Point, BufferedProcess} = require 'atom'
 path = require 'path'
 _ = require 'underscore-plus'
-
-ProviderBase = require './provider-base'
+{Point, BufferedProcess} = require 'atom'
+SearchBase = require './search-base'
 settings = require '../settings'
-{padStringLeft, getCurrentWordAndBoundary} = require '../utils'
 
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
@@ -45,10 +43,9 @@ getOutputterForProject = (project, items) ->
       items.push({point, text, filePath, projectName})
 
 module.exports =
-class Search extends ProviderBase
-  items: null
-  includeHeaderGrammarRules: true
-  supportDirectEdit: true
+class Search extends SearchBase
+  indentTextForLineHeader: "    "
+  configForSaveAfterDirectEdit: 'AtomScanSaveAfterDirectEdit'
 
   checkReady: ->
     if @options.currentProject
@@ -61,24 +58,7 @@ class Search extends ProviderBase
         atom.notifications.addInfo(message, dismissable: true)
         return Promise.resolve(false)
 
-    if @options.currentWord
-      {word, boundary} = getCurrentWordAndBoundary(@editor)
-      @options.wordOnly = boundary
-      @options.search = word
-
-    if @options.search
-      Promise.resolve(true)
-    else
-      @readInput().then (input) =>
-        @options.search = input
-        true
-
-  initialize: ->
-    source = _.escapeRegExp(@options.search)
-    if @options.wordOnly
-      source = "\\b#{source}\\b"
-    searchTerm = "(?i:#{source})"
-    @ui.grammar.setSearchTerm(searchTerm)
+    super
 
   getItems: ->
     if @items?
@@ -90,14 +70,6 @@ class Search extends ProviderBase
         items = _.flatten(values)
         @injectMaxLineTextWidth(items)
         @items = items
-
-  injectMaxLineTextWidth: (items) ->
-    # Inject maxLineTextWidth field to each item just for make row header aligned.
-    items = items.filter((item) -> not item.skip) # normal item only
-    maxRow = Math.max((items.map (item) -> item.point.row)...)
-    maxLineTextWidth = String(maxRow + 1).length
-    for item in items
-      item.maxLineTextWidth = maxLineTextWidth
 
   search: (pattern, project) ->
     items = []
@@ -121,13 +93,6 @@ class Search extends ProviderBase
           env: process.env
       )
 
-  confirmed: ({filePath, point}) ->
-    return unless point?
-    @pane.activate()
-    atom.workspace.open(filePath, pending: true).then (editor) ->
-      editor.setCursorBufferPosition(point, autoscroll: false)
-      editor.scrollToBufferPosition(point, center: true)
-      return {editor, point}
 
   filterItems: (items, regexps) ->
     filterKey = @getFilterKey()
@@ -147,37 +112,3 @@ class Search extends ProviderBase
           item.filePath in filePaths
       else
         true
-
-  getRowHeaderForItem: (item) ->
-    "    " + padStringLeft(String(item.point.row + 1), item.maxLineTextWidth) + ":"
-
-  viewForItem: (item) ->
-    if item.header?
-      item.header
-    else
-      @getRowHeaderForItem(item) + item.text
-
-  updateRealFile: (states) ->
-    changes = @getChangeSet(states)
-    return unless changes.length
-    @pane.activate()
-    for filePath, changes of _.groupBy(changes, 'filePath')
-      @updateFile(filePath, changes)
-
-  updateFile: (filePath, changes) ->
-    atom.workspace.open(filePath).then (editor) ->
-      editor.transact ->
-        for {row, text} in changes
-          range = editor.bufferRangeForBufferRow(row)
-          editor.setTextInBufferRange(range, text)
-      if settings.get('SearchSaveAfterDirectEdit')
-        editor.save()
-
-  getChangeSet: (states) ->
-    changes = []
-    for {newText, item} in states
-      {text, filePath, point} = item
-      newText = newText[@getRowHeaderForItem(item).length...]
-      if newText isnt text
-        changes.push({row: point.row, text: newText, filePath})
-    changes
