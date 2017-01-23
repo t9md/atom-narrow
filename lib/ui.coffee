@@ -213,9 +213,9 @@ class UI
 
   observeCursorPositionChangeForNarrowEditor: ->
     @narrowEditor.onDidChangeCursorPosition (event) =>
+      return if @isLocked()
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
-      return if @isLocked() or
-        not cursor.selection.isEmpty() or
+      return if (not cursor.selection.isEmpty()) or
         textChanged or
         (newBufferPosition.row is 0) or
         (oldBufferPosition.row is newBufferPosition.row)
