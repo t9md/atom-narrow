@@ -132,16 +132,20 @@ class ProviderBase
     changes = @getChangeSet(states)
     return unless changes.length
 
-    @pane.activate()
     if @boundToEditor
-      @applyChangeSet(@editor, changes)
+      # Intentionally avoid direct use of @editor to skip observation event
+      # subscribed to @editor.
+      # This prevent auto refresh, so undoable narrowEditor to last state.
+      changesByFilePath =  {}
+      changesByFilePath[@editor.getPath()] = changes
     else
       changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
-      for filePath, changes of changesByFilePath
-        # CRITICAL: protect `changes` replaced by outer variable.
-        do (filePath, changes) =>
-          atom.workspace.open(filePath, activateItem: false).then (editor) =>
-            @applyChangeSet(editor, changes)
+
+    for filePath, changes of changesByFilePath
+      # CRITICAL: protect `changes` replaced by outer variable.
+      do (filePath, changes) =>
+        atom.workspace.open(filePath, activateItem: false).then (editor) =>
+          @applyChangeSet(editor, changes)
 
   needSaveAfterDirectEdit: ->
     param = @getName() + 'SaveAfterDirectEdit'
@@ -152,7 +156,13 @@ class ProviderBase
       for {newText, item} in changes
         range = editor.bufferRangeForBufferRow(item.point.row)
         editor.setTextInBufferRange(range, newText)
-    editor.save() if @needSaveAfterDirectEdit()
+
+        # Sync item's text state
+        # To allow re-edit if not saved and non-boundToEditor provider
+        item.text = newText
+
+    if @needSaveAfterDirectEdit()
+      editor.save()
 
   # Helpers
   # -------------------------
