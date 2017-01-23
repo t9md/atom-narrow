@@ -28,9 +28,6 @@ class Lines extends ProviderBase
 
     return _.min(points, (point) -> point.column)
 
-  viewForItem: (item) ->
-    @getViewTextWithLineHeaderForItem(item, @editor)
-
   updateRealFile: (states) ->
     changes = @getChangeSet(states)
     @editor.transact =>
