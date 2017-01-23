@@ -27,22 +27,3 @@ class Lines extends ProviderBase
         points.push(range.start)
 
     return _.min(points, (point) -> point.column)
-
-  updateRealFile: (states) ->
-    changes = @getChangeSet(states)
-    @editor.transact =>
-      for {row, text} in changes
-        range = @editor.bufferRangeForBufferRow(row)
-        @editor.setTextInBufferRange(range, text)
-    if settings.get('LinesSaveAfterDirectEdit')
-      @editor.save()
-
-  getChangeSet: (states) ->
-    changes = []
-    for {newText, item} in states
-      {text, point} = item
-      lineHeaderLength = @getLineHeaderForItem(item, @editor).length
-      newText = newText[lineHeaderLength...]
-      if newText isnt text
-        changes.push({row: point.row, text: newText})
-    changes

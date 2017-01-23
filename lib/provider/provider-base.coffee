@@ -13,7 +13,10 @@ class ProviderBase
   wasConfirmed: false
   boundToEditor: false
   includeHeaderGrammarRules: false
+
   supportDirectEdit: false
+  configForSaveAfterDirectEdit: null
+
   indentTextForLineHeader: ""
   showLineHeader: true
 
@@ -96,18 +99,8 @@ class ProviderBase
 
     return {@editor, point}
 
-  getViewTextWithLineHeaderForItem: (item, editor) ->
-    @getLineHeaderForItem(item, editor) + item.text
-
-  # Unless items didn't have maxLineTextWidth field, detect last line from editor.
-  getLineHeaderForItem: ({text, point, maxLineTextWidth}, editor=@editor) ->
-    maxLineTextWidth ?= String(editor.getLastBufferRow() + 1).length
-    @indentTextForLineHeader + padStringLeft(String(point.row + 1), maxLineTextWidth) + ':'
-
-  readInput: ->
-    Input ?= require '../input'
-    new Input().readInput()
-
+  # View
+  # -------------------------
   viewForItem: (item) ->
     if item.header?
       item.header
@@ -116,3 +109,52 @@ class ProviderBase
         @getViewTextWithLineHeaderForItem(item)
       else
         item.text
+
+  getViewTextWithLineHeaderForItem: (item, editor) ->
+    @getLineHeaderForItem(item, editor) + item.text
+
+  # Unless items didn't have maxLineTextWidth field, detect last line from editor.
+  getLineHeaderForItem: ({text, point, maxLineTextWidth}, editor=@editor) ->
+    maxLineTextWidth ?= String(editor.getLastBufferRow() + 1).length
+    @indentTextForLineHeader + padStringLeft(String(point.row + 1), maxLineTextWidth) + ':'
+
+  # Direct Edit
+  # -------------------------
+  getChangeSet: (states) ->
+    changes = []
+    for {newText, item} in states
+      lineHeaderLength = @getLineHeaderForItem(item).length
+      newText = newText[lineHeaderLength...]
+      if newText isnt item.text
+        changes.push({newText, item})
+    changes
+
+  updateRealFile: (states) ->
+    changes = @getChangeSet(states)
+    return unless changes.length
+
+    @pane.activate()
+    if @boundToEditor
+      @applyChangeSet(@editor, changes,)
+    else
+      changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
+      for filePath, changes of changesByFilePath
+        atom.workspace.open(filePath).then (editor) =>
+          @applyChangeSet(editor, changes)
+
+  needSaveAfterDirectEdit: ->
+    param = @getName() + 'SaveAfterDirectEdit'
+    settings.get(param)
+
+  applyChangeSet: (editor, changes) ->
+    editor.transact ->
+      for {newText, item} in changes
+        range = editor.bufferRangeForBufferRow(item.point.row)
+        editor.setTextInBufferRange(range, newText)
+    editor.save() if @needSaveAfterDirectEdit()
+
+  # Helpers
+  # -------------------------
+  readInput: ->
+    Input ?= require '../input'
+    new Input().readInput()

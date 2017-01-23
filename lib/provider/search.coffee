@@ -45,7 +45,6 @@ getOutputterForProject = (project, items) ->
 module.exports =
 class Search extends SearchBase
   indentTextForLineHeader: "    "
-  configForSaveAfterDirectEdit: 'AtomScanSaveAfterDirectEdit'
 
   checkReady: ->
     if @options.currentProject
@@ -92,7 +91,6 @@ class Search extends SearchBase
           cwd: project
           env: process.env
       )
-
 
   filterItems: (items, regexps) ->
     filterKey = @getFilterKey()

@@ -5,7 +5,6 @@ SearchBase = require './search-base'
 module.exports =
 class AtomScan extends SearchBase
   indentTextForLineHeader: "  "
-  configForSaveAfterDirectEdit: 'AtomScanSaveAfterDirectEdit'
 
   getItems: ->
     if @items?
