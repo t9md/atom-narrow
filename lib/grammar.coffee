@@ -6,8 +6,7 @@ class NarrowGrammar
   filePath: path.join(__dirname, 'grammar', 'narrow.cson')
   scopeName: 'source.narrow'
 
-  constructor: (@editor, options={}) ->
-    {@includeHeaderRules} = options
+  constructor: (@editor, {@includeHeaderRules}={}) ->
 
   activate: (rule = @getRule()) ->
     atom.grammars.removeGrammarForScopeName(@scopeName)

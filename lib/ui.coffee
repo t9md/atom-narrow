@@ -71,7 +71,7 @@ class UI
 
     @gutterForPrompt = new PromptGutter(@editor)
 
-    @grammar = new Grammar(@editor, includeHeader: @provider.includeHeaderGrammar)
+    @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
     @registerCommands()
     @disposables.add(@observeInputChange())
     @observeCursorPositionChangeForNarrowEditor()
@@ -105,10 +105,14 @@ class UI
     @setPromptLine("\n")
     @moveToPrompt()
     if @input
-      # prompt line change kick refresh items
-      @editor.insertText(@input)
-    else
-      @refresh()
+      @withIgnoreChangeOnNarrowEdigtor =>
+        @editor.insertText(@input)
+    @refresh()
+
+  withIgnoreChangeOnNarrowEdigtor: (fn) ->
+    @ignoreChangeOnNarrowEditor = true
+    fn()
+    @ignoreChangeOnNarrowEditor = false
 
   focus: ->
     if @isAlive()
