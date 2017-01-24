@@ -11,15 +11,20 @@ getAdjacentPaneForPane = (pane) ->
     .last()
     .value()
 
-openItemInAdjacentPaneForPane = (basePane, item, direction) ->
-  if pane = getAdjacentPaneForPane(basePane)
+# Return open pane
+openItemInAdjacentPaneForPane = (basePane, {item, direction}) ->
+  pane = getAdjacentPaneForPane(basePane)
+
+  if pane?
     pane.activateItem(item)
     pane.activate()
+    return pane
   else
-    pane = switch direction
-      when 'right' then basePane.splitRight(items: [item])
-      when 'down' then basePane.splitDown(items: [item])
-  pane
+    return switch direction
+      when 'right'
+        basePane.splitRight(items: [item])
+      when 'down'
+        basePane.splitDown(items: [item])
 
 smartScrollToBufferPosition = (editor, point) ->
   editorElement = editor.element
@@ -79,6 +84,8 @@ getCurrentWordAndBoundary = (editor) ->
     text = selection.getText()
     {word: text, boundary: false}
 
+isActiveEditor = (editor) ->
+  editor is atom.workspace.getActiveTextEditor()
 
 module.exports = {
   getAdjacentPaneForPane
@@ -90,4 +97,5 @@ module.exports = {
   limitNumber
   getCurrentWord
   getCurrentWordAndBoundary
+  isActiveEditor
 }

@@ -30,3 +30,4 @@ class Symbols extends ProviderBase
       @items = tags.map ({position}) =>
         point: position
         text: @editor.lineTextForBufferRow(position.row)
+      @items

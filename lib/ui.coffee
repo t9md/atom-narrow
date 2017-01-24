@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter} = require 'atom'
-{openItemInAdjacentPaneForPane} = require './utils'
+{openItemInAdjacentPaneForPane, isActiveEditor} = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
 
@@ -26,17 +26,17 @@ class UI
   @uiByNarrowEditor: new Map()
   autoPreview: false
   preventAutoPreview: false
-  ignoreChangeOnNarrowEditor: false
+  ignoreChangeOnEditor: false
   destroyed: false
   items: []
   itemsByProvider: null
 
-  @unregisterUI: (narrowEditor) ->
-    @uiByNarrowEditor.delete(narrowEditor)
+  @unregisterUI: (editor) ->
+    @uiByNarrowEditor.delete(editor)
     @updateWorkspaceClassList()
 
-  @registerUI: (narrowEditor, ui) ->
-    @uiByNarrowEditor.set(narrowEditor, ui)
+  @registerUI: (editor, ui) ->
+    @uiByNarrowEditor.set(editor, ui)
     @updateWorkspaceClassList()
 
   @updateWorkspaceClassList: ->
@@ -60,21 +60,20 @@ class UI
 
     @originalPane = atom.workspace.getActivePane()
 
-    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     @providerEditor = @provider.editor
-    dashName = @provider.getDashName()
-    @editor.getTitle = -> dashName
+    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    @editor.getTitle = => @provider.getDashName()
     @editor.isModified = -> false
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
-    @editorElement.classList.add('narrow', 'narrow-editor', dashName)
+    @editorElement.classList.add('narrow', 'narrow-editor', @provider.getDashName())
 
     @gutterForPrompt = new PromptGutter(@editor)
 
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
-    @registerCommands()
+    @disposables.add(@registerCommands())
     @disposables.add(@observeInputChange())
-    @observeCursorPositionChangeForNarrowEditor()
+    @disposables.add(@observeCursorPositionChange())
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       if item is @editor
@@ -85,34 +84,23 @@ class UI
     if @provider.boundToEditor
       @disposables.add @providerEditor.onDidStopChanging =>
         # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
-        if atom.workspace.getActiveTextEditor() is @providerEditor
-          @refresh(force: true)
+        @refresh(force: true) if isActiveEditor(@providerEditor)
 
       @disposables.add @providerEditor.onDidChangeCursorPosition =>
-        if atom.workspace.getActiveTextEditor() is @providerEditor
-          @syncToProviderEditor()
+        @syncToProviderEditor() if isActiveEditor(@providerEditor)
 
       @disposables.add @providerEditor.onDidDestroy(@destroy.bind(this))
 
     @constructor.registerUI(@editor, this)
 
   start: ->
-    @grammar.activate()
     activePane = atom.workspace.getActivePane()
-    direction = settings.get('directionToOpen')
-    @pane = openItemInAdjacentPaneForPane(activePane, @editor, direction)
-
-    @setPromptLine("\n")
+    options = {item: @editor, direction: settings.get('directionToOpen')}
+    @pane = openItemInAdjacentPaneForPane(activePane, options)
+    @grammar.activate()
+    @setPromptLine((@input ? '') + "\n" )
     @moveToPrompt()
-    if @input
-      @withIgnoreChangeOnNarrowEdigtor =>
-        @editor.insertText(@input)
     @refresh()
-
-  withIgnoreChangeOnNarrowEdigtor: (fn) ->
-    @ignoreChangeOnNarrowEditor = true
-    fn()
-    @ignoreChangeOnNarrowEditor = false
 
   focus: ->
     if @isAlive()
@@ -206,8 +194,8 @@ class UI
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
     regexps = words.map (word) => @getRegExpForQueryWord(word)
-    @ignoreChangeOnNarrowEditor = true
 
+    @ignoreChangeOnEditor = true
     # In case prompt accidentaly mutated
     eof = @editor.getEofBufferPosition()
     if eof.isLessThan(@itemAreaStart)
@@ -226,7 +214,7 @@ class UI
         @syncToProviderEditor()
       else
         @selectItemForRow(@findNormalItem(1, 'next'))
-      @ignoreChangeOnNarrowEditor = false
+      @ignoreChangeOnEditor = false
 
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
@@ -246,8 +234,8 @@ class UI
     true
 
   observeInputChange: ->
-    @editor.buffer.onDidChange ({newRange, oldRange, newText, oldText}) =>
-      return if @ignoreChangeOnNarrowEditor
+    @editor.buffer.onDidChange ({newRange, oldRange}) =>
+      return if @ignoreChangeOnEditor
 
       promptRange = @getPromptRange()
       onPrompt = (range) -> range.intersectsWith(promptRange)
@@ -275,7 +263,7 @@ class UI
     fn()
     @preventAutoPreview = false
 
-  observeCursorPositionChangeForNarrowEditor: ->
+  observeCursorPositionChange: ->
     @editor.onDidChangeCursorPosition (event) =>
       return if @isLocked()
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
@@ -284,7 +272,10 @@ class UI
         (newBufferPosition.row is 0) or
         (oldBufferPosition.row is newBufferPosition.row)
 
-      direction = if (newBufferPosition.row - oldBufferPosition.row) > 0 then 'next' else 'previous'
+      if newBufferPosition.row > oldBufferPosition.row
+        direction = 'next'
+      else
+        direction = 'previous'
       {row, column} = newBufferPosition
       @withLock =>
         row = @findNormalItem(row, direction)
@@ -297,27 +288,24 @@ class UI
       @preview() if @isAutoPreview()
 
   syncToProviderEditor: ->
-    cursorPosition = @providerEditor.getCursorBufferPosition()
     # Detect item
     # - cursor position is equal or greather than that item.
+    cursorPosition = @providerEditor.getCursorBufferPosition()
     foundItem = null
-    for item in @items by -1 when item.point?
-      itemPoint = Point.fromObject(item.point)
-      if itemPoint.isLessThanOrEqual(cursorPosition)
-        foundItem = item
-        break
+    for item in @items by -1 when item.point?.isLessThanOrEqual(cursorPosition)
+      foundItem = item
+      break
 
     if foundItem?
-      @selectItem(foundItem)
+      @selectItem(item)
     else
       @selectItemForRow(@findNormalItem(1, 'next'))
 
-    unless @editor is atom.workspace.getActiveTextEditor()
+    unless isActiveEditor(@editor)
       row = @editor.getCursorBufferPosition().row
       selectedItemRow = @getRowForSelectedItem()
       if (row isnt selectedItemRow)
         @editor.scrollToBufferPosition([selectedItemRow, 0])
-        # @withLock => @editor.setCursorBufferPosition([selectedItemRow, 0])
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()
@@ -370,7 +358,7 @@ class UI
     @items.indexOf(item)
 
   selectItem: (item) ->
-    if (row = @items.indexOf(item) ) >= 0
+    if (row = @getRowForItem(item)) >= 0
       @selectItemForRow(row)
 
   selectItemForRow: (row) ->
@@ -387,7 +375,7 @@ class UI
 
   # Return range
   setPromptLine: (text) ->
-    @ignoreChangeOnNarrowEditor = true
+    @ignoreChangeOnEditor = true
     range = @editor.setTextInBufferRange(@getPromptRange(0), text)
-    @ignoreChangeOnNarrowEditor = false
+    @ignoreChangeOnEditor = false
     range

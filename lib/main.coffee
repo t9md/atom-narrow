@@ -13,7 +13,7 @@ module.exports =
     settings.removeDeprecated()
 
     @subscriptions.add atom.workspace.observeActivePaneItem (item) =>
-      if atom.workspace.isTextEditor(item) and @isNarrowEditor(item)
+      if @isNarrowEditor(item)
         @currentNarrowEditor = item
 
     @subscriptions.add atom.commands.add 'atom-text-editor',
@@ -60,8 +60,9 @@ module.exports =
     @subscriptions?.dispose()
     {@subscriptions} = {}
 
-  isNarrowEditor: (editor) ->
-    editor.element.classList.contains('narrow-editor')
+  isNarrowEditor: (item) ->
+    atom.workspace.isTextEditor(item) and
+      item.element.classList.contains('narrow-editor')
 
   consumeVim: ({getEditorState, observeVimStates}) ->
     @subscriptions.add observeVimStates (vimState) =>

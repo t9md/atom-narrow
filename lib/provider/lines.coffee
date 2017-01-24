@@ -10,8 +10,8 @@ class Lines extends ProviderBase
   supportCacheItems: true
 
   getItems: ->
-    @editor.buffer.getLines().map (text, i) ->
-      point: new Point(i, 0)
+    @editor.buffer.getLines().map (text, row) ->
+      point: new Point(row, 0)
       text: text
 
   filterItems: (items, regexps) ->
