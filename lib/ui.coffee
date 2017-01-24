@@ -174,7 +174,7 @@ class UI
   getNarrowQuery: ->
     @lastNarrowQuery = @narrowEditor.lineTextForBufferRow(0)
 
-  getRegExpForWord: (word) ->
+  getRegExpForQueryWord: (word) ->
     pattern = _.escapeRegExp(word)
     sensitivity = settings.get('caseSensitivityForNarrowQuery')
     if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and /[A-Z]/.test(word))
@@ -190,9 +190,9 @@ class UI
   refresh: ->
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
-    regexps = words.map (word) => @getRegExpForWord(word)
+    regexps = words.map (word) => @getRegExpForQueryWord(word)
     @grammar.update(regexps)
-    
+
     @ignoreChangeOnNarrowEditor = true
     Promise.resolve(@provider.getItems()).then (items) =>
       @clearItemsText()
