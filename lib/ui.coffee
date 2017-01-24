@@ -206,9 +206,11 @@ class UI
       return false
 
     if @provider.showLineHeader
-      @narrowEditor.buffer.getLines()[1...].every (line, row) => line.startsWith(@items[row]._lineHeader)
-    else
-      true
+      for line, row in @narrowEditor.buffer.getLines() when (row >= 1)
+        return false unless line.startsWith(@items[row]._lineHeader)
+
+    true
+
 
   observeInputChange: ->
     @narrowEditor.buffer.onDidChange ({newRange, oldRange}) =>
