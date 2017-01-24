@@ -70,7 +70,10 @@ alpha
 No keymap to invoke global command(e.g `narrow:lines`).  
 narrow-ui have limited default keymap, see [default keymap](https://github.com/t9md/atom-narrow/blob/master/keymaps/narrow.cson).
 
-- Mine(vim-mode-plus user) for global command.
+Currently default-keymap is not yet settled, so sorry this will likely to change in future version.
+
+### my keymap(vim-mode-plus user)
+
 ```coffeescript
 'atom-text-editor.vim-mode-plus.normal-mode':
   'space o': 'narrow:fold'
@@ -85,7 +88,19 @@ narrow-ui have limited default keymap, see [default keymap](https://github.com/t
 
 # available only when some narrow was opened.
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus:not(.narrow)':
+  'ctrl-g': 'narrow:close'
   'ctrl-cmd-f': 'narrow:focus'
+  'ctrl-cmd-p': 'narrow:previous-item'
+  'ctrl-cmd-n': 'narrow:next-item'
+  'up': 'narrow:previous-item'
+  'down': 'narrow:next-item'
+
+# On narrow-editor
+'atom-text-editor.narrow.narrow-editor.vim-mode-plus[data-grammar="source narrow"]':
+  'ctrl-g': 'core:close'
+  'tab': 'narrow-ui:move-to-query-or-current-item'
+  'ctrl-cmd-s': 'narrow-ui:update-real-file'
+
   'ctrl-cmd-p': 'narrow:previous-item'
   'ctrl-cmd-n': 'narrow:next-item'
   'up': 'narrow:previous-item'
