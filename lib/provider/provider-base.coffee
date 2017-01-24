@@ -9,7 +9,7 @@ module.exports =
 class ProviderBase
   wasConfirmed: false
   boundToEditor: false
-  includeHeaderGrammarRules: false
+  includeHeaderGrammar: false
 
   indentTextForLineHeader: ""
   showLineHeader: true

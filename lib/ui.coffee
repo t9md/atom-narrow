@@ -6,7 +6,7 @@ _ = require 'underscore-plus'
 } = require './utils'
 settings = require './settings'
 path = require 'path'
-NarrowGrammar = require './grammar'
+Grammar = require './grammar'
 
 class PromptGutter
   constructor: (@editor) ->
@@ -62,8 +62,6 @@ class UI
       @editor.scrollToCursorPosition(center: true)
 
     @originalPane = atom.workspace.getActivePane()
-    @gutterItem = document.createElement('span')
-    @gutterItem.textContent = " > "
 
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     @providerEditor = @provider.editor
@@ -76,8 +74,7 @@ class UI
 
     @gutterForPrompt = new PromptGutter(@editor)
 
-    includeHeaderRules = @provider.includeHeaderGrammarRules
-    @grammar = new NarrowGrammar(@editor, {includeHeaderRules})
+    @grammar = new Grammar(@editor, includeHeader: @provider.includeHeaderGrammar)
     @registerCommands()
     @disposables.add(@observeInputChange())
     @observeCursorPositionChangeForNarrowEditor()
@@ -180,10 +177,10 @@ class UI
 
     @confirm(keepOpen: true)
 
-  nextItem: (options) ->
+  nextItem: ->
     @moveUpDown('down', options)
 
-  previousItem: (options) ->
+  previousItem: ->
     @moveUpDown('up', options)
 
   isAutoPreview: ->
@@ -314,9 +311,12 @@ class UI
       if itemPoint.isLessThanOrEqual(cursorPosition)
         foundItem = item
         break
-    return unless foundItem?
 
-    @selectItem(foundItem)
+    if foundItem?
+      @selectItem(foundItem)
+    else
+      @selectItemForRow(@findNormalItem(1, 'next'))
+
     unless @editor is atom.workspace.getActiveTextEditor()
       row = @editor.getCursorBufferPosition().row
       selectedItemRow = @getRowForSelectedItem()

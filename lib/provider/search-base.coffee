@@ -7,7 +7,7 @@ settings = require '../settings'
 module.exports =
 class SearchBase extends ProviderBase
   items: null
-  includeHeaderGrammarRules: true
+  includeHeaderGrammar: true
   supportDirectEdit: true
 
   checkReady: ->

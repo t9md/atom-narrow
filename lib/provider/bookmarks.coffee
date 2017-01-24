@@ -18,7 +18,7 @@ getBookmarks = ->
 
 module.exports =
 class Bookmarks extends ProviderBase
-  includeHeaderGrammarRules: true
+  includeHeaderGrammar: true
   indentTextForLineHeader: "  "
   supportCacheItems: false
 
