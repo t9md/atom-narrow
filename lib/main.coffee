@@ -61,7 +61,7 @@ module.exports =
     {@subscriptions} = {}
 
   isNarrowEditor: (editor) ->
-    editor.element.classList.contains('narrow')
+    editor.element.classList.contains('narrow-editor')
 
   consumeVim: ({getEditorState, observeVimStates}) ->
     @subscriptions.add observeVimStates (vimState) =>

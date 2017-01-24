@@ -14,10 +14,8 @@ atom-text-editor .narrow-ui-selected-row {
 @line-marker: fadeout(lighten(@syntax-color-added, 0%), 20%);
 
 atom-text-editor {
-  .line {
-    &.narrow-result {
-      box-shadow:0 -8px 0 -6px @line-marker inset;
-    }
+  .line.narrow-result {
+    box-shadow:0 -8px 0 -6px @line-marker inset;
   }
 }
 

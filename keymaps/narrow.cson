@@ -1,13 +1,17 @@
 # Need improve following example for normal user.
-'atom-text-editor.narrow[data-grammar="source narrow"]':
+'atom-text-editor.narrow.narrow-editor':
   'enter': 'core:confirm'
-  # 'ctrl-u': 'narrow-ui:preview-item'
+# 'ctrl-u': 'narrow-ui:preview-item'
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
   'tab': 'narrow-ui:move-to-query-or-current-item'
   'f5': 'narrow-ui:force-refresh'
   # 'ctrl-cmd-s': 'narrow-ui:update-real-file'
 
-'atom-text-editor.narrow.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
+'atom-text-editor.narrow.narrow-editor.fold':
+  'cmd-]': 'narrow-ui:fold:increase-fold-level'
+  'cmd-[': 'narrow-ui:fold:decrease-fold-level'
+
+'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode':
   'enter': 'core:confirm'
   'q': 'core:close'
   'o': 'narrow-ui:confirm-keep-open'
@@ -15,14 +19,10 @@
   'r': 'narrow-ui:toggle-auto-preview'
   'ctrl-r': 'narrow-ui:force-refresh'
 
-'atom-text-editor.narrow.fold[data-grammar="source narrow"]':
-  'cmd-]': 'narrow-ui:fold:increase-fold-level'
-  'cmd-[': 'narrow-ui:fold:decrease-fold-level'
-
-'atom-text-editor.narrow.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
+'atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode':
   'enter': 'core:confirm'
 
-# For vim-mode-plus integration
+# This is for vim-mode-plus search-mini-editor
 'atom-text-editor.vim-mode-plus-search':
   'ctrl-l': 'vim-mode-plus-user:narrow-lines-from-search'
   'cmd-/': 'vim-mode-plus-user:narrow-search'

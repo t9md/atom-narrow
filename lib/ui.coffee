@@ -60,7 +60,7 @@ class UI
     @editor.isModified = -> false
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
-    @editorElement.classList.add('narrow', dashName)
+    @editorElement.classList.add('narrow', 'narrow-editor', dashName)
 
     @gutterForPrompt = new PromptGutter(@editor)
 
