@@ -130,6 +130,8 @@ class UI
 
   updateRealFile: ->
     return unless @provider.supportDirectEdit
+    return unless @ensureNarrowEditorIsValidState()
+
     states = []
     for lineText, row in @narrowEditor.buffer.getLines()
       continue if row is 0
@@ -190,7 +192,11 @@ class UI
     Promise.resolve(@provider.getItems()).then (items) =>
       @clearItemsText()
       @setItems(@provider.filterItems(items, regexps))
+      @narrowEditorLastRow = @narrowEditor.getLastBufferRow()
       @refreshing = false
+
+  ensureNarrowEditorIsValidState: ->
+    @narrowEditorLastRow is @narrowEditor.getLastBufferRow()
 
   observeInputChange: ->
     @narrowEditor.buffer.onDidChange ({newRange, oldRange}) =>
