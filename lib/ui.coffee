@@ -236,7 +236,7 @@ class UI
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
     itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
-    range = @editor.setTextInBufferRange(itemArea, texts.join("\n"))
+    range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
     @editorLastRow = range.end.row
 
   ensureNarrowEditorIsValidState: ->
