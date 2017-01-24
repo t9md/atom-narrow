@@ -40,12 +40,7 @@ class AtomScan extends SearchBase
         @items = items
 
   filterItems: (items, regexps) ->
-    filterKey = @getFilterKey()
-    for regexp in regexps
-      items = items.filter (item) ->
-        item.skip or regexp.test(item[filterKey])
-    items
-
+    items = super
     normalItems = _.filter(items, (item) -> not item.skip)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))
 

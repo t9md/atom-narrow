@@ -61,17 +61,11 @@ class ProviderBase
   subscribe: (args...) ->
     @subscriptions.add(args...)
 
-  getFilterKey: ->
-    "text"
-
   filterItems: (items, regexps) ->
-    filterKey = @getFilterKey()
+    filterKey = "text"
     for regexp in regexps
       items = items.filter (item) ->
-        if (text = item[filterKey])?
-          regexp.test(text)
-        else
-          true # items without filterKey is always displayed.
+        item.skip or regexp.test(item[filterKey])
     items
 
   destroy: ->
