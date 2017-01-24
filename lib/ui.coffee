@@ -289,8 +289,9 @@ class UI
 
   preview: ->
     @confirm(keepOpen: true).then ({editor, point}) =>
-      @setRowMarker(editor, point)
-      @focus()
+      if editor.isAlive()
+        @setRowMarker(editor, point)
+        @focus()
 
   isNormalItem: (item) ->
     item? and not item.skip
