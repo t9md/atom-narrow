@@ -67,6 +67,7 @@ class UI
     @registerCommands()
     @disposables.add(@observeInputChange())
     @observeCursorPositionChangeForNarrowEditor()
+    @observerNarrowEditorToProtectFromUnwantedMutation()
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       @rowMarker?.destroy() if item isnt @narrowEditor
@@ -328,3 +329,17 @@ class UI
     texts = items.map (item) => @provider.viewForItem(item)
     @appendText(texts.join("\n"))
     @selectItemForRow(@findValidItem(1, 'next'))
+
+  observerNarrowEditorToProtectFromUnwantedMutation: ->
+    # HACK:
+    # auto-DESTROY selection when `ctrl-cmd-g`(find-and-replace:select-all)
+    # which intersects first row(prompt-row).
+    @disposables.add atom.commands.onDidDispatch ({target, type}) =>
+      if type is 'find-and-replace:select-all' and
+          atom.workspace.isTextEditor(editor = target.getModel?()) and
+            editor is @narrowEditor
+
+        if editor.hasMultipleCursors()
+          promptRange = editor.bufferRangeForBufferRow(0)
+          for selection in editor.getSelections() when selection.getBufferRange().intersectsWith(promptRange)
+            selection.destroy()
