@@ -33,6 +33,7 @@ class UI
   ignoreChangeOnNarrowEditor: false
   destroyed: false
   items: []
+  itemsByProvider: null
 
   @unregisterUI: (narrowEditor) ->
     @uiByNarrowEditor.delete(narrowEditor)
@@ -187,11 +188,13 @@ class UI
       new RegExp(pattern, 'i')
 
   forceRefresh: ->
-    @provider.invalidateCachedItem()
+    @refresh(force: true)
     @moveToPrompt()
-    @refresh()
 
-  refresh: ->
+  refresh: ({force}={})->
+    if force
+      @itemsByProvider = null
+
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
     regexps = words.map (word) => @getRegExpForQueryWord(word)
@@ -203,7 +206,9 @@ class UI
       eof = @setPromptLine("\n").end
       @moveToPrompt()
 
-    Promise.resolve(@provider.getItems()).then (items) =>
+    Promise.resolve(@itemsByProvider ? @provider.getItems()).then (items) =>
+      if @provider.supportCacheItems
+        @itemsByProvider = items
       items = @provider.filterItems(items, regexps)
       @items = [@promptItem, items...]
       @renderItems(items)
@@ -213,9 +218,9 @@ class UI
       @ignoreChangeOnNarrowEditor = false
 
   renderItems: (items) ->
-    texts = items.map (item) -> @provider.viewForItem(item)
+    texts = items.map (item) => @provider.viewForItem(item)
     itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
-    range = @editor.setTextInBufferRange(itemArea, texts.join("\n")
+    range = @editor.setTextInBufferRange(itemArea, texts.join("\n"))
     @editorLastRow = range.end.row
 
   ensureNarrowEditorIsValidState: ->
@@ -228,7 +233,6 @@ class UI
         return false unless line.startsWith(item._lineHeader)
 
     true
-
 
   observeInputChange: ->
     @editor.buffer.onDidChange ({newRange, oldRange, newText, oldText}) =>

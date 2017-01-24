@@ -5,10 +5,9 @@ SearchBase = require './search-base'
 module.exports =
 class AtomScan extends SearchBase
   indentTextForLineHeader: "  "
+  supportCacheItems: true
 
   getItems: ->
-    return @items if @items?
-
     source = _.escapeRegExp(@options.search)
     if @options.wordOnly
       regexp = ///\b#{source}\b///i
@@ -35,7 +34,7 @@ class AtomScan extends SearchBase
             items.push({filePath, text, point})
 
       @injectMaxLineTextWidth(items)
-      @items = items
+      items
 
   filterItems: (items, regexps) ->
     items = super

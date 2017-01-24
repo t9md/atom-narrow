@@ -4,9 +4,20 @@ ProviderBase = require './provider-base'
 
 TagGenerator = requireFrom('symbols-view', 'tag-generator')
 
+# Symbols provider depending on ctag via TagGenerator.
+# Which read tag info from file on disk.
+# So we cant update symbol unless it's saved on disk.
+# This is very exceptional provider not supportCacheItems in spite of boundToEditor.
+
 module.exports =
 class Symbols extends ProviderBase
   boundToEditor: true
+  showLineHeader: false
+  supportCacheItems: false # manage manually
+
+  initialize: ->
+    @subscribe @editor.onDidSave =>
+      @items = null
 
   getItems: ->
     return @items if @items?
@@ -19,6 +30,3 @@ class Symbols extends ProviderBase
       @items = tags.map ({position}) =>
         point: position
         text: @editor.lineTextForBufferRow(position.row)
-
-  viewForItem: ({text}) ->
-    text

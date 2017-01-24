@@ -11,23 +11,20 @@ class ProviderBase
   boundToEditor: false
   includeHeaderGrammarRules: false
 
-  supportDirectEdit: false
-
   indentTextForLineHeader: ""
   showLineHeader: true
 
+  supportDirectEdit: false
+  supportCacheItems: false
+
   getName: ->
     @constructor.name
-
-  invalidateCachedItem: ->
-    @items = null
 
   getDashName: ->
     _.dasherize(@getName())
 
   refresh: ->
-    @items = null
-    @ui.refresh().then =>
+    @ui.refresh(force: true).then =>
       @ui.syncToProviderEditor()
 
   initialize: ->

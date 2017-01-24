@@ -45,6 +45,7 @@ getOutputterForProject = (project, items) ->
 module.exports =
 class Search extends SearchBase
   indentTextForLineHeader: "    "
+  supportCacheItems: true
 
   checkReady: ->
     if @options.currentProject
@@ -60,14 +61,12 @@ class Search extends SearchBase
     super
 
   getItems: ->
-    return @items if @items?
-
     @options.projects ?= atom.project.getPaths()
     search = @search.bind(this, _.escapeRegExp(@options.search))
     Promise.all(@options.projects.map(search)).then (values) =>
       items = _.flatten(values)
       @injectMaxLineTextWidth(items)
-      @items = items
+      items
 
   search: (pattern, project) ->
     items = []

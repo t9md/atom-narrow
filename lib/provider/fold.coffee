@@ -17,6 +17,7 @@ class Fold extends ProviderBase
   boundToEditor: true
   foldLevel: 2
   showLineHeader: false
+  supportCacheItems: true
 
   initialize: ->
     atom.commands.add @ui.editorElement,
@@ -28,11 +29,8 @@ class Fold extends ProviderBase
     @refresh()
 
   getItems: ->
-    return @items if @items?
-
     filePath = @editor.getPath()
-    rows = getCodeFoldStartRows(@editor, @foldLevel)
-    @items = rows.map (row) =>
+    getCodeFoldStartRows(@editor, @foldLevel).map (row) =>
       point: new Point(row, 0)
       text: @editor.lineTextForBufferRow(row)
       filePath: filePath

@@ -7,11 +7,10 @@ module.exports =
 class Lines extends ProviderBase
   boundToEditor: true
   supportDirectEdit: true
+  supportCacheItems: true
 
   getItems: ->
-    return @items if @items?
-
-    @items = @editor.buffer.getLines().map (text, i) ->
+    @editor.buffer.getLines().map (text, i) ->
       point: new Point(i, 0)
       text: text
 
