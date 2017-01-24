@@ -132,8 +132,6 @@ class ProviderBase
         @applyChanges(filePath, changes)
 
   applyChanges: (filePath, changes) ->
-    saveAfterEdit = settings.get(@getName() + 'SaveAfterDirectEdit')
-
     atom.workspace.open(filePath, activateItem: false).then (editor) ->
       editor.transact ->
         for {newText, item} in changes
@@ -144,8 +142,7 @@ class ProviderBase
           # To allow re-edit if not saved and non-boundToEditor provider
           item.text = newText
 
-      if saveAfterEdit
-        editor.save()
+      editor.save()
 
   # Helpers
   # -------------------------

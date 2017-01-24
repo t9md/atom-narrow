@@ -69,10 +69,8 @@ module.exports = new Settings 'narrow',
     description: "Case sensitivity of your query in narrow-editor"
   vmpStartInInsertModeForUI: true
   LinesDefaultAutoPreview: true
-  LinesSaveAfterDirectEdit: false
   FoldDefaultAutoPreview: true
   SearchDefaultAutoPreview: true
-  SearchSaveAfterDirectEdit: false
   SearchAgCommandArgs:
     default: "--nocolor --column"
     description: """
@@ -86,7 +84,6 @@ module.exports = new Settings 'narrow',
       Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
     """
   AtomScanDefaultAutoPreview: true
-  AtomScanSaveAfterDirectEdit: false
   SymbolsDefaultAutoPreview: true
   GitDiffDefaultAutoPreview: true
   BookmarksDefaultAutoPreview: true
