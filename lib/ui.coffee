@@ -132,12 +132,17 @@ class UI
     return unless @provider.supportDirectEdit
     return unless @ensureNarrowEditorIsValidState()
 
-    states = []
-    for lineText, row in @narrowEditor.buffer.getLines()
-      continue if row is 0
-      if @isValidItem(item = @items[row])
-        states.push({item, newText: lineText})
-    @provider.updateRealFile(states)
+    changes = []
+    lines = @narrowEditor.buffer.getLines()
+    for line, row in lines when (row >= 1) and @isValidItem(item = @items[row])
+      if item._lineHeader?
+        line = line[item._lineHeader.length...] # Strip lineHeader
+
+      unless line is item.text
+        changes.push({newText: line, item})
+
+    if changes.length
+      @provider.updateRealFile(changes)
 
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -196,7 +201,14 @@ class UI
       @refreshing = false
 
   ensureNarrowEditorIsValidState: ->
-    @narrowEditorLastRow is @narrowEditor.getLastBufferRow()
+    # Ensure all item have valid line header
+    unless @narrowEditorLastRow is @narrowEditor.getLastBufferRow()
+      return false
+
+    if @provider.showLineHeader
+      @narrowEditor.buffer.getLines()[1...].every (line, row) => line.startsWith(@items[row]._lineHeader)
+    else
+      true
 
   observeInputChange: ->
     @narrowEditor.buffer.onDidChange ({newRange, oldRange}) =>

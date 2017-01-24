@@ -109,12 +109,10 @@ class ProviderBase
       item.header
     else
       if @showLineHeader
-        @getViewTextWithLineHeaderForItem(item)
+        item._lineHeader = @getLineHeaderForItem(item) # Inject
+        item._lineHeader + item.text
       else
         item.text
-
-  getViewTextWithLineHeaderForItem: (item, editor) ->
-    @getLineHeaderForItem(item, editor) + item.text
 
   # Unless items didn't have maxLineTextWidth field, detect last line from editor.
   getLineHeaderForItem: ({text, point, maxLineTextWidth}, editor=@editor) ->
@@ -123,50 +121,32 @@ class ProviderBase
 
   # Direct Edit
   # -------------------------
-  getChangeSet: (states) ->
-    changes = []
-    for {newText, item} in states
-      lineHeaderLength = @getLineHeaderForItem(item).length
-      newText = newText[lineHeaderLength...]
-      if newText isnt item.text
-        changes.push({newText, item})
-    changes
-
-  updateRealFile: (states) ->
-    changes = @getChangeSet(states)
-    return unless changes.length
-
+  updateRealFile: (changes) ->
     if @boundToEditor
       # Intentionally avoid direct use of @editor to skip observation event
       # subscribed to @editor.
       # This prevent auto refresh, so undoable narrowEditor to last state.
-      changesByFilePath =  {}
-      changesByFilePath[@editor.getPath()] = changes
+      @applyChanges(@editor.getPath(), changes)
     else
       changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
+      for filePath, changes of changesByFilePath
+        @applyChanges(filePath, changes)
 
-    for filePath, changes of changesByFilePath
-      # CRITICAL: protect `changes` replaced by outer variable.
-      do (filePath, changes) =>
-        atom.workspace.open(filePath, activateItem: false).then (editor) =>
-          @applyChangeSet(editor, changes)
+  applyChanges: (filePath, changes) ->
+    saveAfterEdit = settings.get(@getName() + 'SaveAfterDirectEdit')
 
-  needSaveAfterDirectEdit: ->
-    param = @getName() + 'SaveAfterDirectEdit'
-    settings.get(param)
+    atom.workspace.open(filePath, activateItem: false).then (editor) ->
+      editor.transact ->
+        for {newText, item} in changes
+          range = editor.bufferRangeForBufferRow(item.point.row)
+          editor.setTextInBufferRange(range, newText)
 
-  applyChangeSet: (editor, changes) ->
-    editor.transact ->
-      for {newText, item} in changes
-        range = editor.bufferRangeForBufferRow(item.point.row)
-        editor.setTextInBufferRange(range, newText)
+          # Sync item's text state
+          # To allow re-edit if not saved and non-boundToEditor provider
+          item.text = newText
 
-        # Sync item's text state
-        # To allow re-edit if not saved and non-boundToEditor provider
-        item.text = newText
-
-    if @needSaveAfterDirectEdit()
-      editor.save()
+      if saveAfterEdit
+        editor.save()
 
   # Helpers
   # -------------------------
