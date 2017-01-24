@@ -68,9 +68,9 @@ module.exports = new Settings 'narrow',
     enum: ['smartcase', 'sensitive', 'insensitive']
     description: "Case sensitivity of your query in narrow-editor"
   vmpStartInInsertModeForUI: true
-  LinesDefaultAutoPreview: true
-  FoldDefaultAutoPreview: true
-  SearchDefaultAutoPreview: true
+  LinesAutoPreview: true
+  FoldAutoPreview: true
+  SearchAutoPreview: true
   SearchAgCommandArgs:
     default: "--nocolor --column"
     description: """
@@ -83,7 +83,7 @@ module.exports = new Settings 'narrow',
       Smart case: `ag --nocolor --column -S PATTERN`<br>
       Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
     """
-  AtomScanDefaultAutoPreview: true
-  SymbolsDefaultAutoPreview: true
-  GitDiffDefaultAutoPreview: true
-  BookmarksDefaultAutoPreview: true
+  AtomScanAutoPreview: true
+  SymbolsAutoPreview: true
+  GitDiffAutoPreview: true
+  BookmarksAutoPreview: true

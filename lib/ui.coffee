@@ -49,6 +49,7 @@ class UI
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
     @emitter = new Emitter
+    @autoPreview = settings.get(@provider.getName() + "AutoPreview")
 
     # Special item used to translate narrow editor row to items without pain
     @promptItem = Object.freeze({_prompt: true, skip: true})
@@ -104,8 +105,6 @@ class UI
       @autoPreview = false
     else
       @pane = openItemInAdjacentPaneForPane(activePane, @editor, direction)
-      defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
-      @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
 
     @setPromptLine("\n")
     @moveToPrompt()
