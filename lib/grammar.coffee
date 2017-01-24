@@ -2,7 +2,7 @@ path = require 'path'
 _ = require 'underscore-plus'
 
 module.exports =
-class NarrowGrammar
+class Grammar
   filePath: path.join(__dirname, 'grammar', 'narrow.cson')
   scopeName: 'source.narrow'
 

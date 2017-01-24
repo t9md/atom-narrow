@@ -51,9 +51,7 @@ module.exports =
     getCurrentWord(atom.workspace.getActiveTextEditor())
 
   narrow: (providerName, options) ->
-    if providerName not of @providers
-      @providers[providerName] = require("./provider/#{providerName}")
-    klass = @providers[providerName]
+    klass = require("./provider/#{providerName}")
     new klass(options)
 
   deactivate: ->

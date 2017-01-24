@@ -80,6 +80,8 @@ class UI
         @emitDidFocused()
       else
         @rowMarker?.destroy()
+        if @provider.boundToEditor and (item is @providerEditor)
+          @syncToProviderEditor()
 
     if @provider.boundToEditor
       @disposables.add @providerEditor.onDidStopChanging =>
@@ -129,7 +131,7 @@ class UI
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
-      'narrow-ui:refresh-force': => @refresh(force: true)
+      'narrow-ui:refresh-force': => @refresh(force: true, moveToPrompt: true)
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:update-real-file': => @updateRealFile()
 
@@ -153,18 +155,26 @@ class UI
     if (row = @getRowForSelectedItem()) >= 0
       @withLock => @editor.setCursorBufferPosition([row, 0])
 
+    if @direction is 'down' and @provider.boundToEditor
+      # Prevent side scroll of narrow editor
+      point = @providerEditor.getCursorBufferPosition()
+      if point.isGreaterThanOrEqual(_.last(@items).point)
+        return
+
     @withPreventAutoPreview =>
       switch direction
-        when 'up' then @editor.moveUp()
-        when 'down' then @editor.moveDown()
+        when 'up'
+          @editor.moveUp()
+        when 'down'
+          @editor.moveDown()
 
     @confirm(keepOpen: true)
 
   nextItem: ->
-    @moveUpDown('down', options)
+    @moveUpDown('down')
 
   previousItem: ->
-    @moveUpDown('up', options)
+    @moveUpDown('up')
 
   isAutoPreview: ->
     if @preventAutoPreview
@@ -187,9 +197,11 @@ class UI
     else
       new RegExp(pattern, 'i')
 
-  refresh: ({force}={}) ->
+  refresh: ({force, moveToPrompt}={}) ->
     if force
       @itemsByProvider = null
+    if moveToPrompt
+      @moveToPrompt()
 
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
@@ -210,9 +222,11 @@ class UI
       @renderItems(items)
       @grammar.update(regexps)
 
-      if @provider.boundToEditor and @selectedItem
+      if @provider.boundToEditor and @selectedItem and not isActiveEditor(@editor)
+        # console.log "case1"
         @syncToProviderEditor()
       else
+        # console.log "case2" #, @selectedItem
         @selectItemForRow(@findNormalItem(1, 'next'))
       @ignoreChangeOnEditor = false
 
