@@ -24,8 +24,7 @@ class ProviderBase
     _.dasherize(@getName())
 
   refresh: ->
-    @ui.refresh(force: true).then =>
-      @ui.syncToProviderEditor()
+    @ui.refresh(force: true)
 
   initialize: ->
     # to override
@@ -42,13 +41,6 @@ class ProviderBase
     @emitter = new Emitter
 
     @ui = new UI(this, {input: @options.uiInput})
-
-    if @boundToEditor
-      @subscribe @editor.onDidStopChanging =>
-        # Skip is not activeEditor
-        # This is for skip auto-refresh on direct-edit.
-        if atom.workspace.getActiveTextEditor() is @editor
-          @refresh()
 
     @checkReady().then (ready) =>
       if ready

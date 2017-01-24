@@ -3,7 +3,7 @@
   'enter': 'core:confirm'
 # 'ctrl-u': 'narrow-ui:preview-item'
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
-  'tab': 'narrow-ui:move-to-query-or-current-item'
+  'tab': 'narrow-ui:move-to-prompt-or-selected-item'
   'f5': 'narrow-ui:refresh-force'
   'ctrl-l': 'narrow-ui:refresh-force'
   # 'ctrl-cmd-s': 'narrow-ui:update-real-file'

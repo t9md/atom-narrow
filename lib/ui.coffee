@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-{Point, Range, CompositeDisposable} = require 'atom'
+{Point, Range, CompositeDisposable, Emitter} = require 'atom'
 {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
@@ -47,12 +47,19 @@ class UI
     workspaceElement = atom.views.getView(atom.workspace)
     workspaceElement.classList.toggle('has-narrow', @uiByNarrowEditor.size)
 
+  onDidFocused: (fn) -> @emitter.on('did-focused', fn)
+  emitDidFocused: -> @emitter.emit('did-focused')
+
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
+    @emitter = new Emitter
 
     # Special item used to translate narrow editor row to items without pain
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @itemAreaStart = Object.freeze(new Point(1, 0))
+
+    @onDidFocused =>
+      @editor.scrollToCursorPosition(center: true)
 
     @originalPane = atom.workspace.getActivePane()
     @gutterItem = document.createElement('span')
@@ -76,10 +83,21 @@ class UI
     @observeCursorPositionChangeForNarrowEditor()
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @rowMarker?.destroy() if item isnt @editor
+      if item is @editor
+        @emitDidFocused()
+      else
+        @rowMarker?.destroy()
 
     if @provider.boundToEditor
-      @disposables.add @providerEditor.onDidChangeCursorPosition(@syncToProviderEditor.bind(this))
+      @disposables.add @providerEditor.onDidStopChanging =>
+        # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
+        if atom.workspace.getActiveTextEditor() is @providerEditor
+          @refresh(force: true)
+
+      @disposables.add @providerEditor.onDidChangeCursorPosition =>
+        if atom.workspace.getActiveTextEditor() is @providerEditor
+          @syncToProviderEditor()
+
       @disposables.add @providerEditor.onDidDestroy(@destroy.bind(this))
 
     @constructor.registerUI(@editor, this)
@@ -99,6 +117,7 @@ class UI
     @setPromptLine("\n")
     @moveToPrompt()
     if @input
+      # prompt line change kick refresh items
       @editor.insertText(@input)
     else
       @refresh()
@@ -107,6 +126,7 @@ class UI
     if @isAlive()
       @pane.activate()
       @pane.activateItem(@editor)
+      @emitDidFocused()
 
   isAlive: ->
     @editor?.isAlive?()
@@ -130,7 +150,7 @@ class UI
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:refresh-force': => @refresh(force: true)
-      'narrow-ui:move-to-query-or-current-item': => @moveToQueryOrCurrentItem()
+      'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:update-real-file': => @updateRealFile()
 
   updateRealFile: ->
@@ -209,8 +229,11 @@ class UI
       @items = [@promptItem, items...]
       @renderItems(items)
       @grammar.update(regexps)
-      @selectItemForRow(@findNormalItem(1, 'next'))
 
+      if @provider.boundToEditor and @selectedItem
+        @syncToProviderEditor()
+      else
+        @selectItemForRow(@findNormalItem(1, 'next'))
       @ignoreChangeOnNarrowEditor = false
 
   renderItems: (items) ->
@@ -282,9 +305,6 @@ class UI
       @preview() if @isAutoPreview()
 
   syncToProviderEditor: ->
-    # Skip if not active editor.
-    return unless atom.workspace.getActiveTextEditor() is @providerEditor
-
     cursorPosition = @providerEditor.getCursorBufferPosition()
     # Detect item
     # - cursor position is equal or greather than that item.
@@ -297,10 +317,12 @@ class UI
     return unless foundItem?
 
     @selectItem(foundItem)
-    row = @editor.getCursorBufferPosition().row
-    selectedItemRow = @getRowForSelectedItem()
-    if (row isnt selectedItemRow)
-      @withLock => @editor.setCursorBufferPosition([selectedItemRow, 0])
+    unless @editor is atom.workspace.getActiveTextEditor()
+      row = @editor.getCursorBufferPosition().row
+      selectedItemRow = @getRowForSelectedItem()
+      if (row isnt selectedItemRow)
+        @editor.scrollToBufferPosition([selectedItemRow, 0])
+        # @withLock => @editor.setCursorBufferPosition([selectedItemRow, 0])
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()
@@ -335,9 +357,9 @@ class UI
       return row
     null
 
-  moveToQueryOrCurrentItem: ->
+  moveToPromptOrSelectedItem: ->
     row = @getRowForSelectedItem()
-    if row is @editor.getCursorBufferPosition().row
+    if (row is @editor.getCursorBufferPosition().row) or not (row >= 0)
       @moveToPrompt()
     else
       # move to current item
@@ -363,7 +385,7 @@ class UI
       @selectedItem = item
 
   getSelectedItem: ->
-    @selectedItem ? {}
+    @selectedItem
 
   getPromptRange: ->
     @editor.bufferRangeForBufferRow(0)

@@ -108,7 +108,7 @@ Currently default-keymap is not yet settled, so sorry this will likely to change
 # On narrow-editor
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus[data-grammar="source narrow"]':
   'ctrl-g': 'core:close'
-  'tab': 'narrow-ui:move-to-query-or-current-item'
+  'tab': 'narrow-ui:move-to-prompt-or-selected-item'
   'ctrl-cmd-s': 'narrow-ui:update-real-file'
 
   'ctrl-cmd-p': 'narrow:previous-item'
