@@ -60,15 +60,14 @@ class Search extends SearchBase
     super
 
   getItems: ->
-    if @items?
-      @items
-    else
-      @options.projects ?= atom.project.getPaths()
-      search = @search.bind(this, _.escapeRegExp(@options.search))
-      Promise.all(@options.projects.map(search)).then (values) =>
-        items = _.flatten(values)
-        @injectMaxLineTextWidth(items)
-        @items = items
+    return @items if @items?
+
+    @options.projects ?= atom.project.getPaths()
+    search = @search.bind(this, _.escapeRegExp(@options.search))
+    Promise.all(@options.projects.map(search)).then (values) =>
+      items = _.flatten(values)
+      @injectMaxLineTextWidth(items)
+      @items = items
 
   search: (pattern, project) ->
     items = []

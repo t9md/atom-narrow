@@ -28,12 +28,11 @@ class Fold extends ProviderBase
     @refresh()
 
   getItems: ->
-    if @items?
-      @items
-    else
-      filePath = @editor.getPath()
-      rows = getCodeFoldStartRows(@editor, @foldLevel)
-      @items = rows.map (row) =>
-        point: new Point(row, 0)
-        text: @editor.lineTextForBufferRow(row)
-        filePath: filePath
+    return @items if @items?
+
+    filePath = @editor.getPath()
+    rows = getCodeFoldStartRows(@editor, @foldLevel)
+    @items = rows.map (row) =>
+      point: new Point(row, 0)
+      text: @editor.lineTextForBufferRow(row)
+      filePath: filePath

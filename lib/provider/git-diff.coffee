@@ -14,13 +14,12 @@ class GitDiff extends ProviderBase
   boundToEditor: true
 
   getItems: ->
-    if @items?
-      @items
-    else
-      filePath = @editor.getPath()
-      diffs = repositoryForPath(filePath)?.getLineDiffs(filePath, @editor.getText()) ? []
-      for diff in diffs
-        bufferRow = limitNumber(diff.newStart - 1, min: 0)
-        diff.point = new Point(bufferRow, 0)
-        diff.text = @editor.lineTextForBufferRow(bufferRow)
-      @items = diffs
+    return @items if @items?
+
+    filePath = @editor.getPath()
+    diffs = repositoryForPath(filePath)?.getLineDiffs(filePath, @editor.getText()) ? []
+    for diff in diffs
+      bufferRow = limitNumber(diff.newStart - 1, min: 0)
+      diff.point = new Point(bufferRow, 0)
+      diff.text = @editor.lineTextForBufferRow(bufferRow)
+    @items = diffs

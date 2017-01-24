@@ -9,7 +9,9 @@ class Lines extends ProviderBase
   supportDirectEdit: true
 
   getItems: ->
-    @items ?= @editor.buffer.getLines().map (text, i) ->
+    return @items if @items?
+
+    @items = @editor.buffer.getLines().map (text, i) ->
       point: new Point(i, 0)
       text: text
 
