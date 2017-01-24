@@ -31,10 +31,6 @@ smartScrollToBufferPosition = (editor, point) ->
   center = (onePageDown < target) or (target < onePageUp)
   editor.scrollToBufferPosition(point, {center})
 
-padStringLeft = (string, targetLength) ->
-  padding = " ".repeat(targetLength - string.length)
-  padding + string
-
 # Reloadable registerElement
 registerElement = (name, options) ->
   element = document.createElement(name)
@@ -88,7 +84,6 @@ module.exports = {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
   smartScrollToBufferPosition
-  padStringLeft
   registerElement
   saveEditorState
   requireFrom

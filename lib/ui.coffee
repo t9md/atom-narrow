@@ -30,6 +30,7 @@ class UI
   @uiByNarrowEditor: new Map()
   autoPreview: false
   preventAutoPreview: false
+  ignoreChangeOnNarrowEditor: false
   destroyed: false
   items: []
 
@@ -90,8 +91,8 @@ class UI
       defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
       @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
 
-    @narrowEditor.insertText("\n")
-    @narrowEditor.setCursorBufferPosition([0, Infinity])
+    @setPromptLine("\n")
+    @moveToPrompt()
     if @input
       @narrowEditor.insertText(@input)
     else
@@ -129,12 +130,19 @@ class UI
 
   updateRealFile: ->
     return unless @provider.supportDirectEdit
-    states = []
-    for lineText, row in @narrowEditor.buffer.getLines()
-      continue if row is 0
-      if @isValidItem(item = @items[row])
-        states.push({item, newText: lineText})
-    @provider.updateRealFile(states)
+    return unless @ensureNarrowEditorIsValidState()
+
+    changes = []
+    lines = @narrowEditor.buffer.getLines()
+    for line, row in lines when (row >= 1) and @isValidItem(item = @items[row])
+      if item._lineHeader?
+        line = line[item._lineHeader.length...] # Strip lineHeader
+
+      unless line is item.text
+        changes.push({newText: line, item})
+
+    if changes.length
+      @provider.updateRealFile(changes)
 
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -164,9 +172,9 @@ class UI
     @preview() if @isAutoPreview()
 
   getNarrowQuery: ->
-    @narrowEditor.lineTextForBufferRow(0)
+    @lastNarrowQuery = @narrowEditor.lineTextForBufferRow(0)
 
-  getRegExpForWord: (word) ->
+  getRegExpForQueryWord: (word) ->
     pattern = _.escapeRegExp(word)
     sensitivity = settings.get('caseSensitivityForNarrowQuery')
     if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and /[A-Z]/.test(word))
@@ -176,28 +184,51 @@ class UI
 
   forceRefresh: ->
     @provider.invalidateCachedItem()
-    @narrowEditor.setCursorBufferPosition([0, Infinity])
+    @moveToPrompt()
     @refresh()
 
-  refreshing: false
   refresh: ->
-    @refreshing = true
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
-    regexps = words.map (word) => @getRegExpForWord(word)
+    regexps = words.map (word) => @getRegExpForQueryWord(word)
     @grammar.update(regexps)
+
+    @ignoreChangeOnNarrowEditor = true
     Promise.resolve(@provider.getItems()).then (items) =>
       @clearItemsText()
       @setItems(@provider.filterItems(items, regexps))
-      @refreshing = false
+      @narrowEditorLastRow = @narrowEditor.getLastBufferRow()
+      @ignoreChangeOnNarrowEditor = false
+
+  ensureNarrowEditorIsValidState: ->
+    # Ensure all item have valid line header
+    unless @narrowEditorLastRow is @narrowEditor.getLastBufferRow()
+      return false
+
+    if @provider.showLineHeader
+      for line, row in @narrowEditor.buffer.getLines() when (row >= 1) and not (item = @items[row]).skip
+        return false unless line.startsWith(item._lineHeader)
+
+    true
+
 
   observeInputChange: ->
-    @narrowEditor.buffer.onDidChange ({newRange, oldRange}) =>
-      if not newRange.isEmpty() and (newRange.start.row is 0) and (newRange.end.row is 0)
-        return @refresh()
+    @narrowEditor.buffer.onDidChange ({newRange, oldRange, newText, oldText}) =>
+      return if @ignoreChangeOnNarrowEditor
 
-      if not oldRange.isEmpty() and (oldRange.start.row is 0) and (oldRange.end.row is 0)
-        return @refresh()
+      promptRange = @getPromptRange()
+      onPrompt = (range) -> range.intersectsWith(promptRange)
+      notEmptyAndPrompt = (range) -> not range.isEmpty() and onPrompt(range)
+
+      if notEmptyAndPrompt(newRange) or notEmptyAndPrompt(oldRange)
+        if @narrowEditor.hasMultipleCursors()
+          # Destroy cursors on prompt
+          for selection in @narrowEditor.getSelections() when onPrompt(selection.getBufferRange())
+            selection.destroy()
+          # Recover query on prompt
+          @setPromptLine(@lastNarrowQuery) if @lastNarrowQuery
+        else
+          @refresh()
 
   locked: false
   isLocked: -> @locked
@@ -279,8 +310,8 @@ class UI
   appendText: (text) ->
     eof = @narrowEditor.getEofBufferPosition()
     if eof.isLessThan([1, 0])
-      eof = @narrowEditor.getLastSelection().insertText("\n").end
-      @narrowEditor.setCursorBufferPosition([0, Infinity])
+      eof = @setPromptLine("\n").end
+      @moveToPrompt()
     @narrowEditor.setTextInBufferRange([eof, eof], text)
 
   # Return row
@@ -298,14 +329,16 @@ class UI
   moveToQueryOrCurrentItem: ->
     row = @getRowForSelectedItem()
     if row is @narrowEditor.getCursorBufferPosition().row
-      # move to query
-      @narrowEditor.setCursorBufferPosition([0, Infinity])
+      @moveToPrompt()
     else
       # move to current item
       @narrowEditor.setCursorBufferPosition([row, 0])
 
   getRowForSelectedItem: ->
     @getRowForItem(@getSelectedItem())
+
+  moveToPrompt: ->
+    @narrowEditor.setCursorBufferPosition(@getPromptRange().end)
 
   getRowForItem: (item) ->
     @items.indexOf(item)
@@ -328,3 +361,13 @@ class UI
     texts = items.map (item) => @provider.viewForItem(item)
     @appendText(texts.join("\n"))
     @selectItemForRow(@findValidItem(1, 'next'))
+
+  getPromptRange: ->
+    @narrowEditor.bufferRangeForBufferRow(0)
+
+  # Return range
+  setPromptLine: (text) ->
+    @ignoreChangeOnNarrowEditor = true
+    range = @narrowEditor.setTextInBufferRange(@getPromptRange(0), text)
+    @ignoreChangeOnNarrowEditor = false
+    range
