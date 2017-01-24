@@ -23,9 +23,6 @@ class ProviderBase
   getDashName: ->
     _.dasherize(@getName())
 
-  refresh: ->
-    @ui.refresh(force: true)
-
   initialize: ->
     # to override
 

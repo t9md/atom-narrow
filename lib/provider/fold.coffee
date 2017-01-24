@@ -26,7 +26,7 @@ class Fold extends ProviderBase
 
   updateFoldLevel: (relativeLevel) ->
     @foldLevel = Math.max(0, @foldLevel + relativeLevel)
-    @refresh()
+    @ui.refresh(force: true)
 
   getItems: ->
     filePath = @editor.getPath()
