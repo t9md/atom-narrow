@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-{Point, CompositeDisposable} = require 'atom'
+{Point, Range, CompositeDisposable} = require 'atom'
 {
   getAdjacentPaneForPane
   openItemInAdjacentPaneForPane
@@ -48,6 +48,10 @@ class UI
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
+
+    # Special item used to translate narrow editor row to items without pain
+    @promptItem = Object.freeze({_prompt: true, skip: true})
+    @itemAreaStart = Object.freeze(new Point(1, 0))
 
     @originalPane = atom.workspace.getActivePane()
     @gutterItem = document.createElement('span')
@@ -191,14 +195,28 @@ class UI
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
     regexps = words.map (word) => @getRegExpForQueryWord(word)
-    @grammar.update(regexps)
-
     @ignoreChangeOnNarrowEditor = true
+
+    # In case prompt accidentaly mutated
+    eof = @editor.getEofBufferPosition()
+    if eof.isLessThan(@itemAreaStart)
+      eof = @setPromptLine("\n").end
+      @moveToPrompt()
+
     Promise.resolve(@provider.getItems()).then (items) =>
-      @clearItemsText()
-      @setItems(@provider.filterItems(items, regexps))
-      @editorLastRow = @editor.getLastBufferRow()
+      items = @provider.filterItems(items, regexps)
+      @items = [@promptItem, items...]
+      @renderItems(items)
+      @grammar.update(regexps)
+      @selectItemForRow(@findNormalItem(1, 'next'))
+
       @ignoreChangeOnNarrowEditor = false
+
+  renderItems: (items) ->
+    texts = items.map (item) -> @provider.viewForItem(item)
+    itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
+    range = @editor.setTextInBufferRange(itemArea, texts.join("\n")
+    @editorLastRow = range.end.row
 
   ensureNarrowEditorIsValidState: ->
     # Ensure all item have valid line header
@@ -303,18 +321,6 @@ class UI
         @editor.destroy()
       {editor, point}
 
-  # clear text from  2nd row to last row.
-  clearItemsText: ->
-    range = [[1, 0], @editor.getEofBufferPosition()]
-    @editor.setTextInBufferRange(range, '')
-
-  appendText: (text) ->
-    eof = @editor.getEofBufferPosition()
-    if eof.isLessThan([1, 0])
-      eof = @setPromptLine("\n").end
-      @moveToPrompt()
-    @editor.setTextInBufferRange([eof, eof], text)
-
   # Return row
   findNormalItem: (startRow, direction) ->
     maxRow = @items.length - 1
@@ -356,12 +362,6 @@ class UI
 
   getSelectedItem: ->
     @selectedItem ? {}
-
-  setItems: (items) ->
-    @items = [{_prompt: true, skip: true}, items...]
-    texts = items.map (item) => @provider.viewForItem(item)
-    @appendText(texts.join("\n"))
-    @selectItemForRow(@findNormalItem(1, 'next'))
 
   getPromptRange: ->
     @editor.bufferRangeForBufferRow(0)
