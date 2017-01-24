@@ -134,7 +134,7 @@ class UI
 
     changes = []
     lines = @editor.buffer.getLines()
-    for line, row in lines when @isValidItem(item = @items[row])
+    for line, row in lines when @isNormalItem(item = @items[row])
       if item._lineHeader?
         line = line[item._lineHeader.length...] # Strip lineHeader
 
@@ -206,7 +206,7 @@ class UI
       return false
 
     if @provider.showLineHeader
-      for line, row in @editor.buffer.getLines() when @isValidItem(item = @items[row])
+      for line, row in @editor.buffer.getLines() when @isNormalItem(item = @items[row])
         return false unless line.startsWith(item._lineHeader)
 
     true
@@ -254,7 +254,7 @@ class UI
       direction = if (newBufferPosition.row - oldBufferPosition.row) > 0 then 'next' else 'previous'
       {row, column} = newBufferPosition
       @withLock =>
-        row = @findValidItem(row, direction)
+        row = @findNormalItem(row, direction)
         if row? # row might be '0'
           @selectItemForRow(row)
           cursor.setBufferPosition([row, column])
@@ -292,7 +292,7 @@ class UI
       @setRowMarker(editor, point)
       @focus()
 
-  isValidItem: (item) ->
+  isNormalItem: (item) ->
     item? and not item.skip
 
   confirm: (options={}) ->
@@ -315,14 +315,14 @@ class UI
     @editor.setTextInBufferRange([eof, eof], text)
 
   # Return row
-  findValidItem: (startRow, direction) ->
+  findNormalItem: (startRow, direction) ->
     maxRow = @items.length - 1
     rows = if direction is 'next'
       [startRow..maxRow]
     else
       [startRow..0]
 
-    for row in rows when @isValidItem(@items[row])
+    for row in rows when @isNormalItem(@items[row])
       return row
     null
 
@@ -349,7 +349,7 @@ class UI
 
   selectItemForRow: (row) ->
     item = @items[row]
-    if @isValidItem(item)
+    if @isNormalItem(item)
       @gutterForPrompt.setToRow(row)
       @selectedItem = item
 
@@ -360,7 +360,7 @@ class UI
     @items = [{_prompt: true, skip: true}, items...]
     texts = items.map (item) => @provider.viewForItem(item)
     @appendText(texts.join("\n"))
-    @selectItemForRow(@findValidItem(1, 'next'))
+    @selectItemForRow(@findNormalItem(1, 'next'))
 
   getPromptRange: ->
     @editor.bufferRangeForBufferRow(0)
