@@ -1,16 +1,25 @@
 # narrow
 
 narrow something.  
-Inspired by unite.vim, emacs-helm.  
+Code navigation tool inspired by unite.vim, emacs-helm.  
 
 # Development status
 
 alpha
 
+# What's this
+
+narrow provide narrowing UI like unite/denite.vim or emacs-helm.  
+But unlike these predecessor, narrow's primal focus is on code navigation.  
+So most of bundled providers are **bound to particular editor** and updated selected item indicator as you move cursor on editor.  
+You can move around quickly between narrowed item as long as easy to see where am I in all items since cursor position change automatically reflected to narrow-editor.  
+
 # Features
 
-- autoPreview items under cursor.
-- Auto sync narrow-bounded-editor's cursor position to selected intem on narrow UI.
+- Auto preview items under cursor(default `true` for all providers).
+- Auto update items on narrow-editor when item changed(e.g. `narrow:lines` refresh items when text changed).
+- Auto sync editor's cursor position to selected item on narrow-editor(narrowing UI).
+- Direct edit in narrow-editor which update realFile on disk by `narrow:update-real-file` commands.
 - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration.
 
 # Architecture(not settled yet)
