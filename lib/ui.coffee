@@ -129,7 +129,7 @@ class UI
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
-      'narrow-ui:force-refresh': => @forceRefresh()
+      'narrow-ui:refresh-force': => @refresh(force: true)
       'narrow-ui:move-to-query-or-current-item': => @moveToQueryOrCurrentItem()
       'narrow-ui:update-real-file': => @updateRealFile()
 
@@ -187,11 +187,7 @@ class UI
     else
       new RegExp(pattern, 'i')
 
-  forceRefresh: ->
-    @refresh(force: true)
-    @moveToPrompt()
-
-  refresh: ({force}={})->
+  refresh: ({force}={}) ->
     if force
       @itemsByProvider = null
 
@@ -286,6 +282,9 @@ class UI
       @preview() if @isAutoPreview()
 
   syncToProviderEditor: ->
+    # Skip if not active editor.
+    return unless atom.workspace.getActiveTextEditor() is @providerEditor
+
     cursorPosition = @providerEditor.getCursorBufferPosition()
     # Detect item
     # - cursor position is equal or greather than that item.
@@ -298,10 +297,9 @@ class UI
     return unless foundItem?
 
     @selectItem(foundItem)
-    narrowEditorRow = @editor.getCursorBufferPosition().row
+    row = @editor.getCursorBufferPosition().row
     selectedItemRow = @getRowForSelectedItem()
-
-    if (narrowEditorRow isnt 0) and (narrowEditorRow isnt selectedItemRow)
+    if (row isnt selectedItemRow)
       @withLock => @editor.setCursorBufferPosition([selectedItemRow, 0])
 
   setRowMarker: (editor, point) ->
