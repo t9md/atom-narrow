@@ -18,7 +18,7 @@
   'o': 'narrow-ui:confirm-keep-open'
   # 'u': 'narrow-ui:preview-item'
   'r': 'narrow-ui:toggle-auto-preview'
-  'ctrl-r': 'narrow-ui:force-refresh'
+  'ctrl-r': 'narrow-ui:refresh-force'
 
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode':
   'enter': 'core:confirm'
