@@ -134,7 +134,7 @@ class UI
 
     changes = []
     lines = @editor.buffer.getLines()
-    for line, row in lines when (row >= 1) and @isValidItem(item = @items[row])
+    for line, row in lines when @isValidItem(item = @items[row])
       if item._lineHeader?
         line = line[item._lineHeader.length...] # Strip lineHeader
 
@@ -206,7 +206,7 @@ class UI
       return false
 
     if @provider.showLineHeader
-      for line, row in @editor.buffer.getLines() when (row >= 1) and not (item = @items[row]).skip
+      for line, row in @editor.buffer.getLines() when @isValidItem(item = @items[row])
         return false unless line.startsWith(item._lineHeader)
 
     true
