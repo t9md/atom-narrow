@@ -1,11 +1,7 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter} = require 'atom'
-{
-  getAdjacentPaneForPane
-  openItemInAdjacentPaneForPane
-} = require './utils'
+{openItemInAdjacentPaneForPane} = require './utils'
 settings = require './settings'
-path = require 'path'
 Grammar = require './grammar'
 
 class PromptGutter
