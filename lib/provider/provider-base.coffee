@@ -124,7 +124,7 @@ class ProviderBase
     if @boundToEditor
       # Intentionally avoid direct use of @editor to skip observation event
       # subscribed to @editor.
-      # This prevent auto refresh, so undoable narrowEditor to last state.
+      # This prevent auto refresh, so undoable narrow-editor to last state.
       @applyChanges(@editor.getPath(), changes)
     else
       changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)

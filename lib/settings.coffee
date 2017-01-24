@@ -66,7 +66,7 @@ module.exports = new Settings 'narrow',
   caseSensitivityForNarrowQuery:
     default: 'smartcase'
     enum: ['smartcase', 'sensitive', 'insensitive']
-    description: "Case sensitivity of your query in narrowEditor"
+    description: "Case sensitivity of your query in narrow-editor"
   vmpStartInInsertModeForUI: true
   LinesDefaultAutoPreview: true
   LinesSaveAfterDirectEdit: false

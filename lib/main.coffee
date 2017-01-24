@@ -41,7 +41,7 @@ module.exports =
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()
 
-  getUi: (narrowEditor) ->
+  getUi: ->
     Ui ?= require './ui'
     Ui.uiByNarrowEditor.get(@currentNarrowEditor)
 

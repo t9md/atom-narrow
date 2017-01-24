@@ -19,7 +19,7 @@ class Fold extends ProviderBase
   showLineHeader: false
 
   initialize: ->
-    atom.commands.add @ui.narrowEditorElement,
+    atom.commands.add @ui.editorElement,
       'narrow-ui:fold:increase-fold-level': => @updateFoldLevel(+1)
       'narrow-ui:fold:decrease-fold-level': => @updateFoldLevel(-1)
 

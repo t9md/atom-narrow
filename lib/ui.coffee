@@ -53,73 +53,73 @@ class UI
     @gutterItem = document.createElement('span')
     @gutterItem.textContent = " > "
 
-    @narrowEditor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    @providerEditor = @provider.editor
     dashName = @provider.getDashName()
-    @narrowEditor.getTitle = -> dashName
-    @narrowEditor.isModified = -> false
-    @narrowEditor.onDidDestroy(@destroy.bind(this))
-    @narrowEditorElement = @narrowEditor.element
-    @narrowEditorElement.classList.add('narrow', dashName)
+    @editor.getTitle = -> dashName
+    @editor.isModified = -> false
+    @editor.onDidDestroy(@destroy.bind(this))
+    @editorElement = @editor.element
+    @editorElement.classList.add('narrow', dashName)
 
-    @gutterForPrompt = new PromptGutter(@narrowEditor)
+    @gutterForPrompt = new PromptGutter(@editor)
 
     includeHeaderRules = @provider.includeHeaderGrammarRules
-    @grammar = new NarrowGrammar(@narrowEditor, {includeHeaderRules})
+    @grammar = new NarrowGrammar(@editor, {includeHeaderRules})
     @registerCommands()
     @disposables.add(@observeInputChange())
     @observeCursorPositionChangeForNarrowEditor()
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @rowMarker?.destroy() if item isnt @narrowEditor
+      @rowMarker?.destroy() if item isnt @editor
 
     if @provider.boundToEditor
-      providerEditor = @provider.editor
-      @disposables.add providerEditor.onDidChangeCursorPosition(@syncToProviderEditor.bind(this))
-      @disposables.add providerEditor.onDidDestroy(@destroy.bind(this))
+      @disposables.add @providerEditor.onDidChangeCursorPosition(@syncToProviderEditor.bind(this))
+      @disposables.add @providerEditor.onDidDestroy(@destroy.bind(this))
 
-    @constructor.registerUI(@narrowEditor, this)
+    @constructor.registerUI(@editor, this)
 
   start: ->
     @grammar.activate()
     activePane = atom.workspace.getActivePane()
     direction = settings.get('directionToOpen')
     if direction is 'here'
-      @pane = activePane.activateItem(@narrowEditor)
+      @pane = activePane.activateItem(@editor)
       @autoPreview = false
     else
-      @pane = openItemInAdjacentPaneForPane(activePane, @narrowEditor, direction)
+      @pane = openItemInAdjacentPaneForPane(activePane, @editor, direction)
       defaultAutoPreviewConfigName = @provider.getName() + "DefaultAutoPreview"
       @autoPreview = settings.get(defaultAutoPreviewConfigName) ? false
 
     @setPromptLine("\n")
     @moveToPrompt()
     if @input
-      @narrowEditor.insertText(@input)
+      @editor.insertText(@input)
     else
       @refresh()
 
   focus: ->
     if @isAlive()
       @pane.activate()
-      @pane.activateItem(@narrowEditor)
+      @pane.activateItem(@editor)
 
   isAlive: ->
-    @narrowEditor?.isAlive?()
+    @editor?.isAlive?()
 
   destroy: ->
     return if @destroyed
     @destroyed = true
 
     @disposables.dispose()
-    @narrowEditor.destroy()
+    @editor.destroy()
     @originalPane.activate() if @originalPane.isAlive()
     @provider?.destroy?()
     @gutterForPrompt?.destroy()
-    @constructor.unregisterUI(@narrowEditor)
+    @constructor.unregisterUI(@editor)
     @rowMarker?.destroy()
 
   registerCommands: ->
-    atom.commands.add @narrowEditorElement,
+    atom.commands.add @editorElement,
       'core:confirm': => @confirm()
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
@@ -133,7 +133,7 @@ class UI
     return unless @ensureNarrowEditorIsValidState()
 
     changes = []
-    lines = @narrowEditor.buffer.getLines()
+    lines = @editor.buffer.getLines()
     for line, row in lines when (row >= 1) and @isValidItem(item = @items[row])
       if item._lineHeader?
         line = line[item._lineHeader.length...] # Strip lineHeader
@@ -146,12 +146,12 @@ class UI
 
   moveUpDown: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
-      @withLock => @narrowEditor.setCursorBufferPosition([row, 0])
+      @withLock => @editor.setCursorBufferPosition([row, 0])
 
     @withPreventAutoPreview =>
       switch direction
-        when 'up' then @narrowEditor.moveUp()
-        when 'down' then @narrowEditor.moveDown()
+        when 'up' then @editor.moveUp()
+        when 'down' then @editor.moveDown()
 
     @confirm(keepOpen: true)
 
@@ -172,7 +172,7 @@ class UI
     @preview() if @isAutoPreview()
 
   getNarrowQuery: ->
-    @lastNarrowQuery = @narrowEditor.lineTextForBufferRow(0)
+    @lastNarrowQuery = @editor.lineTextForBufferRow(0)
 
   getRegExpForQueryWord: (word) ->
     pattern = _.escapeRegExp(word)
@@ -197,23 +197,23 @@ class UI
     Promise.resolve(@provider.getItems()).then (items) =>
       @clearItemsText()
       @setItems(@provider.filterItems(items, regexps))
-      @narrowEditorLastRow = @narrowEditor.getLastBufferRow()
+      @editorLastRow = @editor.getLastBufferRow()
       @ignoreChangeOnNarrowEditor = false
 
   ensureNarrowEditorIsValidState: ->
     # Ensure all item have valid line header
-    unless @narrowEditorLastRow is @narrowEditor.getLastBufferRow()
+    unless @editorLastRow is @editor.getLastBufferRow()
       return false
 
     if @provider.showLineHeader
-      for line, row in @narrowEditor.buffer.getLines() when (row >= 1) and not (item = @items[row]).skip
+      for line, row in @editor.buffer.getLines() when (row >= 1) and not (item = @items[row]).skip
         return false unless line.startsWith(item._lineHeader)
 
     true
 
 
   observeInputChange: ->
-    @narrowEditor.buffer.onDidChange ({newRange, oldRange, newText, oldText}) =>
+    @editor.buffer.onDidChange ({newRange, oldRange, newText, oldText}) =>
       return if @ignoreChangeOnNarrowEditor
 
       promptRange = @getPromptRange()
@@ -221,9 +221,9 @@ class UI
       notEmptyAndPrompt = (range) -> not range.isEmpty() and onPrompt(range)
 
       if notEmptyAndPrompt(newRange) or notEmptyAndPrompt(oldRange)
-        if @narrowEditor.hasMultipleCursors()
+        if @editor.hasMultipleCursors()
           # Destroy cursors on prompt
-          for selection in @narrowEditor.getSelections() when onPrompt(selection.getBufferRange())
+          for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
           # Recover query on prompt
           @setPromptLine(@lastNarrowQuery) if @lastNarrowQuery
@@ -243,7 +243,7 @@ class UI
     @preventAutoPreview = false
 
   observeCursorPositionChangeForNarrowEditor: ->
-    @narrowEditor.onDidChangeCursorPosition (event) =>
+    @editor.onDidChangeCursorPosition (event) =>
       return if @isLocked()
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
       return if (not cursor.selection.isEmpty()) or
@@ -264,7 +264,7 @@ class UI
       @preview() if @isAutoPreview()
 
   syncToProviderEditor: ->
-    cursorPosition = @provider.editor.getCursorBufferPosition()
+    cursorPosition = @providerEditor.getCursorBufferPosition()
     # Detect item
     # - cursor position is equal or greather than that item.
     foundItem = null
@@ -276,11 +276,11 @@ class UI
     return unless foundItem?
 
     @selectItem(foundItem)
-    narrowEditorRow = @narrowEditor.getCursorBufferPosition().row
+    narrowEditorRow = @editor.getCursorBufferPosition().row
     selectedItemRow = @getRowForSelectedItem()
 
     if (narrowEditorRow isnt 0) and (narrowEditorRow isnt selectedItemRow)
-      @withLock => @narrowEditor.setCursorBufferPosition([selectedItemRow, 0])
+      @withLock => @editor.setCursorBufferPosition([selectedItemRow, 0])
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()
@@ -299,20 +299,20 @@ class UI
     item = @getSelectedItem()
     Promise.resolve(@provider.confirmed(item)).then ({editor, point}) =>
       unless options.keepOpen
-        @narrowEditor.destroy()
+        @editor.destroy()
       {editor, point}
 
   # clear text from  2nd row to last row.
   clearItemsText: ->
-    range = [[1, 0], @narrowEditor.getEofBufferPosition()]
-    @narrowEditor.setTextInBufferRange(range, '')
+    range = [[1, 0], @editor.getEofBufferPosition()]
+    @editor.setTextInBufferRange(range, '')
 
   appendText: (text) ->
-    eof = @narrowEditor.getEofBufferPosition()
+    eof = @editor.getEofBufferPosition()
     if eof.isLessThan([1, 0])
       eof = @setPromptLine("\n").end
       @moveToPrompt()
-    @narrowEditor.setTextInBufferRange([eof, eof], text)
+    @editor.setTextInBufferRange([eof, eof], text)
 
   # Return row
   findValidItem: (startRow, direction) ->
@@ -328,17 +328,17 @@ class UI
 
   moveToQueryOrCurrentItem: ->
     row = @getRowForSelectedItem()
-    if row is @narrowEditor.getCursorBufferPosition().row
+    if row is @editor.getCursorBufferPosition().row
       @moveToPrompt()
     else
       # move to current item
-      @narrowEditor.setCursorBufferPosition([row, 0])
+      @editor.setCursorBufferPosition([row, 0])
 
   getRowForSelectedItem: ->
     @getRowForItem(@getSelectedItem())
 
   moveToPrompt: ->
-    @narrowEditor.setCursorBufferPosition(@getPromptRange().end)
+    @editor.setCursorBufferPosition(@getPromptRange().end)
 
   getRowForItem: (item) ->
     @items.indexOf(item)
@@ -363,11 +363,11 @@ class UI
     @selectItemForRow(@findValidItem(1, 'next'))
 
   getPromptRange: ->
-    @narrowEditor.bufferRangeForBufferRow(0)
+    @editor.bufferRangeForBufferRow(0)
 
   # Return range
   setPromptLine: (text) ->
     @ignoreChangeOnNarrowEditor = true
-    range = @narrowEditor.setTextInBufferRange(@getPromptRange(0), text)
+    range = @editor.setTextInBufferRange(@getPromptRange(0), text)
     @ignoreChangeOnNarrowEditor = false
     range
