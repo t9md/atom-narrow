@@ -1,7 +1,7 @@
 # narrow
 
 narrow something.  
-similar to unite.vim, emacs-helm  
+Inspired by unite.vim, emacs-helm.  
 
 # Development status
 
