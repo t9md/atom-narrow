@@ -142,6 +142,7 @@ config.cson
       # snip
       "narrow"
     ]
+  # snip
   "vim-mode-plus":
     highlightSearchExcludeScopes: [
       "narrow"

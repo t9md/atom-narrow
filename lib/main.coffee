@@ -42,8 +42,11 @@ module.exports =
       'narrow:previous-item': => @getUi()?.previousItem()
 
   getUi: ->
+    @getUiForEditor(@currentNarrowEditor)
+
+  getUiForEditor: (editor) ->
     Ui ?= require './ui'
-    Ui.uiByNarrowEditor.get(@currentNarrowEditor)
+    Ui.uiByNarrowEditor.get(editor)
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
@@ -65,14 +68,13 @@ module.exports =
   consumeVim: ({getEditorState, observeVimStates}) ->
     @subscriptions.add observeVimStates (vimState) =>
       {editor} = vimState
-      return unless @isNarrowEditor(editor)
+      return unless @isNarrowEditor(editor) and ui = @getUiForEditor(editor)
 
-      if settings.get('vmpStartInInsertModeForUI') and not vimState.isMode('insert')
-        vimState.activate('insert')
+      if settings.get('vmpAutoChangeModeInUI')
+        ui.autoChangeModeForVimState(vimState)
 
       # @subscriptions.add vimState.modeManager.onDidActivateMode ({mode, submode}) ->
-      #   if mode is 'insert' and editor.getCursorBufferPosition().row isnt 0
-      #     editor.setCursorBufferPosition([0, Infinity]) # auto move to EOL of first line.
+      #   ui.moveToPrompt() if (mode is 'insert') and (submode isnt 'replace')
 
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()

@@ -43,8 +43,10 @@ class UI
     workspaceElement = atom.views.getView(atom.workspace)
     workspaceElement.classList.toggle('has-narrow', @uiByNarrowEditor.size)
 
-  onDidFocused: (fn) -> @emitter.on('did-focused', fn)
-  emitDidFocused: -> @emitter.emit('did-focused')
+  onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
+  emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
+  onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
+  emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
@@ -55,13 +57,13 @@ class UI
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
-    @onDidFocused =>
-      @editor.scrollToCursorPosition(center: true)
-
     @originalPane = atom.workspace.getActivePane()
 
     @providerEditor = @provider.editor
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    # FIXME
+    # Opening multiple narrow-editor for same provider get title `undefined`
+    # (e.g multiple narrow-editor for lines provider)
     @editor.getTitle = => @provider.getDashName()
     @editor.isModified = -> false
     @editor.onDidDestroy(@destroy.bind(this))
@@ -77,11 +79,13 @@ class UI
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       if item is @editor
-        @emitDidFocused()
-      else
-        @rowMarker?.destroy()
-        if @provider.boundToEditor and (item is @providerEditor)
-          @syncToProviderEditor()
+        # in preview
+        return
+
+      @rowMarker?.destroy()
+      if @provider.boundToEditor and (item is @providerEditor)
+        # To sync when providerEditor clicked or tab change
+        @syncToProviderEditor()
 
     if @provider.boundToEditor
       @disposables.add @providerEditor.onDidStopChanging =>
@@ -108,7 +112,6 @@ class UI
     if @isAlive()
       @pane.activate()
       @pane.activateItem(@editor)
-      @emitDidFocused()
 
   isAlive: ->
     @editor?.isAlive?()
@@ -222,12 +225,10 @@ class UI
       @renderItems(items)
       @grammar.update(regexps)
 
-      if @provider.boundToEditor and @selectedItem and not isActiveEditor(@editor)
-        # console.log "case1"
-        @syncToProviderEditor()
-      else
-        # console.log "case2" #, @selectedItem
+      if isActiveEditor(@editor)
         @selectItemForRow(@findNormalItem(1, 'next'))
+      else
+        @syncToProviderEditor() if @provider.boundToEditor
       @ignoreChangeOnEditor = false
 
   renderItems: (items) ->
@@ -281,23 +282,28 @@ class UI
     @editor.onDidChangeCursorPosition (event) =>
       return if @isLocked()
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
-      return if (not cursor.selection.isEmpty()) or
-        textChanged or
-        (newBufferPosition.row is 0) or
+      return if textChanged or
+        (not cursor.selection.isEmpty()) or
         (oldBufferPosition.row is newBufferPosition.row)
+
+      if newBufferPosition.row is 0
+        @withLock => @moveToPrompt()
+        return
 
       if newBufferPosition.row > oldBufferPosition.row
         direction = 'next'
       else
         direction = 'previous'
       {row, column} = newBufferPosition
+
       @withLock =>
         row = @findNormalItem(row, direction)
         if row? # row might be '0'
           @selectItemForRow(row)
           cursor.setBufferPosition([row, column])
+          @emitDidMoveToItemArea()
         else if direction is 'previous'
-          cursor.setBufferPosition([0, column])
+          @moveToPrompt()
 
       @preview() if @isAutoPreview()
 
@@ -318,8 +324,8 @@ class UI
     unless isActiveEditor(@editor)
       row = @editor.getCursorBufferPosition().row
       selectedItemRow = @getRowForSelectedItem()
-      if (row isnt selectedItemRow)
-        @editor.scrollToBufferPosition([selectedItemRow, 0])
+      if (row = @getRowForSelectedItem()) >= 0
+        @withLock => @editor.setCursorBufferPosition([row, 0])
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()
@@ -367,6 +373,7 @@ class UI
 
   moveToPrompt: ->
     @editor.setCursorBufferPosition(@getPromptRange().end)
+    @emitDidMoveToPrompt()
 
   getRowForItem: (item) ->
     @items.indexOf(item)
@@ -393,3 +400,8 @@ class UI
     range = @editor.setTextInBufferRange(@getPromptRange(0), text)
     @ignoreChangeOnEditor = false
     range
+
+  # vim-mode-plus integration
+  autoChangeModeForVimState: (vimState) ->
+    @disposables.add @onDidMoveToPrompt -> vimState.activate('insert') unless vimState.isMode('insert')
+    @disposables.add @onDidMoveToItemArea -> vimState.activate('normal') if vimState.isMode('insert')
