@@ -1,9 +1,6 @@
 _ = require 'underscore-plus'
 {Point, CompositeDisposable, Emitter} = require 'atom'
-{
-  saveEditorState
-  padStringLeft
-} = require '../utils'
+{saveEditorState} = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
 Input = null
@@ -115,9 +112,11 @@ class ProviderBase
         item.text
 
   # Unless items didn't have maxLineTextWidth field, detect last line from editor.
-  getLineHeaderForItem: ({text, point, maxLineTextWidth}, editor=@editor) ->
+  getLineHeaderForItem: ({point, maxLineTextWidth}, editor=@editor) ->
     maxLineTextWidth ?= String(editor.getLastBufferRow() + 1).length
-    @indentTextForLineHeader + padStringLeft(String(point.row + 1), maxLineTextWidth) + ': '
+    lineNumberText = String(point.row + 1)
+    padding = " ".repeat(maxLineTextWidth - lineNumberText.length)
+    @indentTextForLineHeader + padding + lineNumberText + ": "
 
   # Direct Edit
   # -------------------------

@@ -187,18 +187,18 @@ class UI
     @moveToPrompt()
     @refresh()
 
-  refreshing: false
   refresh: ->
-    @refreshing = true
     query = @getNarrowQuery()
     words = _.compact(query.split(/\s+/))
     regexps = words.map (word) => @getRegExpForWord(word)
     @grammar.update(regexps)
+    
+    @ignoreChangeOnNarrowEditor = true
     Promise.resolve(@provider.getItems()).then (items) =>
       @clearItemsText()
       @setItems(@provider.filterItems(items, regexps))
       @narrowEditorLastRow = @narrowEditor.getLastBufferRow()
-      @refreshing = false
+      @ignoreChangeOnNarrowEditor = false
 
   ensureNarrowEditorIsValidState: ->
     # Ensure all item have valid line header
@@ -225,6 +225,7 @@ class UI
           # Destroy cursors on prompt
           for selection in @narrowEditor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
+          # Recover query on prompt
           @setPromptLine(@lastNarrowQuery) if @lastNarrowQuery
         else
           @refresh()
