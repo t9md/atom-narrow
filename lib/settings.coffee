@@ -61,8 +61,8 @@ class Settings
 module.exports = new Settings 'narrow',
   directionToOpen:
     default: 'right'
-    enum: ['right', 'down', 'here']
-    description: "Where to open"
+    enum: ['right', 'down']
+    description: "Where to open narrow-editor"
   caseSensitivityForNarrowQuery:
     default: 'smartcase'
     enum: ['smartcase', 'sensitive', 'insensitive']

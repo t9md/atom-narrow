@@ -100,11 +100,7 @@ class UI
     @grammar.activate()
     activePane = atom.workspace.getActivePane()
     direction = settings.get('directionToOpen')
-    if direction is 'here'
-      @pane = activePane.activateItem(@editor)
-      @autoPreview = false
-    else
-      @pane = openItemInAdjacentPaneForPane(activePane, @editor, direction)
+    @pane = openItemInAdjacentPaneForPane(activePane, @editor, direction)
 
     @setPromptLine("\n")
     @moveToPrompt()
