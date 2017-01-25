@@ -5,7 +5,6 @@ ProviderBase = require './provider-base'
 
 module.exports =
 class SearchBase extends ProviderBase
-  items: null
   includeHeaderGrammar: true
   supportDirectEdit: true
 
