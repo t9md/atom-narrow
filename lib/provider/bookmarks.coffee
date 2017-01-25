@@ -24,18 +24,17 @@ class Bookmarks extends ProviderBase
 
   getItemsForEditor: (editor, markerLayer) ->
     filePath = editor.getPath()
-    maxLineTextWidth = String(editor.getLastBufferRow() + 1).length
-    items = []
-    for marker in markerLayer.getMarkers()
-      point = marker.getStartBufferPosition()
-      text = editor.lineTextForBufferRow(point.row)
-      items.push({point, text, filePath, maxLineTextWidth})
-
-    _.sortBy(items, ({point}) -> point.row)
+    markerLayer.getMarkers()
+      .map (marker) ->
+        point = marker.getStartBufferPosition()
+        text = editor.lineTextForBufferRow(point.row)
+        {point, text, filePath}
+      .sort (a, b) ->
+        a.point.compare(b.point)
 
   getItems: ->
     items = []
     for {editor, markerLayer} in getBookmarks() when markerLayer.getMarkerCount() > 0
       items.push(header: "# #{editor.getPath()}", skip: true)
       items.push(@getItemsForEditor(editor, markerLayer)...)
-    items
+    @injectMaxLineTextWidthForItems(items)
