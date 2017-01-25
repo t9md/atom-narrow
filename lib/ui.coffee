@@ -136,6 +136,7 @@ class UI
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:refresh-force': => @refresh(force: true, moveToPrompt: true)
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
+      'narrow-ui:move-to-prompt': => @moveToPrompt()
       'narrow-ui:update-real-file': => @updateRealFile()
 
   updateRealFile: ->

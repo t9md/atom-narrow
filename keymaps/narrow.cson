@@ -36,6 +36,7 @@
   'q': 'core:close'
   'o': 'narrow-ui:confirm-keep-open'
   'r': 'narrow-ui:toggle-auto-preview'
+  'I': 'narrow-ui:move-to-prompt'
 
 # Invoke narrow command from vim-mode-plus's search-mini-editor
 # ---------------------------
