@@ -35,9 +35,9 @@ class AtomScan extends SearchBase
 
       @injectMaxLineTextWidthForItems(items)
 
-  filterItems: (items, regexps) ->
+  filterItems: (items, filterSpec) ->
     items = super
-    normalItems = _.filter(items, (item) -> not item.skip)
+    normalItems = _.reject(items, (item) -> item.skip)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))
 
     _.filter items, (item) ->

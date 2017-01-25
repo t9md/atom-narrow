@@ -89,7 +89,7 @@ class Search extends SearchBase
           env: process.env
       )
 
-  filterItems: (items, regexps) ->
+  filterItems: (items, filterSpec) ->
     items = super
     normalItems = _.reject(items, (item) -> item.skip)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))

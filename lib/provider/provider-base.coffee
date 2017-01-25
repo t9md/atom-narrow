@@ -47,11 +47,13 @@ class ProviderBase
   subscribe: (args...) ->
     @subscriptions.add(args...)
 
-  filterItems: (items, regexps) ->
-    filterKey = "text"
-    for regexp in regexps
-      items = items.filter (item) ->
-        item.skip or regexp.test(item[filterKey])
+  filterItems: (items, {include, exclude}) ->
+    for regexp in exclude
+      items = items.filter (item) -> item.skip or not regexp.test(item.text)
+
+    for regexp in include
+      items = items.filter (item) -> item.skip or regexp.test(item.text)
+
     items
 
   destroy: ->

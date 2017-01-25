@@ -13,9 +13,9 @@ class Lines extends ProviderBase
       point: new Point(row, 0)
       text: text
 
-  filterItems: (items, regexps) ->
-    @regexps = regexps
-    super(items, regexps)
+  filterItems: (items, filterSpec) ->
+    @regexps = filterSpec.include
+    super
 
   adjustPoint: (point) ->
     return null if @regexps.length is 0
