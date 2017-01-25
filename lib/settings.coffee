@@ -72,14 +72,28 @@ module.exports = new Settings 'narrow',
     description: "Automatically change mode on narrow-editor, insert-mode(=prompt), normal-mode(=item-area)"
 
   # Per providers settings
-  LinesAutoPreview: true
-  LinesCloseOnConfirm: true
-
+  # -------------------------
+  # auto-preview
+  AtomScanAutoPreview: true
+  BookmarksAutoPreview: true
   FoldAutoPreview: true
-  FoldCloseOnConfirm: true
-
+  GitDiffAutoPreview: true
+  LinesAutoPreview: true
+  LinterAutoPreview: true
   SearchAutoPreview: true
+  SymbolsAutoPreview: true
+
+  # close-on-confirm
+  AtomScanCloseOnConfirm: true
+  BookmarksCloseOnConfirm: true
+  FoldCloseOnConfirm: true
+  GitDiffCloseOnConfirm: true
+  LinesCloseOnConfirm: true
+  LinterCloseOnConfirm: true
   SearchCloseOnConfirm: true
+  SymbolsCloseOnConfirm: true
+
+  # Other
   SearchAgCommandArgs:
     default: "--nocolor --column"
     description: """
@@ -92,18 +106,3 @@ module.exports = new Settings 'narrow',
       Smart case: `ag --nocolor --column -S PATTERN`<br>
       Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
     """
-
-  AtomScanAutoPreview: true
-  AtomScanCloseOnConfirm: true
-
-  SymbolsAutoPreview: true
-  SymbolsCloseOnConfirm: true
-
-  GitDiffAutoPreview: true
-  GitDiffCloseOnConfirm: true
-
-  BookmarksAutoPreview: true
-  BookmarksCloseOnConfirm: true
-
-  LinterAutoPreview: true
-  LinterCloseOnConfirm: true
