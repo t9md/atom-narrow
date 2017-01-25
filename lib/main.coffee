@@ -17,16 +17,24 @@ module.exports =
         @currentNarrowEditor = item
 
     @subscriptions.add atom.commands.add 'atom-text-editor',
+      # Shared commands
+      'narrow:focus': => @getUi()?.focus()
+      'narrow:close': => @getUi()?.destroy()
+      'narrow:next-item': => @getUi()?.nextItem()
+      'narrow:previous-item': => @getUi()?.previousItem()
+
+      # Providers
       'narrow:lines': => @narrow('lines')
-      'narrow:lines-by-current-word': => @narrow('lines', uiInput: @getCurrentWord())
-
       'narrow:fold': => @narrow('fold')
-      'narrow:fold-by-current-word': => @narrow('fold', uiInput: @getCurrentWord())
-
       'narrow:symbols': => @narrow('symbols')
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:bookmarks': => @narrow('bookmarks')
+      'narrow:linter': => @narrow('linter')
 
+      'narrow:lines-by-current-word': => @narrow('lines', uiInput: @getCurrentWord())
+      'narrow:fold-by-current-word': => @narrow('fold', uiInput: @getCurrentWord())
+
+      # search family
       'narrow:search': => @narrow('search')
       'narrow:search-by-current-word': => @narrow('search', currentWord: true)
 
@@ -35,13 +43,6 @@ module.exports =
 
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', currentWord: true)
-
-      'narrow:linter': => @narrow('linter')
-
-      'narrow:focus': => @getUi()?.focus()
-      'narrow:close': => @getUi()?.destroy()
-      'narrow:next-item': => @getUi()?.nextItem()
-      'narrow:previous-item': => @getUi()?.previousItem()
 
   getUi: ->
     @getUiForEditor(@currentNarrowEditor)
@@ -70,10 +71,8 @@ module.exports =
   consumeVim: ({getEditorState, observeVimStates}) ->
     @subscriptions.add observeVimStates (vimState) =>
       {editor} = vimState
-      return unless @isNarrowEditor(editor) and ui = @getUiForEditor(editor)
-
-      if settings.get('vmpAutoChangeModeInUI')
-        ui.autoChangeModeForVimState(vimState)
+      if settings.get('vmpAutoChangeModeInUI') and @isNarrowEditor(editor)
+        @getUiForEditor(editor)?.autoChangeModeForVimState(vimState)
 
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()
