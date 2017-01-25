@@ -286,24 +286,22 @@ class UI
         (not cursor.selection.isEmpty()) or
         (oldBufferPosition.row is newBufferPosition.row)
 
-      if newBufferPosition.row is 0
+      newRow = newBufferPosition.row
+      oldRow = oldBufferPosition.row
+
+      if newRow is 0 # was at Item area
         @withLock => @moveToPrompt()
         return
 
-      if newBufferPosition.row > oldBufferPosition.row
-        direction = 'next'
-      else
-        direction = 'previous'
-      {row, column} = newBufferPosition
-
+      direction = if newRow > oldRow then 'next' else 'previous'
       @withLock =>
-        row = @findNormalItem(row, direction)
+        row = @findNormalItem(newRow, direction)
         if row? # row might be '0'
           @selectItemForRow(row)
-          cursor.setBufferPosition([row, column])
-          @emitDidMoveToItemArea()
-        else if direction is 'previous'
-          @moveToPrompt()
+          cursor.setBufferPosition([row, newBufferPosition.column])
+          @emitDidMoveToItemArea() if oldRow is 0 # was at prompt
+        else
+          @moveToPrompt() if direction is 'previous'
 
       @preview() if @isAutoPreview()
 
