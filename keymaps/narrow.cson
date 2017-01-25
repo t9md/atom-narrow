@@ -1,27 +1,45 @@
-# Need improve following example for normal user.
-'atom-text-editor.narrow.narrow-editor':
+# -------------------------
+# For every user
+# -------------------------
+# On every editor
+# ---------------------------
+'atom-workspace.has-narrow atom-text-editor':
+  'ctrl-g': 'narrow:close'
+  'ctrl-cmd-f': 'narrow:focus'
+  'ctrl-cmd-p': 'narrow:previous-item'
+  'ctrl-cmd-n': 'narrow:next-item'
+
+# Only on narrow-editor
+# ---------------------------
+'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
   'enter': 'core:confirm'
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
   'tab': 'narrow-ui:move-to-prompt-or-selected-item'
   'f5': 'narrow-ui:refresh-force'
   'ctrl-l': 'narrow-ui:refresh-force'
+  # Danger, don't comment in without understanding.
   # 'ctrl-cmd-s': 'narrow-ui:update-real-file'
 
-'atom-text-editor.narrow.narrow-editor.fold':
+# narrow-editor.fold
+# -------------------------
+'atom-text-editor.narrow.narrow-editor.fold[data-grammar="source narrow"]':
   'cmd-]': 'narrow-ui:fold:increase-fold-level'
   'cmd-[': 'narrow-ui:fold:decrease-fold-level'
 
-'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode':
+# -------------------------
+# Vim-mode-plus user only
+# -------------------------
+# narrow-editor.normal-mode
+# ---------------------------
+'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'
   'q': 'core:close'
   'o': 'narrow-ui:confirm-keep-open'
   'r': 'narrow-ui:toggle-auto-preview'
 
-'atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode':
-  'enter': 'core:confirm'
-
-# This is for vim-mode-plus search-mini-editor
+# Invoke narrow command from vim-mode-plus's search-mini-editor
+# ---------------------------
 'atom-text-editor.vim-mode-plus-search':
-  'ctrl-l': 'vim-mode-plus-user:narrow-lines-from-search'
-  'cmd-/': 'vim-mode-plus-user:narrow-search'
-  'ctrl-cmd-/': 'vim-mode-plus-user:narrow-search-current-project'
+  'ctrl-l': 'vim-mode-plus-user:narrow:lines'
+  'cmd-/': 'vim-mode-plus-user:narrow:search'
+  'ctrl-cmd-/': 'vim-mode-plus-user:narrow:search-current-project'
