@@ -65,8 +65,7 @@ class Search extends SearchBase
     search = @search.bind(this, _.escapeRegExp(@options.search))
     Promise.all(@options.projects.map(search)).then (values) =>
       items = _.flatten(values)
-      @injectMaxLineTextWidth(items)
-      items
+      @injectMaxLineTextWidthForItems(items)
 
   search: (pattern, project) ->
     items = []
@@ -92,7 +91,7 @@ class Search extends SearchBase
 
   filterItems: (items, regexps) ->
     items = super
-    normalItems = _.filter(items, (item) -> not item.skip)
+    normalItems = _.reject(items, (item) -> item.skip)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))
     projectNames = _.uniq(_.pluck(normalItems, "projectName"))
 

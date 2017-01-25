@@ -33,8 +33,7 @@ class AtomScan extends SearchBase
             rows.push(point.row) # ensure single item per row
             items.push({filePath, text, point})
 
-      @injectMaxLineTextWidth(items)
-      items
+      @injectMaxLineTextWidthForItems(items)
 
   filterItems: (items, regexps) ->
     items = super
