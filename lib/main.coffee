@@ -71,8 +71,17 @@ module.exports =
   consumeVim: ({getEditorState, observeVimStates}) ->
     @subscriptions.add observeVimStates (vimState) =>
       {editor} = vimState
-      if settings.get('vmpAutoChangeModeInUI') and @isNarrowEditor(editor)
-        @getUiForEditor(editor)?.autoChangeModeForVimState(vimState)
+      if @isNarrowEditor(editor) and ui = @getUiForEditor(editor)
+        if settings.get('vmpStartInInsertModeForUI')
+          vimState.activate('insert') unless vimState.isMode('insert')
+
+        if settings.get('vmpAutoChangeModeInUI')
+          ui.autoChangeModeForVimState(vimState)
+
+        atom.commands.add ui.editorElement,
+          'vim-mode-plus-user:narrow-ui:move-to-prompt': ->
+            ui.moveToPrompt()
+            vimState.activate('insert') unless vimState.isMode('insert')
 
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()
