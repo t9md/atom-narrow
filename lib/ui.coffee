@@ -3,6 +3,7 @@ _ = require 'underscore-plus'
 {openItemInAdjacentPaneForPane, isActiveEditor} = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
+translateQueryToRegexps = require './translate-query-to-regexps'
 
 class PromptGutter
   constructor: (@editor) ->
@@ -193,23 +194,11 @@ class UI
   getNarrowQuery: ->
     @lastNarrowQuery = @editor.lineTextForBufferRow(0)
 
-  getRegExpForQueryWord: (word) ->
-    pattern = _.escapeRegExp(word)
-    sensitivity = settings.get('caseSensitivityForNarrowQuery')
-    if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and /[A-Z]/.test(word))
-      new RegExp(pattern)
-    else
-      new RegExp(pattern, 'i')
-
   refresh: ({force, moveToPrompt}={}) ->
     if force
       @itemsByProvider = null
     if moveToPrompt
       @moveToPrompt()
-
-    getRegExpForQueryWord = @getRegExpForQueryWord.bind(this)
-    words = _.compact(@getNarrowQuery().split(/\s+/))
-    regexps = word.map(getRegExpForQueryWord)
 
     @ignoreChangeOnEditor = true
     # In case prompt accidentaly mutated
@@ -218,6 +207,7 @@ class UI
       eof = @setPromptLine("\n").end
       @moveToPrompt()
 
+    regexps = translateQueryToRegexps(@getNarrowQuery())
     Promise.resolve(@itemsByProvider ? @provider.getItems()).then (items) =>
       if @provider.supportCacheItems
         @itemsByProvider = items
