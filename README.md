@@ -41,6 +41,7 @@ alpha
 - `git-diff`: Info source is from core `git-diff` package.
 - `bookmarks`: For core `bookmarks` package
 - `symbols`: Symbols are provided by core `symbols-views` package's.
+- `linter`: Use message provided by [linter](https://atom.io/packages/linter) package.
 
 # Quick tour
 
@@ -105,6 +106,7 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 - `narrow:atom-scan-by-current-word`
 - `narrow:focus`
 - `narrow:symbols`
+- `narrow:linter`
 - `narrow:bookmarks`
 - `narrow:git-diff`
 
@@ -133,6 +135,7 @@ Start it from command-palette or set keymap in `keymap.cson`.
 'atom-text-editor.vim-mode-plus.normal-mode':
   'space o': 'narrow:fold'
   'space O': 'narrow:symbols'
+  'space c': 'narrow:linter'
   'space l': 'narrow:lines'
   'space L': 'narrow:lines-by-current-word'
   'space s': 'narrow:search'
