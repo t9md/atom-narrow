@@ -1,4 +1,4 @@
-# 0.12.0: WIP
+# 0.12.0:
 - New: `*`(wildcard) and `!` negate expression support for query. See #64 for detail.
 - New: setting to control `close-on-confirm` behavior. Params and default values are below.
   - `AtomScanCloseOnConfirm`: true
