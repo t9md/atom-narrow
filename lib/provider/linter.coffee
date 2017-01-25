@@ -33,7 +33,7 @@ class Linter extends ProviderBase
     Promise.all(promises).then (values) =>
       @injectMaxLineTextWidthForItems(_.flatten(values))
 
-  filterItems: (items, regexps) ->
+  filterItems: (items, filterSpec) ->
     items = super
     normalItems = _.reject(items, (item) -> item.skip)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))

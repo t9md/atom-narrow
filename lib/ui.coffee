@@ -3,7 +3,7 @@ _ = require 'underscore-plus'
 {openItemInAdjacentPaneForPane, isActiveEditor} = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
-translateQueryToRegexps = require './translate-query-to-regexps'
+getFilterSpecForQuery = require './get-filter-spec-for-query'
 
 class PromptGutter
   constructor: (@editor) ->
@@ -207,14 +207,17 @@ class UI
       eof = @setPromptLine("\n").end
       @moveToPrompt()
 
-    regexps = translateQueryToRegexps(@getNarrowQuery())
+    filterSpec = getFilterSpecForQuery(@getNarrowQuery())
+
     Promise.resolve(@itemsByProvider ? @provider.getItems()).then (items) =>
       if @provider.supportCacheItems
         @itemsByProvider = items
-      items = @provider.filterItems(items, regexps)
+      items = @provider.filterItems(items, filterSpec)
       @items = [@promptItem, items...]
       @renderItems(items)
-      @grammar.update(regexps)
+
+      # No need to highlight excluded items
+      @grammar.update(filterSpec.include)
 
       if isActiveEditor(@editor)
         @selectItemForRow(@findNormalItem(1, 'next'))
