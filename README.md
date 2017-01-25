@@ -88,7 +88,7 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 
 # Gifs
 
-`narrow:lines`
+<!-- `narrow:lines`
 
 ![line](https://raw.githubusercontent.com/t9md/t9md/43b393e7e87bc36ee9dc309e9525050b95ec07ed/img/atom-narrow/lines.gif)
 
@@ -96,13 +96,13 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 
 ![fold](https://raw.githubusercontent.com/t9md/t9md/43b393e7e87bc36ee9dc309e9525050b95ec07ed/img/atom-narrow/fold.gif)
 
-`narrow:search` (require `ag`)
+`narrow:search` (require `ag`) -->
 
-![search](https://raw.githubusercontent.com/t9md/t9md/43b393e7e87bc36ee9dc309e9525050b95ec07ed/img/atom-narrow/search.gif)
+![search](https://raw.githubusercontent.com/t9md/t9md/c84c679d8d9d06f00afb10b1f42cfa806483dd03/img/atom-narrow.gif)
 
 # Commands
 
-### global Commands
+### Provider commands
 
 - `narrow:lines`
 - `narrow:lines-by-current-word`
@@ -112,25 +112,29 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 - `narrow:search-by-current-word`
 - `narrow:search-current-project`
 - `narrow:search-current-project-by-current-word`
+- `narrow:atom-scan`
+- `narrow:atom-scan-by-current-word`
 - `narrow:focus`
 - `narrow:symbols`
 - `narrow:bookmarks`
 - `narrow:git-diff`
 
-### narrow-ui
+### narrow-editor(narrow-ui)
 
 - `core:confirm`
+- `narrow-ui:confirm-keep-open`
 - `narrow-ui:preview-item`
 - `narrow-ui:toggle-auto-preview`
+- `narrow-ui:refresh-force`
+- `narrow-ui:move-to-prompt-or-selected-item`
+- `narrow-ui:update-real-file`
 
 # Keymaps
 
-No keymap to invoke global command(e.g `narrow:lines`).  
-Start it from command-palette or set keymap by `keymap.cson`.
+No keymap to invoke narrow provider(e.g `narrow:lines`).  
+Start it from command-palette or set keymap in `keymap.cson`.
 
-For other keymap, see [default keymap](https://github.com/t9md/atom-narrow/blob/master/keymaps/narrow.cson).
-
-⚠️ Currently default-keymap is not yet settled, so sorry this will likely to change in future version.   
+⚠️ [default keymap](https://github.com/t9md/atom-narrow/blob/master/keymaps/narrow.cson) is not yet settled, this will likely to change in future version.   
 
 ### My keymap(vim-mode-plus user)
 
