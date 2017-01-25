@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 {Point} = require 'atom'
-settings = require '../settings'
 
 module.exports =
 class Lines extends ProviderBase

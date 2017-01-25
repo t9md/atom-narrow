@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
-settings = require '../settings'
 {getCurrentWordAndBoundary} = require '../utils'
 
 module.exports =
