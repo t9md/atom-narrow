@@ -1,3 +1,44 @@
+# 0.11.0: Really BIG release.
+
+- New: direct-edit support #45, #43.
+  - After you edit narrow-editor items then invoked `narrow-ui:update-real-file`.
+  - Which apply changes to real file and auto-save.
+  - Read instruction on README.md.
+  - `direct-edit` supported providers are `lines`, `search`, `atom-scan`.
+- New: `atom-scan` provider, similar to `search`.
+  - `atom-scan` use `atom.workspace.scan` so no external command is required.
+- New: narrow-editor have `narrow-editor` CSS class
+- Improve: Add quick-tour on README.md.
+- Improve: Set many default-keymap.
+- Breaking: Rename commands name
+  - Rename: `narrow-ui:refresh-force` to `narrow-ui:refresh-force` and add new `ctrl-l` keymap
+  - Rename: `narrow-ui:move-to-query-or-current-item` to `narrow-ui:move-to-prompt-or-selected-item`
+  - Rename: `vim-mode-plus-user:narrow-lines-from-search` to `vim-mode-plus-user:narrow:lines`
+  - Rename: `vim-mode-plus-user:narrow-search` to `vim-mode-plus-user:narrow:search`
+  - Rename: `vim-mode-plus-user:narrow-search-current-project` to `vim-mode-plus-user:narrow:search-current-project`
+  - New: `vim-mode-plus-user:narrow:atom-scan`
+- Breaking: No longer `ctr-r` mapped in `vim-mode-plus.normal-mode` to avoid conflict to `vim-mode-plus:redo`.
+- Breaking: Configuration parameters
+  - Simplify auto preview config name remove `Default` part from name.
+    - `LinesDefaultAutoPreview` to `LinesAutoPreview`
+    - `FoldDefaultAutoPreview` to `FoldAutoPreview`
+    - `SearchDefaultAutoPreview` to `SearchAutoPreview`
+    - `SymbolsDefaultAutoPreview` to `SymbolAutoPreview`
+    - `GitDiffDefaultAutoPreview` to `GitDiffAutoPreview`
+    - `BookmarksDefaultAutoPreview` to `BookmarksAutoPreview`
+  - For `directionOpen` pram, `here` is no longer supported.
+    - Old allowed value: [`right`, `down`, `here`]
+    - New allowed value: [`right`, `down`]
+  - `vmpStartInInsertModeForUI` is removed
+  - `vmpAutoChangeModeInUI` is added
+- Change: `search` no longer show column on each items. #47
+- Improve: Respect word boundary(`\b`) for both grammar and search args for `search`, `atom-scan`.
+- Improve: `lines` now place cursor on query matching position by best effort.
+- Improve: Prevent green row marker remains by updating atomically.
+- Improve: Add spaces for line-header, All line-header showing provider now show aligned line-header.
+- Improve: Item cache is handled by ui and controlled by `supportCacheItems` prop on provider.
+- Improve: Item area refresh is not skipped on `undo` and `redo`, so only queries are undo managed.
+
 # 0.10.1:
 - Eval: tryout to fix `ag` search not work on windows #9.
 
