@@ -333,10 +333,13 @@ class UI
   isNormalItem: (item) ->
     item? and not item.skip
 
+  needCloseOnConfirm: ->
+    settings.get(@provider.getName() + "CloseOnConfirm")
+
   confirm: (options={}) ->
     item = @getSelectedItem()
     Promise.resolve(@provider.confirmed(item)).then ({editor, point}) =>
-      unless options.keepOpen
+      if not options.keepOpen and @needCloseOnConfirm()
         @editor.destroy()
       {editor, point}
 

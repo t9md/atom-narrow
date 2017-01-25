@@ -70,9 +70,16 @@ module.exports = new Settings 'narrow',
   vmpAutoChangeModeInUI:
     default: true
     description: "Automatically change mode on narrow-editor, insert-mode(=prompt), normal-mode(=item-area)"
+
+  # Per providers settings
   LinesAutoPreview: true
+  LinesCloseOnConfirm: true
+
   FoldAutoPreview: true
+  FoldCloseOnConfirm: true
+
   SearchAutoPreview: true
+  SearchCloseOnConfirm: true
   SearchAgCommandArgs:
     default: "--nocolor --column"
     description: """
@@ -85,8 +92,18 @@ module.exports = new Settings 'narrow',
       Smart case: `ag --nocolor --column -S PATTERN`<br>
       Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
     """
+
   AtomScanAutoPreview: true
+  AtomScanCloseOnConfirm: true
+
   SymbolsAutoPreview: true
+  SymbolsCloseOnConfirm: true
+
   GitDiffAutoPreview: true
+  GitDiffCloseOnConfirm: true
+
   BookmarksAutoPreview: true
+  BookmarksCloseOnConfirm: true
+
   LinterAutoPreview: true
+  LinterCloseOnConfirm: true
