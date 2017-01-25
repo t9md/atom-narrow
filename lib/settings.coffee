@@ -89,3 +89,4 @@ module.exports = new Settings 'narrow',
   SymbolsAutoPreview: true
   GitDiffAutoPreview: true
   BookmarksAutoPreview: true
+  LinterAutoPreview: true

@@ -36,6 +36,8 @@ module.exports =
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', currentWord: true)
 
+      'narrow:linter': => @narrow('linter')
+
       'narrow:focus': => @getUi()?.focus()
       'narrow:close': => @getUi()?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
