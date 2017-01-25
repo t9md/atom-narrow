@@ -15,8 +15,8 @@ alpha
 - But **not** aiming to become "can open anything from narrow-able UI" package.
 - Primal focus is on **code-navigation**.
 - Most of bundled providers are **bound to specific editor**.
-- And sync current-item on narrow-UI as you move cursor on bounded editor.
-- This **auto sync current-item with bounded editor** gives valuable context to programmer.
+- And sync current-item on narrow-UI as you move cursor on bound editor.
+- This **auto sync current-item to cursor of bound editor** gives you valuable context to keep focus on X.  
 
 # Features
 

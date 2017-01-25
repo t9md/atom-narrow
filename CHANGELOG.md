@@ -1,3 +1,23 @@
+# 0.12.0: WIP
+- New: `*`(wildcard) and `!` negate expression support for query. See #64 for detail.
+- New: setting to control `close-on-confirm` behavior. Params and default values are below.
+  - `AtomScanCloseOnConfirm`: true
+  - `BookmarksCloseOnConfirm`: true
+  - `FoldCloseOnConfirm`: true
+  - `GitDiffCloseOnConfirm`: true
+  - `LinesCloseOnConfirm`: true
+  - `LinterCloseOnConfirm`: true
+  - `SearchCloseOnConfirm`: true
+  - `SymbolsCloseOnConfirm`: true
+- New: new provider `narrow:linter` which use linter packages message as information source.
+  - Support `direct-edit`
+- Improve: improve usability for `vim-mode-plus` user.
+  - `vmpAutoChangeModeInUI` set to default `false`(was `true` in v0.11.0)
+  - Revival `vmpStartInInsertModeForUI` settings (was removed in v0.11.0)
+  - `i`, `a` in narrow-editor mapped to new `vim-mode-plus-user:narrow-ui:move-to-prompt`.
+  - Which move to prompt and start insert-mode if not.
+- Improve: No longer syncToProviderEditor for editor-bound-provider while cursor move caused by preview.
+
 # 0.11.0: Really BIG release.
 
 - New: direct-edit support #45, #43.
