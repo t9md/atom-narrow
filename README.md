@@ -7,6 +7,8 @@ Code navigation tool inspired by unite.vim, emacs-helm.
 
 alpha
 
+![search](https://raw.githubusercontent.com/t9md/t9md/2c84dbbbaf4a5b625bcc22ed2d9896733bdb0f04/img/atom-narrow.gif)
+
 # What's this
 
 - Provide narrowing UI like unite/denite.vim or emacs-helm.
@@ -85,20 +87,6 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 6. Invoke `Narrow Ui: Update Real File` from command-palette.
 7. DONE, changes you made on narrow-editor items are applied to real-file(and saved).
 8. You can undo changes by re-edit items on narrow-editor and reapply changes by `Narrow Ui: Update Real File`.
-
-# Gifs
-
-<!-- `narrow:lines`
-
-![line](https://raw.githubusercontent.com/t9md/t9md/43b393e7e87bc36ee9dc309e9525050b95ec07ed/img/atom-narrow/lines.gif)
-
-`narrow:fold`
-
-![fold](https://raw.githubusercontent.com/t9md/t9md/43b393e7e87bc36ee9dc309e9525050b95ec07ed/img/atom-narrow/fold.gif)
-
-`narrow:search` (require `ag`) -->
-
-![search](https://raw.githubusercontent.com/t9md/t9md/c84c679d8d9d06f00afb10b1f42cfa806483dd03/img/atom-narrow.gif)
 
 # Commands
 
