@@ -88,6 +88,7 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 7. DONE, changes you made on narrow-editor items are applied to real-file(and saved).
 8. You can undo changes by re-edit items on narrow-editor and reapply changes by `Narrow Ui: Update Real File`.
 
+
 # Commands
 
 ### Provider commands
@@ -159,17 +160,6 @@ Start it from command-palette or set keymap in `keymap.cson`.
   ';': 'narrow-ui:confirm-keep-open'
 ```
 
-# vim-mode-plus integration.
-
-If you are [vim-mode-plus](https://atom.io/packages/vim-mode-plus) user.
-Following command are available from vim-mode-plus's search(`/` or `?`) mini-editor.
-See [keymap definition](https://github.com/t9md/atom-narrow/blob/make-it-stable/keymaps/narrow.cson)
-
-- `vim-mode-plus-user:narrow:lines`
-- `vim-mode-plus-user:narrow:search`
-- `vim-mode-plus-user:narrow:atom-scan`
-- `vim-mode-plus-user:narrow:search-current-project`
-
 # Recommended configuration for other packages.
 
 - Suppress autocomplete-plus's popup on narrow-editor
@@ -188,3 +178,24 @@ See [keymap definition](https://github.com/t9md/atom-narrow/blob/make-it-stable/
       "narrow"
     ]
 ```
+
+# Notes for vim-mode-plus user
+
+## Start narrow from vim-mode-plus's search-input-form
+
+If you are [vim-mode-plus](https://atom.io/packages/vim-mode-plus) user.
+Following command are available from vim-mode-plus's search(`/` or `?`) mini-editor.
+See [keymap definition](https://github.com/t9md/atom-narrow/blob/make-it-stable/keymaps/narrow.cson)
+
+- `vim-mode-plus-user:narrow:lines`
+- `vim-mode-plus-user:narrow:search`
+- `vim-mode-plus-user:narrow:atom-scan`
+- `vim-mode-plus-user:narrow:search-current-project`
+
+## How to edit item-area for direct-edit.
+
+- In narrow-editor, `i`, `a` in `normal-mode` move cursor to prompt line.
+- So when you want to edit items itself for `direct-edit` and `update-real-file` use other key to enter `insert-mode`.
+- `I` is intentionally mapped to `vim-mode-plus:activate-insert-mode` which is normally mapped to `i`.
+  - Which might not be intuitive, but I want make item mutatation bit difficult. So user have to type `I`.
+- Other than `I`, you can start `insert-mode` by `A`, `c` etc..

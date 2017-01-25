@@ -36,7 +36,9 @@
   'q': 'core:close'
   'o': 'narrow-ui:confirm-keep-open'
   'r': 'narrow-ui:toggle-auto-preview'
-  'I': 'narrow-ui:move-to-prompt'
+  'i': 'narrow-ui:move-to-prompt'
+  'a': 'narrow-ui:move-to-prompt'
+  'I': 'vim-mode-plus:activate-insert-mode'
 
 # Invoke narrow command from vim-mode-plus's search-mini-editor
 # ---------------------------
