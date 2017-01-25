@@ -73,9 +73,6 @@ module.exports =
       if settings.get('vmpAutoChangeModeInUI')
         ui.autoChangeModeForVimState(vimState)
 
-      # @subscriptions.add vimState.modeManager.onDidActivateMode ({mode, submode}) ->
-      #   ui.moveToPrompt() if (mode is 'insert') and (submode isnt 'replace')
-
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()
       vimState = getEditorState(editor)
