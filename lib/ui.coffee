@@ -207,9 +207,9 @@ class UI
     if moveToPrompt
       @moveToPrompt()
 
-    query = @getNarrowQuery()
-    words = _.compact(query.split(/\s+/))
-    regexps = words.map (word) => @getRegExpForQueryWord(word)
+    getRegExpForQueryWord = @getRegExpForQueryWord.bind(this)
+    words = _.compact(@getNarrowQuery().split(/\s+/))
+    regexps = word.map(getRegExpForQueryWord)
 
     @ignoreChangeOnEditor = true
     # In case prompt accidentaly mutated
