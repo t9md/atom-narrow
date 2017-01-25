@@ -28,13 +28,3 @@ class SearchBase extends ProviderBase
       source = "\\b#{source}\\b"
     searchTerm = "(?i:#{source})"
     @ui.grammar.setSearchTerm(searchTerm)
-
-  # Confirmed
-  # -------------------------
-  confirmed: ({filePath, point}) ->
-    return unless point?
-    @pane.activate()
-    atom.workspace.open(filePath, pending: true).then (editor) ->
-      editor.setCursorBufferPosition(point, autoscroll: false)
-      editor.scrollToBufferPosition(point, center: true)
-      return {editor, point}

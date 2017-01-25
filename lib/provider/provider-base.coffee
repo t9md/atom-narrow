@@ -60,24 +60,28 @@ class ProviderBase
       @restoreEditorState()
     {@editor, @editorElement, @subscriptions} = {}
 
-  confirmed: ({point}) ->
+  confirmed: (item) ->
     @wasConfirmed = true
-    return unless point?
-    point = Point.fromObject(point)
-
-    newPoint = @adjustPoint?(point)
-    if newPoint?
-      @editor.setCursorBufferPosition(newPoint, autoscroll: false)
-    else
-      @editor.setCursorBufferPosition(point, autoscroll: false)
-      @editor.moveToFirstCharacterOfLine()
-
     @pane.activate()
-    @pane.activateItem(@editor)
+    {point, filePath} = item
 
-    @editor.scrollToBufferPosition(point, center: true)
+    if filePath?
+      atom.workspace.open(filePath, pending: true).then (editor) ->
+        editor.setCursorBufferPosition(point, autoscroll: false)
+        editor.scrollToBufferPosition(point, center: true)
+        return {editor, point}
+    else
+      newPoint = @adjustPoint?(point)
+      if newPoint?
+        point = newPoint
+        @editor.setCursorBufferPosition(point, autoscroll: false)
+      else
+        @editor.setCursorBufferPosition(point, autoscroll: false)
+        @editor.moveToFirstCharacterOfLine()
 
-    return {@editor, point}
+      @pane.activateItem(@editor)
+      @editor.scrollToBufferPosition(point, center: true)
+      return {@editor, point}
 
   # View
   # -------------------------

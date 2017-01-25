@@ -39,11 +39,3 @@ class Bookmarks extends ProviderBase
       items.push(header: "# #{editor.getPath()}", skip: true)
       items.push(@getItemsForEditor(editor, markerLayer)...)
     items
-
-  confirmed: (item) ->
-    {filePath, point} = item
-    @pane.activate()
-    atom.workspace.open(filePath, pending: true).then (editor) ->
-      editor.setCursorBufferPosition(point, autoscroll: false)
-      editor.scrollToBufferPosition(point, center: true)
-      return {editor, point}
