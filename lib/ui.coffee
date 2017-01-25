@@ -27,6 +27,7 @@ class UI
   @uiByNarrowEditor: new Map()
   autoPreview: false
   preventAutoPreview: false
+  preventSyncToProviderEditor: false
   ignoreChangeOnEditor: false
   destroyed: false
   items: []
@@ -300,6 +301,7 @@ class UI
       @preview() if @isAutoPreview()
 
   syncToProviderEditor: ->
+    return if @preventSyncToProviderEditor
     # Detect item
     # - cursor position is equal or greather than that item.
     cursorPosition = @providerEditor.getCursorBufferPosition()
@@ -325,10 +327,12 @@ class UI
     editor.decorateMarker(@rowMarker, type: 'line', class: 'narrow-result')
 
   preview: ->
+    @preventSyncToProviderEditor = true
     @confirm(keepOpen: true).then ({editor, point}) =>
       if editor.isAlive()
         @setRowMarker(editor, point)
         @focus()
+        @preventSyncToProviderEditor = false
 
   isNormalItem: (item) ->
     item? and not item.skip
