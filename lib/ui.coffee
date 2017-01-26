@@ -24,15 +24,9 @@ class PromptGutter
 
 module.exports =
 class UI
+  # UI static
+  # -------------------------
   @uiByEditor: new Map()
-  autoPreview: false
-  preventAutoPreview: false
-  preventSyncToProviderEditor: false
-  ignoreChangeOnEditor: false
-  destroyed: false
-  items: []
-  itemsByProvider: null
-
   @unregister: (ui) ->
     @uiByEditor.delete(ui.editor)
     @updateWorkspaceClassList()
@@ -45,8 +39,17 @@ class UI
     @uiByEditor.get(editor)
 
   @updateWorkspaceClassList: ->
-    workspaceElement = atom.views.getView(atom.workspace)
-    workspaceElement.classList.toggle('has-narrow', @uiByEditor.size)
+    atom.views.getView(atom.workspace).classList.toggle('has-narrow', @uiByEditor.size)
+
+  # UI.prototype
+  # -------------------------
+  autoPreview: false
+  preventAutoPreview: false
+  preventSyncToProviderEditor: false
+  ignoreChangeOnEditor: false
+  destroyed: false
+  items: []
+  itemsByProvider: null # Used to cache result
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -334,8 +337,7 @@ class UI
       oldPosition = @editor.getCursorBufferPosition()
       @withLock =>
         @editor.setCursorBufferPosition([row, oldPosition.column])
-        if oldPosition.row is 0
-          @emitDidMoveToItemArea() # was at prompt
+        @emitDidMoveToItemArea() if oldPosition.row is 0 # was at prompt
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()

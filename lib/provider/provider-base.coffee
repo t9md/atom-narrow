@@ -67,13 +67,11 @@ class ProviderBase
     {point, filePath} = item
 
     if filePath?
-      console.log 'case1'
       atom.workspace.open(filePath, pending: true).then (editor) ->
         editor.setCursorBufferPosition(point, autoscroll: false)
         editor.scrollToBufferPosition(point, center: true)
         return {editor, point}
     else
-      console.log 'case2'
       newPoint = @adjustPoint?(point)
       if newPoint?
         point = newPoint
