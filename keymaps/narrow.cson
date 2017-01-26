@@ -40,6 +40,11 @@
   'a': 'vim-mode-plus-user:narrow-ui:move-to-prompt'
   'I': 'vim-mode-plus:activate-insert-mode'
 
+'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode:not(.has-occurrence)':
+  # Can move next/previos from out-side of narrow-editor if workspace has narrow-editor.
+  'tab': 'narrow:next-item'
+  'shift-tab': 'narrow:previous-item'
+
 # Invoke narrow command from vim-mode-plus's search-mini-editor
 # ---------------------------
 'atom-text-editor.vim-mode-plus-search':

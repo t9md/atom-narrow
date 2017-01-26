@@ -145,11 +145,6 @@ Start it from command-palette or set keymap in `keymap.cson`.
   'space G': 'narrow:git-diff'
   'space B': 'narrow:bookmarks'
 
-# To move to next/previous item from outside(also inside) of narrow
-'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode':
-  'up': 'narrow:previous-item'
-  'down': 'narrow:next-item'
-
 # Only on narrow-editor
 # -------------------------
 # narrow-editor regardless of mode of vim
@@ -183,6 +178,9 @@ Start it from command-palette or set keymap in `keymap.cson`.
 ```
 
 # Notes for vim-mode-plus user
+
+Learn [keymap](https://github.com/t9md/atom-narrow/blob/make-it-stable/keymaps/narrow.cson) available as default.  
+e.g. You can move to next or previous item by `tab`, `shift-tab`(for this to work, you need vim-mode-plus v0.81.0 or later).  
 
 ## Start narrow from vim-mode-plus's search-input-form
 
