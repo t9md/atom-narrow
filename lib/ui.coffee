@@ -65,8 +65,6 @@ class UI
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
-    @originalPane = atom.workspace.getActivePane()
-
     @providerEditor = @provider.editor
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     # FIXME
@@ -124,20 +122,33 @@ class UI
     @moveToPrompt()
     @refresh()
 
-  focus: ->
-    if @isAlive()
-      @pane.activate()
-      @pane.activateItem(@editor)
+  getPane: ->
+    atom.workspace.paneForItem(@editor)
 
-  isAlive: ->
-    @editor?.isAlive?()
+  toggleFocus: (options) ->
+    if isActiveEditor(@editor)
+      @activateProviderPane()
+    else
+      @focus(options)
+
+  focus: ({moveToPrompt}={}) ->
+    if @editor?.isAlive()
+      pane = @getPane()
+      pane.activate()
+      pane.activateItem(@editor)
+      @moveToPrompt() if moveToPrompt
+
+  activateProviderPane: ->
+    if (pane = @provider.getPane()) and pane.isAlive()
+      pane.activate()
 
   destroy: ->
     return if @destroyed
     @destroyed = true
     @disposables.dispose()
     @editor.destroy()
-    @originalPane.activate() if @originalPane.isAlive()
+    @activateProviderPane()
+
     @provider?.destroy?()
     @gutterForPrompt?.destroy()
     @rowMarker?.destroy()
@@ -152,6 +163,7 @@ class UI
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt()
       'narrow-ui:update-real-file': => @updateRealFile()
+      'narrow-ui:focus-back': => @activateProviderPane()
 
   updateRealFile: ->
     return unless @provider.supportDirectEdit
@@ -421,5 +433,5 @@ class UI
 
   # vim-mode-plus integration
   autoChangeModeForVimState: (vimState) ->
-    # @disposables.add @onDidMoveToPrompt -> vimState.activate('insert') unless vimState.isMode('insert')
+    @disposables.add @onDidMoveToPrompt -> vimState.activate('insert') unless vimState.isMode('insert')
     @disposables.add @onDidMoveToItemArea -> vimState.activate('normal') if vimState.isMode('insert')

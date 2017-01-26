@@ -18,7 +18,8 @@ module.exports =
 
     @subscriptions.add atom.commands.add 'atom-text-editor',
       # Shared commands
-      'narrow:focus': => @getUi()?.focus()
+      'narrow:focus': => @getUi()?.toggleFocus()
+      'narrow:focus-prompt': => @getUi()?.toggleFocus(moveToPrompt: true)
       'narrow:close': => @getUi()?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()

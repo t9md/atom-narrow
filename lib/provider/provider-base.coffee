@@ -29,11 +29,13 @@ class ProviderBase
   checkReady: ->
     Promise.resolve(true)
 
+  getPane: ->
+    atom.workspace.paneForItem(@editor)
+
   constructor: (@options={}) ->
     @subscriptions = new CompositeDisposable
     @editor = atom.workspace.getActiveTextEditor()
     @editorElement = @editor.element
-    @pane = atom.workspace.paneForItem(@editor)
     @restoreEditorState = saveEditorState(@editor)
 
     @ui = new UI(this, {input: @options.uiInput})
@@ -63,7 +65,7 @@ class ProviderBase
 
   confirmed: (item) ->
     @wasConfirmed = true
-    @pane.activate()
+    @getPane().activate()
     {point, filePath} = item
 
     if filePath?
@@ -80,7 +82,7 @@ class ProviderBase
         @editor.setCursorBufferPosition(point, autoscroll: false)
         @editor.moveToFirstCharacterOfLine()
 
-      @pane.activateItem(@editor)
+      @getPane().activateItem(@editor)
       @editor.scrollToBufferPosition(point, center: true)
       return {@editor, point}
 
