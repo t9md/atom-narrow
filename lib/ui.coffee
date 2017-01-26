@@ -50,6 +50,7 @@ class UI
   destroyed: false
   items: []
   itemsByProvider: null # Used to cache result
+  lastNarrowQuery: ''
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -120,7 +121,7 @@ class UI
   start: ->
     activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
     @grammar.activate()
-    @setPromptLine((@input ? '') + "\n")
+    @setPrompt(@input)
     @moveToPrompt()
     @refresh()
 
@@ -231,7 +232,7 @@ class UI
     # In case prompt accidentaly mutated
     eof = @editor.getEofBufferPosition()
     if eof.isLessThan(@itemAreaStart)
-      eof = @setPromptLine("\n").end
+      eof = @setPrompt().end
       @moveToPrompt()
 
     filterSpec = getFilterSpecForQuery(@getNarrowQuery())
@@ -283,7 +284,7 @@ class UI
           for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
           # Recover query on prompt
-          @setPromptLine(@lastNarrowQuery) if @lastNarrowQuery
+          @setPrompt(@lastNarrowQuery)
         else
           @refresh()
 
@@ -427,7 +428,9 @@ class UI
     @editor.bufferRangeForBufferRow(0)
 
   # Return range
-  setPromptLine: (text) ->
+  setPrompt: (text='') ->
+    if @editor.getLastBufferRow() is 0
+      text += "\n"
     @ignoreChangeOnEditor = true
     range = @editor.setTextInBufferRange(@getPromptRange(0), text)
     @ignoreChangeOnEditor = false
