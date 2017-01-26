@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
-{openItemInAdjacentPaneForPane, isActiveEditor} = require './utils'
+{activatePaneItemInAdjacentPane, isActiveEditor} = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
@@ -66,15 +66,19 @@ class UI
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
     @providerEditor = @provider.editor
+
+    # Setup narrow-editor
+    # -------------------------
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     # FIXME
     # Opening multiple narrow-editor for same provider get title `undefined`
     # (e.g multiple narrow-editor for lines provider)
-    @editor.getTitle = => @provider.getDashName()
+    providerDashname = @provider.getDashName()
+    @editor.getTitle = -> providerDashname
     @editor.isModified = -> false
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
-    @editorElement.classList.add('narrow', 'narrow-editor', @provider.getDashName())
+    @editorElement.classList.add('narrow', 'narrow-editor', providerDashname)
 
     @gutterForPrompt = new PromptGutter(@editor)
 
@@ -114,11 +118,9 @@ class UI
       @constructor.unregister(this)
 
   start: ->
-    activePane = atom.workspace.getActivePane()
-    options = {item: @editor, direction: settings.get('directionToOpen')}
-    @pane = openItemInAdjacentPaneForPane(activePane, options)
+    activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
     @grammar.activate()
-    @setPromptLine((@input ? '') + "\n" )
+    @setPromptLine((@input ? '') + "\n")
     @moveToPrompt()
     @refresh()
 

@@ -11,20 +11,22 @@ getAdjacentPaneForPane = (pane) ->
     .last()
     .value()
 
-# Return open pane
-openItemInAdjacentPaneForPane = (basePane, {item, direction}) ->
-  pane = getAdjacentPaneForPane(basePane)
+# Split is used when fail to find adjacent pane.
+# return pane
+activatePaneItemInAdjacentPane = (item, {split}={}) ->
+  currentPane = atom.workspace.getActivePane()
+  pane = getAdjacentPaneForPane(currentPane)
 
   if pane?
-    pane.activateItem(item)
     pane.activate()
+    pane.activateItem(item)
     return pane
   else
-    return switch direction
+    return switch split
       when 'right'
-        basePane.splitRight(items: [item])
+        currentPane.splitRight(items: [item])
       when 'down'
-        basePane.splitDown(items: [item])
+        currentPane.splitDown(items: [item])
 
 smartScrollToBufferPosition = (editor, point) ->
   editorElement = editor.element
@@ -89,7 +91,7 @@ isActiveEditor = (editor) ->
 
 module.exports = {
   getAdjacentPaneForPane
-  openItemInAdjacentPaneForPane
+  activatePaneItemInAdjacentPane
   smartScrollToBufferPosition
   registerElement
   saveEditorState

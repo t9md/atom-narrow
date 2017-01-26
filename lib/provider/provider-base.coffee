@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
-{saveEditorState} = require '../utils'
+{saveEditorState, getAdjacentPaneForPane} = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
 Input = null
@@ -65,15 +65,23 @@ class ProviderBase
 
   confirmed: (item) ->
     @wasConfirmed = true
-    @getPane().activate()
+
     {point, filePath} = item
 
     if filePath?
-      atom.workspace.open(filePath, pending: true).then (editor) ->
+      options = {pending: true}
+      if pane = @getPane() ? getAdjacentPaneForPane(@ui.getPane())
+        pane.activate()
+      else
+        options.split = settings.get('directionToOpen')
+
+      atom.workspace.open(filePath, options).then (editor) ->
         editor.setCursorBufferPosition(point, autoscroll: false)
         editor.scrollToBufferPosition(point, center: true)
         return {editor, point}
     else
+      pane = @getPane()
+      pane.activate()
       newPoint = @adjustPoint?(point)
       if newPoint?
         point = newPoint
@@ -82,7 +90,7 @@ class ProviderBase
         @editor.setCursorBufferPosition(point, autoscroll: false)
         @editor.moveToFirstCharacterOfLine()
 
-      @getPane().activateItem(@editor)
+      pane.activateItem(@editor)
       @editor.scrollToBufferPosition(point, center: true)
       return {@editor, point}
 
