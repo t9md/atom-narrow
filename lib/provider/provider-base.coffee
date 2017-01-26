@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-{Point, CompositeDisposable, Emitter} = require 'atom'
+{Point, CompositeDisposable} = require 'atom'
 {saveEditorState} = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
@@ -35,7 +35,6 @@ class ProviderBase
     @editorElement = @editor.element
     @pane = atom.workspace.paneForItem(@editor)
     @restoreEditorState = saveEditorState(@editor)
-    @emitter = new Emitter
 
     @ui = new UI(this, {input: @options.uiInput})
 
@@ -68,11 +67,13 @@ class ProviderBase
     {point, filePath} = item
 
     if filePath?
+      console.log 'case1'
       atom.workspace.open(filePath, pending: true).then (editor) ->
         editor.setCursorBufferPosition(point, autoscroll: false)
         editor.scrollToBufferPosition(point, center: true)
         return {editor, point}
     else
+      console.log 'case2'
       newPoint = @adjustPoint?(point)
       if newPoint?
         point = newPoint
