@@ -147,6 +147,11 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 # Only on narrow-editor
 # -------------------------
+
+# When workspace has narrow-editor, focus it by cmd-f if in normal-mode
+'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode':
+  'cmd-f': 'narrow:focus'
+
 # narrow-editor regardless of mode of vim
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
   # Danger, apply change on narrow-editor to real file by `ctrl-cmd-s`.
