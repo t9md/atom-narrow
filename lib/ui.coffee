@@ -94,8 +94,14 @@ class UI
         # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
         @refresh(force: true) if isActiveEditor(@providerEditor)
 
-      @disposables.add @providerEditor.onDidChangeCursorPosition =>
-        @syncToProviderEditor() if isActiveEditor(@providerEditor)
+      needToSyncToProviderEditor = (event) =>
+        isActiveEditor(@providerEditor) and
+          not event.textChanged and
+          event.oldBufferPosition.row isnt event.newBufferPosition.row
+
+      @disposables.add @providerEditor.onDidChangeCursorPosition (event) =>
+        if needToSyncToProviderEditor(event)
+          @syncToProviderEditor()
 
       @disposables.add @providerEditor.onDidDestroy(@destroy.bind(this))
 
@@ -276,6 +282,7 @@ class UI
   observeCursorPositionChange: ->
     @editor.onDidChangeCursorPosition (event) =>
       return if @isLocked()
+
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
       return if textChanged or
         (not cursor.selection.isEmpty()) or
@@ -285,18 +292,20 @@ class UI
       oldRow = oldBufferPosition.row
 
       if newRow is 0 # was at Item area
-        @withLock => @moveToPrompt()
+        @moveToPrompt()
         return
 
       direction = if newRow > oldRow then 'next' else 'previous'
-      @withLock =>
-        row = @findNormalItem(newRow, direction)
-        if row? # row might be '0'
-          @selectItemForRow(row)
-          cursor.setBufferPosition([row, newBufferPosition.column])
-          @emitDidMoveToItemArea() if oldRow is 0 # was at prompt
+
+      row = @findNormalItem(newRow, direction)
+      if row? # row might be '0'
+        @selectItemForRow(row)
+        if row is newRow
+          @emitDidMoveToItemArea() if oldRow is 0
         else
-          @moveToPrompt() if direction is 'previous'
+          @moveToSelectedItem()
+      else
+        @moveToPrompt() if direction is 'previous'
 
       @preview() if @isAutoPreview()
 
@@ -315,11 +324,15 @@ class UI
     else
       @selectItemForRow(@findNormalItem(1, 'next'))
 
-    unless isActiveEditor(@editor)
-      row = @editor.getCursorBufferPosition().row
-      selectedItemRow = @getRowForSelectedItem()
-      if (row = @getRowForSelectedItem()) >= 0
-        @withLock => @editor.setCursorBufferPosition([row, 0])
+    @moveToSelectedItem() unless isActiveEditor(@editor)
+
+  moveToSelectedItem: ->
+    if (row = @getRowForSelectedItem()) >= 0
+      oldPosition = @editor.getCursorBufferPosition()
+      @withLock =>
+        @editor.setCursorBufferPosition([row, oldPosition.column])
+        if oldPosition.row is 0
+          @emitDidMoveToItemArea() # was at prompt
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()
@@ -371,8 +384,9 @@ class UI
     @getRowForItem(@getSelectedItem())
 
   moveToPrompt: ->
-    @editor.setCursorBufferPosition(@getPromptRange().end)
-    @emitDidMoveToPrompt()
+    @withLock =>
+      @editor.setCursorBufferPosition(@getPromptRange().end)
+      @emitDidMoveToPrompt()
 
   getRowForItem: (item) ->
     @items.indexOf(item)
@@ -402,5 +416,5 @@ class UI
 
   # vim-mode-plus integration
   autoChangeModeForVimState: (vimState) ->
-    @disposables.add @onDidMoveToPrompt -> vimState.activate('insert') unless vimState.isMode('insert')
+    # @disposables.add @onDidMoveToPrompt -> vimState.activate('insert') unless vimState.isMode('insert')
     @disposables.add @onDidMoveToItemArea -> vimState.activate('normal') if vimState.isMode('insert')
