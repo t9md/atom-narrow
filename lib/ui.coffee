@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-{Point, Range, CompositeDisposable, Emitter} = require 'atom'
+{Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
 {openItemInAdjacentPaneForPane, isActiveEditor} = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -24,7 +24,7 @@ class PromptGutter
 
 module.exports =
 class UI
-  @uiByNarrowEditor: new Map()
+  @uiByEditor: new Map()
   autoPreview: false
   preventAutoPreview: false
   preventSyncToProviderEditor: false
@@ -33,17 +33,20 @@ class UI
   items: []
   itemsByProvider: null
 
-  @unregisterUI: (editor) ->
-    @uiByNarrowEditor.delete(editor)
+  @unregister: (ui) ->
+    @uiByEditor.delete(ui.editor)
     @updateWorkspaceClassList()
 
-  @registerUI: (editor, ui) ->
-    @uiByNarrowEditor.set(editor, ui)
+  @register: (ui) ->
+    @uiByEditor.set(ui.editor, ui)
     @updateWorkspaceClassList()
+
+  @get: (editor) ->
+    @uiByEditor.get(editor)
 
   @updateWorkspaceClassList: ->
     workspaceElement = atom.views.getView(atom.workspace)
-    workspaceElement.classList.toggle('has-narrow', @uiByNarrowEditor.size)
+    workspaceElement.classList.toggle('has-narrow', @uiByEditor.size)
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -105,7 +108,9 @@ class UI
 
       @disposables.add @providerEditor.onDidDestroy(@destroy.bind(this))
 
-    @constructor.registerUI(@editor, this)
+    @constructor.register(this)
+    @disposables.add new Disposable =>
+      @constructor.unregister(this)
 
   start: ->
     activePane = atom.workspace.getActivePane()
@@ -127,13 +132,11 @@ class UI
   destroy: ->
     return if @destroyed
     @destroyed = true
-
     @disposables.dispose()
     @editor.destroy()
     @originalPane.activate() if @originalPane.isAlive()
     @provider?.destroy?()
     @gutterForPrompt?.destroy()
-    @constructor.unregisterUI(@editor)
     @rowMarker?.destroy()
 
   registerCommands: ->

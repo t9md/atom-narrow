@@ -48,8 +48,7 @@ module.exports =
     @getUiForEditor(@currentNarrowEditor)
 
   getUiForEditor: (editor) ->
-    Ui ?= require './ui'
-    Ui.uiByNarrowEditor.get(editor)
+    (Ui ?= require './ui').get(editor)
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
