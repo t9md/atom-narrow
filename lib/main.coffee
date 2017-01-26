@@ -58,7 +58,8 @@ module.exports =
 
   narrow: (providerName, options) ->
     klass = require("./provider/#{providerName}")
-    new klass(options)
+    editor = atom.workspace.getActiveTextEditor()
+    new klass(editor, options)
 
   deactivate: ->
     @subscriptions?.dispose()

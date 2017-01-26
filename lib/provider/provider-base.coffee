@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
-{saveEditorState, getAdjacentPaneForPane} = require '../utils'
+{saveEditorState, getAdjacentPaneForPane, isActiveEditor} = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
 Input = null
@@ -32,9 +32,11 @@ class ProviderBase
   getPane: ->
     atom.workspace.paneForItem(@editor)
 
-  constructor: (@options={}) ->
+  isActive: ->
+    isActiveEditor(@editor)
+
+  constructor: (@editor, @options={}) ->
     @subscriptions = new CompositeDisposable
-    @editor = atom.workspace.getActiveTextEditor()
     @editorElement = @editor.element
     @restoreEditorState = saveEditorState(@editor)
 

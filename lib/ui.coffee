@@ -81,7 +81,7 @@ class UI
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashname)
 
-    @gutterForPrompt = new PromptGutter(@editor)
+    @promptGutter = new PromptGutter(@editor)
 
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
     @disposables.add(@registerCommands())
@@ -101,10 +101,10 @@ class UI
     if @provider.boundToEditor
       @disposables.add @providerEditor.onDidStopChanging =>
         # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
-        @refresh(force: true) if isActiveEditor(@providerEditor)
+        @refresh(force: true) if @provider.isActive()
 
       needToSyncToProviderEditor = (event) =>
-        isActiveEditor(@providerEditor) and
+        @provider.isActive() and
           not event.textChanged and
           event.oldBufferPosition.row isnt event.newBufferPosition.row
 
@@ -128,18 +128,20 @@ class UI
   getPane: ->
     atom.workspace.paneForItem(@editor)
 
+  isActive: ->
+    isActiveEditor(@editor)
+
   toggleFocus: (options) ->
-    if isActiveEditor(@editor)
+    if @isActive()
       @activateProviderPane()
     else
       @focus(options)
 
   focus: ({moveToPrompt}={}) ->
-    if @editor?.isAlive()
-      pane = @getPane()
-      pane.activate()
-      pane.activateItem(@editor)
-      @moveToPrompt() if moveToPrompt
+    pane = @getPane()
+    pane.activate()
+    pane.activateItem(@editor)
+    @moveToPrompt() if moveToPrompt
 
   activateProviderPane: ->
     if (pane = @provider.getPane()) and pane.isAlive()
@@ -153,7 +155,7 @@ class UI
     @activateProviderPane()
 
     @provider?.destroy?()
-    @gutterForPrompt?.destroy()
+    @promptGutter?.destroy()
     @rowMarker?.destroy()
 
   registerCommands: ->
@@ -247,7 +249,7 @@ class UI
       # No need to highlight excluded items
       @grammar.update(filterSpec.include)
 
-      if isActiveEditor(@editor)
+      if @isActive()
         @selectItemForRow(@findNormalItem(1, 'next'))
       else
         @syncToProviderEditor() if @provider.boundToEditor
@@ -345,7 +347,7 @@ class UI
     else
       @selectItemForRow(@findNormalItem(1, 'next'))
 
-    @moveToSelectedItem() unless isActiveEditor(@editor)
+    @moveToSelectedItem() unless @isActive()
 
   moveToSelectedItem: ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -418,7 +420,7 @@ class UI
   selectItemForRow: (row) ->
     item = @items[row]
     if @isNormalItem(item)
-      @gutterForPrompt.setToRow(row)
+      @promptGutter.setToRow(row)
       @selectedItem = item
 
   getSelectedItem: ->
