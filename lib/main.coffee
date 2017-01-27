@@ -19,7 +19,7 @@ module.exports =
     @subscriptions.add atom.commands.add 'atom-text-editor',
       # Shared commands
       'narrow:focus': => @getUi()?.toggleFocus()
-      'narrow:focus-prompt': => @getUi()?.toggleFocus(moveToPrompt: true)
+      'narrow:focus-prompt': => @getUi()?.focusPrompt()
       'narrow:close': => @getUi()?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()
@@ -58,7 +58,8 @@ module.exports =
 
   narrow: (providerName, options) ->
     klass = require("./provider/#{providerName}")
-    new klass(options)
+    editor = atom.workspace.getActiveTextEditor()
+    new klass(editor, options)
 
   deactivate: ->
     @subscriptions?.dispose()
@@ -68,21 +69,7 @@ module.exports =
     atom.workspace.isTextEditor(item) and
       item.element.classList.contains('narrow-editor')
 
-  consumeVim: ({getEditorState, observeVimStates}) ->
-    @subscriptions.add observeVimStates (vimState) =>
-      {editor} = vimState
-      if @isNarrowEditor(editor) and ui = @getUiForEditor(editor)
-        if settings.get('vmpStartInInsertModeForUI')
-          vimState.activate('insert') unless vimState.isMode('insert')
-
-        if settings.get('vmpAutoChangeModeInUI')
-          ui.autoChangeModeForVimState(vimState)
-
-        atom.commands.add ui.editorElement,
-          'vim-mode-plus-user:narrow-ui:move-to-prompt': ->
-            ui.moveToPrompt()
-            vimState.activate('insert') unless vimState.isMode('insert')
-
+  consumeVim: ({getEditorState}) ->
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()
       vimState = getEditorState(editor)
