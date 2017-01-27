@@ -29,8 +29,6 @@ class Fold extends ProviderBase
     @ui.refresh(force: true)
 
   getItems: ->
-    filePath = @editor.getPath()
     getCodeFoldStartRows(@editor, @foldLevel).map (row) =>
       point: new Point(row, 0)
       text: @editor.lineTextForBufferRow(row)
-      filePath: filePath
