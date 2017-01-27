@@ -81,6 +81,9 @@ class UI
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashname)
 
+    @disposables.add @onDidMoveToItemArea =>
+      @vmpActivateNormalMode() if @vmpIsInsertMode()
+
     @promptGutter = new PromptGutter(@editor)
 
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
@@ -122,7 +125,7 @@ class UI
     activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
     @grammar.activate()
     @setPrompt(@input)
-    @moveToPrompt()
+    @moveToPrompt(startInsert: true)
     @refresh()
 
   getPane: ->
@@ -131,17 +134,29 @@ class UI
   isActive: ->
     isActiveEditor(@editor)
 
-  toggleFocus: (options) ->
-    if @isActive()
-      @activateProviderPane()
-    else
-      @focus(options)
+  isAtPrompt: ->
+    @getPromptRange().containsPoint(@editor.getCursorBufferPosition())
 
-  focus: ({moveToPrompt}={}) ->
+  isAtItemArea: ->
+    not @isAtPrompt()
+
+  focus: ->
     pane = @getPane()
     pane.activate()
     pane.activateItem(@editor)
-    @moveToPrompt() if moveToPrompt
+
+  focusPrompt: ->
+    if @isActive() and @isAtPrompt()
+      @activateProviderPane()
+    else
+      @focus() unless @isActive()
+      @moveToPrompt(startInsert: true)
+
+  toggleFocus: ->
+    if @isActive()
+      @activateProviderPane()
+    else
+      @focus()
 
   activateProviderPane: ->
     if (pane = @provider.getPane()) and pane.isAlive()
@@ -166,7 +181,7 @@ class UI
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:refresh-force': => @refresh(force: true, moveToPrompt: true)
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
-      'narrow-ui:move-to-prompt': => @moveToPrompt()
+      'narrow-ui:move-to-prompt': => @moveToPrompt(startInsert: true)
       'narrow-ui:update-real-file': => @updateRealFile()
       'narrow-ui:focus-back': => @activateProviderPane()
 
@@ -397,7 +412,7 @@ class UI
   moveToPromptOrSelectedItem: ->
     row = @getRowForSelectedItem()
     if (row is @editor.getCursorBufferPosition().row) or not (row >= 0)
-      @moveToPrompt()
+      @moveToPrompt(startInsert: true)
     else
       # move to current item
       @editor.setCursorBufferPosition([row, 0])
@@ -405,9 +420,10 @@ class UI
   getRowForSelectedItem: ->
     @getRowForItem(@getSelectedItem())
 
-  moveToPrompt: ->
+  moveToPrompt: ({startInsert}={}) ->
     @withLock =>
       @editor.setCursorBufferPosition(@getPromptRange().end)
+      @vmpActivateInsertMode() if startInsert and @vmpIsNormalMode()
       @emitDidMoveToPrompt()
 
   getRowForItem: (item) ->
@@ -439,6 +455,18 @@ class UI
     range
 
   # vim-mode-plus integration
-  autoChangeModeForVimState: (vimState) ->
-    @disposables.add @onDidMoveToPrompt -> vimState.activate('insert') unless vimState.isMode('insert')
-    @disposables.add @onDidMoveToItemArea -> vimState.activate('normal') if vimState.isMode('insert')
+  # -------------------------
+  vmpActivateNormalMode: ->
+    atom.commands.dispatch(@editorElement, 'vim-mode-plus:activate-normal-mode')
+
+  vmpActivateInsertMode: ->
+    atom.commands.dispatch(@editorElement, 'vim-mode-plus:activate-insert-mode')
+
+  vmpIsInsertMode: ->
+    @vmpIsEnabled() and @editorElement.classList.contains('insert-mode')
+
+  vmpIsNormalMode: ->
+    @vmpIsEnabled() and @editorElement.classList.contains('normal-mode')
+
+  vmpIsEnabled: ->
+    @editorElement.classList.contains('vim-mode-plus')
