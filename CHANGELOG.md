@@ -1,5 +1,4 @@
-# 0.13.0: WIP
-
+# 0.13.0:
 - New keymap: For vim-mode-plus user(need vim-mode-plus v0.81.0 or later).
   - `tab`, `shift-tab` to move to next/previous item from outside of narrow-editor
   - These keymaps are only activated at least one narrow-editor exists on workspace.
