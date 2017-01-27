@@ -1,7 +1,20 @@
 # 0.13.0: WIP
+
 - New keymap: For vim-mode-plus user(need vim-mode-plus v0.81.0 or later).
   - `tab`, `shift-tab` to move to next/previous item from outside of narrow-editor
   - These keymaps are only activated at least one narrow-editor exists on workspace.
+- New command:
+  - `narrow:focus-prompt`: focus prompt of narrow-editor from outside/inside of narrow-editor.
+    - If cursor is already at prompt of narrow-editor, it focus back to original editor.
+  - `narrow:refresh`: Manually refresh items from inside/outside of narrow-editor.
+    - Intended to be used for non-editor-bounded provider such as `search`, `atom-scan`.
+
+- Improve, Breaking: Simplify vim-mode-plus integration.
+  - Following two configurations are removed. Why? Get default behavior right, so no longer need these option.
+  - `vmpAutoChangeModeInUI`
+  - `vmpStartInInsertModeForUI`
+- Fix: No longer throw error when non-boundToEditor provider(e.g. search) destroy original editor and click item.
+- Internal: Lots of conceptual cleanup and reflect it to code, logic, fix lot of potential bug(I believe so).
 
 # 0.12.1:
 - Released for README.update after 3 min of 0.12.0 release. no behavioral change.
