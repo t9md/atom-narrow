@@ -17,7 +17,7 @@
   'f5': 'narrow-ui:refresh-force'
   'ctrl-l': 'narrow-ui:refresh-force'
 
-'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]:not(.insert-mode)':
+'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]:not(.vim-mode-plus)':
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
 
 # narrow-editor.fold
