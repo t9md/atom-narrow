@@ -161,6 +161,7 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 # narrow-editor regardless of mode of vim
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
+  'cmd-f': 'narrow:focus'
   'cmd-i': 'narrow:focus-prompt' # cmd-i to return to calling editor.
   # Danger, apply change on narrow-editor to real file by `ctrl-cmd-s`.
   'ctrl-cmd-s': 'narrow-ui:update-real-file'
