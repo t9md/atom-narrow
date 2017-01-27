@@ -46,7 +46,7 @@ class UI
   autoPreview: false
   preventAutoPreview: false
   preventSyncToEditor: false
-  ignoreChangeOnEditor: false
+  ignoreChange: false
   ignoreCursorMove: false
   destroyed: false
   items: []
@@ -87,8 +87,8 @@ class UI
 
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
     @disposables.add(@registerCommands())
-    @disposables.add(@observeInputChange())
-    @disposables.add(@observeCursorPositionChange())
+    @disposables.add(@observeChange())
+    @disposables.add(@observeCursorMove())
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       unless item is @editor
@@ -219,7 +219,6 @@ class UI
     if moveToPrompt
       @moveToPrompt()
 
-    @ignoreChangeOnEditor = true
     # In case prompt accidentaly mutated
     eof = @editor.getEofBufferPosition()
     if eof.isLessThan(@itemAreaStart)
@@ -233,6 +232,7 @@ class UI
         @itemsByProvider = items
       items = @provider.filterItems(items, filterSpec)
       @items = [@promptItem, items...]
+
       @renderItems(items)
 
       # No need to highlight excluded items
@@ -242,13 +242,13 @@ class UI
         @selectItemForRow(@findNormalItem(1, 'next'))
       else
         @syncToEditor() if @provider.boundToEditor
-      @ignoreChangeOnEditor = false
 
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
     itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
-    range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
-    @editorLastRow = range.end.row
+    @withIgnoreChange =>
+      range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
+      @editorLastRow = range.end.row
 
   ensureNarrowEditorIsValidState: ->
     unless @editorLastRow is @editor.getLastBufferRow()
@@ -261,9 +261,9 @@ class UI
 
     true
 
-  observeInputChange: ->
+  observeChange: ->
     @editor.buffer.onDidChange ({newRange, oldRange}) =>
-      return if @ignoreChangeOnEditor
+      return if @ignoreChange
 
       promptRange = @getPromptRange()
       onPrompt = (range) -> range.intersectsWith(promptRange)
@@ -284,12 +284,17 @@ class UI
     fn()
     @ignoreCursorMove = false
 
+  withIgnoreChange: (fn) ->
+    @ignoreChange = true
+    fn()
+    @ignoreChange = false
+
   withPreventAutoPreview: (fn) ->
     @preventAutoPreview = true
     fn()
     @preventAutoPreview = false
 
-  observeCursorPositionChange: ->
+  observeCursorMove: ->
     @editor.onDidChangeCursorPosition (event) =>
       return if @ignoreCursorMove
 
@@ -422,9 +427,10 @@ class UI
   setPrompt: (text='') ->
     if @editor.getLastBufferRow() is 0
       text += "\n"
-    @ignoreChangeOnEditor = true
-    range = @editor.setTextInBufferRange(@getPromptRange(0), text)
-    @ignoreChangeOnEditor = false
+
+    range = null
+    @withIgnoreChange =>
+      range = @editor.setTextInBufferRange(@getPromptRange(0), text)
     range
 
   setSyncToEditor: (editor) ->
