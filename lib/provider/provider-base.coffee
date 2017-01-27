@@ -67,7 +67,6 @@ class ProviderBase
 
   confirmed: (item) ->
     @wasConfirmed = true
-
     {point, filePath} = item
 
     if filePath?

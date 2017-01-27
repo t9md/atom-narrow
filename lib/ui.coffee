@@ -47,6 +47,7 @@ class UI
   preventAutoPreview: false
   preventSyncToEditor: false
   ignoreChangeOnEditor: false
+  ignoreCursorMove: false
   destroyed: false
   items: []
   itemsByProvider: null # Used to cache result
@@ -164,7 +165,6 @@ class UI
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt(startInsert: true)
       'narrow-ui:update-real-file': => @updateRealFile()
-      'narrow-ui:focus-back': => @activateProviderPane()
 
   updateRealFile: ->
     return unless @provider.supportDirectEdit
@@ -182,9 +182,9 @@ class UI
     if changes.length
       @provider.updateRealFile(changes)
 
-  moveUpDown: (direction) ->
+  moveCursor: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
-      @withLock => @editor.setCursorBufferPosition([row, 0])
+      @withIgnoreCursorMove => @editor.setCursorBufferPosition([row, 0])
 
     if @direction is 'down' and @provider.boundToEditor
       # Prevent side scroll of narrow editor
@@ -192,30 +192,23 @@ class UI
       if point.isGreaterThanOrEqual(_.last(@items).point)
         return
 
-    @withPreventAutoPreview =>
-      switch direction
-        when 'up'
-          @editor.moveUp()
-        when 'down'
-          @editor.moveDown()
+    switch direction
+      when 'up'
+        @withPreventAutoPreview => @editor.moveUp()
+      when 'down'
+        @withPreventAutoPreview => @editor.moveDown()
 
     @confirm(keepOpen: true)
 
   nextItem: ->
-    @moveUpDown('down')
+    @moveCursor('down')
 
   previousItem: ->
-    @moveUpDown('up')
-
-  isAutoPreview: ->
-    if @preventAutoPreview
-      false
-    else
-      @autoPreview
+    @moveCursor('up')
 
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
-    @preview() if @isAutoPreview()
+    @preview() if @autoPreview
 
   getNarrowQuery: ->
     @lastNarrowQuery = @editor.lineTextForBufferRow(0)
@@ -258,10 +251,10 @@ class UI
     @editorLastRow = range.end.row
 
   ensureNarrowEditorIsValidState: ->
-    # Ensure all item have valid line header
     unless @editorLastRow is @editor.getLastBufferRow()
       return false
 
+    # Ensure all item have valid line header
     if @provider.showLineHeader
       for line, row in @editor.buffer.getLines() when @isNormalItem(item = @items[row])
         return false unless line.startsWith(item._lineHeader)
@@ -286,12 +279,10 @@ class UI
         else
           @refresh()
 
-  locked: false
-  isLocked: -> @locked
-  withLock: (fn) ->
-    @locked = true
+  withIgnoreCursorMove: (fn) ->
+    @ignoreCursorMove = true
     fn()
-    @locked = false
+    @ignoreCursorMove = false
 
   withPreventAutoPreview: (fn) ->
     @preventAutoPreview = true
@@ -300,7 +291,7 @@ class UI
 
   observeCursorPositionChange: ->
     @editor.onDidChangeCursorPosition (event) =>
-      return if @isLocked()
+      return if @ignoreCursorMove
 
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
       return if textChanged or
@@ -326,7 +317,8 @@ class UI
       else
         @moveToPrompt() if direction is 'previous'
 
-      @preview() if @isAutoPreview()
+      if @autoPreview and not @preventAutoPreview
+        @preview()
 
   syncToEditor: ->
     return if @preventSyncToEditor
@@ -348,7 +340,7 @@ class UI
   moveToSelectedItem: ->
     if (row = @getRowForSelectedItem()) >= 0
       oldPosition = @editor.getCursorBufferPosition()
-      @withLock =>
+      @withIgnoreCursorMove =>
         @editor.setCursorBufferPosition([row, oldPosition.column])
         @emitDidMoveToItemArea() if oldPosition.row is 0 # was at prompt
 
@@ -363,7 +355,7 @@ class UI
       if editor.isAlive()
         @setRowMarker(editor, point)
         @focus()
-        @preventSyncToEditor = false
+      @preventSyncToEditor = false
 
   isNormalItem: (item) ->
     item? and not item.skip
@@ -402,7 +394,7 @@ class UI
     @getRowForItem(@getSelectedItem())
 
   moveToPrompt: ({startInsert}={}) ->
-    @withLock =>
+    @withIgnoreCursorMove =>
       @editor.setCursorBufferPosition(@getPromptRange().end)
       @vmpActivateInsertMode() if startInsert and @vmpIsNormalMode()
       @emitDidMoveToPrompt()
