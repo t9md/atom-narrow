@@ -45,7 +45,7 @@ class UI
   # -------------------------
   autoPreview: false
   preventAutoPreview: false
-  preventSyncToProviderEditor: false
+  preventSyncToEditor: false
   ignoreChangeOnEditor: false
   destroyed: false
   items: []
@@ -65,8 +65,6 @@ class UI
     # Special item used to translate narrow editor row to items without pain
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @itemAreaStart = Object.freeze(new Point(1, 0))
-
-    @providerEditor = @provider.editor
 
     # Setup narrow-editor
     # -------------------------
@@ -92,30 +90,12 @@ class UI
     @disposables.add(@observeCursorPositionChange())
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      if item is @editor
-        # in preview
-        return
-
-      @rowMarker?.destroy()
-      if @provider.boundToEditor and (item is @providerEditor)
-        # To sync when providerEditor clicked or tab change
-        @syncToProviderEditor()
+      unless item is @editor
+        @rowMarker?.destroy()
 
     if @provider.boundToEditor
-      @disposables.add @providerEditor.onDidStopChanging =>
-        # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
-        @refresh(force: true) if @provider.isActive()
-
-      needToSyncToProviderEditor = (event) =>
-        @provider.isActive() and
-          not event.textChanged and
-          event.oldBufferPosition.row isnt event.newBufferPosition.row
-
-      @disposables.add @providerEditor.onDidChangeCursorPosition (event) =>
-        if needToSyncToProviderEditor(event)
-          @syncToProviderEditor()
-
-      @disposables.add @providerEditor.onDidDestroy(@destroy.bind(this))
+      @setSyncToEditor(@provider.editor)
+      @disposables.add @provider.editor.onDidDestroy(@destroy.bind(this))
 
     @constructor.register(this)
     @disposables.add new Disposable =>
@@ -165,6 +145,7 @@ class UI
   destroy: ->
     return if @destroyed
     @destroyed = true
+    @syncSubcriptions?.dispose()
     @disposables.dispose()
     @editor.destroy()
     @activateProviderPane()
@@ -207,7 +188,7 @@ class UI
 
     if @direction is 'down' and @provider.boundToEditor
       # Prevent side scroll of narrow editor
-      point = @providerEditor.getCursorBufferPosition()
+      point = @provider.editor.getCursorBufferPosition()
       if point.isGreaterThanOrEqual(_.last(@items).point)
         return
 
@@ -267,7 +248,7 @@ class UI
       if @isActive()
         @selectItemForRow(@findNormalItem(1, 'next'))
       else
-        @syncToProviderEditor() if @provider.boundToEditor
+        @syncToEditor() if @provider.boundToEditor
       @ignoreChangeOnEditor = false
 
   renderItems: (items) ->
@@ -347,11 +328,11 @@ class UI
 
       @preview() if @isAutoPreview()
 
-  syncToProviderEditor: ->
-    return if @preventSyncToProviderEditor
+  syncToEditor: ->
+    return if @preventSyncToEditor
     # Detect item
     # - cursor position is equal or greather than that item.
-    cursorPosition = @providerEditor.getCursorBufferPosition()
+    cursorPosition = @syncingEditor.getCursorBufferPosition()
     foundItem = null
     for item in @items by -1 when item.point?.isLessThanOrEqual(cursorPosition)
       foundItem = item
@@ -377,12 +358,12 @@ class UI
     editor.decorateMarker(@rowMarker, type: 'line', class: 'narrow-result')
 
   preview: ->
-    @preventSyncToProviderEditor = true
+    @preventSyncToEditor = true
     @confirm(keepOpen: true).then ({editor, point}) =>
       if editor.isAlive()
         @setRowMarker(editor, point)
         @focus()
-        @preventSyncToProviderEditor = false
+        @preventSyncToEditor = false
 
   isNormalItem: (item) ->
     item? and not item.skip
@@ -453,6 +434,23 @@ class UI
     range = @editor.setTextInBufferRange(@getPromptRange(0), text)
     @ignoreChangeOnEditor = false
     range
+
+  setSyncToEditor: (editor) ->
+    @syncingEditor = editor
+    @syncSubcriptions?.dispose()
+    @syncSubcriptions = new CompositeDisposable
+    @syncSubcriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      @syncToEditor() if item is editor
+
+    @syncSubcriptions.add editor.onDidStopChanging =>
+      # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
+      @refresh(force: true) if isActiveEditor(editor)
+
+    @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
+      if isActiveEditor(editor) and
+          (not event.textChanged) and
+          (event.oldBufferPosition.row isnt event.newBufferPosition.row)
+        @syncToEditor()
 
   # vim-mode-plus integration
   # -------------------------
