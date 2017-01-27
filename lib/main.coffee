@@ -20,6 +20,7 @@ module.exports =
       # Shared commands
       'narrow:focus': => @getUi()?.toggleFocus()
       'narrow:focus-prompt': => @getUi()?.focusPrompt()
+      'narrow:refresh': => @getUi()?.refresh(force: true)
       'narrow:close': => @getUi()?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()
