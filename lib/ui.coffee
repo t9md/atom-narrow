@@ -454,6 +454,11 @@ class UI
     @ignoreChangeOnEditor = false
     range
 
+  bindToEditor: ->
+    @editorSubcriptions?.dispose()
+    @editorSubcriptions = new CompositeDisposable
+    #
+
   # vim-mode-plus integration
   # -------------------------
   vmpActivateNormalMode: ->
