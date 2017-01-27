@@ -147,13 +147,21 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 # Only on narrow-editor
 # -------------------------
+# - Use these TWO key very frequently
+#   - cmd-f: To focus to narrow-editor AND focus-back to original-editor
+#   - cmd-i: To focus to narrow-editor's prompt AND focus-back to original-editor
 
-# When workspace has narrow-editor, focus it by cmd-f if in normal-mode
+# When workspace has narrow-editor
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode':
-  'cmd-f': 'narrow:focus'
+  'cmd-f': 'narrow:focus' # focus to narrow-editor
+  'cmd-i': 'narrow:focus-prompt' # focus to prompt of narrow-editor
+  'ctrl-cmd-l': 'narrow:refresh' # manually refresh items
+  'down': 'narrow:next-item'
+  'up': 'narrow:previous-item'
 
 # narrow-editor regardless of mode of vim
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
+  'cmd-i': 'narrow:focus-prompt' # cmd-i to return to calling editor.
   # Danger, apply change on narrow-editor to real file by `ctrl-cmd-s`.
   'ctrl-cmd-s': 'narrow-ui:update-real-file'
 
