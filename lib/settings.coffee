@@ -67,12 +67,6 @@ module.exports = new Settings 'narrow',
     default: 'smartcase'
     enum: ['smartcase', 'sensitive', 'insensitive']
     description: "Case sensitivity of your query in narrow-editor"
-  # vmpAutoChangeModeInUI:
-  #   default: true
-  #   description: "Automatically change mode on narrow-editor, insert-mode(=prompt), normal-mode(=item-area)"
-  # vmpStartInInsertModeForUI:
-  #   default: true
-  #   description: "Start in insert-mode on initial open"
 
   # Per providers settings
   # -------------------------
