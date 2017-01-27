@@ -186,11 +186,8 @@ class UI
     if (row = @getRowForSelectedItem()) >= 0
       @withIgnoreCursorMove => @editor.setCursorBufferPosition([row, 0])
 
-    if @direction is 'down' and @provider.boundToEditor
-      # Prevent side scroll of narrow editor
-      point = @provider.editor.getCursorBufferPosition()
-      if point.isGreaterThanOrEqual(_.last(@items).point)
-        return
+    if direction is 'down' and @editor.getCursorBufferPosition().row is @editor.getLastBufferRow()
+      return
 
     switch direction
       when 'up'
