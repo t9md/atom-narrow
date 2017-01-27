@@ -92,29 +92,11 @@ class UI
     @disposables.add(@observeCursorPositionChange())
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      if item is @editor
-        # in preview
-        return
-
-      @rowMarker?.destroy()
-      if @provider.boundToEditor and (item is @providerEditor)
-        # To sync when providerEditor clicked or tab change
-        @syncToProviderEditor()
+      unless item is @editor
+        @rowMarker?.destroy()
 
     if @provider.boundToEditor
-      @disposables.add @providerEditor.onDidStopChanging =>
-        # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
-        @refresh(force: true) if @provider.isActive()
-
-      needToSyncToProviderEditor = (event) =>
-        @provider.isActive() and
-          not event.textChanged and
-          event.oldBufferPosition.row isnt event.newBufferPosition.row
-
-      @disposables.add @providerEditor.onDidChangeCursorPosition (event) =>
-        if needToSyncToProviderEditor(event)
-          @syncToProviderEditor()
-
+      @bindToEditor(@provider.editor)
       @disposables.add @providerEditor.onDidDestroy(@destroy.bind(this))
 
     @constructor.register(this)
@@ -165,6 +147,7 @@ class UI
   destroy: ->
     return if @destroyed
     @destroyed = true
+    @editorSubcriptions?.dispose()
     @disposables.dispose()
     @editor.destroy()
     @activateProviderPane()
@@ -454,10 +437,21 @@ class UI
     @ignoreChangeOnEditor = false
     range
 
-  bindToEditor: ->
+  bindToEditor: (editor) ->
     @editorSubcriptions?.dispose()
     @editorSubcriptions = new CompositeDisposable
-    #
+    @editorSubcriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      @syncToProviderEditor() if item is editor
+
+    @editorSubcriptions.add editor.onDidStopChanging =>
+      # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
+      @refresh(force: true) if isActiveEditor(editor)
+
+    @editorSubcriptions.add editor.onDidChangeCursorPosition (event) =>
+      if isActiveEditor(editor) and
+          (not event.textChanged) and
+          (event.oldBufferPosition.row isnt event.newBufferPosition.row)
+        @syncToProviderEditor()
 
   # vim-mode-plus integration
   # -------------------------
