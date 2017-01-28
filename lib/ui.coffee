@@ -1,6 +1,11 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
-{activatePaneItemInAdjacentPane, isActiveEditor, getValidIndexForList} = require './utils'
+{
+  activatePaneItemInAdjacentPane
+  isActiveEditor
+  getValidIndexForList
+  setBufferRow
+} = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
@@ -165,6 +170,8 @@ class UI
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt(startInsert: true)
       'narrow-ui:update-real-file': => @updateRealFile()
+      'core:move-up': (event) => @moveUpOrDown(event, 'previous')
+      'core:move-down': (event) => @moveUpOrDown(event, 'next')
 
   updateRealFile: ->
     return unless @provider.supportDirectEdit
@@ -181,6 +188,19 @@ class UI
 
     if changes.length
       @provider.updateRealFile(changes)
+
+  # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
+  moveUpOrDown: (event, direction) ->
+    cursor = @editor.getLastCursor()
+    row = cursor.getBufferRow()
+
+    if (direction is 'next' and row is @editor.getLastBufferRow()) or
+        (direction is 'previous' and row is 0)
+      # This is the command which override `core:move-up`, `core-move-down`
+      # So when this command do work, it stop propagation, unless that case
+      # this command do nothing and default behavior is still executed.
+      event.stopImmediatePropagation()
+      setBufferRow(cursor, @findRowForNormalOrPromptItem(row, direction))
 
   # Even in movemnt not happens, it should confirm current item
   # This ensure next-item/previous-item always move to selected item.

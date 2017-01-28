@@ -40,6 +40,8 @@
   'a': 'narrow-ui:move-to-prompt'
   'I': 'vim-mode-plus:activate-insert-mode'
   'tab': 'narrow-ui:move-to-prompt-or-selected-item'
+  'k': 'core:move-up'
+  'j': 'core:move-down'
 
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode:not(.has-occurrence)':
   # Can move next/previos from out-side of narrow-editor if workspace has narrow-editor.
