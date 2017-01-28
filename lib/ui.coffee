@@ -48,7 +48,9 @@ class UI
 
   # UI.prototype
   # -------------------------
-  autoPreview: false
+  autoPreview: null
+  autoPreviewOnQueryChange: null
+
   preventAutoPreview: false
   preventSyncToEditor: false
   ignoreChange: false
@@ -66,8 +68,8 @@ class UI
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
     @emitter = new Emitter
-    @autoPreview = settings.get(@provider.getName() + "AutoPreview")
-    @autoPreviewOnQueryChange = settings.get(@provider.getName() + "AutoPreviewOnQueryChange")
+    @autoPreview = @provider.getConfig('autoPreview')
+    @autoPreviewOnQueryChange =  @provider.getConfig('autoPreviewOnQueryChange')
 
     # Special item used to translate narrow editor row to items without pain
     @promptItem = Object.freeze({_prompt: true, skip: true})
@@ -381,13 +383,10 @@ class UI
   isNormalItem: (item) ->
     item? and not item.skip
 
-  needCloseOnConfirm: ->
-    settings.get(@provider.getName() + "CloseOnConfirm")
-
   confirm: ({preview, keepOpen}={}) ->
     item = @getSelectedItem()
     Promise.resolve(@provider.confirmed(item, {preview})).then ({editor, point}) =>
-      if not keepOpen and @needCloseOnConfirm()
+      if not keepOpen and @provider.getConfig('closeOnConfirm')
         @editor.destroy()
       {editor, point}
 

@@ -1,3 +1,5 @@
+_ = require 'underscore-plus'
+
 inferType = (value) ->
   switch
     when Number.isInteger(value) then 'integer'
@@ -5,21 +7,27 @@ inferType = (value) ->
     when typeof(value) is 'string' then 'string'
     when Array.isArray(value) then 'array'
 
+complimentField = (config, injectTitle=false) ->
+  # Automatically infer and inject `type` of each config parameter.
+  # skip if value which aleady have `type` field.
+  # Also translate bare `boolean` value to {default: `boolean`} object
+  for key in Object.keys(config)
+    if typeof(config[key]) is 'boolean'
+      config[key] = {default: config[key]}
+
+    value = config[key]
+    value.type = inferType(value.default) unless value.type?
+    value.title ?= _.uncamelcase(key) if injectTitle
+
+  # Inject order props to display orderd in setting-view
+  for name, i in Object.keys(config)
+    config[name].order = i
+
+  return config
+
 class Settings
   constructor: (@scope, @config) ->
-    # Automatically infer and inject `type` of each config parameter.
-    # skip if value which aleady have `type` field.
-    # Also translate bare `boolean` value to {default: `boolean`} object
-    for key in Object.keys(@config)
-      if typeof(@config[key]) is 'boolean'
-        @config[key] = {default: @config[key]}
-      unless (value = @config[key]).type?
-        value.type = inferType(value.default)
-
-    # Inject order props to display orderd in setting-view
-    for name, i in Object.keys(@config)
-      @config[name].order = i
-
+    complimentField(@config)
 
   get: (param) ->
     atom.config.get "#{@scope}.#{param}"
@@ -58,6 +66,19 @@ class Settings
       content.push "- `#{param}`"
     atom.notifications.addWarning content.join("\n"), dismissable: true
 
+newProviderConfig = (otherProperties) ->
+  properties =
+    autoPreview: true
+    autoPreviewOnQueryChange: true
+    closeOnConfirm: true
+
+  _.extend(properties, otherProperties) if otherProperties?
+
+  return {
+    type: 'object'
+    properties: complimentField(properties, true)
+  }
+
 module.exports = new Settings 'narrow',
   directionToOpen:
     default: 'right'
@@ -70,49 +91,26 @@ module.exports = new Settings 'narrow',
 
   # Per providers settings
   # -------------------------
-
-  AtomScanAutoPreview: true  # auto-preview by cursor move
-  AtomScanAutoPreviewOnQueryChange: true  # auto-preview by query change
-  AtomScanCloseOnConfirm: true
-
-  BookmarksAutoPreview: true
-  BookmarksAutoPreviewOnQueryChange: true
-  BookmarksCloseOnConfirm: true
-
-  FoldAutoPreview: true
-  FoldAutoPreviewOnQueryChange: true
-  FoldCloseOnConfirm: true
-
-  GitDiffAutoPreview: true
-  GitDiffAutoPreviewOnQueryChange: true
-  GitDiffCloseOnConfirm: true
-
-  LinesAutoPreview: true
-  LinesAutoPreviewOnQueryChange: true
-  LinesCloseOnConfirm: true
-
-  LinterAutoPreview: true
-  LinterAutoPreviewOnQueryChange: true
-  LinterCloseOnConfirm: true
-
-  SearchAutoPreview: true
-  SearchAutoPreviewOnQueryChange: true
-  SearchCloseOnConfirm: true
-
-  SymbolsAutoPreview: true
-  SymbolsAutoPreviewOnQueryChange: true
-  SymbolsCloseOnConfirm: true
-
-  # Other
-  SearchAgCommandArgs:
-    default: "--nocolor --column"
-    description: """
-    By default args, full command became..<br>
-    `ag --nocolor --column PATTERN`<br>
-    Be careful narrow don't support every possible combination of args.<br>
-    Pick only if it worked.<br>
-    e.g.<br>
-      Case sensitive: `ag --nocolor --column -s PATTERN`<br>
-      Smart case: `ag --nocolor --column -S PATTERN`<br>
-      Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
-    """
+  AtomScan: newProviderConfig()
+  Bookmarks: newProviderConfig()
+  Fold: newProviderConfig()
+  GitDiff: newProviderConfig()
+  Lines: newProviderConfig()
+  Linter: newProviderConfig()
+  Search: newProviderConfig(
+    agCommandArgs:
+      default: "--nocolor --column"
+      description: """
+      [Experimental: Must be removed in future]<br>
+      <br>
+      By default args, full command became..<br>
+      `ag --nocolor --column PATTERN`<br>
+      Be careful narrow don't support every possible combination of args.<br>
+      Pick only if it worked.<br>
+      e.g.<br>
+        Case sensitive: `ag --nocolor --column -s PATTERN`<br>
+        Smart case: `ag --nocolor --column -S PATTERN`<br>
+        Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
+      """
+  )
+  Symbols: newProviderConfig()
