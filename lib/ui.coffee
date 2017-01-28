@@ -182,18 +182,18 @@ class UI
     if changes.length
       @provider.updateRealFile(changes)
 
+  # Even in movemnt not happens, it should confirm current item
+  # This ensure next-item/previous-item always move to selected item.
   moveCursor: (direction) ->
     if (row = @getRowForSelectedItem()) >= 0
       @withIgnoreCursorMove => @editor.setCursorBufferPosition([row, 0])
-
-    if direction is 'down' and @editor.getCursorBufferPosition().row is @editor.getLastBufferRow()
-      return
 
     switch direction
       when 'up'
         @withPreventAutoPreview => @editor.moveUp()
       when 'down'
-        @withPreventAutoPreview => @editor.moveDown()
+        if @editor.getCursorBufferPosition().row isnt @editor.getLastBufferRow()
+          @withPreventAutoPreview => @editor.moveDown()
 
     @confirm(keepOpen: true)
 
