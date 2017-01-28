@@ -23,6 +23,9 @@ class ProviderBase
   getDashName: ->
     _.dasherize(@getName())
 
+  getConfig: (name) ->
+    settings.get("#{@getName()}.#{name}")
+
   initialize: ->
     # to override
 

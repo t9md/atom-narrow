@@ -2,7 +2,6 @@ path = require 'path'
 _ = require 'underscore-plus'
 {Point, BufferedProcess} = require 'atom'
 SearchBase = require './search-base'
-settings = require '../settings'
 
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
@@ -70,7 +69,7 @@ class Search extends SearchBase
   search: (pattern, project) ->
     items = []
     stdout = stderr = getOutputterForProject(project, items)
-    args = settings.get('SearchAgCommandArgs').split(/\s+/)
+    args = @getConfig('agCommandArgs').split(/\s+/)
 
     if @options.wordOnly and ('-w' not in args) and ('--word-regexp' not in args)
       args.push('--word-regexp')
