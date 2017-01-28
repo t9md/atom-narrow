@@ -168,6 +168,8 @@ class UI
       'core:confirm': => @confirm()
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
+      'narrow-ui:preview-next-item': => @previewNextItem()
+      'narrow-ui:preview-previous-item': => @previewPreviousItem()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:refresh-force': => @refresh(force: true, moveToPrompt: true)
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
@@ -220,6 +222,18 @@ class UI
 
   previousItem: ->
     @confirmItemForDirection('previous')
+
+  previewItemForDirection: (direction) ->
+    row = @findRowForNormalItem(@getRowForSelectedItem(), direction)
+    if row?
+      @selectItemForRow(row)
+      @preview()
+
+  previewNextItem: ->
+    @previewItemForDirection('next')
+
+  previewPreviousItem: ->
+    @previewItemForDirection('previous')
 
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
