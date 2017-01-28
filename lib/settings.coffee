@@ -70,34 +70,37 @@ module.exports = new Settings 'narrow',
 
   # Per providers settings
   # -------------------------
-  # auto-preview by cursor move
-  AtomScanAutoPreview: true
-  BookmarksAutoPreview: true
-  FoldAutoPreview: true
-  GitDiffAutoPreview: true
-  LinesAutoPreview: true
-  LinterAutoPreview: true
-  SearchAutoPreview: true
-  SymbolsAutoPreview: true
 
-  # auto-preview on query change
-  AtomScanAutoPreviewOnQueryChange: true
-  BookmarksAutoPreviewOnQueryChange: true
-  FoldAutoPreviewOnQueryChange: true
-  GitDiffAutoPreviewOnQueryChange: true
-  LinesAutoPreviewOnQueryChange: true
-  LinterAutoPreviewOnQueryChange: true
-  SearchAutoPreviewOnQueryChange: true
-  SymbolsAutoPreviewOnQueryChange: true
-
-  # close-on-confirm
+  AtomScanAutoPreview: true  # auto-preview by cursor move
+  AtomScanAutoPreviewOnQueryChange: true  # auto-preview by query change
   AtomScanCloseOnConfirm: true
+
+  BookmarksAutoPreview: true
+  BookmarksAutoPreviewOnQueryChange: true
   BookmarksCloseOnConfirm: true
+
+  FoldAutoPreview: true
+  FoldAutoPreviewOnQueryChange: true
   FoldCloseOnConfirm: true
+
+  GitDiffAutoPreview: true
+  GitDiffAutoPreviewOnQueryChange: true
   GitDiffCloseOnConfirm: true
+
+  LinesAutoPreview: true
+  LinesAutoPreviewOnQueryChange: true
   LinesCloseOnConfirm: true
+
+  LinterAutoPreview: true
+  LinterAutoPreviewOnQueryChange: true
   LinterCloseOnConfirm: true
+
+  SearchAutoPreview: true
+  SearchAutoPreviewOnQueryChange: true
   SearchCloseOnConfirm: true
+
+  SymbolsAutoPreview: true
+  SymbolsAutoPreviewOnQueryChange: true
   SymbolsCloseOnConfirm: true
 
   # Other
