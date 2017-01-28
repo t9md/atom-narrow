@@ -70,7 +70,7 @@ module.exports = new Settings 'narrow',
 
   # Per providers settings
   # -------------------------
-  # auto-preview
+  # auto-preview by cursor move
   AtomScanAutoPreview: true
   BookmarksAutoPreview: true
   FoldAutoPreview: true
@@ -79,6 +79,16 @@ module.exports = new Settings 'narrow',
   LinterAutoPreview: true
   SearchAutoPreview: true
   SymbolsAutoPreview: true
+
+  # auto-preview on query change
+  AtomScanAutoPreviewOnQueryChange: true
+  BookmarksAutoPreviewOnQueryChange: true
+  FoldAutoPreviewOnQueryChange: true
+  GitDiffAutoPreviewOnQueryChange: true
+  LinesAutoPreviewOnQueryChange: true
+  LinterAutoPreviewOnQueryChange: true
+  SearchAutoPreviewOnQueryChange: true
+  SymbolsAutoPreviewOnQueryChange: true
 
   # close-on-confirm
   AtomScanCloseOnConfirm: true

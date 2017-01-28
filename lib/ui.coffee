@@ -67,6 +67,7 @@ class UI
     @disposables = new CompositeDisposable
     @emitter = new Emitter
     @autoPreview = settings.get(@provider.getName() + "AutoPreview")
+    @autoPreviewOnQueryChange = settings.get(@provider.getName() + "AutoPreviewOnQueryChange")
 
     # Special item used to translate narrow editor row to items without pain
     @promptItem = Object.freeze({_prompt: true, skip: true})
@@ -289,7 +290,8 @@ class UI
           # Recover query on prompt
           @setPrompt(@lastNarrowQuery)
         else
-          @refresh()
+          @refresh().then =>
+            @preview() if @isActive() and @autoPreviewOnQueryChange
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
