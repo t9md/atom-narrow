@@ -199,8 +199,10 @@ class UI
       # This is the command which override `core:move-up`, `core-move-down`
       # So when this command do work, it stop propagation, unless that case
       # this command do nothing and default behavior is still executed.
+      ensureCursorIsOneColumnLeftFromEOL = @vmpIsNormalMode()
       event.stopImmediatePropagation()
-      setBufferRow(cursor, @findRowForNormalOrPromptItem(row, direction))
+      row = @findRowForNormalOrPromptItem(row, direction)
+      setBufferRow(cursor, row, {ensureCursorIsOneColumnLeftFromEOL})
 
   # Even in movemnt not happens, it should confirm current item
   # This ensure next-item/previous-item always move to selected item.

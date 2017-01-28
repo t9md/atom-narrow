@@ -101,9 +101,13 @@ getValidIndexForList = (list, index) ->
       length + index
 
 # Respect goalColumn when moving cursor.
-setBufferRow = (cursor, row) ->
+setBufferRow = (cursor, row, options={}) ->
   column = cursor.goalColumn ? cursor.getBufferColumn()
-  cursor.setBufferPosition([row, column])
+  if options.ensureCursorIsOneColumnLeftFromEOL
+    oneColumLeft = cursor.editor.bufferRangeForBufferRow(row).end.column - 1
+    if oneColumLeft >= 0
+      columnAdjusted = Math.min(column, oneColumLeft)
+  cursor.setBufferPosition([row, columnAdjusted ? column])
   cursor.goalColumn ?= column
 
 module.exports = {
