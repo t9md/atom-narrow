@@ -100,6 +100,12 @@ getValidIndexForList = (list, index) ->
     else
       length + index
 
+# Respect goalColumn when moving cursor.
+setBufferRow = (cursor, row) ->
+  column = cursor.goalColumn ? cursor.getBufferColumn()
+  cursor.setBufferPosition([row, column])
+  cursor.goalColumn ?= column
+
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
@@ -112,4 +118,5 @@ module.exports = {
   getCurrentWordAndBoundary
   isActiveEditor
   getValidIndexForList
+  setBufferRow
 }
