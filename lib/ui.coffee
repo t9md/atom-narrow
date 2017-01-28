@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
-{activatePaneItemInAdjacentPane, isActiveEditor} = require './utils'
+{activatePaneItemInAdjacentPane, isActiveEditor, getValidIndexForList} = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
@@ -184,24 +184,17 @@ class UI
 
   # Even in movemnt not happens, it should confirm current item
   # This ensure next-item/previous-item always move to selected item.
-  moveCursor: (direction) ->
-    if (row = @getRowForSelectedItem()) >= 0
-      @withIgnoreCursorMove => @editor.setCursorBufferPosition([row, 0])
-
-    switch direction
-      when 'up'
-        @withPreventAutoPreview => @editor.moveUp()
-      when 'down'
-        if @editor.getCursorBufferPosition().row isnt @editor.getLastBufferRow()
-          @withPreventAutoPreview => @editor.moveDown()
-
-    @confirm(keepOpen: true)
+  confirmItemForDirection: (direction) ->
+    row = @findRowForNormalItem(@getRowForSelectedItem(), direction)
+    if row?
+      @selectItemForRow(row)
+      @confirm(keepOpen: true)
 
   nextItem: ->
-    @moveCursor('down')
+    @confirmItemForDirection('next')
 
   previousItem: ->
-    @moveCursor('up')
+    @confirmItemForDirection('previous')
 
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
@@ -236,7 +229,7 @@ class UI
       @grammar.update(filterSpec.include)
 
       if @isActive()
-        @selectItemForRow(@findNormalItem(1, 'next'))
+        @selectItemForRow(@findRowForNormalItem(0, 'next'))
       else
         @syncToEditor() if @provider.boundToEditor
 
@@ -307,17 +300,19 @@ class UI
         @moveToPrompt()
         return
 
-      direction = if newRow > oldRow then 'next' else 'previous'
-
-      row = @findNormalItem(newRow, direction)
-      if row? # row might be '0'
-        @selectItemForRow(row)
-        if row is newRow
-          @emitDidMoveToItemArea() if oldRow is 0
-        else
-          @moveToSelectedItem()
+      if @isNormalItemRow(newRow)
+        @selectItemForRow(newRow)
+        @emitDidMoveToItemArea() if oldRow is 0
       else
-        @moveToPrompt() if direction is 'previous'
+        direction = if newRow > oldRow then 'next' else 'previous'
+        row = @findRowForNormalOrPromptItem(newRow, direction)
+        if row?
+          if row is 0
+            @moveToPrompt()
+          else
+            @selectItemForRow(row)
+            @moveToSelectedItem()
+            @emitDidMoveToItemArea() if oldRow is 0
 
       if @autoPreview and not @preventAutoPreview
         @preview()
@@ -335,7 +330,7 @@ class UI
     if foundItem?
       @selectItem(item)
     else
-      @selectItemForRow(@findNormalItem(1, 'next'))
+      @selectItemForRow(@findRowForNormalItem(0, 'next'))
 
     @moveToSelectedItem() unless @isActive()
 
@@ -373,16 +368,26 @@ class UI
       {editor, point}
 
   # Return row
-  findNormalItem: (startRow, direction) ->
-    maxRow = @items.length - 1
-    rows = if direction is 'next'
-      [startRow..maxRow]
-    else
-      [startRow..0]
+  findRowForNormalOrPromptItem: (row, direction) ->
+    delta = switch direction
+      when 'next' then +1
+      when 'previous' then -1
 
-    for row in rows when @isNormalItem(@items[row])
-      return row
-    null
+    loop
+      row = getValidIndexForList(@items, row + delta)
+      if @isNormalItemRow(row) or row is 0
+        return row
+
+  # Return row
+  findRowForNormalItem: (row, direction) ->
+    return null unless @hasNormalItem()
+    delta = switch direction
+      when 'next' then +1
+      when 'previous' then -1
+
+    loop
+      if @isNormalItemRow(row = getValidIndexForList(@items, row + delta))
+        return row
 
   moveToPromptOrSelectedItem: ->
     row = @getRowForSelectedItem()
@@ -400,6 +405,14 @@ class UI
       @editor.setCursorBufferPosition(@getPromptRange().end)
       @vmpActivateInsertMode() if startInsert and @vmpIsNormalMode()
       @emitDidMoveToPrompt()
+
+  isNormalItemRow: (row) ->
+    item = @items[row]
+    @isNormalItem(item)
+
+  hasNormalItem: ->
+    normalItems = @items.filter (item) => @isNormalItem(item)
+    normalItems.length > 0
 
   getRowForItem: (item) ->
     @items.indexOf(item)

@@ -89,6 +89,17 @@ getCurrentWordAndBoundary = (editor) ->
 isActiveEditor = (editor) ->
   editor is atom.workspace.getActiveTextEditor()
 
+getValidIndexForList = (list, index) ->
+  length = list.length
+  if length is 0
+    -1
+  else
+    index = index % length
+    if index >= 0
+      index
+    else
+      length + index
+
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
@@ -100,4 +111,5 @@ module.exports = {
   getCurrentWord
   getCurrentWordAndBoundary
   isActiveEditor
+  getValidIndexForList
 }
