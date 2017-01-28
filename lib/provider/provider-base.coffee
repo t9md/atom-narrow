@@ -63,10 +63,12 @@ class ProviderBase
     @subscriptions.dispose()
     if @editor.isAlive() and not @wasConfirmed
       @restoreEditorState()
+      @getPane().activateItem(@editor)
+
     {@editor, @editorElement, @subscriptions} = {}
 
-  confirmed: (item) ->
-    @wasConfirmed = true
+  confirmed: (item, {preview}={}) ->
+    @wasConfirmed = true unless preview
     {point, filePath} = item
 
     if filePath?

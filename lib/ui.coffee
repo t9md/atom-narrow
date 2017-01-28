@@ -370,7 +370,7 @@ class UI
 
   preview: ->
     @preventSyncToEditor = true
-    @confirm(keepOpen: true).then ({editor, point}) =>
+    @confirm(keepOpen: true, preview: true).then ({editor, point}) =>
       if editor.isAlive()
         @setRowMarker(editor, point)
         @focus()
@@ -382,10 +382,10 @@ class UI
   needCloseOnConfirm: ->
     settings.get(@provider.getName() + "CloseOnConfirm")
 
-  confirm: (options={}) ->
+  confirm: ({preview, keepOpen}={}) ->
     item = @getSelectedItem()
-    Promise.resolve(@provider.confirmed(item)).then ({editor, point}) =>
-      if not options.keepOpen and @needCloseOnConfirm()
+    Promise.resolve(@provider.confirmed(item, {preview})).then ({editor, point}) =>
+      if not keepOpen and @needCloseOnConfirm()
         @editor.destroy()
       {editor, point}
 

@@ -52,9 +52,12 @@ registerElement = (name, options) ->
 saveEditorState = (editor) ->
   editorElement = editor.element
   scrollTop = editorElement.getScrollTop()
+  cursorPosition = editor.getCursorBufferPosition()
 
   foldStartRows = editor.displayLayer.foldsMarkerLayer.findMarkers({}).map (m) -> m.getStartPosition().row
   ->
+    unless editor.getCursorBufferPosition().isEqual(cursorPosition)
+      editor.setCursorBufferPosition(cursorPosition)
     for row in foldStartRows.reverse() when not editor.isFoldedAtBufferRow(row)
       editor.foldBufferRow(row)
     editorElement.setScrollTop(scrollTop)
