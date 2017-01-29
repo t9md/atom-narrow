@@ -1,3 +1,7 @@
+# 0.14.1:
+- Improve: Delay `autoPreviewOnQueryChange` timing to `onStopChanging` for non boundToEditor provider
+  - E.g. `search`, `atom-scan`
+  - Was so heavy that it interfere query keystroke.
 # 0.14.0: Improved UX especially for vim-mode-plus(Need vim-mode-plus v0.82.0 or later).
 - New: #79 Preview without moving cursor from query-prompt. no keymap for non-vim-mode-plus user.
   - `narrow-ui:preview-next-item`
