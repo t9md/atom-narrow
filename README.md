@@ -158,11 +158,11 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
 # From outside of narrow-editor
 # -------------------------
 'atom-text-editor.vim-mode-plus.normal-mode':
-  'space o': 'narrow:fold'
-  'space O': 'narrow:symbols'
-  'space c': 'narrow:linter'
+  'space f': 'narrow:fold'
+  'space o': 'narrow:symbols'
   'space l': 'narrow:lines'
   'space L': 'narrow:lines-by-current-word'
+  'space c': 'narrow:linter'
   'space s': 'narrow:search'
   'space S': 'narrow:search-by-current-word'
   'space a': 'narrow:atom-scan'
