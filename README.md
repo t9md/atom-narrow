@@ -127,7 +127,32 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 ⚠️ [default keymap](https://github.com/t9md/atom-narrow/blob/master/keymaps/narrow.cson) is not yet settled, this will likely to change in future version.   
 
-### My keymap(vim-mode-plus user)
+### My keymap(vim-mode-plus user) and config
+
+
+I set `closeOnConfirm` to `false` for all provider.  
+Since I want to close manually by `ctrl-g`(Maybe change default in future).  
+
+```
+  narrow:
+    AtomScan:
+      closeOnConfirm: false
+    Bookmarks:
+      closeOnConfirm: false
+    Fold:
+      closeOnConfirm: false
+    GitDiff:
+      closeOnConfirm: false
+    Lines:
+      closeOnConfirm: false
+    Linter:
+      closeOnConfirm: false
+    Search:
+      closeOnConfirm: false
+    Symbols:
+      closeOnConfirm: false
+```
+
 
 ```coffeescript
 # From outside of narrow-editor
@@ -166,10 +191,15 @@ Start it from command-palette or set keymap in `keymap.cson`.
   # Danger, apply change on narrow-editor to real file by `ctrl-cmd-s`.
   'ctrl-cmd-s': 'narrow-ui:update-real-file'
 
-# narrow-editor.normal-mode
-'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
-  # confirm without closing narrow-editor by `;`.
-  ';': 'narrow-ui:confirm-keep-open'
+# NOTE: following keymap prevent me to type `;`, `[`, `]` in insert-mode.
+# Which is very problematic in direct-edit mode since I can not insert these chars.
+# Be aware this limitation if you copy this.
+# Solution comes in future by differentiating scope in prompt and item-area.
+'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"],
+atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
+  ';': 'core:confirm' # Confirm by `;`
+  ']': 'narrow-ui:preview-next-item' # preview next while cursor is at prompt
+  '[': 'narrow-ui:preview-previous-item' # preview previous while cursor is at prompt
 ```
 
 # Recommended configuration for other packages.

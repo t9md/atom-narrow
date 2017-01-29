@@ -1,3 +1,29 @@
+# 0.14.0: Improved UX especially for vim-mode-plus(Need vim-mode-plus v0.82.0 or later).
+- New: #79 Preview without moving cursor from query-prompt. no keymap for non-vim-mode-plus user.
+  - `narrow-ui:preview-next-item`
+  - `narrow-ui:preview-previous-item`
+- New: wrap items on next/previous select(from top-to-bottom, bottom-to-top). #72
+  - From outside of narrow-editor, `next-item`, `previous-item` now wrap.
+  - In narrow-editor, moving up/down now wrap for both vim-mode-plus and normal user.
+    - For vim-mode-plus user, it's depend on latest(v0.82.0) vim-mode-plus command.
+- New: Auto previewing as you type #76
+  - Automatically preview first item in item-list as you type query.
+  - New: `autoPreviewOnQueryChange` per provider config. default `true` in all provider.
+- Improve: #74 closing narrow-editor after preview now restore cursor/scroll-top/fold.
+- Improve: Keymap in narrow-editor for vim-mode-plus user.
+  - `k`: `vim-mode-plus:move-up-wrap`(require vmp v0.82.0 or later).
+  - `j`: `vim-mode-plus:move-down-wrap`(require vmp v0.82.0 or later).
+  - `tab`: `preview-next-item`: Preview without moving cursor from query-prompt.
+  - `shift-tab`: `preview-previous-item`: Preview without moving cursor from query-prompt.
+- Breaking: Per provider config is scoped to each provider, sorry for no auto-migration!!.
+  - For easier maintenance(to avoid mess) and for collapsible UI in setting-view.
+  - Here are example of how config name was changed.
+    - `LinesAutoPreview` -> `Lines.autoPreview`
+    - `LinesCloseOnConfirm` -> `Lines.closeOnConfirm`
+    - `SearchAutoPreview` -> `Search.autoPreview`
+    - `SearchAgCommandArgs` -> `Search.agCommandArgs`
+- Fix: `next-item`, `previous-item` now always confirm item even if single item.
+
 # 0.13.0:
 - New keymap: For vim-mode-plus user(need vim-mode-plus v0.81.0 or later).
   - `tab`, `shift-tab` to move to next/previous item from outside of narrow-editor
