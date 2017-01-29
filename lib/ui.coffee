@@ -50,6 +50,7 @@ class UI
   # -------------------------
   autoPreview: null
   autoPreviewOnQueryChange: null
+  autoPreviewOnNextStopChanging: false
 
   preventAutoPreview: false
   preventSyncToEditor: false
@@ -69,7 +70,7 @@ class UI
     @disposables = new CompositeDisposable
     @emitter = new Emitter
     @autoPreview = @provider.getConfig('autoPreview')
-    @autoPreviewOnQueryChange =  @provider.getConfig('autoPreviewOnQueryChange')
+    @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
 
     # Special item used to translate narrow editor row to items without pain
     @promptItem = Object.freeze({_prompt: true, skip: true})
@@ -96,6 +97,7 @@ class UI
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
     @disposables.add(@registerCommands())
     @disposables.add(@observeChange())
+    @disposables.add(@observeStopChanging())
     @disposables.add(@observeCursorMove())
 
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
@@ -290,6 +292,12 @@ class UI
 
     true
 
+  observeStopChanging: ->
+    @editor.onDidStopChanging =>
+      if @autoPreviewOnNextStopChanging
+        @preview()
+        @autoPreviewOnNextStopChanging = false
+
   observeChange: ->
     @editor.buffer.onDidChange ({newRange, oldRange}) =>
       return if @ignoreChange
@@ -307,7 +315,12 @@ class UI
           @setPrompt(@lastNarrowQuery)
         else
           @refresh().then =>
-            @preview() if @isActive() and @autoPreviewOnQueryChange
+            if @autoPreviewOnQueryChange and @isActive()
+              if @provider.boundToEditor
+                @preview()
+              else
+                # Deleay immediate preview unless @provider is boundToEditor
+                @autoPreviewOnNextStopChanging = true
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
