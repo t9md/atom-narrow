@@ -1,3 +1,22 @@
+# 0.15.0: BIG: auto-sync/refresh for all providers, auto-refresh item on each focus change.
+- New: Now all providers sync to current active editor. #81
+  - In previous release only boundToEditor provider(e.g. `lines`, `fold` etc) support sync.
+  - Now all provider support sync(e.g. `search`, `atom-scan`)
+  - What is sync?
+    - update current item indicator by cursor move on active-text editor
+    - So keep you inform where you are among items.
+    - Also auto refresh items when bounded editor content is updated, in following timing.
+      - `onDidStopChanging` for `boundToEditor` provider(e.g. `line`).
+      - `onDidSave` for non `boundToEditor` provider(e.g. `search`).
+- New: Auto rebind to editor for boundToEditor provider #82
+  - e.g. `narrow:fold` auto refresh fold items on each focus change
+    - Each time you change focus to different text-editor, fold items are refreshed
+    - So you can use this fold list as table-of-content of currently focused file
+- Internal: Further decoupled/eliminate state depending code from boundToEditor/syncToEditor logic #82, #81
+  - To support re-bind editor/sync for `search`, `atom-scan`
+- Improve: Show gutter for provider which indent is not empty. #83.
+- Doc: Put link to [Use case and flow of keystrokes](https://github.com/t9md/atom-narrow/issues/75) in README.
+
 # 0.14.1:
 - Improve: Delay `autoPreviewOnQueryChange` timing to `onDidStopChanging` for non boundToEditor provider
   - E.g. `search`, `atom-scan`
