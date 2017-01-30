@@ -112,6 +112,8 @@ setBufferRow = (cursor, row, options={}) ->
   cursor.setBufferPosition([row, columnAdjusted ? column])
   cursor.goalColumn ?= column
 
+isTextEditor = atom.workspace.isTextEditor
+
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
@@ -125,4 +127,5 @@ module.exports = {
   isActiveEditor
   getValidIndexForList
   setBufferRow
+  isTextEditor
 }

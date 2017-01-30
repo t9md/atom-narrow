@@ -5,6 +5,7 @@ _ = require 'underscore-plus'
   isActiveEditor
   getValidIndexForList
   setBufferRow
+  isTextEditor
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -63,8 +64,12 @@ class UI
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
+
   onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
   emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
+
+  onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
+  emitDidRefresh: -> @emitter.emit('did-refresh')
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
@@ -100,17 +105,28 @@ class UI
     @disposables.add(@observeStopChanging())
     @disposables.add(@observeCursorMove())
 
-    @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      unless item is @editor
-        @rowMarker?.destroy()
-
     if @provider.boundToEditor
-      @setSyncToEditor(@provider.editor)
       @disposables.add @provider.editor.onDidDestroy(@destroy.bind(this))
+
+    @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      @syncSubcriptions?.dispose()
+      return if item is @editor
+      @rowMarker?.destroy()
+
+      if isTextEditor(item) and @canSyncToEditor(item)
+        @syncToEditor(item)
+        @setSyncToEditor(item)
 
     @constructor.register(this)
     @disposables.add new Disposable =>
       @constructor.unregister(this)
+
+  canSyncToEditor: (editor) ->
+    filePath = editor.getPath()
+    if @provider.boundToEditor
+      @provider.editor.getPath() is filePath
+    else
+      @items.some (item) -> item.filePath is filePath
 
   start: ->
     activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
@@ -268,8 +284,7 @@ class UI
 
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
-      else
-        @syncToEditor() if @provider.boundToEditor
+      @emitDidRefresh()
 
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
@@ -371,25 +386,33 @@ class UI
     cursorPosition = editor.getCursorBufferPosition()
     if @provider.boundToEditor
       items = _.reject(@items, (item) -> item.skip)
-      # it have only point(no filePath field in each item)
-      _.detect items.reverse(), ({point}) ->
-        point.isLessThanOrEqual(cursorPosition)
-
-  syncToEditor: ->
-    return if @preventSyncToEditor
-    item = @findClosestItemForEditor(@syncingEditor)
-    if item?
-      @selectItem(item)
     else
-      @selectItemForRow(@findRowForNormalItem(0, 'next'))
+      # Item must support filePath
+      filePath = editor.getPath()
+      items = @items.filter((item) -> not item.skip and (item.filePath is filePath))
 
-    @moveToSelectedItem() unless @isActive()
+    for item in items by -1 when @isNormalItem(item)
+      # It have only point(no filePath field in each item)
+      if item.point.isLessThanOrEqual(cursorPosition)
+        break
+    return item # return items[0] as fallback
+
+  syncToEditor: (editor) ->
+    return if @isActive() # Prevent UI cursor from being moved while UI is active.
+    return if @preventSyncToEditor
+    if item = @findClosestItemForEditor(editor)
+      @selectItem(item)
+      @moveToSelectedItem() unless @isActive()
 
   moveToSelectedItem: ->
     if (row = @getRowForSelectedItem()) >= 0
       oldPosition = @editor.getCursorBufferPosition()
       @withIgnoreCursorMove =>
-        @editor.setCursorBufferPosition([row, oldPosition.column])
+        # Manually set cursor to center to avoid scrollTop drastically changes
+        # when refresh and auto-sync.
+        point = [row, oldPosition.column]
+        @editor.setCursorBufferPosition(point, autoscroll: false)
+        @editor.scrollToBufferPosition(point, center: true)
         @emitDidMoveToItemArea() if @isPromptRow(oldPosition.row)
 
   setRowMarker: (editor, point) ->
@@ -492,21 +515,23 @@ class UI
     range
 
   setSyncToEditor: (editor) ->
-    @syncingEditor = editor
-    @syncSubcriptions?.dispose()
     @syncSubcriptions = new CompositeDisposable
-    @syncSubcriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @syncToEditor() if item is editor
-
-    @syncSubcriptions.add editor.onDidStopChanging =>
-      # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
-      @refresh(force: true) if isActiveEditor(editor)
-
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
       if isActiveEditor(editor) and
           (not event.textChanged) and
           (event.oldBufferPosition.row isnt event.newBufferPosition.row)
-        @syncToEditor()
+        @syncToEditor(editor)
+
+    @syncSubcriptions.add @onDidRefresh =>
+      @syncToEditor(editor)
+
+    if @provider.boundToEditor
+      @syncSubcriptions.add editor.onDidStopChanging =>
+        # Surppress refreshing while editor is active to avoid auto-refreshing while direct-edit.
+        @refresh(force: true) unless @isActive()
+    else
+      @syncSubcriptions.add editor.onDidSave =>
+        @refresh(force: true) unless @isActive()
 
   # vim-mode-plus integration
   # -------------------------
