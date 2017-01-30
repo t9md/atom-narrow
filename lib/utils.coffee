@@ -113,6 +113,10 @@ setBufferRow = (cursor, row, options={}) ->
   cursor.goalColumn ?= column
 
 isTextEditor = atom.workspace.isTextEditor
+paneForItem = atom.workspace.paneForItem
+
+isNarrowEditor = (editor) ->
+  isTextEditor(editor) and editor.element.classList.contains('narrow-editor')
 
 module.exports = {
   getAdjacentPaneForPane
@@ -127,5 +131,6 @@ module.exports = {
   isActiveEditor
   getValidIndexForList
   setBufferRow
-  isTextEditor
+  isTextEditon
+  paneForItem
 }

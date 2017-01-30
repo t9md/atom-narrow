@@ -1,6 +1,11 @@
 _ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
-{saveEditorState, getAdjacentPaneForPane, isActiveEditor} = require '../utils'
+{
+  saveEditorState
+  getAdjacentPaneForPane
+  isActiveEditor
+  paneForItem
+} = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
 Input = null
@@ -41,7 +46,7 @@ class ProviderBase
       @restoreEditorState = saveEditorState(@editor)
 
   getPane: ->
-    atom.workspace.paneForItem(@editor)
+    paneForItem(@editor)
 
   isActive: ->
     isActiveEditor(@editor)
@@ -69,21 +74,21 @@ class ProviderBase
 
   destroy: ->
     @editorSubscriptions.dispose()
-    if @editor.isAlive() and not @wasConfirmed
+    pane = paneForItem(@editor)
+    if @editor.isAlive() and pane.isAlive() and not @wasConfirmed
       @restoreEditorState()
-      @getPane().activateItem(@editor)
+      pane.activateItem(@editor)
 
     {@editor, @editorSubscriptions} = {}
 
   confirmed: (item, {preview}={}) ->
     @wasConfirmed = true unless preview
     {point, filePath} = item
+    pane = @getPane() ? getAdjacentPaneForPane(@ui.getPane())
 
     if filePath?
       options = {pending: true}
-      if pane = @getPane() ? getAdjacentPaneForPane(@ui.getPane())
-        pane.activate()
-      else
+      unless pane
         options.split = settings.get('directionToOpen')
 
       atom.workspace.open(filePath, options).then (editor) ->
@@ -91,7 +96,6 @@ class ProviderBase
         editor.scrollToBufferPosition(point, center: true)
         return {editor, point}
     else
-      pane = @getPane()
       pane.activate()
       newPoint = @adjustPoint?(point)
       if newPoint?
