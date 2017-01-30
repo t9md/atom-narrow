@@ -16,6 +16,7 @@ class ProviderBase
 
   supportDirectEdit: false
   supportCacheItems: false
+  editor: null
 
   getName: ->
     @constructor.name
@@ -32,17 +33,21 @@ class ProviderBase
   checkReady: ->
     Promise.resolve(true)
 
+  bindEditor: (editor) ->
+    if @editor isnt editor
+      @editorSubscriptions?.dispose()
+      @editorSubscriptions = new CompositeDisposable
+      @editor = editor
+      @restoreEditorState = saveEditorState(@editor)
+
   getPane: ->
     atom.workspace.paneForItem(@editor)
 
   isActive: ->
     isActiveEditor(@editor)
 
-  constructor: (@editor, @options={}) ->
-    @subscriptions = new CompositeDisposable
-    @editorElement = @editor.element
-    @restoreEditorState = saveEditorState(@editor)
-
+  constructor: (editor, @options={}) ->
+    @bindEditor(editor)
     @ui = new UI(this, {input: @options.uiInput})
 
     @checkReady().then (ready) =>
@@ -50,8 +55,8 @@ class ProviderBase
         @initialize()
         @ui.start()
 
-  subscribe: (args...) ->
-    @subscriptions.add(args...)
+  subscribeEditor: (args...) ->
+    @editorSubscriptions.add(args...)
 
   filterItems: (items, {include, exclude}) ->
     for regexp in exclude
@@ -63,12 +68,12 @@ class ProviderBase
     items
 
   destroy: ->
-    @subscriptions.dispose()
+    @editorSubscriptions.dispose()
     if @editor.isAlive() and not @wasConfirmed
       @restoreEditorState()
       @getPane().activateItem(@editor)
 
-    {@editor, @editorElement, @subscriptions} = {}
+    {@editor, @editorSubscriptions} = {}
 
   confirmed: (item, {preview}={}) ->
     @wasConfirmed = true unless preview

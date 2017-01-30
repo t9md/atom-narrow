@@ -15,13 +15,7 @@ class Symbols extends ProviderBase
   showLineHeader: false
   supportCacheItems: false # manage manually
 
-  initialize: ->
-    @subscribe @editor.onDidSave =>
-      @items = null
-
   getItems: ->
-    return @items if @items?
-
     # We show full line text of symbol's line, so just care for which line have symbol.
     filePath = @editor.getPath()
     scopeName = @editor.getGrammar().scopeName

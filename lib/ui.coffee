@@ -83,7 +83,8 @@ class UI
 
     # Setup narrow-editor
     # -------------------------
-    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    @editor = atom.workspace.buildTextEditor()
+    # @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     # FIXME
     # Opening multiple narrow-editor for same provider get title `undefined`
     # (e.g multiple narrow-editor for lines provider)
@@ -105,17 +106,21 @@ class UI
     @disposables.add(@observeStopChanging())
     @disposables.add(@observeCursorMove())
 
-    if @provider.boundToEditor
-      @disposables.add @provider.editor.onDidDestroy(@destroy.bind(this))
-
     @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       @syncSubcriptions?.dispose()
       return if item is @editor
       @rowMarker?.destroy()
 
-      if isTextEditor(item) and @canSyncToEditor(item)
-        @syncToEditor(item)
-        @setSyncToEditor(item)
+      return unless isTextEditor(item)
+      if @provider.boundToEditor and atom.workspace.paneForItem(item) isnt @getPane()
+        @provider.bindEditor(item)
+        @refresh(force: true).then =>
+          @syncToEditor(item)
+          @setSyncToEditor(item)
+      else
+        if @canSyncToEditor(item)
+          @syncToEditor(item)
+          @setSyncToEditor(item)
 
     @constructor.register(this)
     @disposables.add new Disposable =>
