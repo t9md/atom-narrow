@@ -85,8 +85,9 @@ class UI
 
     # Setup narrow-editor
     # -------------------------
-    @editor = atom.workspace.buildTextEditor()
-    # @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    # Hide line number gutter for empty indent provider
+    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: @provider.indentTextForLineHeader)
+
     # FIXME
     # Opening multiple narrow-editor for same provider get title `undefined`
     # (e.g multiple narrow-editor for lines provider)
