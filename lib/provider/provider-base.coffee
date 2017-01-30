@@ -35,6 +35,10 @@ class ProviderBase
   initialize: ->
     # to override
 
+  # Event is object contains {newEditor, oldEditor}
+  onBindEditor: (event) ->
+    # to override
+
   checkReady: ->
     Promise.resolve(true)
 
@@ -42,8 +46,10 @@ class ProviderBase
     if @editor isnt editor
       @editorSubscriptions?.dispose()
       @editorSubscriptions = new CompositeDisposable
-      @editor = editor
+      oldEditor = @editor
+      @editor = newEditor = editor
       @restoreEditorState = saveEditorState(@editor)
+      @onBindEditor({oldEditor, newEditor})
 
   getPane: ->
     paneForItem(@editor)
@@ -88,7 +94,9 @@ class ProviderBase
 
     if filePath?
       options = {pending: true}
-      unless pane
+      if pane?
+        pane.activate()
+      else
         options.split = settings.get('directionToOpen')
 
       atom.workspace.open(filePath, options).then (editor) ->
