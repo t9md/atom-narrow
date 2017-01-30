@@ -67,8 +67,7 @@ module.exports =
     {@subscriptions} = {}
 
   isNarrowEditor: (item) ->
-    atom.workspace.isTextEditor(item) and
-      item.element.classList.contains('narrow-editor')
+    atom.workspace.isTextEditor(item) and item.element.classList.contains('narrow-editor')
 
   consumeVim: ({getEditorState}) ->
     confirmSearch = -> # return search text

@@ -82,12 +82,12 @@ class UI
     # FIXME
     # Opening multiple narrow-editor for same provider get title `undefined`
     # (e.g multiple narrow-editor for lines provider)
-    providerDashname = @provider.getDashName()
-    @editor.getTitle = -> providerDashname
+    providerDashName = @provider.getDashName()
+    @editor.getTitle = -> providerDashName
     @editor.isModified = -> false
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
-    @editorElement.classList.add('narrow', 'narrow-editor', providerDashname)
+    @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
 
     @disposables.add @onDidMoveToItemArea =>
       @vmpActivateNormalMode() if @vmpIsInsertMode()
@@ -125,11 +125,8 @@ class UI
   isActive: ->
     isActiveEditor(@editor)
 
-  isAtPrompt: ->
-    @getPromptRange().containsPoint(@editor.getCursorBufferPosition())
-
-  isAtItemArea: ->
-    not @isAtPrompt()
+  isPromptRow: (row) ->
+    row is 0
 
   focus: ->
     pane = @getPane()
@@ -137,7 +134,7 @@ class UI
     pane.activateItem(@editor)
 
   focusPrompt: ->
-    if @isActive() and @isAtPrompt()
+    if @isActive() and @isPromptRow(@editor.getCursorBufferPosition().row)
       @activateProviderPane()
     else
       @focus() unless @isActive()
@@ -202,7 +199,7 @@ class UI
     row = cursor.getBufferRow()
 
     if (direction is 'next' and row is @editor.getLastBufferRow()) or
-        (direction is 'previous' and row is 0)
+        (direction is 'previous' and @isPromptRow(row))
       # This is the command which override `core:move-up`, `core-move-down`
       # So when this command do work, it stop propagation, unless that case
       # this command do nothing and default behavior is still executed.
@@ -349,38 +346,39 @@ class UI
       newRow = newBufferPosition.row
       oldRow = oldBufferPosition.row
 
-      if newRow is 0 # was at Item area
-        @moveToPrompt()
+      if @isPromptRow(newRow)
+        @emitDidMoveToPrompt()
         return
 
       if @isNormalItemRow(newRow)
         @selectItemForRow(newRow)
-        @emitDidMoveToItemArea() if oldRow is 0
+        @emitDidMoveToItemArea() if @isPromptRow(oldRow)
       else
         direction = if newRow > oldRow then 'next' else 'previous'
         row = @findRowForNormalOrPromptItem(newRow, direction)
-        if row?
-          if row is 0
-            @moveToPrompt()
-          else
-            @selectItemForRow(row)
-            @moveToSelectedItem()
-            @emitDidMoveToItemArea() if oldRow is 0
+        if @isPromptRow(row)
+          @emitDidMoveToPrompt()
+        else
+          @selectItemForRow(row)
+          @moveToSelectedItem()
 
       if @autoPreview and not @preventAutoPreview
         @preview()
 
-  syncToEditor: ->
-    return if @preventSyncToEditor
+  findClosestItemForEditor: (editor) ->
     # Detect item
     # - cursor position is equal or greather than that item.
-    cursorPosition = @syncingEditor.getCursorBufferPosition()
-    foundItem = null
-    for item in @items by -1 when item.point?.isLessThanOrEqual(cursorPosition)
-      foundItem = item
-      break
+    cursorPosition = editor.getCursorBufferPosition()
+    if @provider.boundToEditor
+      items = _.reject(@items, (item) -> item.skip)
+      # it have only point(no filePath field in each item)
+      _.detect items.reverse(), ({point}) ->
+        point.isLessThanOrEqual(cursorPosition)
 
-    if foundItem?
+  syncToEditor: ->
+    return if @preventSyncToEditor
+    item = @findClosestItemForEditor(@syncingEditor)
+    if item?
       @selectItem(item)
     else
       @selectItemForRow(@findRowForNormalItem(0, 'next'))
@@ -392,7 +390,7 @@ class UI
       oldPosition = @editor.getCursorBufferPosition()
       @withIgnoreCursorMove =>
         @editor.setCursorBufferPosition([row, oldPosition.column])
-        @emitDidMoveToItemArea() if oldPosition.row is 0 # was at prompt
+        @emitDidMoveToItemArea() if @isPromptRow(oldPosition.row)
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()
@@ -418,6 +416,7 @@ class UI
       {editor, point}
 
   # Return row
+  # Never fail since prompt is row 0 and always exists
   findRowForNormalOrPromptItem: (row, direction) ->
     delta = switch direction
       when 'next' then +1
@@ -425,7 +424,7 @@ class UI
 
     loop
       row = getValidIndexForList(@items, row + delta)
-      if @isNormalItemRow(row) or row is 0
+      if @isNormalItemRow(row) or @isPromptRow(row)
         return row
 
   # Return row
@@ -457,8 +456,7 @@ class UI
       @emitDidMoveToPrompt()
 
   isNormalItemRow: (row) ->
-    item = @items[row]
-    @isNormalItem(item)
+    @isNormalItem(@items[row])
 
   hasNormalItem: ->
     normalItems = @items.filter (item) => @isNormalItem(item)

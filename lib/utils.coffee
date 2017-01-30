@@ -75,7 +75,6 @@ getCurrentWord = (editor) ->
   getCurrentWordAndBoundary(editor).word
 
 getCurrentWordAndBoundary = (editor) ->
-  editor = atom.workspace.getActiveTextEditor()
   selection = editor.getLastSelection()
   {cursor} = selection
 
