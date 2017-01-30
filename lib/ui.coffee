@@ -497,7 +497,6 @@ class UI
     range
 
   setSyncToEditor: (editor) ->
-    @syncingEditor = editor
     @syncSubcriptions?.dispose()
     @syncSubcriptions = new CompositeDisposable
     @syncSubcriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
