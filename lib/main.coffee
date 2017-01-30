@@ -1,7 +1,7 @@
 {CompositeDisposable} = require 'atom'
 settings = require './settings'
 Ui = null
-getCurrentWord = null # delay
+{isTextEditor, getCurrentWord} = require('./utils')
 
 module.exports =
   config: settings.config
@@ -54,7 +54,6 @@ module.exports =
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
-    getCurrentWord ?= require('./utils').getCurrentWord
     getCurrentWord(atom.workspace.getActiveTextEditor())
 
   narrow: (providerName, options) ->
@@ -67,7 +66,7 @@ module.exports =
     {@subscriptions} = {}
 
   isNarrowEditor: (item) ->
-    atom.workspace.isTextEditor(item) and item.element.classList.contains('narrow-editor')
+    isTextEditor(item) and item.element.classList.contains('narrow-editor')
 
   consumeVim: ({getEditorState}) ->
     confirmSearch = -> # return search text
