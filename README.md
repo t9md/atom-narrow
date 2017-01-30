@@ -22,10 +22,12 @@ alpha
 
 - Auto preview items under cursor(default `true` for all providers).
 - Auto update items on narrow-editor when item changed(e.g. `narrow:lines` refresh items when text changed).
+- Auto refresh items on active text-editor change(e.g. `narrow:symbols` always shows current-editor's symbol list).
 - Auto sync editor's cursor position to selected item on narrow-editor(narrowing UI).
 - Navigate between narrowed items without focusing narrow-editor.
 - Direct edit in narrow-editor which update realFile on disk by `narrow:update-real-file` commands.
 - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration( I'm also maintainer of vim-mode-plus ).
+- For what can I use this?, See [Use case and flow of keystrokes[(https://github.com/t9md/atom-narrow/issues/75).
 
 # Roles in play.
 
