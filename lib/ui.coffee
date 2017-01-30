@@ -5,6 +5,7 @@ _ = require 'underscore-plus'
   isActiveEditor
   getValidIndexForList
   setBufferRow
+  isTextEditor
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -104,17 +105,28 @@ class UI
     @disposables.add(@observeStopChanging())
     @disposables.add(@observeCursorMove())
 
-    @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      unless item is @editor
-        @rowMarker?.destroy()
-
     if @provider.boundToEditor
-      @setSyncToEditor(@provider.editor)
       @disposables.add @provider.editor.onDidDestroy(@destroy.bind(this))
+
+    @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      @syncSubcriptions?.dispose()
+      return if item is @editor
+      @rowMarker?.destroy()
+
+      if isTextEditor(item) and @canSyncToEditor(item)
+        @syncToEditor(item)
+        @setSyncToEditor(item)
 
     @constructor.register(this)
     @disposables.add new Disposable =>
       @constructor.unregister(this)
+
+  canSyncToEditor: (editor) ->
+    filePath = editor.getPath()
+    if @provider.boundToEditor
+      @provider.editor.getPath() is filePath
+    else
+      @items.some (item) -> item.filePath is filePath
 
   start: ->
     activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
@@ -375,6 +387,7 @@ class UI
     if @provider.boundToEditor
       items = _.reject(@items, (item) -> item.skip)
     else
+      # Item must support filePath
       filePath = editor.getPath()
       items = @items.filter((item) -> not item.skip and (item.filePath is filePath))
 
@@ -394,7 +407,11 @@ class UI
     if (row = @getRowForSelectedItem()) >= 0
       oldPosition = @editor.getCursorBufferPosition()
       @withIgnoreCursorMove =>
-        @editor.setCursorBufferPosition([row, oldPosition.column])
+        # Manually set cursor to center to avoid scrollTop drastically changes
+        # when refresh and auto-sync.
+        point = [row, oldPosition.column]
+        @editor.setCursorBufferPosition(point, autoscroll: false)
+        @editor.scrollToBufferPosition(point, center: true)
         @emitDidMoveToItemArea() if @isPromptRow(oldPosition.row)
 
   setRowMarker: (editor, point) ->
@@ -497,15 +514,7 @@ class UI
     range
 
   setSyncToEditor: (editor) ->
-    @syncSubcriptions?.dispose()
     @syncSubcriptions = new CompositeDisposable
-    @syncSubcriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @syncToEditor(editor) if item is editor
-
-    @syncSubcriptions.add editor.onDidStopChanging =>
-      # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
-      @refresh(force: true) if isActiveEditor(editor)
-
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
       if isActiveEditor(editor) and
           (not event.textChanged) and
@@ -514,6 +523,14 @@ class UI
 
     @syncSubcriptions.add @onDidRefresh =>
       @syncToEditor(editor) unless @isActive()
+
+    if @provider.boundToEditor
+      @syncSubcriptions.add editor.onDidStopChanging =>
+        # Surppress refreshing while editor is active to avoid auto-refreshing while direct-edit.
+        @refresh(force: true) if isActiveEditor(editor)
+    else
+      @syncSubcriptions.add editor.onDidSave =>
+        @refresh(force: true) unless @isActive()
 
   # vim-mode-plus integration
   # -------------------------
