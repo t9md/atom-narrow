@@ -398,6 +398,7 @@ class UI
     return item # return items[0] as fallback
 
   syncToEditor: (editor) ->
+    return if @isActive() # Prevent UI cursor from being moved while UI is active.
     return if @preventSyncToEditor
     if item = @findClosestItemForEditor(editor)
       @selectItem(item)
@@ -522,12 +523,12 @@ class UI
         @syncToEditor(editor)
 
     @syncSubcriptions.add @onDidRefresh =>
-      @syncToEditor(editor) unless @isActive()
+      @syncToEditor(editor)
 
     if @provider.boundToEditor
       @syncSubcriptions.add editor.onDidStopChanging =>
         # Surppress refreshing while editor is active to avoid auto-refreshing while direct-edit.
-        @refresh(force: true) if isActiveEditor(editor)
+        @refresh(force: true) unless @isActive()
     else
       @syncSubcriptions.add editor.onDidSave =>
         @refresh(force: true) unless @isActive()
