@@ -1,7 +1,7 @@
 {CompositeDisposable} = require 'atom'
 settings = require './settings'
 Ui = null
-{isTextEditor, getCurrentWord} = require('./utils')
+{isNarrowEditor, getCurrentWord} = require('./utils')
 
 module.exports =
   config: settings.config
@@ -13,8 +13,7 @@ module.exports =
     settings.removeDeprecated()
 
     @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      if @isNarrowEditor(item)
-        @currentNarrowEditor = item
+      @currentNarrowEditor = item if isNarrowEditor(item)
 
     @subscriptions.add atom.commands.add 'atom-text-editor',
       # Shared commands
@@ -64,9 +63,6 @@ module.exports =
   deactivate: ->
     @subscriptions?.dispose()
     {@subscriptions} = {}
-
-  isNarrowEditor: (item) ->
-    isTextEditor(item) and item.element.classList.contains('narrow-editor')
 
   consumeVim: ({getEditorState}) ->
     confirmSearch = -> # return search text

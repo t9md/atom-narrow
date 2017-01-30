@@ -14,14 +14,14 @@ class Symbols extends ProviderBase
   boundToEditor: true
   showLineHeader: false
   supportCacheItems: false # manage manually
+  items: null
 
-  initialize: ->
-    @subscribe @editor.onDidSave =>
-      @items = null
+  onBindEditor: ({newEditor}) ->
+    @items = null
+    @subscribeEditor(newEditor.onDidSave => @items = null)
 
   getItems: ->
     return @items if @items?
-
     # We show full line text of symbol's line, so just care for which line have symbol.
     filePath = @editor.getPath()
     scopeName = @editor.getGrammar().scopeName

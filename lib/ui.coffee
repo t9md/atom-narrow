@@ -6,6 +6,8 @@ _ = require 'underscore-plus'
   getValidIndexForList
   setBufferRow
   isTextEditor
+  isNarrowEditor
+  paneForItem
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -83,7 +85,8 @@ class UI
 
     # Setup narrow-editor
     # -------------------------
-    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    @editor = atom.workspace.buildTextEditor()
+    # @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
     # FIXME
     # Opening multiple narrow-editor for same provider get title `undefined`
     # (e.g multiple narrow-editor for lines provider)
@@ -100,33 +103,41 @@ class UI
     @promptGutter = new PromptGutter(@editor)
 
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
-    @disposables.add(@registerCommands())
-    @disposables.add(@observeChange())
-    @disposables.add(@observeStopChanging())
-    @disposables.add(@observeCursorMove())
 
-    if @provider.boundToEditor
-      @disposables.add @provider.editor.onDidDestroy(@destroy.bind(this))
-
-    @disposables.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @syncSubcriptions?.dispose()
-      return if item is @editor
-      @rowMarker?.destroy()
-
-      if isTextEditor(item) and @canSyncToEditor(item)
-        @syncToEditor(item)
-        @setSyncToEditor(item)
+    @disposables.add(
+      @registerCommands()
+      @observeChange()
+      @observeStopChanging()
+      @observeCursorMove()
+      @observeStopChangingActivePaneItem()
+    )
 
     @constructor.register(this)
     @disposables.add new Disposable =>
       @constructor.unregister(this)
 
-  canSyncToEditor: (editor) ->
-    filePath = editor.getPath()
-    if @provider.boundToEditor
-      @provider.editor.getPath() is filePath
-    else
-      @items.some (item) -> item.filePath is filePath
+  observeStopChangingActivePaneItem: ->
+    atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      @syncSubcriptions?.dispose()
+      return if item is @editor
+      @rowMarker?.destroy()
+
+      # Only sync to text-editor which meet following conditions
+      # - Not narrow-editor
+      # - Contained in different pane from narrow-editor is contained.
+      if (not isTextEditor(item)) or isNarrowEditor(item) or (paneForItem(item) is @getPane())
+        return
+
+      if @provider.boundToEditor
+        @provider.bindEditor(item)
+        @refresh(force: true).then =>
+          @syncToEditor(item)
+          @setSyncToEditor(item)
+      else
+        filePath = item.getPath()
+        if @items.some((item) -> item.filePath is filePath)
+          @syncToEditor(item)
+          @setSyncToEditor(item)
 
   start: ->
     activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
@@ -136,7 +147,7 @@ class UI
     @refresh()
 
   getPane: ->
-    atom.workspace.paneForItem(@editor)
+    paneForItem(@editor)
 
   isActive: ->
     isActiveEditor(@editor)
@@ -398,8 +409,8 @@ class UI
     return item # return items[0] as fallback
 
   syncToEditor: (editor) ->
-    return if @isActive() # Prevent UI cursor from being moved while UI is active.
     return if @preventSyncToEditor
+    return if @isActive() # Prevent UI cursor from being moved while UI is active.
     if item = @findClosestItemForEditor(editor)
       @selectItem(item)
       @moveToSelectedItem() unless @isActive()

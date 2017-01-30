@@ -1,6 +1,11 @@
 _ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
-{saveEditorState, getAdjacentPaneForPane, isActiveEditor} = require '../utils'
+{
+  saveEditorState
+  getAdjacentPaneForPane
+  isActiveEditor
+  paneForItem
+} = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
 Input = null
@@ -16,6 +21,7 @@ class ProviderBase
 
   supportDirectEdit: false
   supportCacheItems: false
+  editor: null
 
   getName: ->
     @constructor.name
@@ -29,20 +35,30 @@ class ProviderBase
   initialize: ->
     # to override
 
+  # Event is object contains {newEditor, oldEditor}
+  onBindEditor: (event) ->
+    # to override
+
   checkReady: ->
     Promise.resolve(true)
 
+  bindEditor: (editor) ->
+    if @editor isnt editor
+      @editorSubscriptions?.dispose()
+      @editorSubscriptions = new CompositeDisposable
+      oldEditor = @editor
+      @editor = newEditor = editor
+      @restoreEditorState = saveEditorState(@editor)
+      @onBindEditor({oldEditor, newEditor})
+
   getPane: ->
-    atom.workspace.paneForItem(@editor)
+    paneForItem(@editor)
 
   isActive: ->
     isActiveEditor(@editor)
 
-  constructor: (@editor, @options={}) ->
-    @subscriptions = new CompositeDisposable
-    @editorElement = @editor.element
-    @restoreEditorState = saveEditorState(@editor)
-
+  constructor: (editor, @options={}) ->
+    @bindEditor(editor)
     @ui = new UI(this, {input: @options.uiInput})
 
     @checkReady().then (ready) =>
@@ -50,8 +66,8 @@ class ProviderBase
         @initialize()
         @ui.start()
 
-  subscribe: (args...) ->
-    @subscriptions.add(args...)
+  subscribeEditor: (args...) ->
+    @editorSubscriptions.add(args...)
 
   filterItems: (items, {include, exclude}) ->
     for regexp in exclude
@@ -63,20 +79,22 @@ class ProviderBase
     items
 
   destroy: ->
-    @subscriptions.dispose()
-    if @editor.isAlive() and not @wasConfirmed
+    @editorSubscriptions.dispose()
+    pane = paneForItem(@editor)
+    if @editor.isAlive() and pane.isAlive() and not @wasConfirmed
       @restoreEditorState()
-      @getPane().activateItem(@editor)
+      pane.activateItem(@editor)
 
-    {@editor, @editorElement, @subscriptions} = {}
+    {@editor, @editorSubscriptions} = {}
 
   confirmed: (item, {preview}={}) ->
     @wasConfirmed = true unless preview
     {point, filePath} = item
+    pane = @getPane() ? getAdjacentPaneForPane(@ui.getPane())
 
     if filePath?
       options = {pending: true}
-      if pane = @getPane() ? getAdjacentPaneForPane(@ui.getPane())
+      if pane?
         pane.activate()
       else
         options.split = settings.get('directionToOpen')
@@ -86,7 +104,6 @@ class ProviderBase
         editor.scrollToBufferPosition(point, center: true)
         return {editor, point}
     else
-      pane = @getPane()
       pane.activate()
       newPoint = @adjustPoint?(point)
       if newPoint?
