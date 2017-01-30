@@ -63,8 +63,12 @@ class UI
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
+
   onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
   emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
+
+  onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
+  emitDidRefresh: -> @emitter.emit('did-refresh')
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
@@ -268,8 +272,7 @@ class UI
 
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
-      else
-        @syncToEditor() if @provider.boundToEditor
+      @emitDidRefresh()
 
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
@@ -371,19 +374,21 @@ class UI
     cursorPosition = editor.getCursorBufferPosition()
     if @provider.boundToEditor
       items = _.reject(@items, (item) -> item.skip)
-      # it have only point(no filePath field in each item)
-      _.detect items.reverse(), ({point}) ->
-        point.isLessThanOrEqual(cursorPosition)
-
-  syncToEditor: ->
-    return if @preventSyncToEditor
-    item = @findClosestItemForEditor(@syncingEditor)
-    if item?
-      @selectItem(item)
     else
-      @selectItemForRow(@findRowForNormalItem(0, 'next'))
+      filePath = editor.getPath()
+      items = @items.filter((item) -> not item.skip and (item.filePath is filePath))
 
-    @moveToSelectedItem() unless @isActive()
+    for item in items by -1 when @isNormalItem(item)
+      # It have only point(no filePath field in each item)
+      if item.point.isLessThanOrEqual(cursorPosition)
+        break
+    return item # return items[0] as fallback
+
+  syncToEditor: (editor) ->
+    return if @preventSyncToEditor
+    if item = @findClosestItemForEditor(editor)
+      @selectItem(item)
+      @moveToSelectedItem() unless @isActive()
 
   moveToSelectedItem: ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -496,7 +501,7 @@ class UI
     @syncSubcriptions?.dispose()
     @syncSubcriptions = new CompositeDisposable
     @syncSubcriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @syncToEditor() if item is editor
+      @syncToEditor(editor) if item is editor
 
     @syncSubcriptions.add editor.onDidStopChanging =>
       # Skip is not activeEditor, important to skip auto-refresh on direct-edit.
@@ -506,7 +511,10 @@ class UI
       if isActiveEditor(editor) and
           (not event.textChanged) and
           (event.oldBufferPosition.row isnt event.newBufferPosition.row)
-        @syncToEditor()
+        @syncToEditor(editor)
+
+    @syncSubcriptions.add @onDidRefresh =>
+      @syncToEditor(editor) unless @isActive()
 
   # vim-mode-plus integration
   # -------------------------

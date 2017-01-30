@@ -12,7 +12,7 @@ module.exports =
     @subscriptions = new CompositeDisposable
     settings.removeDeprecated()
 
-    @subscriptions.add atom.workspace.observeActivePaneItem (item) =>
+    @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       if @isNarrowEditor(item)
         @currentNarrowEditor = item
 
