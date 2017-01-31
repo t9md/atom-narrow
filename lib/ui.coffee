@@ -63,10 +63,18 @@ class UI
   items: []
   itemsByProvider: null # Used to cache result
   lastNarrowQuery: ''
-  modifiedState: false
+  modifiedState: null
 
   isModified: ->
     @modifiedState
+
+  setModifiedState: (state) ->
+    if state isnt @modifiedState
+      # HACK: overwrite TextBuffer:isModified to return static state.
+      # This state is used for tabs package to show modified icon on tab.
+      @modifiedState = state
+      @editor.buffer.isModified = -> state
+      @editor.buffer.emitModifiedStatusChanged(state)
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -240,7 +248,7 @@ class UI
         return
 
       @provider.updateRealFile(changes)
-      @emitModifiedStatusChanged(false)
+      @setModifiedState(false)
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
   moveUpOrDown: (event, direction) ->
@@ -317,7 +325,7 @@ class UI
 
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
-      @emitModifiedStatusChanged(false)
+      @setModifiedState(false)
       @emitDidRefresh()
 
   renderItems: (items) ->
@@ -375,14 +383,7 @@ class UI
                 # Delay immediate preview unless @provider is boundToEditor
                 @autoPreviewOnNextStopChanging = true
       else
-        @emitModifiedStatusChanged(true)
-
-  # HACK: overwrite TextBuffer:isModified to return static state.
-  # This state is used for tabs package to show modified icon on tab.
-  emitModifiedStatusChanged: (state) ->
-    @modifiedState = state
-    @editor.buffer.isModified = -> state
-    @editor.buffer.emitModifiedStatusChanged(state)
+        @setModifiedState(true)
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
