@@ -191,7 +191,7 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
   'cmd-f': 'narrow:focus'
   'cmd-i': 'narrow:focus-prompt' # cmd-i to return to calling editor.
   # Danger, apply change on narrow-editor to real file by `ctrl-cmd-s`.
-  'ctrl-cmd-s': 'narrow-ui:update-real-file'
+  'cmd-s': 'narrow-ui:update-real-file'
 
 # NOTE: following keymap prevent me to type `;`, `[`, `]` in insert-mode.
 # Which is very problematic in direct-edit mode since I can not insert these chars.
