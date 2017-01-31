@@ -329,10 +329,8 @@ class UI
     true
 
   getModifiedFilePathsInChanges: (changes) ->
-    modifiedEditors = atom.workspace.getTextEditors().filter (editor) -> editor.isModified()
-    modifiedFiles = _.uniq(modifiedEditors.map (editor) -> editor.getPath())
-    updatingFiles = _.uniq(changes.map ({item}) -> item.filePath)
-    updatingFiles.filter (filePath) -> filePath in modifiedFiles
+    _.uniq(changes.map ({item}) -> item.filePath).filter (filePath) ->
+      atom.project.isPathModified(filePath)
 
   observeStopChanging: ->
     @editor.onDidStopChanging =>
