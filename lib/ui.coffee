@@ -218,8 +218,19 @@ class UI
         changes.push({newText: line, item})
 
     if changes.length
-      if not @boundToEditor and not @ensureChangesNotIncludeModifieFilePath(changes)
+      if not @boundToEditor and (modifiedFilePaths = @getModifiedFilePathsInChanges(changes)).length
+        modifiedFilePathsAsString = modifiedFilePaths.map((filePath) -> " - `#{filePath}`").join("\n")
+        message = """
+          Cancelled `update-real-file`.
+          You are trying to update file which have **unsaved modification**.
+          But `narrow:#{@provider.getDashName()}` can not detect unsaved change.
+          To use `update-real-file`, you need to save these files.
+
+          #{modifiedFilePathsAsString}
+          """
+        atom.notifications.addWarning(message, dismissable: true)
         return
+
       @provider.updateRealFile(changes)
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
@@ -317,26 +328,11 @@ class UI
 
     true
 
-  ensureChangesNotIncludeModifieFilePath: (changes) ->
-    updatingFilePaths = _.uniq((changes.map ({item}) -> item.filePath))
-    modifiedFilePaths = atom.workspace.getTextEditors()
-      .filter (editor) -> editor.isModified()
-      .map (editor) -> editor.getPath()
-    updatingButModified = _.intersection(updatingFilePaths, modifiedFilePaths)
-    if updatingButModified.length
-      content = """
-        Canceled `update-real-file`.
-        Because changeset includes **already modified file**.
-        But `narrow:#{@provider.getDashName()}` cannot detect unsaved change.
-        To use `update-real-file`, retry after saving file.
-
-        Following files are already modified.\n
-        """
-      for filePath in updatingButModified
-        content += " - `#{filePath}`\n"
-      atom.notifications.addWarning(content, dismissable: true)
-
-    updatingButModified.length is 0
+  getModifiedFilePathsInChanges: (changes) ->
+    modifiedEditors = atom.workspace.getTextEditors().filter (editor) -> editor.isModified()
+    modifiedFiles = _.uniq(modifiedEditors.map (editor) -> editor.getPath())
+    updatingFiles = _.uniq(changes.map ({item}) -> item.filePath)
+    updatingFiles.filter (filePath) -> filePath in modifiedFiles
 
   observeStopChanging: ->
     @editor.onDidStopChanging =>
