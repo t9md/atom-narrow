@@ -63,6 +63,10 @@ class UI
   items: []
   itemsByProvider: null # Used to cache result
   lastNarrowQuery: ''
+  modifiedState: false
+
+  isModified: ->
+    @modifiedState
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -93,7 +97,6 @@ class UI
     # (e.g multiple narrow-editor for lines provider)
     providerDashName = @provider.getDashName()
     @editor.getTitle = -> providerDashName
-    @editor.isModified = -> false
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
@@ -201,11 +204,16 @@ class UI
       'narrow-ui:refresh-force': => @refresh(force: true, moveToPrompt: true)
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt(startInsert: true)
-      'narrow-ui:update-real-file': => @updateRealFile()
       'core:move-up': (event) => @moveUpOrDown(event, 'previous')
       'core:move-down': (event) => @moveUpOrDown(event, 'next')
+      'narrow-ui:update-real-file': => @updateRealFile()
 
   updateRealFile: ->
+    return unless @isModified()
+    if settings.get('confirmOnUpdateRealFile')
+      unless atom.confirm(message: 'Update real file?', buttons: ['Update', 'Cancel']) is 0
+        return
+
     return unless @provider.supportDirectEdit
     return unless @ensureNarrowEditorIsValidState()
 
@@ -218,7 +226,7 @@ class UI
         changes.push({newText: line, item})
 
     if changes.length
-      if not @boundToEditor and (modifiedFilePaths = @getModifiedFilePathsInChanges(changes)).length
+      if not @provider.boundToEditor and (modifiedFilePaths = @getModifiedFilePathsInChanges(changes)).length
         modifiedFilePathsAsString = modifiedFilePaths.map((filePath) -> " - `#{filePath}`").join("\n")
         message = """
           Cancelled `update-real-file`.
@@ -232,6 +240,7 @@ class UI
         return
 
       @provider.updateRealFile(changes)
+      @emitModifiedStatusChanged(false)
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
   moveUpOrDown: (event, direction) ->
@@ -308,6 +317,7 @@ class UI
 
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
+      @emitModifiedStatusChanged(false)
       @emitDidRefresh()
 
   renderItems: (items) ->
@@ -346,23 +356,33 @@ class UI
 
       promptRange = @getPromptRange()
       onPrompt = (range) -> range.intersectsWith(promptRange)
-      notEmptyAndPrompt = (range) -> not range.isEmpty() and onPrompt(range)
+      isQueryModified = (newRange, oldRange) ->
+        (not newRange.isEmpty() and onPrompt(newRange)) or (not oldRange.isEmpty() and onPrompt(oldRange))
 
-      if notEmptyAndPrompt(newRange) or notEmptyAndPrompt(oldRange)
+      if isQueryModified(newRange, oldRange)
+        # is Query changed
         if @editor.hasMultipleCursors()
-          # Destroy cursors on prompt
+          # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
           for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
-          # Recover query on prompt
-          @setPrompt(@lastNarrowQuery)
+          @setPrompt(@lastNarrowQuery) # Recover query
         else
           @refresh().then =>
             if @autoPreviewOnQueryChange and @isActive()
               if @provider.boundToEditor
                 @preview()
               else
-                # Deleay immediate preview unless @provider is boundToEditor
+                # Delay immediate preview unless @provider is boundToEditor
                 @autoPreviewOnNextStopChanging = true
+      else
+        @emitModifiedStatusChanged(true)
+
+  # HACK: overwrite TextBuffer:isModified to return static state.
+  # This state is used for tabs package to show modified icon on tab.
+  emitModifiedStatusChanged: (state) ->
+    @modifiedState = state
+    @editor.buffer.isModified = -> state
+    @editor.buffer.emitModifiedStatusChanged(state)
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
