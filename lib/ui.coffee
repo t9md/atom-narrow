@@ -214,11 +214,12 @@ class UI
     for line, row in lines when @isNormalItem(item = @items[row])
       if item._lineHeader?
         line = line[item._lineHeader.length...] # Strip lineHeader
-
-      unless line is item.text
+      if line isnt item.text
         changes.push({newText: line, item})
 
     if changes.length
+      if not @boundToEditor and not @ensureChangesNotIncludeModifieFilePath(changes)
+        return
       @provider.updateRealFile(changes)
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
@@ -315,6 +316,27 @@ class UI
         return false unless line.startsWith(item._lineHeader)
 
     true
+
+  ensureChangesNotIncludeModifieFilePath: (changes) ->
+    updatingFilePaths = _.uniq((changes.map ({item}) -> item.filePath))
+    modifiedFilePaths = atom.workspace.getTextEditors()
+      .filter (editor) -> editor.isModified()
+      .map (editor) -> editor.getPath()
+    updatingButModified = _.intersection(updatingFilePaths, modifiedFilePaths)
+    if updatingButModified.length
+      content = """
+        Canceled `update-real-file`.
+        Because changeset includes **already modified file**.
+        But `narrow:#{@provider.getDashName()}` cannot detect unsaved change.
+        To use `update-real-file`, retry after saving file.
+
+        Following files are already modified.\n
+        """
+      for filePath in updatingButModified
+        content += " - `#{filePath}`\n"
+      atom.notifications.addWarning(content, dismissable: true)
+
+    updatingButModified.length is 0
 
   observeStopChanging: ->
     @editor.onDidStopChanging =>
