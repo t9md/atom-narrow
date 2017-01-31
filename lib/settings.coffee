@@ -88,6 +88,7 @@ module.exports = new Settings 'narrow',
     default: 'smartcase'
     enum: ['smartcase', 'sensitive', 'insensitive']
     description: "Case sensitivity of your query in narrow-editor"
+  confirmOnUpdateRealFile: true
 
   # Per providers settings
   # -------------------------
