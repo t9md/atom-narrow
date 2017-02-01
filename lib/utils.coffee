@@ -60,7 +60,7 @@ saveEditorState = (editor) ->
       editor.setCursorBufferPosition(cursorPosition)
     for row in foldStartRows.reverse() when not editor.isFoldedAtBufferRow(row)
       editor.foldBufferRow(row)
-    editorElement.setScrollTop(scrollTop)
+    editor.element.setScrollTop(scrollTop)
 
 requireFrom = (pack, path) ->
   packPath = atom.packages.resolvePackagePath(pack)
@@ -125,7 +125,7 @@ getVisibleEditors = ->
   atom.workspace.getPanes()
     .map (pane) -> pane.getActiveEditor()
     .filter (editor) -> editor?
-    
+
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
