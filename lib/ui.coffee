@@ -64,6 +64,7 @@ class UI
   itemsByProvider: null # Used to cache result
   lastNarrowQuery: ''
   modifiedState: null
+  readOnly: false
 
   isModified: ->
     @modifiedState
@@ -112,8 +113,9 @@ class UI
     @currentItemIndicator = new CurrentItemIndicator(@editor)
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
+    @disposables.add @onDidMoveToItemArea  => @setReadOnly(true)
+
     @disposables.add(
-      @onDidMoveToItemArea(@onMoveToItemArea.bind(this))
       @registerCommands()
       @observeChange()
       @observeStopChanging()
@@ -129,6 +131,17 @@ class UI
     @editorElement.component?.setInputEnabled(false)
     @editorElement.classList.add('read-only')
     @vmpActivateNormalMode() if @vmpIsInsertMode()
+
+  setReadOnly: (readOnly) ->
+    @readOnly = readOnly
+    if @readOnly
+      @editorElement.component?.setInputEnabled(false)
+      @editorElement.classList.add('read-only')
+      @vmpActivateNormalMode() if @vmpIsInsertMode()
+    else
+      @editorElement.component.setInputEnabled(true)
+      @editorElement.classList.remove('read-only')
+      @vmpActivateInsertMode() if @vmpIsNormalMode()
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
@@ -526,10 +539,7 @@ class UI
   moveToPrompt: ({startInsert}={}) ->
     @withIgnoreCursorMove =>
       @editor.setCursorBufferPosition(@getPromptRange().end)
-      if startInsert
-        @editorElement.component.setInputEnabled(true)
-        @editorElement.classList.remove('read-only')
-        @vmpActivateInsertMode() if @vmpIsNormalMode()
+      @setReadOnly(false) if startInsert
       @emitDidMoveToPrompt()
 
   isNormalItemRow: (row) ->
