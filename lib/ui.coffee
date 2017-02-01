@@ -13,7 +13,7 @@ settings = require './settings'
 Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
 
-class PromptGutter
+class CurrentItemIndicator
   constructor: (@editor) ->
     @gutter = @editor.addGutter(name: 'narrow-prompt', priority: 100)
 
@@ -112,7 +112,7 @@ class UI
     @disposables.add @onDidMoveToItemArea =>
       @vmpActivateNormalMode() if @vmpIsInsertMode()
 
-    @promptGutter = new PromptGutter(@editor)
+    @currentItemIndicator = new CurrentItemIndicator(@editor)
 
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
@@ -198,7 +198,7 @@ class UI
     @activateProviderPane()
 
     @provider?.destroy?()
-    @promptGutter?.destroy()
+    @currentItemIndicator?.destroy()
     @rowMarker?.destroy()
 
   registerCommands: ->
@@ -544,7 +544,7 @@ class UI
   selectItemForRow: (row) ->
     item = @items[row]
     if @isNormalItem(item)
-      @promptGutter.setToRow(row)
+      @currentItemIndicator.setToRow(row)
       @selectedItem = item
 
   getSelectedItem: ->
