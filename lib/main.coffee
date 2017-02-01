@@ -68,7 +68,12 @@ module.exports =
     @subscriptions?.dispose()
     {@subscriptions} = {}
 
-  consumeVim: ({getEditorState}) ->
+  consumeVim: ({getEditorState, observeVimStates}) ->
+    @subscriptions.add observeVimStates (vimState) ->
+      if isNarrowEditor(vimState.editor)
+        vimState.modeManager.onDidActivateMode ({mode, submode}) ->
+          Ui.get(vimState.editor).setReadOnly(false) if mode is 'insert'
+
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()
       vimState = getEditorState(editor)
