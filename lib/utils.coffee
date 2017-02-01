@@ -121,6 +121,9 @@ paneForItem = (item) ->
 isNarrowEditor = (editor) ->
   isTextEditor(editor) and editor.element.classList.contains('narrow-editor')
 
+isNarrowUi = (item) ->
+  item?.classList?.contains('narrow-ui')
+
 getVisibleEditors = ->
   atom.workspace.getPanes()
     .map (pane) -> pane.getActiveEditor()
@@ -141,6 +144,7 @@ module.exports = {
   setBufferRow
   isTextEditor
   isNarrowEditor
+  isNarrowUi
   paneForItem
   getVisibleEditors
 }

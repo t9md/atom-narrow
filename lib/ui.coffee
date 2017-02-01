@@ -34,20 +34,20 @@ module.exports =
 class UI
   # UI static
   # -------------------------
-  @uiByEditor: new Map()
+  @uiByView: new Map()
   @unregister: (ui) ->
-    @uiByEditor.delete(ui.editor)
+    @uiByView.delete(ui.view)
     @updateWorkspaceClassList()
 
   @register: (ui) ->
-    @uiByEditor.set(ui.editor, ui)
+    @uiByView.set(ui.view, ui)
     @updateWorkspaceClassList()
 
-  @get: (editor) ->
-    @uiByEditor.get(editor)
+  @get: (view) ->
+    @uiByView.get(view)
 
   @updateWorkspaceClassList: ->
-    atom.views.getView(atom.workspace).classList.toggle('has-narrow', @uiByEditor.size)
+    atom.views.getView(atom.workspace).classList.toggle('has-narrow', @uiByView.size)
 
   # UI.prototype
   # -------------------------
@@ -61,8 +61,8 @@ class UI
   ignoreCursorMove: false
   destroyed: false
   items: []
-  itemsByProvider: null # Used to cache result
-  lastNarrowQuery: ''
+  cachedItems: null # Used to cache result
+  lastQuery: ''
   modifiedState: null
   readOnly: false
 
@@ -92,33 +92,42 @@ class UI
     @autoPreview = @provider.getConfig('autoPreview')
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
 
-    # Special item used to translate narrow editor row to items without pain
-    @promptItem = Object.freeze({_prompt: true, skip: true})
-    @itemAreaStart = Object.freeze(new Point(1, 0))
-
     # Setup narrow-editor
     # -------------------------
     # Hide line number gutter for empty indent provider
+    @queryEditor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false, mini: true)
+    @queryEditorElement = @queryEditor.element
+    providerDashName = @provider.getDashName()
+    @queryEditorElement.classList.add('narrow', 'narrow-query-editor', providerDashName)
+
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: @provider.indentTextForLineHeader)
+    @editorElement = @editor.element
+    @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
+
+    @editor.onDidDestroy(@destroy.bind(this))
+
+    @currentItemIndicator = new CurrentItemIndicator(@editor)
+    @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
+    @disposables.add @onDidMoveToItemArea  => @setReadOnly(true)
+
+    @view = document.createElement('div')
+    @view.classList.add('narrow', 'narrow-ui', providerDashName)
+    @view.appendChild(@queryEditorElement)
+    @view.appendChild(@editorElement)
+
+    @editorElement.addEventListener('focus', @focused.bind(this))
+    @queryEditorElement.addEventListener('focus', @focused.bind(this))
 
     # FIXME
     # Opening multiple narrow-editor for same provider get title `undefined`
     # (e.g multiple narrow-editor for lines provider)
     providerDashName = @provider.getDashName()
-    @editor.getTitle = -> providerDashName
-    @editor.onDidDestroy(@destroy.bind(this))
-    @editorElement = @editor.element
-    @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
-
-    @currentItemIndicator = new CurrentItemIndicator(@editor)
-    @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
-
-    @disposables.add @onDidMoveToItemArea  => @setReadOnly(true)
+    @view.getTitle = -> providerDashName
 
     @disposables.add(
       @registerCommands()
-      @observeChange()
-      @observeStopChanging()
+      @observeQueryChange()
+      @observeQueryStopChanging()
       @observeCursorMove()
       @observeStopChangingActivePaneItem()
     )
@@ -167,17 +176,25 @@ class UI
           @setSyncToEditor(item)
 
   start: ->
-    activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
+    # activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
+    activatePaneItemInAdjacentPane(@view, split: settings.get('directionToOpen'))
     @grammar.activate()
-    @setPrompt(@input)
+    # @setPrompt(@input)
+    @queryEditor.setText(@input ? '')
     @moveToPrompt(startInsert: true)
     @refresh()
 
   getPane: ->
-    paneForItem(@editor)
+    paneForItem(@view)
 
   isActive: ->
     isActiveEditor(@editor)
+    # hasFocus: ->
+
+  hasFocus: ->
+    document.activeElement is @view or @view.contains(document.activeElement)
+    # this is document.activeElement or @contains(document.activeElement)
+
 
   isPromptRow: (row) ->
     row is 0
@@ -185,17 +202,22 @@ class UI
   focus: ->
     pane = @getPane()
     pane.activate()
-    pane.activateItem(@editor)
+    pane.activateItem(@view)
+    # if
+    if @focusedElement is @queryEditorElement
+      @queryEditorElement.focus()
+    else
+      @editorElement.focus()
 
   focusPrompt: ->
-    if @isActive() and @isPromptRow(@editor.getCursorBufferPosition().row)
+    if @hasFocus() and @isQueryFocused() #isPromptRow(@editor.getCursorBufferPosition().row)
       @activateProviderPane()
     else
-      @focus() unless @isActive()
+      @focus() unless @hasFocus()
       @moveToPrompt(startInsert: true)
 
   toggleFocus: ->
-    if @isActive()
+    if @hasFocus()
       @activateProviderPane()
     else
       @focus()
@@ -210,14 +232,16 @@ class UI
     @syncSubcriptions?.dispose()
     @disposables.dispose()
     @editor.destroy()
+    @view.remove()
     @activateProviderPane()
 
     @provider?.destroy?()
     @currentItemIndicator?.destroy()
+
     @rowMarker?.destroy()
 
   registerCommands: ->
-    atom.commands.add @editorElement,
+    atom.commands.add @view,
       'core:confirm': => @confirm()
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:preview-item': => @preview()
@@ -312,45 +336,33 @@ class UI
     @autoPreview = not @autoPreview
     @preview() if @autoPreview
 
-  getNarrowQuery: ->
-    @lastNarrowQuery = @editor.lineTextForBufferRow(0)
+  getQuery: ->
+    @lastQuery = @queryEditor.getText()
 
   refresh: ({force, moveToPrompt}={}) ->
     if force
-      @itemsByProvider = null
+      @cachedItems = null
     if moveToPrompt
       @moveToPrompt()
 
-    # In case prompt accidentaly mutated
-    eof = @editor.getEofBufferPosition()
-    if eof.isLessThan(@itemAreaStart)
-      eof = @setPrompt().end
-      @moveToPrompt()
-
-    filterSpec = getFilterSpecForQuery(@getNarrowQuery())
-
-    Promise.resolve(@itemsByProvider ? @provider.getItems()).then (items) =>
+    filterSpec = getFilterSpecForQuery(@getQuery())
+    Promise.resolve(@cachedItems ? @provider.getItems()).then (items) =>
       if @provider.supportCacheItems
-        @itemsByProvider = items
+        @cachedItems = items
       items = @provider.filterItems(items, filterSpec)
-      @items = [@promptItem, items...]
+      @items = items
 
-      @renderItems(items)
+      texts = items.map (item) => @provider.viewForItem(item)
+      @editor.setTextInBufferRange(@editor.buffer.getRange(), texts.join("\n"), undo: 'skip')
+      @editorLastRow = @editor.getLastBufferRow()
 
-      # No need to highlight excluded items
+      # No need to highlight excluded items, so pass 'include' only.
       @grammar.update(filterSpec.include)
 
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
       @setModifiedState(false)
       @emitDidRefresh()
-
-  renderItems: (items) ->
-    texts = items.map (item) => @provider.viewForItem(item)
-    itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
-    @withIgnoreChange =>
-      range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
-      @editorLastRow = range.end.row
 
   ensureNarrowEditorIsValidState: ->
     unless @editorLastRow is @editor.getLastBufferRow()
@@ -360,45 +372,27 @@ class UI
     if @provider.showLineHeader
       for line, row in @editor.buffer.getLines() when @isNormalItem(item = @items[row])
         return false unless line.startsWith(item._lineHeader)
-
     true
 
   getModifiedFilePathsInChanges: (changes) ->
     _.uniq(changes.map ({item}) -> item.filePath).filter (filePath) ->
       atom.project.isPathModified(filePath)
 
-  observeStopChanging: ->
-    @editor.onDidStopChanging =>
+  observeQueryChange: ->
+    @queryEditor.buffer.onDidChange ({newText}) =>
+      @refresh().then =>
+        if @autoPreviewOnQueryChange and @isActive()
+          if @provider.boundToEditor
+            @preview()
+          else
+            # Delay immediate preview unless @provider is boundToEditor
+            @autoPreviewOnNextStopChanging = true
+
+  observeQueryStopChanging: ->
+    @queryEditor.onDidStopChanging =>
       if @autoPreviewOnNextStopChanging
         @preview()
         @autoPreviewOnNextStopChanging = false
-
-  observeChange: ->
-    @editor.buffer.onDidChange ({newRange, oldRange}) =>
-      return if @ignoreChange
-
-      promptRange = @getPromptRange()
-      onPrompt = (range) -> range.intersectsWith(promptRange)
-      isQueryModified = (newRange, oldRange) ->
-        (not newRange.isEmpty() and onPrompt(newRange)) or (not oldRange.isEmpty() and onPrompt(oldRange))
-
-      if isQueryModified(newRange, oldRange)
-        # is Query changed
-        if @editor.hasMultipleCursors()
-          # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
-          for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
-            selection.destroy()
-          @setPrompt(@lastNarrowQuery) # Recover query
-        else
-          @refresh().then =>
-            if @autoPreviewOnQueryChange and @isActive()
-              if @provider.boundToEditor
-                @preview()
-              else
-                # Delay immediate preview unless @provider is boundToEditor
-                @autoPreviewOnNextStopChanging = true
-      else
-        @setModifiedState(true)
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
@@ -427,9 +421,9 @@ class UI
       newRow = newBufferPosition.row
       oldRow = oldBufferPosition.row
 
-      if @isPromptRow(newRow)
-        @emitDidMoveToPrompt()
-        return
+      # if @isPromptRow(newRow)
+      #   @emitDidMoveToPrompt()
+      #   return
 
       if @isNormalItemRow(newRow)
         @selectItemForRow(newRow)
@@ -535,14 +529,30 @@ class UI
       # move to current item
       @editor.setCursorBufferPosition([row, 0])
 
-  getRowForSelectedItem: ->
-    @getRowForItem(@getSelectedItem())
+  focused: (event) ->
+    @focusedElement = event.target
+
+  isQueryFocused: ->
+    @focusedElement is @queryEditorElement
+
+  isItemAreaFocused: ->
+    @focusedElement is @editorElement
+
+  focusQuery: ->
+    @queryEditorElement.focus()
+
+  focusItemArea: ->
+    @editorElement.focus()
 
   moveToPrompt: ({startInsert}={}) ->
-    @withIgnoreCursorMove =>
-      @editor.setCursorBufferPosition(@getPromptRange().end)
-      @setReadOnly(false) if startInsert
-      @emitDidMoveToPrompt()
+    @queryEditorElement.focus()
+    # @withIgnoreCursorMove =>
+    #   @editor.setCursorBufferPosition(@getPromptRange().end)
+    #   @setReadOnly(false) if startInsert
+    #   @emitDidMoveToPrompt()
+
+  getRowForSelectedItem: ->
+    @getRowForItem(@getSelectedItem())
 
   isNormalItemRow: (row) ->
     @isNormalItem(@items[row])
@@ -569,16 +579,6 @@ class UI
 
   getPromptRange: ->
     @editor.bufferRangeForBufferRow(0)
-
-  # Return range
-  setPrompt: (text='') ->
-    if @editor.getLastBufferRow() is 0
-      text += "\n"
-
-    range = null
-    @withIgnoreChange =>
-      range = @editor.setTextInBufferRange(@getPromptRange(0), text)
-    range
 
   setSyncToEditor: (editor) ->
     @syncSubcriptions = new CompositeDisposable
