@@ -190,8 +190,12 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
   'cmd-f': 'narrow:focus'
   'cmd-i': 'narrow:focus-prompt' # cmd-i to return to calling editor.
-  # Danger, apply change on narrow-editor to real file by `ctrl-cmd-s`.
+  # Danger: apply change on narrow-editor to real file by `cmd-s`.
   'cmd-s': 'narrow-ui:update-real-file'
+
+'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
+  # Danger: I use direct-edit very frequently, so intentionally recover `i` of vim-mode-plus.
+  'i': 'vim-mode-plus:activate-insert-mode'
 
 # NOTE: following keymap prevent me to type `;`, `[`, `]` in insert-mode.
 # Which is very problematic in direct-edit mode since I can not insert these chars.

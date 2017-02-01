@@ -1,3 +1,15 @@
+# 0.16.0:
+- Improve: Usability of direc-edit( `update-real-file` ). #87
+  - If you keymap `cmd-s`( if you are macOS user ), then you can apply changes in `narrow-editor` by `cmd-s`.
+  - Overwrite, TextBuffer's `isModified` function to update modified icon on tab(provided by core `tabs` package).
+  - confirm user before `update-real-file` actually start updating.
+    - New config option `confirmOnUpdateRealFile`( default `true` ).
+    - If this set to `false`, no longer ask before `update-real-file`, danger!
+- Fix: When `update-real-file` on `search` result and filePath include unsaved modification, result in unwanted update. #85
+  - Since `search` use `ag` which search match from saved file on disk
+  - In this situation, now cancel update by warning user.
+- Doc: Update my keymaps on README.
+
 # 0.15.0: BIG: auto-sync/refresh for all providers, auto-refresh item on each focus change.
 - New: Now all providers sync to current active editor. #81
   - In previous release only boundToEditor provider(e.g. `lines`, `fold` etc) support sync.
