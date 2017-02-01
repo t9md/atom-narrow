@@ -121,6 +121,11 @@ paneForItem = (item) ->
 isNarrowEditor = (editor) ->
   isTextEditor(editor) and editor.element.classList.contains('narrow-editor')
 
+getVisibleEditors = ->
+  atom.workspace.getPanes()
+    .map (pane) -> pane.getActiveEditor()
+    .filter (editor) -> editor?
+    
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
@@ -137,4 +142,5 @@ module.exports = {
   isTextEditor
   isNarrowEditor
   paneForItem
+  getVisibleEditors
 }

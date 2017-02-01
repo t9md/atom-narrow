@@ -1,11 +1,12 @@
 {CompositeDisposable} = require 'atom'
 settings = require './settings'
-Ui = null
-{isNarrowEditor, getCurrentWord} = require('./utils')
+Ui = require './ui'
+
+{isNarrowEditor, getCurrentWord, getVisibleEditors} = require('./utils')
 
 module.exports =
   config: settings.config
-  currentNarrowEditor: null
+  lastFocusedNarrowEditor: null
   providers: []
 
   activate: ->
@@ -13,7 +14,7 @@ module.exports =
     settings.removeDeprecated()
 
     @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @currentNarrowEditor = item if isNarrowEditor(item)
+      @lastFocusedNarrowEditor = item if isNarrowEditor(item)
 
     @subscriptions.add atom.commands.add 'atom-text-editor',
       # Shared commands
@@ -46,10 +47,13 @@ module.exports =
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', currentWord: true)
 
   getUi: ->
-    @getUiForEditor(@currentNarrowEditor)
-
-  getUiForEditor: (editor) ->
-    (Ui ?= require './ui').get(editor)
+    if ui = Ui.get(@lastFocusedNarrowEditor)
+      ui
+    else
+      for editor in getVisibleEditors() when isNarrowEditor(editor)
+        return Ui.get(editor)
+      for editor in atom.workspace.getTextEditors() when isNarrowEditor(editor)
+        return Ui.get(editor)
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
