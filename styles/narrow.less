@@ -56,3 +56,25 @@ atom-text-editor.narrow-editor {
     }
   }
 }
+
+.narrow-ui {
+  padding: @component-padding / 2;
+  background: @pane-item-background-color;
+  color: @text-color;
+
+  atom-text-editor {
+    background: @syntax-background-color;
+    // margin:
+    border: 0px solid darken(@syntax-background-color, 10%);
+    margin: 2px 0;
+  }
+  atom-text-editor[mini] {
+    border: none;
+    background: @input-background-color;
+
+    &.is-focused {
+      background: @input-background-color;
+      box-shadow: none;
+    }
+  }
+}
