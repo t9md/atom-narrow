@@ -153,6 +153,7 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
       closeOnConfirm: false
     Symbols:
       closeOnConfirm: false
+    confirmOnUpdateRealFile: false
 ```
 
 
