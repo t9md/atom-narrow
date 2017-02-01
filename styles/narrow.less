@@ -30,16 +30,29 @@ atom-text-editor {
 
 // Hide linumber gutter but still shows icon to fold/un-fold.
 // https://discuss.atom.io/t/use-the-gutter-without-enabling-linenumbers/2461/16
-.narrow-editor .gutter {
-  .line-numbers {
-    text-indent: 999em;
-    width: 23px;
-    overflow: hidden;
-    position: relative;
-    .icon-right {
-      position: absolute;
-      left: 0;
-      text-indent: 0;
+atom-text-editor.narrow-editor {
+  .gutter {
+    .line-numbers {
+      text-indent: 999em;
+      width: 23px;
+      overflow: hidden;
+      position: relative;
+      .icon-right {
+        position: absolute;
+        left: 0;
+        text-indent: 0;
+      }
+    }
+  }
+  &.read-only {
+    &.is-focused {
+      .cursor {
+        border: none;
+        background: none;
+        opacity: 0.5;
+        background-color: @syntax-cursor-color;
+        visibility: visible;
+      }
     }
   }
 }
