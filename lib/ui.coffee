@@ -227,6 +227,8 @@ class UI
       'narrow-ui:refresh-force': => @refresh(force: true, moveToPrompt: true)
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt(startInsert: true)
+      'narrow-ui:start-insert': => @setReadOnly(false)
+      'narrow-ui:stop-insert': => @setReadOnly(true)
       'core:move-up': (event) => @moveUpOrDown(event, 'previous')
       'core:move-down': (event) => @moveUpOrDown(event, 'next')
       'narrow-ui:update-real-file': => @updateRealFile()
