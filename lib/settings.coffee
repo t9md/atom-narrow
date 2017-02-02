@@ -80,10 +80,15 @@ newProviderConfig = (otherProperties) ->
   }
 
 module.exports = new Settings 'narrow',
+  autoShiftReadOnlyOnMoveToItemArea:
+    default: true
+    description: "When cursor in narrow-ui moved to item area"
+
   directionToOpen:
     default: 'right'
     enum: ['right', 'down']
     description: "Where to open narrow-editor"
+
   caseSensitivityForNarrowQuery:
     default: 'smartcase'
     enum: ['smartcase', 'sensitive', 'insensitive']

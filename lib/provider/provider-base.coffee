@@ -43,13 +43,12 @@ class ProviderBase
     Promise.resolve(true)
 
   bindEditor: (editor) ->
-    if @editor isnt editor
-      @editorSubscriptions?.dispose()
-      @editorSubscriptions = new CompositeDisposable
-      oldEditor = @editor
-      @editor = newEditor = editor
-      @restoreEditorState = saveEditorState(@editor)
-      @onBindEditor({oldEditor, newEditor})
+    @editorSubscriptions?.dispose()
+    @editorSubscriptions = new CompositeDisposable
+    oldEditor = @editor
+    @editor = newEditor = editor
+    @restoreEditorState = saveEditorState(@editor)
+    @onBindEditor({oldEditor, newEditor})
 
   getPane: ->
     # If editor was pending item, it will destroyed on next pending open

@@ -97,7 +97,9 @@ class UI
     @currentItemIndicator = new ItemIndicator(@editor)
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
-    @disposables.add @onDidMoveToItemArea  => @setReadOnly(true)
+    @disposables.add @onDidMoveToItemArea =>
+      if settings.get('autoShiftReadOnlyOnMoveToItemArea')
+        @setReadOnly(true)
 
     @disposables.add(
       @registerCommands()
@@ -140,15 +142,16 @@ class UI
         return
 
       if @provider.boundToEditor
-        @provider.bindEditor(item)
-        @refresh(force: true).then =>
-          @syncToEditor(item)
-          @setSyncToEditor(item)
+        if @provider.editor is item
+          @startSyncToEditor(item)
+        else
+          @provider.bindEditor(item)
+          @refresh(force: true).then =>
+            @startSyncToEditor(item)
       else
         filePath = item.getPath()
         if @items.some((item) -> item.filePath is filePath)
-          @syncToEditor(item)
-          @setSyncToEditor(item)
+          @startSyncToEditor(item)
 
   start: ->
     activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
@@ -214,7 +217,9 @@ class UI
       'narrow-ui:preview-next-item': => @previewNextItem()
       'narrow-ui:preview-previous-item': => @previewPreviousItem()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
-      'narrow-ui:refresh-force': => @refresh(force: true, moveToPrompt: true)
+      'narrow-ui:refresh-force': =>
+        @refresh(force: true)
+        @moveToPrompt(startInsert: true)
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt(startInsert: true)
       'narrow-ui:start-insert': => @setReadOnly(false)
@@ -314,8 +319,6 @@ class UI
   refresh: ({force, moveToPrompt}={}) ->
     if force
       @cachedItems = null
-    if moveToPrompt
-      @moveToPrompt()
 
     filterSpec = getFilterSpecForQuery(@getQuery())
 
@@ -570,7 +573,8 @@ class UI
     range = @editor.setTextInBufferRange(@getPromptRange(0), text)
     range
 
-  setSyncToEditor: (editor) ->
+  startSyncToEditor: (editor) ->
+    @syncToEditor(editor)
     @syncSubcriptions = new CompositeDisposable
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
       if isActiveEditor(editor) and
