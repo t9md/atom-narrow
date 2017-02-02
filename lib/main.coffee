@@ -20,7 +20,10 @@ module.exports =
       # Shared commands
       'narrow:focus': => @getUi()?.toggleFocus()
       'narrow:focus-prompt': => @getUi()?.focusPrompt()
-      'narrow:refresh': => @getUi()?.refresh(force: true)
+      'narrow:refresh': =>
+        if (ui = @getUi())?
+          ui.refresh(force: true)
+          ui.moveToPrompt() if ui.isActive()
       'narrow:close': => @getUi()?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()
@@ -72,7 +75,11 @@ module.exports =
     @subscriptions.add observeVimStates (vimState) ->
       if isNarrowEditor(vimState.editor)
         vimState.modeManager.onDidActivateMode ({mode, submode}) ->
-          Ui.get(vimState.editor).setReadOnly(false) if mode is 'insert'
+          switch mode
+            when 'insert'
+              Ui.get(vimState.editor).setReadOnly(false)
+            when 'normal'
+              Ui.get(vimState.editor).setReadOnly(true)
 
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()

@@ -78,9 +78,6 @@ class UI
       'narrow-ui:preview-next-item': => @previewNextItem()
       'narrow-ui:preview-previous-item': => @previewPreviousItem()
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
-      'narrow-ui:refresh-force': =>
-        @refresh(force: true)
-        @moveToPrompt()
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt()
       'narrow-ui:start-insert': => @setReadOnly(false)
@@ -177,7 +174,7 @@ class UI
     # In this case, user see modified icon(mark) on tab.
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
-    
+
     attachedPromise = new Promise (resolve) =>
       disposable = @editorElement.onDidAttach ->
         disposable.dispose()
@@ -438,24 +435,17 @@ class UI
       newRow = newBufferPosition.row
       oldRow = oldBufferPosition.row
 
+      if isHeaderRow = @isHeaderRow(newRow)
+        direction = if newRow > oldRow then 'next' else 'previous'
+        newRow = @findRowForNormalOrPromptItem(newRow, direction)
+
       if @isPromptRow(newRow)
         @emitDidMoveToPrompt()
-        return
-
-      if @isNormalItemRow(newRow)
-        @selectItemForRow(newRow)
-        @emitDidMoveToItemArea() if @isPromptRow(oldRow)
       else
-        direction = if newRow > oldRow then 'next' else 'previous'
-        row = @findRowForNormalOrPromptItem(newRow, direction)
-        if @isPromptRow(row)
-          @emitDidMoveToPrompt()
-        else
-          @selectItemForRow(row)
-          @moveToSelectedItem()
-
-      if @autoPreview and not @preventAutoPreview
-        @preview()
+        @selectItemForRow(newRow)
+        @moveToSelectedItem() if isHeaderRow
+        @emitDidMoveToItemArea() if @isPromptRow(oldRow)
+        @preview() if @autoPreview and not @preventAutoPreview
 
   findClosestItemForEditor: (editor) ->
     # Detect item
@@ -478,18 +468,20 @@ class UI
     return if @preventSyncToEditor
     if item = @findClosestItemForEditor(editor)
       @selectItem(item)
-      @moveToSelectedItem() unless @isActive()
+      unless @isActive()
+        {row} = @editor.getCursorBufferPosition()
+        @moveToSelectedItem()
+        @emitDidMoveToItemArea() if @isPromptRow(row)
 
   moveToSelectedItem: ->
     if (row = @getRowForSelectedItem()) >= 0
-      oldPosition = @editor.getCursorBufferPosition()
+      {column} = @editor.getCursorBufferPosition()
       @withIgnoreCursorMove =>
         # Manually set cursor to center to avoid scrollTop drastically changes
         # when refresh and auto-sync.
-        point = [row, oldPosition.column]
+        point = [row, column]
         @editor.setCursorBufferPosition(point, autoscroll: false)
         @editor.scrollToBufferPosition(point, center: true)
-        @emitDidMoveToItemArea() if @isPromptRow(oldPosition.row)
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()
@@ -555,6 +547,9 @@ class UI
 
   isNormalItemRow: (row) ->
     @isNormalItem(@items[row])
+
+  isHeaderRow: (row) ->
+    not @isPromptRow(row) and not @isNormalItemRow(row)
 
   hasNormalItem: ->
     normalItems = @items.filter (item) => @isNormalItem(item)
