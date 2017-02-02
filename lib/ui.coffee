@@ -49,6 +49,7 @@ class UI
   lastNarrowQuery: ''
   modifiedState: null
   readOnly: false
+  protected: false
 
   isModified: ->
     @modifiedState
@@ -74,6 +75,7 @@ class UI
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
+      'narrow-ui:protect': => @setProtected(true)
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:preview-next-item': => @previewNextItem()
       'narrow-ui:preview-previous-item': => @previewPreviousItem()
@@ -133,6 +135,11 @@ class UI
     @editorElement.component?.setInputEnabled(false)
     @editorElement.classList.add('read-only')
     @vmpActivateNormalMode() if @vmpIsInsertMode()
+
+  isProtected: ->
+    @protected
+
+  setProtected: (@protected) ->
 
   setReadOnly: (readOnly) ->
     @readOnly = readOnly

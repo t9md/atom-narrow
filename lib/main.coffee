@@ -24,7 +24,7 @@ module.exports =
         if (ui = @getUi())?
           ui.refresh(force: true)
           ui.moveToPrompt() if ui.isActive()
-      'narrow:close': => @getUi()?.destroy()
+      'narrow:close': => @getUi(skipProtected: true)?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()
 
@@ -49,14 +49,25 @@ module.exports =
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', currentWord: true)
 
-  getUi: ->
+  getUi: ({skipProtected}={}) ->
     if ui = Ui.get(@lastFocusedNarrowEditor)
-      ui
-    else
-      for editor in getVisibleEditors() when isNarrowEditor(editor)
+      if skipProtected
+        return ui unless ui.isProtected()
+      else
+        return ui
+
+    visibleEditors = getVisibleEditors()
+    invisibleNarrowEditors = []
+    narrowEditors = atom.workspace.getTextEditors().filter (editor) -> isNarrowEditor(editor)
+    if skipProtected
+      narrowEditors = narrowEditors.filter (editor) -> not Ui.get(editor).isProtected()
+
+    for editor in narrowEditors
+      if editor in visibleEditors
         return Ui.get(editor)
-      for editor in atom.workspace.getTextEditors() when isNarrowEditor(editor)
-        return Ui.get(editor)
+      else
+        invisibleNarrowEditors.push(editor)
+    Ui.get(otherEditors[0]) if invisibleNarrowEditors[0]?
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
