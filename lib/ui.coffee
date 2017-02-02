@@ -153,7 +153,10 @@ class UI
   start: ->
     activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
     @grammar.activate()
-    @setPrompt(@input)
+    if @input
+      @setPrompt(@input)
+    else
+      @withIgnoreChange => @setPrompt(@input)
     @moveToPrompt(startInsert: true)
     @refresh()
 
