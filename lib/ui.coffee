@@ -173,14 +173,27 @@ class UI
           @startSyncToEditor(item)
 
   start: ->
+    # When initial getItems() take very long time, it means refresh get delayed.
+    # In this case, user see modified icon(mark) on tab.
+    # Explicitly setting modified start here prevent this
+    @setModifiedState(false)
+    
+    attachedPromise = new Promise (resolve) =>
+      disposable = @editorElement.onDidAttach ->
+        disposable.dispose()
+        resolve()
+
     activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
-    @grammar.activate()
-    if @input
-      @setPrompt(@input)
-    else
-      @withIgnoreChange => @setPrompt(@input)
-    @moveToPrompt()
-    @refresh()
+
+    attachedPromise.then =>
+      @grammar.activate()
+      if @input
+        @setPrompt(@input)
+      else
+        @withIgnoreChange => @setPrompt(@input)
+      @moveToPrompt()
+      @refresh()
+
 
   getPane: ->
     paneForItem(@editor)
