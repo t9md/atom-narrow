@@ -2,7 +2,7 @@
 settings = require './settings'
 Ui = require './ui'
 
-{isNarrowEditor, getCurrentWord, getVisibleEditors} = require('./utils')
+{isNarrowEditor, getCurrentWord, getVisibleEditors} = require './utils'
 
 module.exports =
   config: settings.config
