@@ -12,23 +12,7 @@ _ = require 'underscore-plus'
 settings = require './settings'
 Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
-
-class CurrentItemIndicator
-  constructor: (@editor) ->
-    @gutter = @editor.addGutter(name: 'narrow-prompt', priority: 100)
-
-    @item = document.createElement('span')
-    @item.textContent = " > "
-
-  setToRow: (row) ->
-    @marker?.destroy()
-    @marker = @editor.markBufferPosition([row, 0])
-    @gutter.decorateMarker @marker,
-      class: "narrow-ui-selected-row"
-      item: @item
-
-  destroy: ->
-    @marker?.destroy()
+ItemIndicator = require './item-indicator'
 
 module.exports =
 class UI
@@ -61,7 +45,7 @@ class UI
   ignoreCursorMove: false
   destroyed: false
   items: []
-  itemsByProvider: null # Used to cache result
+  cachedItems: null # Used to cache result
   lastNarrowQuery: ''
   modifiedState: null
   readOnly: false
@@ -110,7 +94,7 @@ class UI
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
 
-    @currentItemIndicator = new CurrentItemIndicator(@editor)
+    @currentItemIndicator = new ItemIndicator(@editor)
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
     @disposables.add @onDidMoveToItemArea  => @setReadOnly(true)
@@ -321,7 +305,7 @@ class UI
 
   refresh: ({force, moveToPrompt}={}) ->
     if force
-      @itemsByProvider = null
+      @cachedItems = null
     if moveToPrompt
       @moveToPrompt()
 
@@ -333,9 +317,9 @@ class UI
 
     filterSpec = getFilterSpecForQuery(@getNarrowQuery())
 
-    Promise.resolve(@itemsByProvider ? @provider.getItems()).then (items) =>
+    Promise.resolve(@cachedItems ? @provider.getItems()).then (items) =>
       if @provider.supportCacheItems
-        @itemsByProvider = items
+        @cachedItems = items
       items = @provider.filterItems(items, filterSpec)
       @items = [@promptItem, items...]
 
