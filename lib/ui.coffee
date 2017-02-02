@@ -300,7 +300,7 @@ class UI
     @autoPreview = not @autoPreview
     @preview() if @autoPreview
 
-  getNarrowQuery: ->
+  getQuery: ->
     @lastNarrowQuery = @editor.lineTextForBufferRow(0)
 
   refresh: ({force, moveToPrompt}={}) ->
@@ -315,7 +315,7 @@ class UI
       eof = @setPrompt().end
       @moveToPrompt()
 
-    filterSpec = getFilterSpecForQuery(@getNarrowQuery())
+    filterSpec = getFilterSpecForQuery(@getQuery())
 
     Promise.resolve(@cachedItems ? @provider.getItems()).then (items) =>
       if @provider.supportCacheItems
