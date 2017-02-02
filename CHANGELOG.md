@@ -1,3 +1,24 @@
+# 0.17.0: read-only mode for non-vim-mode-plus user, performant auto-preview
+- New, Breaking: #88, #62 read-only item area as like vim for non-vim-mode-plus user
+  - If you don't like, you can change `autoShiftReadOnlyOnMoveToItemArea`.
+  - In `read-only` mode
+    - `j`, `k` to move-up/down in item-area.
+    - `i` or `a` to start insert on query-prompt etc.
+- New `autoShiftReadOnlyOnMoveToItemArea` setting( default `true` )
+  - If this set to `true`, When cursor move to item area in `narrow-editor`, automatically set editor to `read-only` mode.
+  - This setting affects both vim-mode-plus and non-vim-mode-plus user.
+- Breaking: Key map tweaking, update README to reflect new keymap.
+  - `tab` is no longer mapped to `narrow-ui:move-to-prompt-or-selected-item`( maybe I will deprecate it in future ).
+- Breaking: `narrow-ui:refresh-force` command since its duplicating globally available `narrow:refresh`.
+- Improve: New `narrow:focus` never fail to focus to ui in workspace #84.
+  - So you can close all `narrow-editor` one by one by repeating `ctrl-g`.
+- Improve: #91 Now auto preview don't change focused item and cursor position unnecessarily.
+  - As a result, auto-preview get light faster.
+- Improve: Auto preview at initial invocation when initial query input was provided( `-by-current-word` situation).
+  - Tweak `tab`( `preview-next-item` ) behavior in query-prompt.
+    - Don't skip first item on first time `tab` if it's not yet auto-previewed.
+- Improve: Cleanup, avoid unnecessary auto refresh when auto-syncing editor.
+
 # 0.16.0:
 - Improve: Usability of direc-edit( `update-real-file` ). #87
   - If you keymap `cmd-s`( if you are macOS user ), then you can apply changes in `narrow-editor` by `cmd-s`.
