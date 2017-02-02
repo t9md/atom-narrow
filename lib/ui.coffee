@@ -99,10 +99,6 @@ class UI
 
     @disposables.add @onDidMoveToItemArea  => @setReadOnly(true)
 
-    # [FIXME] While in dev
-    # @disposables.add atom.workspace.onDidChangeActivePaneItem (item) ->
-    #   console.log 'activePaneItemChange', item
-
     @disposables.add(
       @registerCommands()
       @observeChange()
@@ -189,8 +185,11 @@ class UI
       @focus()
 
   activateProviderPane: ->
-    if (pane = @provider.getPane()) and pane.isAlive()
+    if pane = @provider.getPane()
       pane.activate()
+      activeItem = pane.getActiveItem()
+      if isTextEditor(activeItem)
+        activeItem.scrollToCursorPosition()
 
   destroy: ->
     return if @destroyed
@@ -309,12 +308,6 @@ class UI
     if moveToPrompt
       @moveToPrompt()
 
-    # In case prompt accidentaly mutated
-    eof = @editor.getEofBufferPosition()
-    if eof.isLessThan(@itemAreaStart)
-      eof = @setPrompt().end
-      @moveToPrompt()
-
     filterSpec = getFilterSpecForQuery(@getQuery())
 
     Promise.resolve(@cachedItems ? @provider.getItems()).then (items) =>
@@ -335,8 +328,12 @@ class UI
 
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
-    itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
     @withIgnoreChange =>
+      if @editor.getLastBufferRow() is 0
+        # Need to recover query prompt
+        @setPrompt()
+        @moveToPrompt()
+      itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @editorLastRow = range.end.row
 
@@ -376,7 +373,8 @@ class UI
           # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
           for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
-          @setPrompt(@lastNarrowQuery) # Recover query
+          @withIgnoreChange =>
+            @setPrompt(@lastNarrowQuery) # Recover query
         else
           @refresh().then =>
             if @autoPreviewOnQueryChange and @isActive()
@@ -453,7 +451,6 @@ class UI
 
   syncToEditor: (editor) ->
     return if @preventSyncToEditor
-    return if @isActive() # Prevent UI cursor from being moved while UI is active.
     if item = @findClosestItemForEditor(editor)
       @selectItem(item)
       @moveToSelectedItem() unless @isActive()
@@ -561,10 +558,7 @@ class UI
   setPrompt: (text='') ->
     if @editor.getLastBufferRow() is 0
       text += "\n"
-
-    range = null
-    @withIgnoreChange =>
-      range = @editor.setTextInBufferRange(@getPromptRange(0), text)
+    range = @editor.setTextInBufferRange(@getPromptRange(0), text)
     range
 
   setSyncToEditor: (editor) ->
