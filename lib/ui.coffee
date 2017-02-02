@@ -70,6 +70,25 @@ class UI
   onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
   emitDidRefresh: -> @emitter.emit('did-refresh')
 
+  registerCommands: ->
+    atom.commands.add @editorElement,
+      'core:confirm': => @confirm()
+      'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
+      'narrow-ui:preview-item': => @preview()
+      'narrow-ui:preview-next-item': => @previewNextItem()
+      'narrow-ui:preview-previous-item': => @previewPreviousItem()
+      'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
+      'narrow-ui:refresh-force': =>
+        @refresh(force: true)
+        @moveToPrompt()
+      'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
+      'narrow-ui:move-to-prompt': => @moveToPrompt()
+      'narrow-ui:start-insert': => @setReadOnly(false)
+      'narrow-ui:stop-insert': => @setReadOnly(true)
+      'core:move-up': (event) => @moveUpOrDown(event, 'previous')
+      'core:move-down': (event) => @moveUpOrDown(event, 'next')
+      'narrow-ui:update-real-file': => @updateRealFile()
+
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
     @emitter = new Emitter
@@ -94,7 +113,7 @@ class UI
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
 
-    @currentItemIndicator = new ItemIndicator(@editor)
+    @itemIndicator = new ItemIndicator(@editor)
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
     @disposables.add @onDidMoveToItemArea =>
@@ -160,7 +179,7 @@ class UI
       @setPrompt(@input)
     else
       @withIgnoreChange => @setPrompt(@input)
-    @moveToPrompt(startInsert: true)
+    @moveToPrompt()
     @refresh()
 
   getPane: ->
@@ -182,7 +201,7 @@ class UI
       @activateProviderPane()
     else
       @focus() unless @isActive()
-      @moveToPrompt(startInsert: true)
+      @moveToPrompt()
 
   toggleFocus: ->
     if @isActive()
@@ -206,27 +225,8 @@ class UI
     @activateProviderPane()
 
     @provider?.destroy?()
-    @currentItemIndicator?.destroy()
+    @itemIndicator?.destroy()
     @rowMarker?.destroy()
-
-  registerCommands: ->
-    atom.commands.add @editorElement,
-      'core:confirm': => @confirm()
-      'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
-      'narrow-ui:preview-item': => @preview()
-      'narrow-ui:preview-next-item': => @previewNextItem()
-      'narrow-ui:preview-previous-item': => @previewPreviousItem()
-      'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
-      'narrow-ui:refresh-force': =>
-        @refresh(force: true)
-        @moveToPrompt(startInsert: true)
-      'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
-      'narrow-ui:move-to-prompt': => @moveToPrompt(startInsert: true)
-      'narrow-ui:start-insert': => @setReadOnly(false)
-      'narrow-ui:stop-insert': => @setReadOnly(true)
-      'core:move-up': (event) => @moveUpOrDown(event, 'previous')
-      'core:move-down': (event) => @moveUpOrDown(event, 'next')
-      'narrow-ui:update-real-file': => @updateRealFile()
 
   updateRealFile: ->
     return unless @isModified()
@@ -316,7 +316,7 @@ class UI
   getQuery: ->
     @lastNarrowQuery = @editor.lineTextForBufferRow(0)
 
-  refresh: ({force, moveToPrompt}={}) ->
+  refresh: ({force}={}) ->
     if force
       @cachedItems = null
 
@@ -523,7 +523,7 @@ class UI
   moveToPromptOrSelectedItem: ->
     row = @getRowForSelectedItem()
     if (row is @editor.getCursorBufferPosition().row) or not (row >= 0)
-      @moveToPrompt(startInsert: true)
+      @moveToPrompt()
     else
       # move to current item
       @editor.setCursorBufferPosition([row, 0])
@@ -534,10 +534,10 @@ class UI
   getRowForSelectedItem: ->
     @getRowForItem(@getSelectedItem())
 
-  moveToPrompt: ({startInsert}={}) ->
+  moveToPrompt: ->
     @withIgnoreCursorMove =>
       @editor.setCursorBufferPosition(@getPromptRange().end)
-      @setReadOnly(false) if startInsert
+      @setReadOnly(false)
       @emitDidMoveToPrompt()
 
   isNormalItemRow: (row) ->
@@ -557,7 +557,7 @@ class UI
   selectItemForRow: (row) ->
     item = @items[row]
     if @isNormalItem(item)
-      @currentItemIndicator.setToRow(row)
+      @itemIndicator.setToRow(row)
       @selectedItem = item
 
   getSelectedItem: ->

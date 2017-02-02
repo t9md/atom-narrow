@@ -82,7 +82,7 @@ newProviderConfig = (otherProperties) ->
 module.exports = new Settings 'narrow',
   autoShiftReadOnlyOnMoveToItemArea:
     default: true
-    description: "When cursor in narrow-ui moved to item area"
+    description: "When cursor moved to item area automatically change to read-only mode"
 
   directionToOpen:
     default: 'right'
