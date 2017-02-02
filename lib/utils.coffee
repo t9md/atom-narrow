@@ -28,6 +28,18 @@ activatePaneItemInAdjacentPane = (item, {split}={}) ->
       when 'down'
         currentPane.splitDown(items: [item])
 
+getAdjacentPaneOrSplit = (basePane, {split}) ->
+  pane = getAdjacentPaneForPane(basePane)
+  if pane?
+    pane
+  else
+    pane = switch split
+      when 'right' then basePane.splitRight()
+      when 'down' then basePane.splitDown()
+    # Can not 'split' without activating new pane so rever it here
+    basePane.activate()
+    pane
+
 smartScrollToBufferPosition = (editor, point) ->
   editorElement = editor.element
   editorAreaHeight = editor.getLineHeightInPixels() * (editor.getRowsPerPage() - 1)
@@ -129,6 +141,7 @@ getVisibleEditors = ->
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
+  getAdjacentPaneOrSplit
   smartScrollToBufferPosition
   registerElement
   saveEditorState

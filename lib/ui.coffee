@@ -115,6 +115,10 @@ class UI
 
     @disposables.add @onDidMoveToItemArea  => @setReadOnly(true)
 
+    # [FIXME] While in dev
+    # @disposables.add atom.workspace.onDidChangeActivePaneItem (item) ->
+    #   console.log 'activePaneItemChange', item
+
     @disposables.add(
       @registerCommands()
       @observeChange()
@@ -488,21 +492,17 @@ class UI
 
   preview: ->
     @preventSyncToEditor = true
-    @confirm(keepOpen: true, preview: true).then ({editor, point}) =>
-      if editor.isAlive()
-        @setRowMarker(editor, point)
-        @focus()
+    item = @getSelectedItem()
+    @provider.openFileForItem(item).then (editor) =>
+      editor.scrollToBufferPosition(item.point, center: true)
+      @setRowMarker(editor, item.point)
       @preventSyncToEditor = false
 
-  isNormalItem: (item) ->
-    item? and not item.skip
-
-  confirm: ({preview, keepOpen}={}) ->
+  confirm: ({keepOpen}={}) ->
     item = @getSelectedItem()
-    Promise.resolve(@provider.confirmed(item, {preview})).then ({editor, point}) =>
+    @provider.confirmed(item).then =>
       if not keepOpen and @provider.getConfig('closeOnConfirm')
         @editor.destroy()
-      {editor, point}
 
   # Return row
   # Never fail since prompt is row 0 and always exists
@@ -534,6 +534,9 @@ class UI
     else
       # move to current item
       @editor.setCursorBufferPosition([row, 0])
+
+  isNormalItem: (item) ->
+    item? and not item.skip
 
   getRowForSelectedItem: ->
     @getRowForItem(@getSelectedItem())

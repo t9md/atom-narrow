@@ -2,9 +2,9 @@ _ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
 {
   saveEditorState
-  getAdjacentPaneForPane
   isActiveEditor
   paneForItem
+  getAdjacentPaneOrSplit
 } = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
@@ -52,7 +52,14 @@ class ProviderBase
       @onBindEditor({oldEditor, newEditor})
 
   getPane: ->
-    paneForItem(@editor)
+    # If editor was pending item, it will destroyed on next pending open
+    pane = paneForItem(@editor)
+    if pane?.isAlive()
+      @lastPane = pane
+    else if @lastPane?.isAlive()
+      @lastPane
+    else
+      null
 
   isActive: ->
     isActiveEditor(@editor)
@@ -87,35 +94,33 @@ class ProviderBase
 
     {@editor, @editorSubscriptions} = {}
 
-  confirmed: (item, {preview}={}) ->
-    @wasConfirmed = true unless preview
-    {point, filePath} = item
-    pane = @getPane() ? getAdjacentPaneForPane(@ui.getPane())
+  openFileForItem: ({filePath}, {activatePane}={}) ->
+    filePath ?= @editor.getPath()
+    pane = @getPane() ? getAdjacentPaneOrSplit(@ui.getPane(), split: settings.get('directionToOpen'))
 
-    if filePath?
-      options = {pending: true}
-      if pane?
-        pane.activate()
-      else
-        options.split = settings.get('directionToOpen')
-
-      atom.workspace.open(filePath, options).then (editor) ->
-        editor.setCursorBufferPosition(point, autoscroll: false)
-        editor.scrollToBufferPosition(point, center: true)
-        return {editor, point}
+    if item = pane.itemForURI(filePath)
+      openPromise = Promise.resolve(item)
     else
-      pane.activate()
+      openPromise = atom.workspace.open(filePath, activatePane: false, activateItem: false)
+
+    openPromise.then (editor) ->
+      pane.activate() if activatePane
+      if pane.getActiveItem() isnt editor
+        pane.activateItem(editor, pending: true)
+      editor
+
+  confirmed: (item) ->
+    @wasConfirmed = true
+    {point} = item
+    @openFileForItem(item, activatePane: true).then (editor) ->
       newPoint = @adjustPoint?(point)
       if newPoint?
-        point = newPoint
-        @editor.setCursorBufferPosition(point, autoscroll: false)
+        editor.setCursorBufferPosition(newPoint, autoscroll: false)
+        editor.scrollToBufferPosition(newPoint, center: true)
       else
-        @editor.setCursorBufferPosition(point, autoscroll: false)
-        @editor.moveToFirstCharacterOfLine()
-
-      pane.activateItem(@editor)
-      @editor.scrollToBufferPosition(point, center: true)
-      return {@editor, point}
+        editor.setCursorBufferPosition(point, autoscroll: false)
+        editor.scrollToBufferPosition(point, center: true)
+        editor.moveToFirstCharacterOfLine()
 
   # View
   # -------------------------
