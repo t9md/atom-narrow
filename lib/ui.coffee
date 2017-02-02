@@ -477,18 +477,19 @@ class UI
       @selectItem(item)
       unless @isActive()
         {row} = @editor.getCursorBufferPosition()
-        @moveToSelectedItem()
+        @moveToSelectedItem(scrollToColumnZero: true)
         @emitDidMoveToItemArea() if @isPromptRow(row)
 
-  moveToSelectedItem: ->
+  moveToSelectedItem: ({scrollToColumnZero}={}) ->
     if (row = @getRowForSelectedItem()) >= 0
       {column} = @editor.getCursorBufferPosition()
       @withIgnoreCursorMove =>
         # Manually set cursor to center to avoid scrollTop drastically changes
         # when refresh and auto-sync.
-        point = [row, column]
+        point = scrollPoint = [row, column]
         @editor.setCursorBufferPosition(point, autoscroll: false)
-        @editor.scrollToBufferPosition(point, center: true)
+        scrollPoint = [row, 0] if scrollToColumnZero
+        @editor.scrollToBufferPosition(scrollPoint, center: true)
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()

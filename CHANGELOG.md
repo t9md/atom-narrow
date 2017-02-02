@@ -1,3 +1,10 @@
+# 0.18.0: WIP
+- New: #97 `narrow-ui:protect`( no keymap by default ) to protect `narrow-editor` from being closed by `narrow:close`( `ctrl-g` ).
+  - E.g. If you want keep opened `narrow:symbols` for long use, then you don't want close this `narrow-editor` by `ctrl-g`.
+  - In this case, invoke `narrow-ui:protect` on that `narrow-editor`, after that `ctrl-g` don't close this `narrow-editor`.
+- Improve: #98 Prevent side scroll of `narrow-editor` while auto-syncing to active-editor.
+  - Particularly useful when `narrow:symbols` or `narrow:fold` is used as long-use, keep opened.
+
 # 0.17.0: read-only mode for non-vim-mode-plus user, performant auto-preview
 - New, Breaking: #88, #62 read-only item area as like vim for non-vim-mode-plus user
   - If you don't like, you can change `autoShiftReadOnlyOnMoveToItemArea`.
