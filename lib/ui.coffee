@@ -488,11 +488,11 @@ class UI
 
   preview: ->
     @preventSyncToEditor = true
-    @confirm(keepOpen: true, preview: true).then ({editor, point}) =>
-      if editor.isAlive()
-        @setRowMarker(editor, point)
-        @focus()
-      @preventSyncToEditor = false
+    # @confirm(keepOpen: true, preview: true).then ({editor, point}) =>
+    #   if editor.isAlive()
+    #     @setRowMarker(editor, point)
+    #     @focus()
+    #   @preventSyncToEditor = false
 
   isNormalItem: (item) ->
     item? and not item.skip
