@@ -287,7 +287,13 @@ class UI
     @confirmItemForDirection('previous')
 
   previewItemForDirection: (direction) ->
-    row = @findRowForNormalItem(@getRowForSelectedItem(), direction)
+    if not @rowMarker? and direction is 'next'
+      # When initial invocation not cause preview(since initial query input was empty).
+      # Don't want `tab` skip first seleted item.
+      row = @getRowForSelectedItem()
+    else
+      row = @findRowForNormalItem(@getRowForSelectedItem(), direction)
+
     if row?
       @selectItemForRow(row)
       @preview()
