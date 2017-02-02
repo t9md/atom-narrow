@@ -55,9 +55,11 @@ Items are each lines on editor.
 
 1. Open some text-editor, then via command-palette, invoke `Narrow Line`.
 2. narrow-editor opened, as you type, you can narrow items.
-3. When you type `apple lemmon` as query. lines which mached both `apple` and `lemmon` are listed.
-4. You can move normal `up`, `down` key to quick-preview items.
+3. When you type `apple lemon` as query. lines which matched both `apple` and `lemon` are listed.
+4. You can move normal `up`, `down`(or `j`, `k` in read-only mode) key to quick-preview items.
 5. `enter` to confirm. When confirmed, narrow-editor closed.
+
+The read-only mode is enabled by default.
 
 ### Step2. navigate from outside of `narrow-editor`.
 
@@ -67,9 +69,9 @@ Items are each lines on editor.
 4. `ctrl-cmd-n` to move to `next-item`, `ctrl-cmd-p` to move to `previous-item`.
 5. If you want to close narrow-editor you can close by `ctrl-g`(no need to focus narrow-editor).
 6. If you want to change narrow-query, you have to focus to narrow-editor
-  - Use `ctrl-cmd-f`(`narrow:focus`)
-  - When re-focused to narrow-editor, cursor on narrow-editor is at selected-item.
-  - You can move to prompt line by `tab`(`move-to-prompt-or-selected-item`), and back to selected-item by `tab` again.
+  - Use `ctrl-cmd-f`(`narrow:focus`) to focus narrow-editor's item indicator row.
+  - Use `ctrl-cmd-i`(`narrow:focus-prompt`) to focus narrow-editor's query prompt row
+  - Both commands are available from outside/inside of narrow-editor.
 7. These navigation keymaps are available for all provider(e.g. `search`, `fold` etc).
 
 ### Step3. [DANGER] direct-edit
@@ -94,7 +96,20 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 
 # Commands
 
-### Provider commands
+### Available in all text-editor
+
+##### Ohters
+
+- `narrow:focus`: ( `ctrl-cmd-f` ) Focus to `narrow-editor`, if executed in `narrow-editor`, it re-focus to original editor.
+- `narrow:focus-prompt`: ( `ctrl-cmd-i` ) Focus to `narrow-editor`'s query input prompt, if executed in `narrow-editor`, it re-focus to original editor.
+- `narrow:refresh`: Manually refresh items in `narrow-editor`.
+- `narrow:close`: ( `ctrl-g` ) Close currently opened `narrow-editor` one at a time.
+- `narrow:next-item`: ( `ctrl-cmd-n` ) Move cursor to position of next-item.
+- `narrow:previous-item`: ( `ctrl-cmd-p` ) Move cursor to position of previous-item.
+
+##### Provider commands
+
+No keymaps are provided
 
 - `narrow:lines`
 - `narrow:lines-by-current-word`
@@ -114,13 +129,17 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 
 ### narrow-editor(narrow-ui)
 
-- `core:confirm`
-- `narrow-ui:confirm-keep-open`
-- `narrow-ui:preview-item`
-- `narrow-ui:toggle-auto-preview`
-- `narrow-ui:refresh-force`
-- `narrow-ui:move-to-prompt-or-selected-item`
-- `narrow-ui:update-real-file`
+- `core:confirm`: ( `enter` ) Close `narrow-editor`
+- `narrow-ui:confirm-keep-open`: keep open `narrow-editor`
+- `narrow-ui:preview-item`: Preview currently selected item manually( you don't need in most case ).
+- `narrow-ui:preview-next-item`: ( `tab` ) Preview next-item without moving cursor from `narrow-editor`'s query prompt.
+- `narrow-ui:preview-previous-item`: ( `shift-tab` ) Preview next-item without moving cursor from `narrow-editor`'s query prompt.
+- `narrow-ui:toggle-auto-preview`: ( `ctrl-r` for non-vim-mode-plus user) Disable/enable auto-preview for this `narrow-editor`.
+<!-- - `narrow-ui:move-to-prompt-or-selected-item`: ( DEPRECATED ) -->
+- `narrow-ui:move-to-prompt`: `ctrl-cmd-i`
+- `narrow-ui:start-insert`: `I`, `a`
+- `narrow-ui:stop-insert`: `escape`
+- `narrow-ui:update-real-file`: Apply changes made in `narrow-editor` to real-file.( edit in `narrow-editor` then save it to real file. )
 
 # Keymaps
 

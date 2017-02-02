@@ -5,6 +5,7 @@
 # ---------------------------
 'atom-workspace.has-narrow atom-text-editor':
   'ctrl-g': 'narrow:close'
+  'ctrl-cmd-i': 'narrow:focus-prompt'
   'ctrl-cmd-f': 'narrow:focus'
   'ctrl-cmd-p': 'narrow:previous-item'
   'ctrl-cmd-n': 'narrow:next-item'
@@ -13,9 +14,9 @@
 # ---------------------------
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
   'enter': 'core:confirm'
-  'tab': 'narrow-ui:move-to-prompt-or-selected-item'
-  'f5': 'narrow-ui:refresh-force'
-  'ctrl-l': 'narrow-ui:refresh-force'
+  # 'tab': 'narrow-ui:move-to-prompt-or-selected-item'
+  'f5': 'narrow:refresh'
+  'ctrl-l': 'narrow:refresh'
 
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]:not(.vim-mode-plus)':
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
@@ -37,10 +38,7 @@
   'I': 'narrow-ui:start-insert'
 
 'atom-text-editor.narrow.narrow-editor:not(.read-only)[data-grammar="source narrow"]':
-  'ctrl-g': 'narrow-ui:stop-insert'
-  
-'atom-text-editor.narrow.narrow-editor.vim-mode-plus:not(.read-only)[data-grammar="source narrow"]':
-  'ctrl-g': 'narrow:close'
+  'escape': 'narrow-ui:stop-insert'
 
 'atom-text-editor.narrow.narrow-editor.read-only[data-grammar="source narrow"]':
   'k': 'core:move-up'
@@ -48,6 +46,7 @@
 
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"],
  atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
+  # 'escape': 'narrow-ui:stop-insert'
   'tab': 'narrow-ui:preview-next-item'
   'shift-tab': 'narrow-ui:preview-previous-item'
 
