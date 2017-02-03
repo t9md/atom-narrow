@@ -50,6 +50,7 @@ class UI
   modifiedState: null
   readOnly: false
   protected: false
+  excludedFiles: null
 
   isModified: ->
     @modifiedState
@@ -82,16 +83,20 @@ class UI
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt()
-      'narrow-ui:exclude-file': => @excludeFile()
       'narrow-ui:start-insert': => @setReadOnly(false)
       'narrow-ui:stop-insert': => @setReadOnly(true)
       'core:move-up': (event) => @moveUpOrDown(event, 'previous')
       'core:move-down': (event) => @moveUpOrDown(event, 'next')
       'narrow-ui:update-real-file': => @updateRealFile()
+      'narrow-ui:exclude-file': => @excludeFile()
+      'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
+      'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
+      'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
     @emitter = new Emitter
+    @excludedFiles = []
     @autoPreview = @provider.getConfig('autoPreview')
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
 
@@ -334,6 +339,27 @@ class UI
   getQuery: ->
     @lastNarrowQuery = @editor.lineTextForBufferRow(0)
 
+  excludeFile: ->
+    return if @provider.boundToEditor
+
+    if item = @getSelectedItem()
+      {filePath} = item
+      @excludedFiles.push(filePath) unless filePath in @excludedFiles
+      nextFileItem = @findDifferentFileItem('next')
+
+      @refresh().then =>
+        if nextFileItem
+          @selectItem(nextFileItem)
+          @moveToSelectedItem()
+
+  clearExcludedFiles: ->
+    @excludedFiles = []
+    selectedItem = @getSelectedItem()
+    @refresh().then =>
+      if selectedItem
+        @selectItem(selectedItem)
+        @moveToSelectedItem()
+
   refresh: ({force}={}) ->
     if force
       @cachedItems = null
@@ -344,6 +370,11 @@ class UI
       if @provider.supportCacheItems
         @cachedItems = items
       items = @provider.filterItems(items, filterSpec)
+
+      console.log 'ex', @excludedFiles
+      if not @provider.boundToEditor and @excludedFiles.length
+        items = items.filter ({filePath}) => filePath not in @excludedFiles
+
       @items = [@promptItem, items...]
 
       @renderItems(items)
@@ -533,6 +564,30 @@ class UI
     loop
       if @isNormalItemRow(row = getValidIndexForList(@items, row + delta))
         return row
+
+  findDifferentFileItem: (direction) ->
+    return if @provider.boundToEditor
+    return null unless @hasNormalItem()
+    return null unless selectedItem = @getSelectedItem()
+
+    delta = switch direction
+      when 'next' then +1
+      when 'previous' then -1
+
+    startRow = row = @getRowForSelectedItem()
+    while (row = getValidIndexForList(@items, row + delta)) isnt startRow
+      if @isNormalItemRow(row) and @items[row].filePath isnt selectedItem.filePath
+        return @items[row]
+
+  moveToNextFileItem: ->
+    if item = @findDifferentFileItem('next')
+      @selectItem(item)
+      @moveToSelectedItem()
+
+  moveToPreviousFileItem: ->
+    if item = @findDifferentFileItem('previous')
+      @selectItem(item)
+      @moveToSelectedItem()
 
   moveToPromptOrSelectedItem: ->
     row = @getRowForSelectedItem()
