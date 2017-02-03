@@ -509,23 +509,30 @@ class UI
 
   syncToEditor: (editor) ->
     return if @preventSyncToEditor
-    if item = @findClosestItemForEditor(editor)
+    item = @findClosestItemForEditor(editor)
+    if item? and item isnt @getSelectedItem()
       @selectItem(item)
       unless @isActive()
         {row} = @editor.getCursorBufferPosition()
         @moveToSelectedItem(scrollToColumnZero: true)
         @emitDidMoveToItemArea() if @isPromptRow(row)
 
-  moveToSelectedItem: ({scrollToColumnZero}={}) ->
+  moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove}={}) ->
     if (row = @getRowForSelectedItem()) >= 0
       {column} = @editor.getCursorBufferPosition()
-      @withIgnoreCursorMove =>
+      point = scrollPoint = [row, column]
+      scrollPoint = [row, 0] if scrollToColumnZero
+
+      moveAndScroll = =>
         # Manually set cursor to center to avoid scrollTop drastically changes
         # when refresh and auto-sync.
-        point = scrollPoint = [row, column]
         @editor.setCursorBufferPosition(point, autoscroll: false)
-        scrollPoint = [row, 0] if scrollToColumnZero
         @editor.scrollToBufferPosition(scrollPoint, center: true)
+
+      if ignoreCursorMove ? true
+        @withIgnoreCursorMove(moveAndScroll)
+      else
+        moveAndScroll()
 
   setRowMarker: (editor, point) ->
     @rowMarker?.destroy()
@@ -586,12 +593,12 @@ class UI
   moveToNextFileItem: ->
     if item = @findDifferentFileItem('next')
       @selectItem(item)
-      @moveToSelectedItem()
+      @moveToSelectedItem(ignoreCursorMove: false)
 
   moveToPreviousFileItem: ->
     if item = @findDifferentFileItem('previous')
       @selectItem(item)
-      @moveToSelectedItem()
+      @moveToSelectedItem(ignoreCursorMove: false)
 
   moveToPromptOrSelectedItem: ->
     row = @getRowForSelectedItem()
