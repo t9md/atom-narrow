@@ -94,7 +94,7 @@ class Search extends SearchBase
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))
     projectNames = _.uniq(_.pluck(normalItems, "projectName"))
 
-    _.filter items, (item) ->
+    items.filter (item) ->
       if item.header?
         if item.projectHeader?
           item.projectName in projectNames

@@ -177,5 +177,5 @@ class ProviderBase
       item.maxLineTextWidth = maxLineTextWidth
     items
 
-  getFirstCharacterOfRow: (row) ->
+  getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
