@@ -543,7 +543,7 @@ class UI
   confirm: ({keepOpen}={}) ->
     item = @getSelectedItem()
     @provider.confirmed(item).then =>
-      if not keepOpen and @provider.getConfig('closeOnConfirm')
+      if not keepOpen and not @isProtected() and @provider.getConfig('closeOnConfirm')
         @editor.destroy()
 
   # Return row
