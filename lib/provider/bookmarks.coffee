@@ -35,6 +35,7 @@ class Bookmarks extends ProviderBase
   getItems: ->
     items = []
     for {editor, markerLayer} in getBookmarks() when markerLayer.getMarkerCount() > 0
-      items.push(header: "# #{editor.getPath()}", skip: true)
+      filePath = editor.getPath()
+      items.push(header: "# #{filePath}", filePath: filePath, skip: true)
       items.push(@getItemsForEditor(editor, markerLayer)...)
     @injectMaxLineTextWidthForItems(items)
