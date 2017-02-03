@@ -299,6 +299,7 @@ class UI
   narrowClose: (event) ->
     if @isProtected()
       event.stopImmediatePropagation()
+      @setPrompt('') # clear query
       @activateProviderPane()
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
