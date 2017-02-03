@@ -6,7 +6,8 @@ class ItemIndicator
     @gutter = @editor.addGutter(name: 'narrow-item-indicator', priority: 100)
 
     @item = document.createElement('span')
-    @item.textContent = " > "
+    # @item.className = 'icon icon-arrow-right'
+    # @item.textContent = " > "
 
   setToRow: (@row) ->
     @marker?.destroy()

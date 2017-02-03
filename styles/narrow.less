@@ -1,10 +1,18 @@
 @import "ui-variables";
 @import "syntax-variables";
+@import "octicon-mixins";
 
 // item-indicator
 // =========================
 .narrow-ui-item-indicator-base () {
-  /* Take up the full allowed width */
+  // .octicon(arrow-right, 1em);
+  // .octicon(playback-play, 1em);
+  // .octicon(playback-fast-forward, 1em);
+  // .octicon(mirror-private);
+  // .octicon(check, 1em);
+  // .octicon(dash, 1em);
+  .octicon(chevron-right, 1em);
+  padding: 0 .4em;
   left: 0;
   right: 0;
   display: flex;
@@ -14,12 +22,13 @@
 
 atom-text-editor .narrow-ui-item-indicator {
   .narrow-ui-item-indicator-base();
+
   color: @syntax-color-added;
 }
 
 atom-text-editor .narrow-ui-item-indicator-protected {
   .narrow-ui-item-indicator-base();
-  color: @syntax-color-removed;
+  color: @syntax-color-modified;
 }
 
 // row-marker
