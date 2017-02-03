@@ -341,12 +341,10 @@ class UI
 
   excludeFile: ->
     return if @provider.boundToEditor
-
-    if item = @getSelectedItem()
-      {filePath} = item
-      @excludedFiles.push(filePath) unless filePath in @excludedFiles
+    return unless selectedItem = @getSelectedItem()
+    unless selectedItem.filePath in @excludedFiles
+      @excludedFiles.push(filePath)
       nextFileItem = @findDifferentFileItem('next')
-
       @refresh().then =>
         if nextFileItem
           @selectItem(nextFileItem)
