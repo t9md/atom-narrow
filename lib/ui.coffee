@@ -376,7 +376,6 @@ class UI
         @cachedItems = items
       items = @provider.filterItems(items, filterSpec)
 
-      console.log 'ex', @excludedFiles
       if not @provider.boundToEditor and @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
 
