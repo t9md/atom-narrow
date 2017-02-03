@@ -589,15 +589,23 @@ class UI
       if @isNormalItemRow(row) and @items[row].filePath isnt selectedItem.filePath
         return @items[row]
 
+  isCursorOutOfSyncWithSelectedItem: ->
+    @editor.getCursorBufferPosition().row isnt @getRowForSelectedItem()
+
   moveToNextFileItem: ->
-    # Fallback to selected item incase there is only single filePath in all items
-    # But whant to move to that item from query-prompt.
-    if item = @findDifferentFileItem('next') ? @getSelectedItem()
-      @selectItem(item)
-      @moveToSelectedItem(ignoreCursorMove: false)
+    @moveToDifferentFileItem('next')
 
   moveToPreviousFileItem: ->
-    if item = @findDifferentFileItem('previous') ? @getSelectedItem()
+    @moveToDifferentFileItem('previous')
+
+  moveToDifferentFileItem: (direction) ->
+    if @isCursorOutOfSyncWithSelectedItem()
+      @moveToSelectedItem(ignoreCursorMove: false)
+      return
+
+    # Fallback to selected item incase there is only single filePath in all items
+    # But whant to move to that item from query-prompt.
+    if item = @findDifferentFileItem(direction) ? @getSelectedItem()
       @selectItem(item)
       @moveToSelectedItem(ignoreCursorMove: false)
 
