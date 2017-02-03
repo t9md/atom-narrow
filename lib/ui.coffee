@@ -75,6 +75,7 @@ class UI
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
+      'narrow:close': (event) => @narrowClose(event)
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:protect': => @toggleProtect()
       'narrow-ui:preview-item': => @preview()
@@ -288,6 +289,17 @@ class UI
 
       @provider.updateRealFile(changes)
       @setModifiedState(false)
+
+  # This function is mapped from `narrow:close`
+  # To differentiate `narrow:close` for protected narrow-editor.
+  # * Two purpose.
+  # 1. So that don't close non-protected narrow-editor when narrow:close is
+  #   invoked from protected narrow-editor
+  # 2. To re-focus to caller editor for not interfering regular preview-then-close-by-ctrl-g flow.
+  narrowClose: (event) ->
+    if @isProtected()
+      event.stopImmediatePropagation()
+      @activateProviderPane()
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
   moveUpOrDown: (event, direction) ->
