@@ -338,14 +338,18 @@ class UI
       @selectItemForRow(row)
       @preview()
 
-  previewNextItem: -> @previewItemForDirection('next')
-  previewPreviousItem: -> @previewItemForDirection('previous')
+  previewNextItem: ->
+    @previewItemForDirection('next')
+
+  previewPreviousItem: ->
+    @previewItemForDirection('previous')
 
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
     @preview() if @autoPreview
 
-  getQuery: -> @lastNarrowQuery = @editor.lineTextForBufferRow(0)
+  getQuery: ->
+    @lastNarrowQuery = @editor.lineTextForBufferRow(0)
 
   excludeFile: ->
     return if @provider.boundToEditor
