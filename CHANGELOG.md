@@ -1,3 +1,19 @@
+# 0.19.0: WIP
+- New: Exclude particular file item from result for non-boundToEditor provider.
+  - This is nothing to do with provider's behavior, just filter out result in narrow-editor(ui).
+    - `narrow-ui:exclude-file`: `backspace`, Exclude currently selected file from result.(no effect in boundToEditor provider)
+    - `narrow-ui:clear-excluded-files`: `ctrl-backspace`, Clear exclude-file list. and refresh
+- New: Move to next/previous file's item(no effect in boundToEditor provider)
+  - `narrow-ui:move-to-next-file-item`: `n`, Move to first-item of next-file.
+  - `narrow-ui:move-to-previous-file-item`: `p` Move to last-item of previous-file.
+
+- Use case
+  - Start `narrow:search`, then enter `read-only` mode
+  - `backspace` to exclude currently selected file's item from result.
+  - `ctrl-backspace` to clear and refresh excluded file list.
+  - `n` to move to first-item of next file
+  - `p` to move to last-item of previous file
+
 # 0.18.0:
 - New: #97 `narrow-ui:protect`( no keymap by default ) to protect `narrow-editor` from being closed by `narrow:close`( `ctrl-g` ).
   - E.g. If you want keep opened `narrow:symbols` for long use, then you don't want close this `narrow-editor` by `ctrl-g`.
