@@ -138,6 +138,12 @@ getVisibleEditors = ->
     .map (pane) -> pane.getActiveEditor()
     .filter (editor) -> editor?
 
+getFirstCharacterPositionForBufferRow = (editor, row) ->
+  range = null
+  scanRange = editor.bufferRangeForBufferRow(row)
+  editor.scanInBufferRange /\S/, scanRange, (event) -> range = event.range
+  range?.start ? new Point(row, 0)
+
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
@@ -156,4 +162,5 @@ module.exports = {
   isNarrowEditor
   paneForItem
   getVisibleEditors
+  getFirstCharacterPositionForBufferRow
 }

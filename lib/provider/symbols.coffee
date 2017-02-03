@@ -28,6 +28,6 @@ class Symbols extends ProviderBase
     new TagGenerator(filePath, scopeName).generate().then (tags) =>
       tags = _.uniq(tags, (tag) -> tag.position.row)
       @items = tags.map ({position}) =>
-        point: position
+        point: @getFirstCharacterOfRow(position.row)
         text: @editor.lineTextForBufferRow(position.row)
       @items

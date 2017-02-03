@@ -30,5 +30,5 @@ class Fold extends ProviderBase
 
   getItems: ->
     getCodeFoldStartRows(@editor, @foldLevel).map (row) =>
-      point: new Point(row, 0)
+      point: @getFirstCharacterOfRow(row)
       text: @editor.lineTextForBufferRow(row)

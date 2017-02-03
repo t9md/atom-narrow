@@ -5,6 +5,7 @@ _ = require 'underscore-plus'
   isActiveEditor
   paneForItem
   getAdjacentPaneOrSplit
+  getFirstCharacterPositionForBufferRow
 } = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
@@ -175,3 +176,6 @@ class ProviderBase
     for item in items when not item.skip
       item.maxLineTextWidth = maxLineTextWidth
     items
+
+  getFirstCharacterOfRow: (row) ->
+    getFirstCharacterPositionForBufferRow(@editor, row)
