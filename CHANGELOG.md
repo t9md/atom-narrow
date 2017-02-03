@@ -1,4 +1,4 @@
-# 0.19.0: WIP
+# 0.19.0:
 - New: Exclude particular file item from result for non-boundToEditor provider.
   - This is nothing to do with provider's behavior, just filter out result in narrow-editor(ui).
     - `narrow-ui:exclude-file`: `backspace`, Exclude currently selected file from result.(no effect in boundToEditor provider)
@@ -13,6 +13,11 @@
   - `ctrl-backspace` to clear and refresh excluded file list.
   - `n` to move to first-item of next file
   - `p` to move to last-item of previous file
+
+- Doc: FAQ Section in README
+- Fix: [Critical]. No longer modify cursor position after confirmed
+  - It's interfere precise closest position when auto-sync.
+  - Also because of this bug, item's point was just ignored in all providers.
 
 # 0.18.0:
 - New: #97 `narrow-ui:protect`( no keymap by default ) to protect `narrow-editor` from being closed by `narrow:close`( `ctrl-g` ).
