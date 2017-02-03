@@ -82,6 +82,7 @@ class UI
       'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt()
+      'narrow-ui:exclude-file': => @excludeFile()
       'narrow-ui:start-insert': => @setReadOnly(false)
       'narrow-ui:stop-insert': => @setReadOnly(true)
       'core:move-up': (event) => @moveUpOrDown(event, 'previous')
