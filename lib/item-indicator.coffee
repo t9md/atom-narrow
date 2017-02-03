@@ -1,17 +1,30 @@
 module.exports =
 class ItemIndicator
-  constructor: (@editor) ->
+  row: null
+  constructor: (@ui) ->
+    {@editor} = @ui
     @gutter = @editor.addGutter(name: 'narrow-item-indicator', priority: 100)
 
     @item = document.createElement('span')
     @item.textContent = " > "
 
-  setToRow: (row) ->
+  setToRow: (@row) ->
     @marker?.destroy()
-    @marker = @editor.markBufferPosition([row, 0])
+    @marker = @editor.markBufferPosition([@row, 0])
     @gutter.decorateMarker @marker,
-      class: "narrow-ui-selected-row"
+      class: @getClassName()
       item: @item
+
+  getClassName: ->
+    if @ui.isProtected()
+      "narrow-ui-item-indicator-protected"
+    else
+      "narrow-ui-item-indicator"
+
+  redraw: ->
+    @setToRow(@row)
+
+  setClassName: (@className) ->
 
   destroy: ->
     @marker?.destroy()

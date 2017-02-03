@@ -76,7 +76,7 @@ class UI
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
-      'narrow-ui:protect': => @setProtected(true)
+      'narrow-ui:protect': => @toggleProtect()
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:preview-next-item': => @previewNextItem()
       'narrow-ui:preview-previous-item': => @previewPreviousItem()
@@ -118,7 +118,7 @@ class UI
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
 
-    @itemIndicator = new ItemIndicator(@editor)
+    @itemIndicator = new ItemIndicator(this)
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
     @disposables.add @onDidMoveToItemArea =>
@@ -142,10 +142,14 @@ class UI
     @editorElement.classList.add('read-only')
     @vmpActivateNormalMode() if @vmpIsInsertMode()
 
+  toggleProtect: ->
+    @setProtected(not @protected)
+
   isProtected: ->
     @protected
 
   setProtected: (@protected) ->
+    @itemIndicator.redraw()
 
   setReadOnly: (readOnly) ->
     @readOnly = readOnly

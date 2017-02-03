@@ -1,24 +1,39 @@
 @import "ui-variables";
 @import "syntax-variables";
 
-atom-text-editor .narrow-ui-selected-row {
+// item-indicator
+// =========================
+.narrow-ui-item-indicator-base () {
   /* Take up the full allowed width */
   left: 0;
   right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+atom-text-editor .narrow-ui-item-indicator {
+  .narrow-ui-item-indicator-base();
   color: @syntax-color-added;
 }
 
-@line-marker: fadeout(lighten(@syntax-color-added, 0%), 20%);
+atom-text-editor .narrow-ui-item-indicator-protected {
+  .narrow-ui-item-indicator-base();
+  color: @syntax-color-removed;
+}
+
+// row-marker
+// =========================
+@row-marker-color: fadeout(lighten(@syntax-color-added, 0%), 20%);
 
 atom-text-editor {
   .line.narrow-result {
-    box-shadow:0 -7px 0 -6px @line-marker inset;
+    box-shadow:0 -7px 0 -6px @row-marker-color inset;
   }
 }
 
+// search min editor
+// =========================
 .narrow-search-container {
   display: flex;
   padding: @component-padding/2 @component-padding;
@@ -28,9 +43,9 @@ atom-text-editor {
   }
 }
 
-// Hide linumber gutter but still shows icon to fold/un-fold.
-// https://discuss.atom.io/t/use-the-gutter-without-enabling-linenumbers/2461/16
 atom-text-editor.narrow-editor {
+  // Hide linumber gutter but still shows icon to fold/un-fold.
+  // https://discuss.atom.io/t/use-the-gutter-without-enabling-linenumbers/2461/16
   .gutter {
     .line-numbers {
       text-indent: 999em;
@@ -44,6 +59,7 @@ atom-text-editor.narrow-editor {
       }
     }
   }
+  // block-cursor on read-only mode
   &.read-only {
     &.is-focused {
       .cursor {
