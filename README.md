@@ -284,7 +284,7 @@ See [keymap definition](https://github.com/t9md/atom-narrow/blob/make-it-stable/
 
 - Use `n`, `p` in `read-only` mode.
 
-### I want `narrow:symbols` always shows up at right-most pane and don't want close.
+### I want `narrow:symbols` always shows up at right-most pane and don't want to close.
 
 1. Open `narrow:symbols`( or maybe you want to use `narrow:fold` )
 2. Move this `narrow-editor` by drag and drop to the place where you want.
