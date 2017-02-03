@@ -343,20 +343,27 @@ class UI
     return if @provider.boundToEditor
     return unless selectedItem = @getSelectedItem()
     unless selectedItem.filePath in @excludedFiles
-      @excludedFiles.push(filePath)
+      @excludedFiles.push(selectedItem.filePath)
       nextFileItem = @findDifferentFileItem('next')
+      {column} = @editor.getCursorBufferPosition()
       @refresh().then =>
         if nextFileItem
           @selectItem(nextFileItem)
           @moveToSelectedItem()
+          {row} = @editor.getCursorBufferPosition()
+          @editor.setCursorBufferPosition([row, column])
 
   clearExcludedFiles: ->
+    return if @excludedFiles.length is 0
     @excludedFiles = []
     selectedItem = @getSelectedItem()
+    {column} = @editor.getCursorBufferPosition()
     @refresh().then =>
       if selectedItem
         @selectItem(selectedItem)
         @moveToSelectedItem()
+        {row} = @editor.getCursorBufferPosition()
+        @editor.setCursorBufferPosition([row, column])
 
   refresh: ({force}={}) ->
     if force
