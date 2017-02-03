@@ -509,8 +509,7 @@ class UI
 
   syncToEditor: (editor) ->
     return if @preventSyncToEditor
-    item = @findClosestItemForEditor(editor)
-    if item? and item isnt @getSelectedItem()
+    if item = @findClosestItemForEditor(editor)
       @selectItem(item)
       unless @isActive()
         {row} = @editor.getCursorBufferPosition()
