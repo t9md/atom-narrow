@@ -278,7 +278,7 @@ See [keymap definition](https://github.com/t9md/atom-narrow/blob/make-it-stable/
 
 - Use `backspace` to exclude particular file from result.
 - `ctrl-backspace` clear excluded file list and refresh
-- These keymaps are available in `narrow-editor` and you are in `read-mode`
+- These keymaps are available in `narrow-editor` and you are in `read-only-mode`
 
 ### Want to skip to `next-file`, `previous-file`
 

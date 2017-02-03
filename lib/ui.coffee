@@ -138,11 +138,6 @@ class UI
     @disposables.add new Disposable =>
       @constructor.unregister(this)
 
-  onMoveToItemArea: ->
-    @editorElement.component?.setInputEnabled(false)
-    @editorElement.classList.add('read-only')
-    @vmpActivateNormalMode() if @vmpIsInsertMode()
-
   toggleProtect: ->
     @setProtected(not @protected)
 
@@ -343,18 +338,14 @@ class UI
       @selectItemForRow(row)
       @preview()
 
-  previewNextItem: ->
-    @previewItemForDirection('next')
-
-  previewPreviousItem: ->
-    @previewItemForDirection('previous')
+  previewNextItem: -> @previewItemForDirection('next')
+  previewPreviousItem: -> @previewItemForDirection('previous')
 
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
     @preview() if @autoPreview
 
-  getQuery: ->
-    @lastNarrowQuery = @editor.lineTextForBufferRow(0)
+  getQuery: -> @lastNarrowQuery = @editor.lineTextForBufferRow(0)
 
   excludeFile: ->
     return if @provider.boundToEditor
