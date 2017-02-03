@@ -270,3 +270,23 @@ See [keymap definition](https://github.com/t9md/atom-narrow/blob/make-it-stable/
 - `I` is intentionally mapped to `vim-mode-plus:activate-insert-mode` which is normally mapped to `i`.
   - Which might not be intuitive, but I want make item mutatation bit difficult. So user have to type `I`.
 - Other than `I`, you can start `insert-mode` by `A`, `c` etc..
+
+# Q&A
+
+### How can I exclude particular file from `narrow:search`
+
+- Use `backspace` to exclude particular file from result.
+- `ctrl-backspace` clear excluded file list and refresh
+- These keymaps are available in `narrow-editor` and you are in `read-mode`
+
+### Want to skip to `next-file`, `previous-file`
+
+- Use `n`, `p` in `read-only` mode.
+
+### I want `narrow:symbols` always shows up at right-most pane and don't want close.
+
+1. Open `narrow:symbols`( or maybe you want to use `narrow:fold` )
+2. Move this `narrow-editor` by drag and drop to the place where you want.
+3. From command-palette, execute `Narrow Ui: Protect`. Now `narrow-editor` protected.
+4. Protected `narrow-editor` is not closed by `ctrl-g`( `narrow:close` ), and not closed by confirm by `enter`.
+5. To close, use normal `cmd-w` or close button on tab.
