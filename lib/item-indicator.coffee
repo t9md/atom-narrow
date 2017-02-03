@@ -22,7 +22,5 @@ class ItemIndicator
   redraw: ->
     @setToRow(@row)
 
-  setClassName: (@className) ->
-
   destroy: ->
     @marker?.destroy()
