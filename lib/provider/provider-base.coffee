@@ -119,7 +119,6 @@ class ProviderBase
       else
         editor.setCursorBufferPosition(point, autoscroll: false)
         editor.scrollToBufferPosition(point, center: true)
-        editor.moveToFirstCharacterOfLine()
 
   # View
   # -------------------------
