@@ -28,6 +28,7 @@ alpha
 - Direct edit in narrow-editor which update realFile on disk by `narrow:update-real-file` commands.
 - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration( I'm also maintainer of vim-mode-plus ).
 - For what can I use this?, See [Use case and flow of keystrokes](https://github.com/t9md/atom-narrow/issues/75).
+- Also see Q&A section at bottom of this README.
 
 # Roles in play.
 
