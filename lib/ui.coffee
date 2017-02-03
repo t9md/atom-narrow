@@ -349,7 +349,7 @@ class UI
       @refresh().then =>
         if nextFileItem
           @selectItem(nextFileItem)
-          @moveToSelectedItem()
+          @moveToSelectedItem(ignoreCursorMove: false)
           {row} = @editor.getCursorBufferPosition()
           @editor.setCursorBufferPosition([row, column])
 
@@ -361,7 +361,7 @@ class UI
     @refresh().then =>
       if selectedItem
         @selectItem(selectedItem)
-        @moveToSelectedItem()
+        @moveToSelectedItem(ignoreCursorMove: false)
         {row} = @editor.getCursorBufferPosition()
         @editor.setCursorBufferPosition([row, column])
 
@@ -591,12 +591,14 @@ class UI
         return @items[row]
 
   moveToNextFileItem: ->
-    if item = @findDifferentFileItem('next')
+    # Fallback to selected item incase there is only single filePath in all items
+    # But whant to move to that item from query-prompt.
+    if item = @findDifferentFileItem('next') ? @getSelectedItem()
       @selectItem(item)
       @moveToSelectedItem(ignoreCursorMove: false)
 
   moveToPreviousFileItem: ->
-    if item = @findDifferentFileItem('previous')
+    if item = @findDifferentFileItem('previous') ? @getSelectedItem()
       @selectItem(item)
       @moveToSelectedItem(ignoreCursorMove: false)
 
