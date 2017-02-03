@@ -113,12 +113,9 @@ class ProviderBase
     {point} = item
     @openFileForItem(item, activatePane: true).then (editor) ->
       newPoint = @adjustPoint?(point)
-      if newPoint?
-        editor.setCursorBufferPosition(newPoint, autoscroll: false)
-        editor.scrollToBufferPosition(newPoint, center: true)
-      else
-        editor.setCursorBufferPosition(point, autoscroll: false)
-        editor.scrollToBufferPosition(point, center: true)
+      point = newPoint if newPoint?
+      editor.setCursorBufferPosition(point, autoscroll: false)
+      editor.scrollToBufferPosition(point, center: true)
 
   # View
   # -------------------------
