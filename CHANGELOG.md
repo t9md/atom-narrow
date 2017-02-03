@@ -14,6 +14,7 @@
   - `n` to move to first-item of next file
   - `p` to move to last-item of previous file
 
+- Improve: No longer close `narrow-editor` on confirm if protected by `narrow-ui:protect`.
 - Doc: FAQ Section in README
 - Fix: [Critical]. No longer modify cursor position after confirmed
   - It's interfere precise closest position when auto-sync.
