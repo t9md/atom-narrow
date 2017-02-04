@@ -12,7 +12,7 @@ ruleHeaderLevel2 =
   name: 'markup.heading.heading-2.narrow'
 
 ruleLineHeader =
-  match: '^\\s*(\\d+(?:: *\\d+)?:)*'
+  match: '^\\s*(\\d+(?:: *\\d+)?:)'
   name: 'location.narrow'
   captures:
     '1':
