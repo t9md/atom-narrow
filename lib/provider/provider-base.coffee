@@ -173,13 +173,5 @@ class ProviderBase
     Input ?= require '../input'
     new Input().readInput()
 
-  # Return intems which are injected maxLineTextWidth(used to align lineHeader)
-  injectMaxLineTextWidthForItems: (items) ->
-    rows = _.reject(items, (item) -> item.skip).map(({point}) -> point.row)
-    maxLineTextWidth = String(Math.max(rows...) + 1).length
-    for item in items when not item.skip
-      item.maxLineTextWidth = maxLineTextWidth
-    items
-
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)

@@ -31,8 +31,8 @@ class Linter extends ProviderBase
     for filePath, items of _.groupBy(items, ({filePath}) -> filePath)
       promises.push(@injectLineText(filePath, items))
 
-    Promise.all(promises).then (values) =>
-      @injectMaxLineTextWidthForItems(_.flatten(values))
+    Promise.all(promises).then (values) ->
+      _.flatten(values)
 
   filterItems: (items, filterSpec) ->
     items = super

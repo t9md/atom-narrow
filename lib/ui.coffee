@@ -381,22 +381,27 @@ class UI
     if force
       @cachedItems = null
 
+    if @cachedItems?
+      promiseForItems = Promise.resolve(@cachedItems)
+    else
+      promiseForItems = Promise.resolve(@provider.getItems()).then (items) =>
+        if @provider.showLineHeader
+          @injectMaxLineTextWidthForItems(items)
+        if @provider.supportCacheItems
+          @cachedItems = items
+        items
+
     filterSpec = getFilterSpecForQuery(@getQuery())
+    # No need to highlight excluded items
+    @grammar.update(filterSpec.include)
 
-    Promise.resolve(@cachedItems ? @provider.getItems()).then (items) =>
-      if @provider.supportCacheItems
-        @cachedItems = items
+    promiseForItems.then (items) =>
       items = @provider.filterItems(items, filterSpec)
-
       if not @provider.boundToEditor and @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
 
       @items = [@promptItem, items...]
-
       @renderItems(items)
-
-      # No need to highlight excluded items
-      @grammar.update(filterSpec.include)
 
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
@@ -696,6 +701,14 @@ class UI
     else
       @syncSubcriptions.add editor.onDidSave =>
         @refresh(force: true) unless @isActive()
+
+  # Return intems which are injected maxLineTextWidth(used to align lineHeader)
+  injectMaxLineTextWidthForItems: (items) ->
+    rows = _.reject(items, (item) -> item.skip).map(({point}) -> point.row)
+    maxLineTextWidth = String(Math.max(rows...) + 1).length
+    for item in items when not item.skip
+      item.maxLineTextWidth = maxLineTextWidth
+    items
 
   # vim-mode-plus integration
   # -------------------------

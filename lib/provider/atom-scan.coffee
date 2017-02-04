@@ -19,7 +19,7 @@ class AtomScan extends SearchBase
       if result?.matches?.length
         (resultsByFilePath[result.filePath] ?= []).push(result.matches...)
 
-    scanPromise.then =>
+    scanPromise.then ->
       items = []
       for filePath, results of resultsByFilePath
         items.push({header: "# #{filePath}", filePath, skip: true})
@@ -29,8 +29,7 @@ class AtomScan extends SearchBase
             text: item.lineText
             point: Point.fromObject(item.range[0])
           })
-
-      @injectMaxLineTextWidthForItems(items)
+      items
 
   filterItems: (items, filterSpec) ->
     items = super
