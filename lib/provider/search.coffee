@@ -36,14 +36,13 @@ getOutputterForProject = (project, items) ->
 
       if currentFilePath isnt filePath
         currentFilePath = filePath
-        header = "  # #{relativePath}"
+        header = "## #{relativePath}"
         items.push({header, projectName, filePath, skip: true})
 
       items.push({point, text, filePath, projectName})
 
 module.exports =
 class Search extends SearchBase
-  indentTextForLineHeader: "    "
   supportCacheItems: true
 
   checkReady: ->

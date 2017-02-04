@@ -5,7 +5,6 @@ ProviderBase = require './provider-base'
 module.exports =
 class Linter extends ProviderBase
   includeHeaderGrammar: true
-  indentTextForLineHeader: "    "
   supportDirectEdit: true
   showLineHeader: true
 
@@ -17,7 +16,7 @@ class Linter extends ProviderBase
       for item in items
         text = editor.lineTextForBufferRow(item.point.row)
         item.text = text
-        result.push(header: "  # #{item.info}", filePath: filePath, skip: true, item: item)
+        result.push(header: "## #{item.info}", filePath: filePath, skip: true, item: item)
         result.push(item)
       return result
 

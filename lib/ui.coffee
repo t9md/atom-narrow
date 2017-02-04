@@ -704,10 +704,15 @@ class UI
 
   # Return intems which are injected maxLineTextWidth(used to align lineHeader)
   injectMaxLineTextWidthForItems: (items) ->
-    rows = _.reject(items, (item) -> item.skip).map(({point}) -> point.row)
+    normalItems = _.reject(items, (item) -> item.skip)
+    points = _.pluck(normalItems, 'point')
+    rows = _.pluck(points, 'row')
+    columns = _.pluck(points, 'column')
     maxLineTextWidth = String(Math.max(rows...) + 1).length
-    for item in items when not item.skip
+    maxColumnTextWidth = String(Math.max(columns...) + 1).length
+    for item in items when normalItems
       item.maxLineTextWidth = maxLineTextWidth
+      item.maxColumnTextWidth = maxColumnTextWidth
     items
 
   # vim-mode-plus integration

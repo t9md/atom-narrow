@@ -4,7 +4,6 @@ SearchBase = require './search-base'
 
 module.exports =
 class AtomScan extends SearchBase
-  indentTextForLineHeader: "  "
   supportCacheItems: true
 
   getItems: ->
