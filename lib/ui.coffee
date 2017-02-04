@@ -268,22 +268,21 @@ class UI
       if line isnt item.text
         changes.push({newText: line, item})
 
-    if changes.length
-      if not @provider.boundToEditor and (modifiedFilePaths = @getModifiedFilePathsInChanges(changes)).length
-        modifiedFilePathsAsString = modifiedFilePaths.map((filePath) -> " - `#{filePath}`").join("\n")
-        message = """
-          Cancelled `update-real-file`.
-          You are trying to update file which have **unsaved modification**.
-          But `narrow:#{@provider.getDashName()}` can not detect unsaved change.
-          To use `update-real-file`, you need to save these files.
+    return unless changes.length
 
-          #{modifiedFilePathsAsString}
-          """
+    unless @provider.boundToEditor
+      {success, message} = @ensureNoModifiedFileForChanges(changes)
+      unless success
         atom.notifications.addWarning(message, dismissable: true)
         return
 
-      @provider.updateRealFile(changes)
-      @setModifiedState(false)
+    {success, message} = @ensureNoConflictForChanges(changes)
+    unless success
+      atom.notifications.addWarning(message, dismissable: true)
+      return
+
+    @provider.updateRealFile(changes)
+    @setModifiedState(false)
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
@@ -430,9 +429,55 @@ class UI
 
     true
 
+  detectConflictForChanges: (changes) ->
+    conflictChanges = {}
+    changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
+    for filePath, changesInFile of changesByFilePath
+      changesByRow = _.groupBy(changesInFile, ({item}) -> item.point.row)
+      for row, changesInRow of changesByRow
+        newTexts = _.pluck(changesInRow, 'newText')
+        if _.uniq(newTexts).length > 1
+          conflictChanges[filePath] ?= []
+          conflictChanges[filePath].push(changesInRow...)
+    conflictChanges
+
+  ensureNoConflictForChanges: (changes) ->
+    message = []
+    conflictChanges = @detectConflictForChanges(changes)
+    success = _.isEmpty(conflictChanges)
+    unless success
+      message.push """
+        Cancelled `update-real-file`.
+        Detected **conflicting change to same line**.
+        """
+      for filePath, changesInFile of conflictChanges
+        message.push("- #{filePath}")
+        for {newText, item} in changesInFile
+          message.push("  - #{item.point.translate([1, 1]).toString()}, #{newText}")
+
+    return {success, message: message.join("\n")}
+
   getModifiedFilePathsInChanges: (changes) ->
     _.uniq(changes.map ({item}) -> item.filePath).filter (filePath) ->
       atom.project.isPathModified(filePath)
+
+  ensureNoModifiedFileForChanges: (changes) ->
+    message = ''
+    modifiedFilePaths = @getModifiedFilePathsInChanges(changes)
+    success = modifiedFilePaths.length is 0
+    unless success
+      modifiedFilePathsAsString = modifiedFilePaths.map((filePath) -> " - `#{filePath}`").join("\n")
+      message = """
+        Cancelled `update-real-file`.
+        You are trying to update file which have **unsaved modification**.
+        But `narrow:#{@provider.getDashName()}` can not detect unsaved change.
+        To use `update-real-file`, you need to save these files.
+
+        #{modifiedFilePathsAsString}
+        """
+
+    return {success, message}
+
 
   observeStopChanging: ->
     @editor.onDidStopChanging =>
@@ -718,8 +763,8 @@ class UI
     lineText = String(point.row + 1)
     padding = " ".repeat(maxLineWidth - lineText.length)
     lineHeader = "#{@provider.indentTextForLineHeader}#{padding}#{lineText}"
-    if @showColumnOnLineHeader
-      columnText = String(point.columnText + 1)
+    if @provider.showColumnOnLineHeader
+      columnText = String(point.column + 1)
       padding = " ".repeat(maxColumnWidth - columnText.length)
       lineHeader = "#{lineHeader}:#{padding}#{columnText}"
     lineHeader + ": "
