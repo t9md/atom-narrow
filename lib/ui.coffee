@@ -386,7 +386,7 @@ class UI
     else
       promiseForItems = Promise.resolve(@provider.getItems()).then (items) =>
         if @provider.showLineHeader
-          @injectMaxLineTextWidthForItems(items)
+          @injectLineHeader(items)
         if @provider.supportCacheItems
           @cachedItems = items
         items
@@ -703,17 +703,26 @@ class UI
         @refresh(force: true) unless @isActive()
 
   # Return intems which are injected maxLineTextWidth(used to align lineHeader)
-  injectMaxLineTextWidthForItems: (items) ->
+  injectLineHeader: (items) ->
     normalItems = _.reject(items, (item) -> item.skip)
     points = _.pluck(normalItems, 'point')
-    rows = _.pluck(points, 'row')
-    columns = _.pluck(points, 'column')
-    maxLineTextWidth = String(Math.max(rows...) + 1).length
-    maxColumnTextWidth = String(Math.max(columns...) + 1).length
-    for item in items when normalItems
-      item.maxLineTextWidth = maxLineTextWidth
-      item.maxColumnTextWidth = maxColumnTextWidth
+    maxLine = Math.max(_.pluck(points, 'row')...) + 1
+    maxColumn = Math.max(_.pluck(points, 'column')...) + 1
+    maxLineWidth = String(maxLine).length
+    maxColumnWidth = String(maxColumn).length
+    for item in normalItems
+      item._lineHeader = @getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
     items
+
+  getLineHeaderForItem: (point, maxLineWidth, maxColumnWidth) ->
+    lineText = String(point.row + 1)
+    padding = " ".repeat(maxLineWidth - lineText.length)
+    lineHeader = "#{@provider.indentTextForLineHeader}#{padding}#{lineText}"
+    if @showColumnOnLineHeader
+      columnText = String(point.columnText + 1)
+      padding = " ".repeat(maxColumnWidth - columnText.length)
+      lineHeader = "#{lineHeader}:#{padding}#{columnText}"
+    lineHeader + ": "
 
   # vim-mode-plus integration
   # -------------------------

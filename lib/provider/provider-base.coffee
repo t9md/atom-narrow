@@ -126,22 +126,9 @@ class ProviderBase
       item.header
     else
       if @showLineHeader
-        item._lineHeader = @getLineHeaderForItem(item) # Inject
         item._lineHeader + item.text
       else
         item.text
-
-  # Unless items didn't have maxLineTextWidth field, detect last line from editor.
-  getLineHeaderForItem: ({point, maxLineTextWidth, maxColumnTextWidth}, editor=@editor) ->
-    maxLineTextWidth ?= String(editor.getLastBufferRow() + 1).length
-    lineNumberText = String(point.row + 1)
-    padding = " ".repeat(maxLineTextWidth - lineNumberText.length)
-    lineHeader = @indentTextForLineHeader + padding + lineNumberText
-    if @showColumnOnLineHeader
-      columnNumberText = String(point.column + 1)
-      padding = " ".repeat(maxColumnTextWidth - columnNumberText.length)
-      lineHeader = lineHeader + ':' + padding + columnNumberText
-    lineHeader + ": "
 
   # Direct Edit
   # -------------------------
