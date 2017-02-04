@@ -60,8 +60,7 @@ class Search extends SearchBase
 
   getItems: ->
     @options.projects ?= atom.project.getPaths()
-    regexp = @getRegExpForSearchTerm()#@options.search)
-    search = @search.bind(this, regexp)
+    search = @search.bind(this, @getRegExpForSearchTerm())
     Promise.all(@options.projects.map(search)).then (values) ->
       _.flatten(values)
 
