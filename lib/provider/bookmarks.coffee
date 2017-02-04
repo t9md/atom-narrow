@@ -19,7 +19,7 @@ getBookmarks = ->
 module.exports =
 class Bookmarks extends ProviderBase
   includeHeaderGrammar: true
-  indentTextForLineHeader: "  "
+  showLineHeader: true
   supportCacheItems: false
 
   getItemsForEditor: (editor, markerLayer) ->
@@ -38,4 +38,4 @@ class Bookmarks extends ProviderBase
       filePath = editor.getPath()
       items.push(header: "# #{filePath}", filePath: filePath, skip: true)
       items.push(@getItemsForEditor(editor, markerLayer)...)
-    @injectMaxLineTextWidthForItems(items)
+    items

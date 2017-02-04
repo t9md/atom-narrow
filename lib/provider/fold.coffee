@@ -16,7 +16,6 @@ module.exports =
 class Fold extends ProviderBase
   boundToEditor: true
   foldLevel: 2
-  showLineHeader: false
   supportCacheItems: true
 
   initialize: ->

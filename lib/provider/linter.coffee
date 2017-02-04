@@ -5,8 +5,8 @@ ProviderBase = require './provider-base'
 module.exports =
 class Linter extends ProviderBase
   includeHeaderGrammar: true
-  indentTextForLineHeader: "    "
   supportDirectEdit: true
+  showLineHeader: true
 
   injectLineText: (filePath, items) ->
     # Inject real lineText
@@ -16,7 +16,7 @@ class Linter extends ProviderBase
       for item in items
         text = editor.lineTextForBufferRow(item.point.row)
         item.text = text
-        result.push(header: "  # #{item.info}", filePath: filePath, skip: true, item: item)
+        result.push(header: "## #{item.info}", filePath: filePath, skip: true, item: item)
         result.push(item)
       return result
 
@@ -30,8 +30,8 @@ class Linter extends ProviderBase
     for filePath, items of _.groupBy(items, ({filePath}) -> filePath)
       promises.push(@injectLineText(filePath, items))
 
-    Promise.all(promises).then (values) =>
-      @injectMaxLineTextWidthForItems(_.flatten(values))
+    Promise.all(promises).then (values) ->
+      _.flatten(values)
 
   filterItems: (items, filterSpec) ->
     items = super

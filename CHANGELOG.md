@@ -1,3 +1,18 @@
+# 0.20.0: WIP
+- Improve: #102 Change itemIndicator for protected `narrow-editor`.
+- Improve: #101 `ctrl-g`( `narrow:close` ) in protected `narrow-editor` no longer close un-protected `narrow-editor`.
+- Improve: Adjust point to first-character-of-line( was column 0 ) for provider `fold` and `symbols`.
+- Experiment: Use octicon icon for itemIndicator in `narrow-editor`.
+- Experiment, Breaking: Remove indentation of lineHeader for more space for line text.
+- New, Improve: Show multiple matches on same line for `search` and `atom-scan`
+  - Show column for `search`, `atom-scan`
+  - Add protection for `update-real-file` by detecting conflicting change to same line.
+    - e.g
+      - When you have text file which content is "test abc abc\n"
+      - search `abc` now shows two items(since one line contain two `abc`).
+      - So user can edit these two items **differently** and try to `update-real-file`.
+      - But this is not allowed, detect conflict and show warning.
+
 # 0.19.0:
 - New: Exclude particular file item from result for non-boundToEditor provider.
   - This is nothing to do with provider's behavior, just filter out result in narrow-editor(ui).

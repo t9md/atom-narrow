@@ -18,7 +18,8 @@ class ProviderBase
   includeHeaderGrammar: false
 
   indentTextForLineHeader: ""
-  showLineHeader: true
+  showLineHeader: false
+  showColumnOnLineHeader: false
 
   supportDirectEdit: false
   supportCacheItems: false
@@ -125,17 +126,9 @@ class ProviderBase
       item.header
     else
       if @showLineHeader
-        item._lineHeader = @getLineHeaderForItem(item) # Inject
         item._lineHeader + item.text
       else
         item.text
-
-  # Unless items didn't have maxLineTextWidth field, detect last line from editor.
-  getLineHeaderForItem: ({point, maxLineTextWidth}, editor=@editor) ->
-    maxLineTextWidth ?= String(editor.getLastBufferRow() + 1).length
-    lineNumberText = String(point.row + 1)
-    padding = " ".repeat(maxLineTextWidth - lineNumberText.length)
-    @indentTextForLineHeader + padding + lineNumberText + ": "
 
   # Direct Edit
   # -------------------------
@@ -168,14 +161,6 @@ class ProviderBase
   readInput: ->
     Input ?= require '../input'
     new Input().readInput()
-
-  # Return intems which are injected maxLineTextWidth(used to align lineHeader)
-  injectMaxLineTextWidthForItems: (items) ->
-    rows = _.reject(items, (item) -> item.skip).map(({point}) -> point.row)
-    maxLineTextWidth = String(Math.max(rows...) + 1).length
-    for item in items when not item.skip
-      item.maxLineTextWidth = maxLineTextWidth
-    items
 
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)

@@ -7,6 +7,7 @@ class Lines extends ProviderBase
   boundToEditor: true
   supportDirectEdit: true
   supportCacheItems: true
+  showLineHeader: true
 
   getItems: ->
     @editor.buffer.getLines().map (text, row) ->

@@ -7,6 +7,8 @@ module.exports =
 class SearchBase extends ProviderBase
   includeHeaderGrammar: true
   supportDirectEdit: true
+  showLineHeader: true
+  showColumnOnLineHeader: true
 
   checkReady: ->
     if @options.currentWord
