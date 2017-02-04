@@ -7,12 +7,7 @@ class AtomScan extends SearchBase
   supportCacheItems: true
 
   getItems: ->
-    source = _.escapeRegExp(@options.search)
-    if @options.wordOnly
-      regexp = ///\b#{source}\b///i
-    else
-      regexp = ///#{source}///i
-
+    regexp = @getRegExpForSearchTerm()
     resultsByFilePath = {}
     scanPromise = atom.workspace.scan regexp, (result) ->
       if result?.matches?.length

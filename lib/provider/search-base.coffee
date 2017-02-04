@@ -23,9 +23,23 @@ class SearchBase extends ProviderBase
         @options.search = input
         true
 
-  initialize: ->
-    source = _.escapeRegExp(@options.search)
+  getRegExpForSearchTerm: ->
+    searchTerm = @options.search
+    source = _.escapeRegExp(searchTerm)
     if @options.wordOnly
       source = "\\b#{source}\\b"
-    searchTerm = "(?i:#{source})"
+
+    sensitivity = @getConfig('caseSensitivityForSearchTerm')
+    if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and /[A-Z]/.test(searchTerm))
+      new RegExp(source)
+    else
+      new RegExp(source, 'i')
+
+  initialize: ->
+    regexp = @getRegExpForSearchTerm()
+    source = regexp.source
+    if regexp.ignoreCase
+      searchTerm = "(?i:#{source})"
+    else
+      searchTerm = source
     @ui.grammar.setSearchTerm(searchTerm)

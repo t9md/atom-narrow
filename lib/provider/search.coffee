@@ -60,19 +60,22 @@ class Search extends SearchBase
 
   getItems: ->
     @options.projects ?= atom.project.getPaths()
-    search = @search.bind(this, _.escapeRegExp(@options.search))
+    regexp = @getRegExpForSearchTerm()#@options.search)
+    search = @search.bind(this, regexp)
     Promise.all(@options.projects.map(search)).then (values) ->
       _.flatten(values)
 
-  search: (pattern, project) ->
+  search: (regexp, project) ->
     items = []
     stdout = stderr = getOutputterForProject(project, items)
     args = @getConfig('agCommandArgs').split(/\s+/)
 
-    if @options.wordOnly and ('-w' not in args) and ('--word-regexp' not in args)
-      args.push('--word-regexp')
+    if regexp.ignoreCase
+      args.push('--ignore-case')
+    else
+      args.push('--case-sensitive')
 
-    args.push(pattern)
+    args.push(regexp.source)
     new Promise (resolve) ->
       runCommand(
         command: 'ag'

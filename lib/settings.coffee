@@ -97,13 +97,20 @@ module.exports = new Settings 'narrow',
 
   # Per providers settings
   # -------------------------
-  AtomScan: newProviderConfig()
+  AtomScan: newProviderConfig(
+    caseSensitivityForSearchTerm:
+      default: 'smartcase'
+      enum: ['smartcase', 'sensitive', 'insensitive']
+  )
   Bookmarks: newProviderConfig()
   Fold: newProviderConfig()
   GitDiff: newProviderConfig()
   Lines: newProviderConfig()
   Linter: newProviderConfig()
   Search: newProviderConfig(
+    caseSensitivityForSearchTerm:
+      default: 'smartcase'
+      enum: ['smartcase', 'sensitive', 'insensitive']
     agCommandArgs:
       default: "--nocolor --column --vimgrep"
       description: """
