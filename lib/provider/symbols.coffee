@@ -12,7 +12,6 @@ TagGenerator = requireFrom('symbols-view', 'tag-generator')
 module.exports =
 class Symbols extends ProviderBase
   boundToEditor: true
-  showLineHeader: false
   supportCacheItems: false # manage manually
   items: null
 

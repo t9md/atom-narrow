@@ -7,6 +7,7 @@ class Linter extends ProviderBase
   includeHeaderGrammar: true
   indentTextForLineHeader: "    "
   supportDirectEdit: true
+  showLineHeader: true
 
   injectLineText: (filePath, items) ->
     # Inject real lineText

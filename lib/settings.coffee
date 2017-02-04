@@ -105,7 +105,7 @@ module.exports = new Settings 'narrow',
   Linter: newProviderConfig()
   Search: newProviderConfig(
     agCommandArgs:
-      default: "--nocolor --column"
+      default: "--nocolor --column --vimgrep"
       description: """
       [Experimental: Must be removed in future]<br>
       <br>

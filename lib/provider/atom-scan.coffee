@@ -22,16 +22,13 @@ class AtomScan extends SearchBase
     scanPromise.then =>
       items = []
       for filePath, results of resultsByFilePath
-        header = "# #{filePath}"
-        items.push({header, filePath, skip: true})
-        rows = []
+        items.push({header: "# #{filePath}", filePath, skip: true})
         for item in results
-          filePath = filePath
-          text = item.lineText
-          point = Point.fromObject(item.range[0])
-          if point.row not in rows
-            rows.push(point.row) # ensure single item per row
-            items.push({filePath, text, point})
+          items.push({
+            filePath: filePath
+            text: item.lineText
+            point: Point.fromObject(item.range[0])
+          })
 
       @injectMaxLineTextWidthForItems(items)
 

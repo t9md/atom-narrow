@@ -18,7 +18,8 @@ class ProviderBase
   includeHeaderGrammar: false
 
   indentTextForLineHeader: ""
-  showLineHeader: true
+  showLineHeader: false
+  showColumnOnLineHeader: false
 
   supportDirectEdit: false
   supportCacheItems: false
@@ -135,7 +136,10 @@ class ProviderBase
     maxLineTextWidth ?= String(editor.getLastBufferRow() + 1).length
     lineNumberText = String(point.row + 1)
     padding = " ".repeat(maxLineTextWidth - lineNumberText.length)
-    @indentTextForLineHeader + padding + lineNumberText + ": "
+    lineHeader = @indentTextForLineHeader + padding + lineNumberText + ":"
+    if @showColumnOnLineHeader
+      lineHeader = lineHeader + point.column + ":"
+    lineHeader + " "
 
   # Direct Edit
   # -------------------------

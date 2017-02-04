@@ -20,6 +20,7 @@ module.exports =
 class Bookmarks extends ProviderBase
   includeHeaderGrammar: true
   indentTextForLineHeader: "  "
+  showLineHeader: true
   supportCacheItems: false
 
   getItemsForEditor: (editor, markerLayer) ->
