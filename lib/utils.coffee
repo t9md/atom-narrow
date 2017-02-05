@@ -1,4 +1,4 @@
-{Disposable} = require 'atom'
+{Disposable, Point} = require 'atom'
 _ = require 'underscore-plus'
 
 getAdjacentPaneForPane = (pane) ->
