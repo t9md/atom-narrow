@@ -45,6 +45,28 @@ class SearchBase extends ProviderBase
     else
       new RegExp(source, 'gi')
 
+  initialize: ->
+    @markerLayerByEditor = new Map()
+    @decorationByItem = new Map()
+    clearHighlight = new Disposable => @clearHighlight()
+    @subscriptions.add(
+      clearHighlight
+      @observeUiStopRefreshing()
+      @observeUiChangeSelectedItem()
+      @observeUiPreview()
+      @observeStopChangingActivePaneItem()
+    )
+
+    @regExpForSearchTerm = @getRegExpForSearchTerm()
+    source = @regExpForSearchTerm.source
+    if @regExpForSearchTerm.ignoreCase
+      searchTerm = "(?i:#{source})"
+    else
+      searchTerm = source
+    @ui.grammar.setSearchTerm(searchTerm)
+
+  # Highlight items
+  # -------------------------
   clearHighlight: ->
     @markerLayerByEditor.forEach (markerLayer) ->
       marker.destroy() for marker in markerLayer.getMarkers()
@@ -54,10 +76,10 @@ class SearchBase extends ProviderBase
   decorationOptions = {type: 'highlight', class: 'narrow-search-match'}
   highlightEditor: (editor) ->
     # Get items shown on narrow-editor and also matching editor's filePath
-    items = @ui.getNormalItemsForPath(editor.getPath())
+    items = @ui.getNormalItemsForFilePath(editor.getPath())
     return unless items.length
-    markerLayer = editor.addMarkerLayer()
-    @markerLayerByEditor.set(editor, markerLayer)
+
+    @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
     editor.scan @regExpForSearchTerm, ({range}) =>
       if item = _.detect(items, ({point}) -> point.isEqual(range.start))
         marker = markerLayer.markBufferRange(range, invalidate: 'inside')
@@ -66,39 +88,30 @@ class SearchBase extends ProviderBase
 
   updateCurrentHighlight: ->
     if decoration = @decorationByItem.get(@ui.getPreviouslySelectedItem())
-      updateDecoration decoration, (cssClass) -> cssClass.replace(' current', '')
+      updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
 
     if decoration = @decorationByItem.get(@ui.getSelectedItem())
-      updateDecoration decoration, (cssClass) -> cssClass.replace(' current', '') + ' current'
+      updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', '') + ' current')
 
-  initialize: ->
-    @markerLayerByEditor = new Map()
-    @decorationByItem = new Map()
-    @subscriptions.add new Disposable => @clearHighlight()
-
-    @subscriptions.add @ui.onDidStopRefreshing =>
+  observeUiStopRefreshing: ->
+    @ui.onDidStopRefreshing =>
       @clearHighlight()
       @highlightEditor(editor) for editor in getVisibleEditors()
       @updateCurrentHighlight()
 
-    @subscriptions.add @ui.onDidChangeSelectedItem =>
-      @updateCurrentHighlight()
-
-    @subscriptions.add @ui.onDidPreview ({editor}) =>
+  observeUiPreview: ->
+    @ui.onDidPreview ({editor}) =>
       unless @markerLayerByEditor.has(editor)
         @highlightEditor(editor)
         @updateCurrentHighlight()
 
-    @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
+  observeStopChangingActivePaneItem: ->
+    atom.workspace.onDidStopChangingActivePaneItem (item) =>
       if isTextEditor(item) and not isNarrowEditor(item)
         unless @markerLayerByEditor.has(item)
           @highlightEditor(item)
           @updateCurrentHighlight()
 
-    @regExpForSearchTerm = @getRegExpForSearchTerm()
-    source = @regExpForSearchTerm.source
-    if @regExpForSearchTerm.ignoreCase
-      searchTerm = "(?i:#{source})"
-    else
-      searchTerm = source
-    @ui.grammar.setSearchTerm(searchTerm)
+  observeUiChangeSelectedItem: ->
+    @ui.onDidChangeSelectedItem =>
+      @updateCurrentHighlight()
