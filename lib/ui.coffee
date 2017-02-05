@@ -85,6 +85,9 @@ class UI
 
     @stopRefreshingTimeout = setTimeout(stopRefreshingCallback, @stopRefreshingDelay)
 
+  onDidPreview: (fn) -> @emitter.on('did-preview', fn)
+  emitDidPreview: (event) -> @emitter.emit('did-preview', event)
+
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
@@ -621,6 +624,7 @@ class UI
       editor.scrollToBufferPosition(item.point, center: true)
       @setRowMarker(editor, item.point)
       @preventSyncToEditor = false
+      @emitDidPreview({editor, item})
 
   confirm: ({keepOpen}={}) ->
     item = @getSelectedItem()

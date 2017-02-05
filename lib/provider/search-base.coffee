@@ -76,18 +76,25 @@ class SearchBase extends ProviderBase
     @markerLayerByEditor = new Map()
     @subscriptions.add new Disposable => @clearHighlight()
 
+    wasVisibleEditors = null
+    wasVisibleEditor = (editor) ->
+      editor in wasVisibleEditors
+
     @subscriptions.add @ui.onDidStopRefreshing =>
       console.log 'stop refreshing'
       @highlightMatches()
+      wasVisibleEditors = getVisibleEditors()
 
-    @subscriptions.add @getPane().onDidChangeActiveItem (editor) =>
-      console.log 'change active item'
+    @subscriptions.add @ui.onDidPreview ({editor, item}) =>
+      console.log 'did preview'
       @highlightMatches(editor)
+      wasVisibleEditors = getVisibleEditors()
 
     @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      console.log 'active item changed'
-      if isTextEditor(item) and not isNarrowEditor(item)
+      if isTextEditor(item) and not isNarrowEditor(item) and not wasVisibleEditors(item)
+        console.log 'active item changed'
         @highlightMatches(item)
+        wasVisibleEditors = getVisibleEditors()
 
     @regExpForSearchTerm = @getRegExpForSearchTerm()
     source = @regExpForSearchTerm.source
