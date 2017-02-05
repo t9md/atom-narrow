@@ -209,7 +209,7 @@ class UI
     # In this case, user see modified icon(mark) on tab.
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
-    
+
     if @editorElement.component?
       attachedPromise = Promise.resolve()
     else
