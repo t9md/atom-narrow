@@ -43,31 +43,12 @@ class SearchBase extends ProviderBase
         marker.destroy()
     @markerLayerByEditor.clear()
 
-  highlightMatches: (editor) ->
-    normalItems = @ui.items.filter (item) -> not item.skip
-    itemsByFilePath =  _.groupBy(normalItems, (item) -> item.filePath)
-    visibleEditors = getVisibleEditors()
+  highlightEditor: (editor) ->
+    items = @ui.getNormalItemsForPath(editor.getPath())
+    return unless items.length
 
-    if editor? and (editor in visibleEditors) and (items = itemsByFilePath[editor.getPath()])
-      @clearHighlightForEditor(editor)
-      @highlightEditor(editor, items)
-    else
-      @clearHighlight()
-      for editor in visibleEditors when (items = itemsByFilePath[editor.getPath()])
-        @highlightEditor(editor, items)
-
-  clearHighlightForEditor: (editor) ->
-    if @markerLayerByEditor.has(editor)
-      markerLayer = @markerLayerByEditor.get(editor)
-      for marker in markerLayer.getMarkers()
-        marker.destroy()
-      @markerLayerByEditor.delete(editor)
-
-  highlightEditor: (editor, items) ->
-    decorationOptions = {type: 'highlight', class: 'narrow-search-match'}
-    markerLayer = editor.addMarkerLayer()
-    @markerLayerByEditor.set(editor, markerLayer)
-    editor.decorateMarkerLayer(markerLayer, decorationOptions)
+    @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
+    editor.decorateMarkerLayer(markerLayer, type: 'highlight', class: 'narrow-search-match')
     editor.scan @regExpForSearchTerm, ({range}) ->
       if items.some(({point}) -> point.isEqual(range.start))
         markerLayer.markBufferRange(range, invalidate: 'inside')
@@ -76,25 +57,20 @@ class SearchBase extends ProviderBase
     @markerLayerByEditor = new Map()
     @subscriptions.add new Disposable => @clearHighlight()
 
-    wasVisibleEditors = null
-    wasVisibleEditor = (editor) ->
-      editor in wasVisibleEditors
-
     @subscriptions.add @ui.onDidStopRefreshing =>
       console.log 'stop refreshing'
-      @highlightMatches()
-      wasVisibleEditors = getVisibleEditors()
+      @clearHighlight()
+      @highlightEditor(editor) for editor in getVisibleEditors()
 
-    @subscriptions.add @ui.onDidPreview ({editor, item}) =>
-      console.log 'did preview'
-      @highlightMatches(editor)
-      wasVisibleEditors = getVisibleEditors()
+    @subscriptions.add @ui.onDidPreview ({editor}) =>
+      unless @markerLayerByEditor.has(editor)
+        console.log 'did preview'
+        @highlightEditor(editor)
 
     @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      if isTextEditor(item) and not isNarrowEditor(item) and not wasVisibleEditors(item)
+      if isTextEditor(item) and not isNarrowEditor(item) and not @markerLayerByEditor.has(item)
         console.log 'active item changed'
-        @highlightMatches(item)
-        wasVisibleEditors = getVisibleEditors()
+        @highlightEditor(item)
 
     @regExpForSearchTerm = @getRegExpForSearchTerm()
     source = @regExpForSearchTerm.source

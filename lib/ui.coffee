@@ -779,6 +779,10 @@ class UI
       item._lineHeader = @getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
     items
 
+  getNormalItemsForPath: (filePath) ->
+    @items.filter (item) ->
+      (not item.skip) and (item.filePath is filePath)
+
   getLineHeaderForItem: (point, maxLineWidth, maxColumnWidth) ->
     lineText = String(point.row + 1)
     padding = " ".repeat(maxLineWidth - lineText.length)
