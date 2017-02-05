@@ -75,7 +75,7 @@ class UI
   onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
   emitDidRefresh: -> @emitter.emit('did-refresh')
 
-  # stopRefreshingTimeout is debounced, fired after stopRefreshingDelay
+  # 'did-stop-refreshing' event is debounced, fired after stopRefreshingDelay
   onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
   emitDidStopRefreshing: ->
     clearTimeout(@stopRefreshingTimeout) if @stopRefreshingTimeout?
@@ -562,7 +562,9 @@ class UI
         newRow = @findRowForNormalOrPromptItem(newRow, direction)
 
       if @isPromptRow(newRow)
-        @emitDidMoveToPrompt()
+        @withIgnoreCursorMove =>
+          @editor.setCursorBufferPosition([newRow, newBufferPosition.column])
+          @emitDidMoveToPrompt()
       else
         @selectItemForRow(newRow)
         @moveToSelectedItem() if isHeaderRow
