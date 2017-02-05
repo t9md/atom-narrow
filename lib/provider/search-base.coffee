@@ -39,11 +39,11 @@ class SearchBase extends ProviderBase
 
   clearHighlight: ->
     @markerLayerByEditor.forEach (markerLayer) ->
-      for marker in markerLayer.getMarkers()
-        marker.destroy()
+      marker.destroy() for marker in markerLayer.getMarkers()
     @markerLayerByEditor.clear()
 
   highlightEditor: (editor) ->
+    # Get items shown on narrow-editor and also matching editor's filePath
     items = @ui.getNormalItemsForPath(editor.getPath())
     return unless items.length
 
@@ -58,18 +58,15 @@ class SearchBase extends ProviderBase
     @subscriptions.add new Disposable => @clearHighlight()
 
     @subscriptions.add @ui.onDidStopRefreshing =>
-      console.log 'stop refreshing'
       @clearHighlight()
       @highlightEditor(editor) for editor in getVisibleEditors()
 
     @subscriptions.add @ui.onDidPreview ({editor}) =>
       unless @markerLayerByEditor.has(editor)
-        console.log 'did preview'
         @highlightEditor(editor)
 
     @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       if isTextEditor(item) and not isNarrowEditor(item) and not @markerLayerByEditor.has(item)
-        console.log 'active item changed'
         @highlightEditor(item)
 
     @regExpForSearchTerm = @getRegExpForSearchTerm()
