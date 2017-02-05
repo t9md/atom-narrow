@@ -1,13 +1,4 @@
-# 0.20.0: WIP
-- Improve: #106 highlight matches for provider `search` and `atom-scan`.
-- Internal: Add Ui event when working on #106
-  - Introduce `Ui::onDidStopRefreshing` event which is fired after 100ms delay.
-  - Introduce `Ui::onDidPreview` event which is fired on preview finished.
-- Improve: #102 Change itemIndicator for protected `narrow-editor`.
-- Improve: #101 `ctrl-g`( `narrow:close` ) in protected `narrow-editor` no longer close un-protected `narrow-editor`.
-- Improve: Adjust point to first-character-of-line( was column 0 ) for provider `fold` and `symbols`.
-- Experiment: Use octicon icon for itemIndicator in `narrow-editor`.
-- Experiment, Breaking: Remove indentation of lineHeader for more space for line text.
+# 0.20.0:
 - New, Improve: Show multiple matches on same line for `search` and `atom-scan`
   - Show column for `search`, `atom-scan`
   - Add protection for `update-real-file` by detecting conflicting change to same line.
@@ -16,6 +7,20 @@
       - search `abc` now shows two items(since one line contain two `abc`).
       - So user can edit these two items **differently** and try to `update-real-file`.
       - But this is not allowed, detect conflict and show warning.
+- Breaking, Experiment: Remove indentation of lineHeader for more space for line text.
+- Improve: #106 highlight matches for provider `search` and `atom-scan`.
+  - Update current match highlight on each sync-editor-to-ui.
+- Improve: Adjust point to first-character-of-line( was column 0 ) for provider `fold` and `symbols`.
+- Improve: #102 Change itemIndicator color for protected `narrow-editor`.
+- Improve: Improve UX when `narrow:close`( `ctrl-g` ) is executed on protected `narrow-editor`.
+  - No longer close un-protected `narrow-editor`.
+  - Clear query then refocus to caller editor for not interfering regular preview-then-close-by-ctrl-g flow.
+    - Thus though it don't close `narrow-editor`, it behave like closed by `ctrl-g`.
+- Experiment: Use octicon icon for itemIndicator in `narrow-editor`.
+- Internal: Add Ui event when working on #106
+  - Introduce `Ui::onDidStopRefreshing` which is fired 100ms delayed after `onDidRefresh`.
+  - Introduce `Ui::onDidPreview`
+  - Introduce `Ui::onDidChangeSelectedItem`
 
 # 0.19.0:
 - New: Exclude particular file item from result for non-boundToEditor provider.
