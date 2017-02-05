@@ -43,31 +43,28 @@ class SearchBase extends ProviderBase
         marker.destroy()
     @markerLayerByEditor.clear()
 
-  highlightMatches: ->
+  highlightMatches: (editor) ->
     normalItems = @ui.items.filter (item) -> not item.skip
     itemsByFilePath =  _.groupBy(normalItems, (item) -> item.filePath)
     visibleEditors = getVisibleEditors()
 
-    if editor?
-      if editor in visibleEditors
-        editors = [editor]
-      else
-        return
-    else
-      editors = visibleEditors
-      @clearHighlight()
-
-    for editor in editors when (items = itemsByFilePath[editor.getPath()])
+    if editor? and (editor in visibleEditors) and (items = itemsByFilePath[editor.getPath()])
+      @clearHighlightForEditor(editor)
       @highlightEditor(editor, items)
+    else
+      @clearHighlight()
+      for editor in visibleEditors when (items = itemsByFilePath[editor.getPath()])
+        @highlightEditor(editor, items)
 
-  highlightEditor: (editor, items) ->
-    decorationOptions = {type: 'highlight', class: 'narrow-search-match'}
+  clearHighlightForEditor: (editor) ->
     if @markerLayerByEditor.has(editor)
       markerLayer = @markerLayerByEditor.get(editor)
       for marker in markerLayer.getMarkers()
         marker.destroy()
       @markerLayerByEditor.delete(editor)
 
+  highlightEditor: (editor, items) ->
+    decorationOptions = {type: 'highlight', class: 'narrow-search-match'}
     markerLayer = editor.addMarkerLayer()
     @markerLayerByEditor.set(editor, markerLayer)
     editor.decorateMarkerLayer(markerLayer, decorationOptions)
@@ -79,18 +76,13 @@ class SearchBase extends ProviderBase
     @markerLayerByEditor = new Map()
     @subscriptions.add new Disposable => @clearHighlight()
 
-    @subscriptions.add @ui.onDidRefresh =>
-      console.log 'refresh'
+    @subscriptions.add @ui.onDidStopRefreshing =>
+      console.log 'stop refreshing'
       @highlightMatches()
 
     @subscriptions.add @getPane().onDidChangeActiveItem (editor) =>
       console.log 'change active item'
       @highlightMatches(editor)
-
-    # @subscriptions.add atom.workspace.observeTextEditors (editor) =>
-    #   console.log 'observe editor'
-    #   editor.element.onDidAttach =>
-    #     @highlightMatches()
 
     @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
       console.log 'active item changed'

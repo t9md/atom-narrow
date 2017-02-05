@@ -35,6 +35,9 @@ class UI
 
   # UI.prototype
   # -------------------------
+  stopRefreshingDelay: 100
+  stopRefreshingTimeout: null
+
   autoPreview: null
   autoPreviewOnQueryChange: null
   autoPreviewOnNextStopChanging: false
@@ -71,6 +74,16 @@ class UI
 
   onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
   emitDidRefresh: -> @emitter.emit('did-refresh')
+
+  # stopRefreshingTimeout is debounced, fired after stopRefreshingDelay
+  onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
+  emitDidStopRefreshing: ->
+    clearTimeout(@stopRefreshingTimeout) if @stopRefreshingTimeout?
+    stopRefreshingCallback = =>
+      @stopRefreshingTimeout = null
+      @emitter.emit('did-stop-refreshing')
+
+    @stopRefreshingTimeout = setTimeout(stopRefreshingCallback, @stopRefreshingDelay)
 
   registerCommands: ->
     atom.commands.add @editorElement,
@@ -406,6 +419,7 @@ class UI
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
       @setModifiedState(false)
       @emitDidRefresh()
+      @emitDidStopRefreshing()
 
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
