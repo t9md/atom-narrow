@@ -7,9 +7,8 @@ class AtomScan extends SearchBase
   supportCacheItems: true
 
   getItems: ->
-    regexp = @getRegExpForSearchTerm()
     resultsByFilePath = {}
-    scanPromise = atom.workspace.scan regexp, (result) ->
+    scanPromise = atom.workspace.scan @regExpForSearchTerm, (result) ->
       if result?.matches?.length
         (resultsByFilePath[result.filePath] ?= []).push(result.matches...)
 
