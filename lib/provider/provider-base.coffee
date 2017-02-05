@@ -18,6 +18,7 @@ class ProviderBase
   includeHeaderGrammar: false
 
   indentTextForLineHeader: ""
+  ignoreSideMovementOnSyncToEditor: true
   showLineHeader: false
   showColumnOnLineHeader: false
 

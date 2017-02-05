@@ -35,6 +35,9 @@ class UI
 
   # UI.prototype
   # -------------------------
+  selectedItem: null
+  previouslySelectedItem: null
+
   stopRefreshingDelay: 100
   stopRefreshingTimeout: null
 
@@ -74,6 +77,9 @@ class UI
 
   onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
   emitDidRefresh: -> @emitter.emit('did-refresh')
+
+  onDidChangeSelectedItem: (fn) -> @emitter.on('did-change-selected-item', fn)
+  emitDidChangeSelectedItem: (event) -> @emitter.emit('did-change-selected-item', event)
 
   # 'did-stop-refreshing' event is debounced, fired after stopRefreshingDelay
   onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
@@ -732,10 +738,19 @@ class UI
     item = @items[row]
     if @isNormalItem(item)
       @itemIndicator.setToRow(row)
+      @previouslySelectedItem = @selectedItem
       @selectedItem = item
+      event = {
+        oldItem: @previouslySelectedItem
+        newItem: @selectedItem
+      }
+      @emitDidChangeSelectedItem(event)
 
   getSelectedItem: ->
     @selectedItem
+
+  getPreviouslySelectedItem: ->
+    @previouslySelectedItem
 
   getPromptRange: ->
     @editor.bufferRangeForBufferRow(0)
@@ -751,9 +766,10 @@ class UI
     @syncToEditor(editor)
     @syncSubcriptions = new CompositeDisposable
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
-      if isActiveEditor(editor) and
-          (not event.textChanged) and
-          (event.oldBufferPosition.row isnt event.newBufferPosition.row)
+      if isActiveEditor(editor) and (not event.textChanged)
+        if @provider.ignoreSideMovementOnSyncToEditor
+          return if event.oldBufferPosition.row is event.newBufferPosition.row
+
         @syncToEditor(editor)
 
     @syncSubcriptions.add @onDidRefresh =>
