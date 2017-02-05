@@ -100,17 +100,26 @@ class ProviderBase
 
   openFileForItem: ({filePath}, {activatePane}={}) ->
     filePath ?= @editor.getPath()
-    pane = @getPane() ? getAdjacentPaneOrSplit(@ui.getPane(), split: settings.get('directionToOpen'))
 
+    uiPane = @ui.getPane()
+    pane = @getPane() ? getAdjacentPaneOrSplit(uiPane, split: settings.get('directionToOpen'))
     if item = pane.itemForURI(filePath)
-      openPromise = Promise.resolve(item)
-    else
-      openPromise = atom.workspace.open(filePath, activatePane: false, activateItem: false)
-
-    openPromise.then (editor) ->
       pane.activate() if activatePane
-      if pane.getActiveItem() isnt editor
-        pane.activateItem(editor, pending: true)
+      pane.activateItem(item, pending: true)
+      return Promise.resolve(item)
+
+    # NOTE: See #107
+    # Activate target pane to open, before workspace.open is super important to avoid
+    #  'workspace can only contain one instance of item exception'
+    # There are two approaches to open item at target pane.
+    #  A. Not work: Open item then activate that item on target-pane.
+    #  B. Work: Activate target-pane first then open item at target-pane
+    # Why? if current active pane have item for that path, `workspace.open` return that item.
+    # then trying to activate returned item on target-pane result in, one item activated on multiple-pane.
+    # this situation cause exception.
+    pane.activate()
+    atom.workspace.open(filePath, pending: true).then (editor) ->
+      uiPane.activate() unless activatePane
       editor
 
   confirmed: (item) ->
