@@ -40,6 +40,25 @@ atom-text-editor {
   }
 }
 
+// row-marker
+// =========================
+atom-text-editor {
+  .narrow-search-match {
+    .region {
+      box-sizing: border-box;
+      border-radius: @component-border-radius;
+
+      background-color: @syntax-result-marker-color;
+      border: 2px solid transparent;
+      transition: border-color .2s;
+    }
+    &.current .region {
+      border-color: @syntax-result-marker-color-selected;
+      transition-duration: .1s;
+    }
+  }
+}
+
 // search min editor
 // =========================
 .narrow-search-container {

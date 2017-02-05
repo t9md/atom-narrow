@@ -1,4 +1,8 @@
 # 0.20.0: WIP
+- Improve: #106 highlight matches for provider `search` and `atom-scan`.
+- Internal: Add Ui event when working on #106
+  - Introduce `Ui::onDidStopRefreshing` event which is fired after 100ms delay.
+  - Introduce `Ui::onDidPreview` event which is fired on preview finished.
 - Improve: #102 Change itemIndicator for protected `narrow-editor`.
 - Improve: #101 `ctrl-g`( `narrow:close` ) in protected `narrow-editor` no longer close un-protected `narrow-editor`.
 - Improve: Adjust point to first-character-of-line( was column 0 ) for provider `fold` and `symbols`.

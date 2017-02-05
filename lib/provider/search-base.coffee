@@ -1,14 +1,24 @@
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
-{getCurrentWordAndBoundary} = require '../utils'
+{Disposable} = require 'atom'
+{
+  getCurrentWordAndBoundary
+  getVisibleEditors
+  isTextEditor
+  isNarrowEditor
+  updateDecoration
+} = require '../utils'
 
 module.exports =
 class SearchBase extends ProviderBase
+  ignoreSideMovementOnSyncToEditor: false
+
   includeHeaderGrammar: true
   supportDirectEdit: true
   showLineHeader: true
   showColumnOnLineHeader: true
+  regExpForSearchTerm: null
 
   checkReady: ->
     if @options.currentWord
@@ -31,15 +41,77 @@ class SearchBase extends ProviderBase
 
     sensitivity = @getConfig('caseSensitivityForSearchTerm')
     if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and /[A-Z]/.test(searchTerm))
-      new RegExp(source)
+      new RegExp(source, 'g')
     else
-      new RegExp(source, 'i')
+      new RegExp(source, 'gi')
 
   initialize: ->
-    regexp = @getRegExpForSearchTerm()
-    source = regexp.source
-    if regexp.ignoreCase
+    @markerLayerByEditor = new Map()
+    @decorationByItem = new Map()
+    clearHighlight = new Disposable => @clearHighlight()
+    @subscriptions.add(
+      clearHighlight
+      @observeUiStopRefreshing()
+      @observeUiChangeSelectedItem()
+      @observeUiPreview()
+      @observeStopChangingActivePaneItem()
+    )
+
+    @regExpForSearchTerm = @getRegExpForSearchTerm()
+    source = @regExpForSearchTerm.source
+    if @regExpForSearchTerm.ignoreCase
       searchTerm = "(?i:#{source})"
     else
       searchTerm = source
     @ui.grammar.setSearchTerm(searchTerm)
+
+  # Highlight items
+  # -------------------------
+  clearHighlight: ->
+    @markerLayerByEditor.forEach (markerLayer) ->
+      marker.destroy() for marker in markerLayer.getMarkers()
+    @markerLayerByEditor.clear()
+    @decorationByItem.clear()
+
+  decorationOptions = {type: 'highlight', class: 'narrow-search-match'}
+  highlightEditor: (editor) ->
+    # Get items shown on narrow-editor and also matching editor's filePath
+    items = @ui.getNormalItemsForFilePath(editor.getPath())
+    return unless items.length
+
+    @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
+    editor.scan @regExpForSearchTerm, ({range}) =>
+      if item = _.detect(items, ({point}) -> point.isEqual(range.start))
+        marker = markerLayer.markBufferRange(range, invalidate: 'inside')
+        decoration = editor.decorateMarker(marker, decorationOptions)
+        @decorationByItem.set(item, decoration)
+
+  updateCurrentHighlight: ->
+    if decoration = @decorationByItem.get(@ui.getPreviouslySelectedItem())
+      updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
+
+    if decoration = @decorationByItem.get(@ui.getSelectedItem())
+      updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', '') + ' current')
+
+  observeUiStopRefreshing: ->
+    @ui.onDidStopRefreshing =>
+      @clearHighlight()
+      @highlightEditor(editor) for editor in getVisibleEditors()
+      @updateCurrentHighlight()
+
+  observeUiPreview: ->
+    @ui.onDidPreview ({editor}) =>
+      unless @markerLayerByEditor.has(editor)
+        @highlightEditor(editor)
+        @updateCurrentHighlight()
+
+  observeStopChangingActivePaneItem: ->
+    atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      if isTextEditor(item) and not isNarrowEditor(item)
+        unless @markerLayerByEditor.has(item)
+          @highlightEditor(item)
+          @updateCurrentHighlight()
+
+  observeUiChangeSelectedItem: ->
+    @ui.onDidChangeSelectedItem =>
+      @updateCurrentHighlight()

@@ -144,6 +144,11 @@ getFirstCharacterPositionForBufferRow = (editor, row) ->
   editor.scanInBufferRange /\S/, scanRange, (event) -> range = event.range
   range?.start ? new Point(row, 0)
 
+updateDecoration = (decoration, fn) ->
+  {type, class: klass} = decoration.getProperties()
+  klass = decoration.getProperties().class
+  decoration.setProperties(type: type, class: fn(klass))
+
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
@@ -163,4 +168,5 @@ module.exports = {
   paneForItem
   getVisibleEditors
   getFirstCharacterPositionForBufferRow
+  updateDecoration
 }

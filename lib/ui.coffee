@@ -35,6 +35,12 @@ class UI
 
   # UI.prototype
   # -------------------------
+  selectedItem: null
+  previouslySelectedItem: null
+
+  stopRefreshingDelay: 100
+  stopRefreshingTimeout: null
+
   autoPreview: null
   autoPreviewOnQueryChange: null
   autoPreviewOnNextStopChanging: false
@@ -71,6 +77,22 @@ class UI
 
   onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
   emitDidRefresh: -> @emitter.emit('did-refresh')
+
+  onDidChangeSelectedItem: (fn) -> @emitter.on('did-change-selected-item', fn)
+  emitDidChangeSelectedItem: (event) -> @emitter.emit('did-change-selected-item', event)
+
+  # 'did-stop-refreshing' event is debounced, fired after stopRefreshingDelay
+  onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
+  emitDidStopRefreshing: ->
+    clearTimeout(@stopRefreshingTimeout) if @stopRefreshingTimeout?
+    stopRefreshingCallback = =>
+      @stopRefreshingTimeout = null
+      @emitter.emit('did-stop-refreshing')
+
+    @stopRefreshingTimeout = setTimeout(stopRefreshingCallback, @stopRefreshingDelay)
+
+  onDidPreview: (fn) -> @emitter.on('did-preview', fn)
+  emitDidPreview: (event) -> @emitter.emit('did-preview', event)
 
   registerCommands: ->
     atom.commands.add @editorElement,
@@ -406,6 +428,7 @@ class UI
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
       @setModifiedState(false)
       @emitDidRefresh()
+      @emitDidStopRefreshing()
 
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
@@ -545,7 +568,9 @@ class UI
         newRow = @findRowForNormalOrPromptItem(newRow, direction)
 
       if @isPromptRow(newRow)
-        @emitDidMoveToPrompt()
+        @withIgnoreCursorMove =>
+          @editor.setCursorBufferPosition([newRow, newBufferPosition.column])
+          @emitDidMoveToPrompt()
       else
         @selectItemForRow(newRow)
         @moveToSelectedItem() if isHeaderRow
@@ -607,6 +632,7 @@ class UI
       editor.scrollToBufferPosition(item.point, center: true)
       @setRowMarker(editor, item.point)
       @preventSyncToEditor = false
+      @emitDidPreview({editor, item})
 
   confirm: ({keepOpen}={}) ->
     item = @getSelectedItem()
@@ -712,10 +738,19 @@ class UI
     item = @items[row]
     if @isNormalItem(item)
       @itemIndicator.setToRow(row)
+      @previouslySelectedItem = @selectedItem
       @selectedItem = item
+      event = {
+        oldItem: @previouslySelectedItem
+        newItem: @selectedItem
+      }
+      @emitDidChangeSelectedItem(event)
 
   getSelectedItem: ->
     @selectedItem
+
+  getPreviouslySelectedItem: ->
+    @previouslySelectedItem
 
   getPromptRange: ->
     @editor.bufferRangeForBufferRow(0)
@@ -731,9 +766,10 @@ class UI
     @syncToEditor(editor)
     @syncSubcriptions = new CompositeDisposable
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
-      if isActiveEditor(editor) and
-          (not event.textChanged) and
-          (event.oldBufferPosition.row isnt event.newBufferPosition.row)
+      if isActiveEditor(editor) and (not event.textChanged)
+        if @provider.ignoreSideMovementOnSyncToEditor
+          return if event.oldBufferPosition.row is event.newBufferPosition.row
+
         @syncToEditor(editor)
 
     @syncSubcriptions.add @onDidRefresh =>
@@ -758,6 +794,10 @@ class UI
     for item in normalItems
       item._lineHeader = @getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
     items
+
+  getNormalItemsForFilePath: (filePath) ->
+    @items.filter (item) ->
+      (not item.skip) and (item.filePath is filePath)
 
   getLineHeaderForItem: (point, maxLineWidth, maxColumnWidth) ->
     lineText = String(point.row + 1)

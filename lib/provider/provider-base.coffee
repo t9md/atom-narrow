@@ -18,6 +18,7 @@ class ProviderBase
   includeHeaderGrammar: false
 
   indentTextForLineHeader: ""
+  ignoreSideMovementOnSyncToEditor: true
   showLineHeader: false
   showColumnOnLineHeader: false
 
@@ -66,6 +67,7 @@ class ProviderBase
     isActiveEditor(@editor)
 
   constructor: (editor, @options={}) ->
+    @subscriptions = new CompositeDisposable
     @bindEditor(editor)
     @ui = new UI(this, {input: @options.uiInput})
 
@@ -87,6 +89,7 @@ class ProviderBase
     items
 
   destroy: ->
+    @subscriptions.dispose()
     @editorSubscriptions.dispose()
     pane = paneForItem(@editor)
     if @editor.isAlive() and pane.isAlive() and not @wasConfirmed
