@@ -55,14 +55,8 @@ class Scan extends ProviderBase
 
   filterItems: (items, {include, exclude}) ->
     if include.length is 0
-      return items
-
-    include.shift()
-    @ui.grammar.update(include)
-    for regexp in exclude
-      items = items.filter (item) -> not regexp.test(item.text)
-
-    for regexp in include
-      items = items.filter (item) -> regexp.test(item.text)
-
-    items
+      items
+    else
+      include.shift()
+      @ui.grammar.update(include)
+      super
