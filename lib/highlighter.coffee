@@ -11,8 +11,8 @@ module.exports =
 class Highlighter
   regexp: null
 
-  constructor: (@provider) ->
-    @ui = @provider.ui
+  constructor: (@ui) ->
+    @provider = @ui.provider
     @markerLayerByEditor = new Map()
     @decorationByItem = new Map()
     @subscriptions = new CompositeDisposable
@@ -26,19 +26,19 @@ class Highlighter
   setRegExp: (@regexp) ->
 
   destroy: ->
-    @clearHighlight()
+    @clear()
     @subscriptions.dispose()
 
   # Highlight items
   # -------------------------
-  clearHighlight: ->
+  clear: ->
     @markerLayerByEditor.forEach (markerLayer) ->
       marker.destroy() for marker in markerLayer.getMarkers()
     @markerLayerByEditor.clear()
     @decorationByItem.clear()
 
   decorationOptions = {type: 'highlight', class: 'narrow-match'}
-  highlightEditor: (editor) ->
+  highlight: (editor) ->
     return unless @regexp
     return if @provider.boundToEditor and editor isnt @provider.editor
     # Get items shown on narrow-editor and also matching editor's filePath
@@ -55,7 +55,7 @@ class Highlighter
         decoration = editor.decorateMarker(marker, decorationOptions)
         @decorationByItem.set(item, decoration)
 
-  updateCurrentHighlight: ->
+  updateCurrent: ->
     if decoration = @decorationByItem.get(@ui.getPreviouslySelectedItem())
       updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
 
@@ -64,24 +64,24 @@ class Highlighter
 
   observeUiStopRefreshing: ->
     @ui.onDidStopRefreshing =>
-      @clearHighlight()
+      @clear()
       for editor in getVisibleEditors() when not isNarrowEditor(editor)
-        @highlightEditor(editor)
-      @updateCurrentHighlight()
+        @highlight(editor)
+      @updateCurrent()
 
   observeUiPreview: ->
     @ui.onDidPreview ({editor}) =>
       unless @markerLayerByEditor.has(editor)
-        @highlightEditor(editor)
-        @updateCurrentHighlight()
+        @highlight(editor)
+        @updateCurrent()
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
       if isTextEditor(item) and not isNarrowEditor(item)
         unless @markerLayerByEditor.has(item)
-          @highlightEditor(item)
-          @updateCurrentHighlight()
+          @highlight(item)
+          @updateCurrent()
 
   observeUiChangeSelectedItem: ->
     @ui.onDidChangeSelectedItem =>
-      @updateCurrentHighlight()
+      @updateCurrent()

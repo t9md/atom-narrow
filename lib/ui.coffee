@@ -12,6 +12,7 @@ _ = require 'underscore-plus'
 settings = require './settings'
 Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
+Highlighter = require './highlighter'
 ItemIndicator = require './item-indicator'
 
 module.exports =
@@ -44,6 +45,7 @@ class UI
   autoPreview: null
   autoPreviewOnQueryChange: null
   autoPreviewOnNextStopChanging: false
+  syncingEditor: null
 
   preventAutoPreview: false
   preventSyncToEditor: false
@@ -122,6 +124,7 @@ class UI
     @excludedFiles = []
     @autoPreview = @provider.getConfig('autoPreview')
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
+    @highlighter = new Highlighter(this) if @provider.useHighlighter
 
     # Special item used to translate narrow editor row to items without pain
     @promptItem = Object.freeze({_prompt: true, skip: true})
@@ -140,6 +143,7 @@ class UI
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
+
 
     @itemIndicator = new ItemIndicator(this)
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
@@ -266,6 +270,7 @@ class UI
   destroy: ->
     return if @destroyed
     @destroyed = true
+    @highlighter?.destroy()
     @syncSubcriptions?.dispose()
     @disposables.dispose()
     @editor.destroy()
@@ -782,7 +787,11 @@ class UI
     range = @editor.setTextInBufferRange(@getPromptRange(0), text)
     range
 
+  isSyncingEditor: (editor) ->
+    @syncingEditor? and @syncingEditor is editor
+
   startSyncToEditor: (editor) ->
+    @syncingEditor = editor
     @syncToEditor(editor)
     @syncSubcriptions = new CompositeDisposable
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>

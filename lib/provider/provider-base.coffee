@@ -22,6 +22,7 @@ class ProviderBase
   showLineHeader: false
   showColumnOnLineHeader: false
   updateGrammarOnQueryChange: true
+  useHighlighter: false
 
   supportDirectEdit: false
   supportCacheItems: false

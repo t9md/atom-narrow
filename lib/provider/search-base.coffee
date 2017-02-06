@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
-Highlighter = require '../highlighter'
 {Disposable} = require 'atom'
 {getCurrentWordAndBoundary} = require '../utils'
 
@@ -14,6 +13,7 @@ class SearchBase extends ProviderBase
   showLineHeader: true
   showColumnOnLineHeader: true
   regExpForSearchTerm: null
+  useHighlighter: true
 
   checkReady: ->
     if @options.currentWord
@@ -41,12 +41,8 @@ class SearchBase extends ProviderBase
       new RegExp(source, 'gi')
 
   initialize: ->
-    @highlighter = new Highlighter(this)
-    @subscriptions.add new Disposable =>
-      @highlighter.destroy()
-
     @regExpForSearchTerm = @getRegExpForSearchTerm()
-    @highlighter.setRegExp(@regExpForSearchTerm)
+    @ui.highlighter.setRegExp(@regExpForSearchTerm)
     @setGrammarSearchTerm(@regExpForSearchTerm)
 
   filterItems: (items, filterSpec) ->

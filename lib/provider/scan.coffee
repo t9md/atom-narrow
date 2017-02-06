@@ -3,7 +3,6 @@ _ = require 'underscore-plus'
 {Point, Disposable} = require 'atom'
 {setGlobalFlagForRegExp} = require '../utils'
 ProviderBase = require './provider-base'
-Highlighter = require '../highlighter'
 
 module.exports =
 class Scan extends ProviderBase
@@ -14,6 +13,7 @@ class Scan extends ProviderBase
   showColumnOnLineHeader: true
   ignoreSideMovementOnSyncToEditor: false
   updateGrammarOnQueryChange: false # for manual update
+  useHighlighter: true
 
   initialize: ->
     if @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
@@ -21,10 +21,6 @@ class Scan extends ProviderBase
       @scanWord = true
     else
       @scanWord = @getConfig('scanWord')
-
-    @highlighter = new Highlighter(this)
-    @subscriptions.add new Disposable =>
-      @highlighter.destroy()
 
     atom.commands.add @ui.editorElement,
       'narrow:scan:toggle-scan-word': => @toggleScanWord()
@@ -49,12 +45,12 @@ class Scan extends ProviderBase
       if @scanWord
         regexp = new RegExp("\\b#{regexp.source}\\b", regexp.flags)
 
-      @highlighter.setRegExp(regexp)
+      @ui.highlighter.setRegExp(regexp)
       @setGrammarSearchTerm(regexp)
       @scanEditor(regexp)
     else
-      @highlighter.setRegExp(null)
-      @highlighter.clearHighlight()
+      @ui.highlighter.setRegExp(null)
+      @ui.highlighter.clear()
       []
 
   filterItems: (items, {include, exclude}) ->
