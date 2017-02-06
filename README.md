@@ -40,6 +40,7 @@ alpha
 - `search`: Search by `ag`( you need to install `ag` by yourself).
 - `atom-scan`: Similar to `search` but use Atom's `atom.workspace.scan`.
 - `lines`: Narrow current editors lines.
+- `scan`: Scan current editor by `TextEditor.prototype.scan`. created for better replacement of `narrow:lines`.
 - `fold`: Provide fold-starting rows as item.
 - `git-diff`: Info source is from core `git-diff` package.
 - `bookmarks`: For core `bookmarks` package
@@ -114,6 +115,8 @@ No keymaps are provided
 
 - `narrow:lines`
 - `narrow:lines-by-current-word`
+- `narrow:scan`
+- `narrow:scan-by-current-word`
 - `narrow:fold`
 - `narrow:fold-by-current-word`
 - `narrow:search`: [ag](https://github.com/ggreer/the_silver_searcher) search. need install by your self.
@@ -155,6 +158,8 @@ Start it from command-palette or set keymap in `keymap.cson`.
 I set `closeOnConfirm` to `false` for all provider.  
 Since I want to close manually by `ctrl-g`(Maybe change default in future).  
 
+###### config
+
 ```
   narrow:
     AtomScan:
@@ -169,6 +174,8 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
       closeOnConfirm: false
     Linter:
       closeOnConfirm: false
+    Scan:
+      closeOnConfirm: false
     Search:
       closeOnConfirm: false
     Symbols:
@@ -176,6 +183,7 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
     confirmOnUpdateRealFile: false
 ```
 
+###### `keymap.cson`
 
 ```coffeescript
 # From outside of narrow-editor
@@ -183,8 +191,11 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
 'atom-text-editor.vim-mode-plus.normal-mode':
   'space f': 'narrow:fold'
   'space o': 'narrow:symbols'
-  'space l': 'narrow:lines'
-  'space L': 'narrow:lines-by-current-word'
+
+  'space l': 'narrow:scan'
+  'space L': 'narrow:scan-by-current-word'
+  # 'space l': 'narrow:lines'
+  # 'space L': 'narrow:lines-by-current-word'
   'space c': 'narrow:linter'
   'space s': 'narrow:search'
   'space S': 'narrow:search-by-current-word'
