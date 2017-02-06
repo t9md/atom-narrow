@@ -433,6 +433,12 @@ class UI
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
       @setModifiedState(false)
+      unless @hasItems()
+        @selectedItem = null
+        @previouslySelectedItem = null
+        @rowMarker?.destroy()
+        @rowMarker = null
+
       @emitDidRefresh()
       @emitDidStopRefreshing()
 
@@ -634,6 +640,11 @@ class UI
   preview: ->
     @preventSyncToEditor = true
     item = @getSelectedItem()
+    unless item
+      @preventSyncToEditor = false
+      @rowMarker?.destroy()
+      return
+
     @provider.openFileForItem(item).then (editor) =>
       editor.scrollToBufferPosition(item.point, center: true)
       @setRowMarker(editor, item.point)
@@ -739,6 +750,9 @@ class UI
   selectItem: (item) ->
     if (row = @getRowForItem(item)) >= 0
       @selectItemForRow(row)
+
+  hasItems: ->
+    @items.length > 1 # ignore prompt placeholder item
 
   selectItemForRow: (row) ->
     item = @items[row]
