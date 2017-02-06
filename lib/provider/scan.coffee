@@ -16,7 +16,12 @@ class Scan extends ProviderBase
   updateGrammarOnQueryChange: false # for manual update
 
   initialize: ->
-    @scanWord = @getConfig('scanWord')
+    if @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
+      # scan by word-boundry if scan-by-current-word is invoked with empty selection.
+      @scanWord = true
+    else
+      @scanWord = @getConfig('scanWord')
+
     @highlighter = new Highlighter(this)
     @subscriptions.add new Disposable =>
       @highlighter.destroy()
