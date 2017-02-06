@@ -1,4 +1,4 @@
-# 0.21.0: WIP
+# 0.21.0:
 - New: Provider `scan` as better `narrow:lines`
   - Commands
     - `narrow:scan`: start `scan`.
@@ -14,14 +14,17 @@
     - Rest of include and exclude(`!` starting word) queries are treated as normal filter query.
     - To make this exceptional query handling obvious by eye, use different syntax grammar highlight for first query(= scan term).
     - It start with empty items, since no query means no scan-term provided.
+- New: UI command to toggle search option on the fly.
+  - `narrow-ui:toggle-search-whole-word`: `alt-cmd-w` )
+  - `narrow-ui:toggle-search-ignore-case`: `alt-cmd-c` )
+  - Currently you can not see current search option state('`searchIgnoreCase`, `searchWholeWord`').
+    - Will come in future version!!
+- New: Config `searchWholeWord`. Used to determine initial value of whole-word-search.
+  - `Scan.searchWholeWord`
+  - `AtomScan.searchWholeWord`
+  - `Search.searchWholeWord`
 - Improve: Faster highlight than v0.20.0 by letting item hold range and use it for decoration.
   - No longer heavier `editor.scan` to matching start of range against item.point.
-- New: Config `searchWholeWord` is used to determine initial value of whole-word-search.
-  - You can toggle it by `alt-cmd-w`( `narrow-ui:toggle-search-whole-word` ) in `narrow-editor`.
-    - `Scan.searchWholeWord`
-    - `AtomScan.searchWholeWord`
-    - `Search.searchWholeWord`
-
 
 # 0.20.1:
 - Fix: #107 `Error: The workspace can only contain one instance of item [object Object](…)`
