@@ -37,7 +37,7 @@ class Highlighter
     @markerLayerByEditor.clear()
     @decorationByItem.clear()
 
-  decorationOptions = {type: 'highlight', class: 'narrow-search-match'}
+  decorationOptions = {type: 'highlight', class: 'narrow-match'}
   highlightEditor: (editor) ->
     return unless @regexp
     return if @provider.boundToEditor and editor isnt @provider.editor
