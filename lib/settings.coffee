@@ -114,6 +114,12 @@ module.exports = new Settings 'narrow',
       This provider is exceptional since it use first query as scan term.<br>
       You can toggle value per narrow-editor via `narrow:scan:toggle-whole-word`( `alt-cmd-w` )<br>
       """
+    caseSensitivityForSearchTerm:
+      default: 'smartcase'
+      enum: ['smartcase', 'sensitive', 'insensitive']
+      description: """
+      Search term is first word of query, is used as search term
+      """
   )
 
   Linter: newProviderConfig()

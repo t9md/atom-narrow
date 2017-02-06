@@ -35,10 +35,8 @@ class Scan extends ProviderBase
   getItems: ->
     {include} = @ui.getFilterSpec()
     if include.length
-      regexp = setGlobalFlagForRegExp(include.shift())
-      if @searchWholeWord
-        regexp = new RegExp("\\b#{regexp.source}\\b", regexp.flags)
-
+      # 'include' hold instance of RegExp
+      regexp = @getRegExpForSearchSource(include.shift().source)
       @ui.highlighter.setRegExp(regexp)
       @setGrammarSearchTerm(regexp)
       @scanEditor(regexp)
