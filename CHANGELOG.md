@@ -1,3 +1,25 @@
+# 0.21.0: WIP
+- New: Provider `scan` as better `narrow:lines`
+  - Commands
+    - `narrow:scan`: start `scan`.
+    - `narrow:scan-by-current-word`: start `scan` by passing current-word as initial query input.
+    - `narrow:scan:toggle-whole-word`: toggle whole word scan on narrow-editor.
+  - Config
+    - `Scan.wholeWord`: This is used initial whole-word search value.
+      - You can toggle it by `ctrl-cmd-t`( `narrow:scan:toggle-whole-word` ) on `narrow-editor`.
+  - Why better than `narrow:lines`?
+    - It can highlight.
+    - It can show multiple matches on same line as different items.
+    - Move you precise position when navigating by `next-item`, `previous-item`.
+  - Some exceptional characteristics important to understand.
+    - Use `editor.scan` under the hood.
+    - It use first narrow query as search term( first word separated by white-spaces on query text ).
+    - Rest of include and exclude(`!` starting word) queries are treated as normal filter query.
+    - To make this exceptional query handling obvious by eye, use different syntax grammar highlight for first query(= scan term).
+    - It start with empty items, since no query means no scan-term provided.
+- Improve: Faster highlight than v0.20.0 by letting item hold range and use it for decoration.
+  - No longer heavier `editor.scan` to matching start of range against item.point.
+
 # 0.20.1:
 - Fix: #107 `Error: The workspace can only contain one instance of item [object Object](…)`
   - Critical and wanted to fix, I could finally found the cause and fixed!!
