@@ -209,3 +209,7 @@ class ProviderBase
     else
       searchTerm = source
     @ui.grammar.setSearchTerm(searchTerm)
+
+  clearGrammarSearchTerm: ->
+    @ui.grammar.setSearchTerm(null)
+    @ui.grammar.activate()

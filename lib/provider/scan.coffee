@@ -42,7 +42,11 @@ class Scan extends ProviderBase
     else
       @ui.highlighter.setRegExp(null)
       @ui.highlighter.clear()
-      []
+      @clearGrammarSearchTerm()
+      
+      @editor.buffer.getLines().map (text, row) ->
+        point: new Point(row, 0)
+        text: text
 
   filterItems: (items, {include, exclude}) ->
     if include.length is 0

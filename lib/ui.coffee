@@ -829,7 +829,7 @@ class UI
     maxLine = Math.max(_.pluck(points, 'row')...) + 1
     maxColumn = Math.max(_.pluck(points, 'column')...) + 1
     maxLineWidth = String(maxLine).length
-    maxColumnWidth = String(maxColumn).length
+    maxColumnWidth = Math.max(String(maxColumn).length, 2)
     for item in normalItems
       item._lineHeader = @getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
     items
