@@ -101,18 +101,18 @@ module.exports = new Settings 'narrow',
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
+    searchWholeWord: false
   )
   Bookmarks: newProviderConfig()
   Fold: newProviderConfig()
   GitDiff: newProviderConfig()
   Lines: newProviderConfig()
   Scan: newProviderConfig(
-    scanWord:
+    searchWholeWord:
       default: false
       description: """
       This provider is exceptional since it use first query as scan term.<br>
-      This option control default word-boundry scan behavior.<br>
-      You can toggle value per narrow-editor via `narrow:scan:toggle-scan-word`( `ctrl-cmd-t` )<br>
+      You can toggle value per narrow-editor via `narrow:scan:toggle-whole-word`( `alt-cmd-w` )<br>
       """
   )
 
@@ -121,6 +121,7 @@ module.exports = new Settings 'narrow',
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
+    searchWholeWord: false
     agCommandArgs:
       default: "--nocolor --column --vimgrep"
       description: """

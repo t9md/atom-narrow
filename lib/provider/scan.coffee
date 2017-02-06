@@ -18,12 +18,9 @@ class Scan extends ProviderBase
   initialize: ->
     if @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
       # scan by word-boundry if scan-by-current-word is invoked with empty selection.
-      @scanWord = true
+      @searchWholeWord = true
     else
-      @scanWord = @getConfig('scanWord')
-
-    atom.commands.add @ui.editorElement,
-      'narrow:scan:toggle-scan-word': => @toggleScanWord()
+      @searchWholeWord = @getConfig('searchWholeWord')
 
   scanEditor: (regexp) ->
     items = []
@@ -35,15 +32,11 @@ class Scan extends ProviderBase
       })
     items
 
-  toggleScanWord: ->
-    @scanWord = not @scanWord
-    @ui.refresh(force: true)
-
   getItems: ->
     {include} = @ui.getFilterSpec()
     if include.length
       regexp = setGlobalFlagForRegExp(include.shift())
-      if @scanWord
+      if @searchWholeWord
         regexp = new RegExp("\\b#{regexp.source}\\b", regexp.flags)
 
       @ui.highlighter.setRegExp(regexp)

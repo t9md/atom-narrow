@@ -84,21 +84,15 @@ limitNumber = (number, {max, min}={}) ->
   number
 
 getCurrentWord = (editor) ->
-  getCurrentWordAndBoundary(editor).word
-
-getCurrentWordAndBoundary = (editor) ->
   selection = editor.getLastSelection()
-  {cursor} = selection
-
   if selection.isEmpty()
-    point = cursor.getBufferPosition()
+    point = selection.cursor.getBufferPosition()
     selection.selectWord()
     text = selection.getText()
-    cursor.setBufferPosition(point)
-    {word: text, boundary: true}
+    selection.cursor.setBufferPosition(point)
+    text
   else
-    text = selection.getText()
-    {word: text, boundary: false}
+    selection.getText()
 
 isActiveEditor = (editor) ->
   editor is atom.workspace.getActiveTextEditor()
@@ -165,7 +159,6 @@ module.exports = {
   requireFrom
   limitNumber
   getCurrentWord
-  getCurrentWordAndBoundary
   isActiveEditor
   getValidIndexForList
   setBufferRow

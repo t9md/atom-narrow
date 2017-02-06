@@ -28,6 +28,9 @@ class ProviderBase
   supportCacheItems: false
   editor: null
 
+  # used by search, atom-scan, scan
+  searchWholeWord: null
+
   getName: ->
     @constructor.name
 
@@ -169,6 +172,9 @@ class ProviderBase
           item.text = newText
 
       editor.save()
+
+  toggleSearchWholeWord: ->
+    @searchWholeWord = not @searchWholeWord
 
   # Helpers
   # -------------------------
