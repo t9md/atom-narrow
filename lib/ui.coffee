@@ -801,6 +801,9 @@ class UI
       item._lineHeader = @getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
     items
 
+  getNormalItems: ->
+    @items.filter (item) -> (not item.skip)
+
   getNormalItemsForFilePath: (filePath) ->
     @items.filter (item) ->
       (not item.skip) and (item.filePath is filePath)

@@ -1,8 +1,9 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{Point} = require 'atom'
+{Point, Disposable} = require 'atom'
 {setGlobalFlagForRegExp} = require '../utils'
 ProviderBase = require './provider-base'
+Highlighter = require '../highlighter'
 
 module.exports =
 class Scan extends ProviderBase
@@ -12,10 +13,14 @@ class Scan extends ProviderBase
   showLineHeader: true
   showColumnOnLineHeader: true
   ignoreSideMovementOnSyncToEditor: false
-  updateGrammarOnQueryChange: false
+  updateGrammarOnQueryChange: false # for manual update
+
+  initialize: ->
+    @highlighter = new Highlighter(this)
+    @subscriptions.add new Disposable =>
+      @highlighter.destroy()
 
   scanEditor: (regexp) ->
-    regexp = setGlobalFlagForRegExp(regexp)
     items = []
     @editor.scan regexp, ({range}) =>
       items.push({
@@ -27,15 +32,13 @@ class Scan extends ProviderBase
   getItems: ->
     {include} = @ui.getFilterSpec()
     if include.length
-      regexp = include.shift()
-      source = regexp.source
-      if regexp.ignoreCase
-        searchTerm = "(?i:#{source})"
-      else
-        searchTerm = source
-      @ui.grammar.setSearchTerm(searchTerm)
+      regexp = setGlobalFlagForRegExp(include.shift())
+      @highlighter.setRegExp(regexp)
+      @setGrammarSearchTerm(regexp)
       @scanEditor(regexp)
     else
+      @highlighter.setRegExp(null)
+      @highlighter.clearHighlight()
       []
 
   filterItems: (items, {include, exclude}) ->
