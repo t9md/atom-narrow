@@ -16,9 +16,6 @@ class SearchBase extends ProviderBase
   regExpForSearchTerm: null
 
   checkReady: ->
-    if @options.currentFile
-      @options.filePath = @editor.getPath()
-
     if @options.currentWord
       {word, boundary} = getCurrentWordAndBoundary(@editor)
       @options.wordOnly = boundary

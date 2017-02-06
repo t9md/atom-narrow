@@ -7,6 +7,7 @@ module.exports =
 class AtomScan extends SearchBase
   supportCacheItems: true
 
+  # Not used but keep it since I'm planning to introduce per file refresh on modification
   scanFile: (regexp, filePath) ->
     items = []
     atom.workspace.open(filePath, activateItem: false).then (editor) ->
@@ -51,7 +52,4 @@ class AtomScan extends SearchBase
       items
 
   getItems: ->
-    if @options.filePath
-      @scanFile(@regExpForSearchTerm, @options.filePath)
-    else
-      @scanWorkspace(@regExpForSearchTerm)
+    @scanWorkspace(@regExpForSearchTerm)

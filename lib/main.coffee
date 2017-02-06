@@ -49,13 +49,8 @@ module.exports =
       'narrow:search-current-project': => @narrow('search', currentProject: true)
       'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, currentWord: true)
 
-      'narrow:search-file': => @narrow('search', currentFile: true)
-      'narrow:search-file-by-current-word': => @narrow('search', currentWord: true, currentFile: true)
-
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', currentWord: true)
-      'narrow:atom-scan-file': => @narrow('atom-scan', currentFile: true)
-      'narrow:atom-scan-file-by-current-word': => @narrow('atom-scan', currentWord: true, currentFile: true)
 
   getUi: ({skipProtected}={}) ->
     if ui = Ui.get(@lastFocusedNarrowEditor)
