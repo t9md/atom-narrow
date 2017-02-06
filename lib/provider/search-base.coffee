@@ -31,6 +31,15 @@ class SearchBase extends ProviderBase
         @options.search = input
         true
 
+  toggleSearchWholeWord: ->
+    super
+    @resetRegExpForSearchTerm()
+
+  resetRegExpForSearchTerm: ->
+    @regExpForSearchTerm = @getRegExpForSearchTerm()
+    @ui.highlighter.setRegExp(@regExpForSearchTerm)
+    @setGrammarSearchTerm(@regExpForSearchTerm)
+
   getRegExpForSearchTerm: ->
     searchTerm = @options.search
     source = _.escapeRegExp(searchTerm)
@@ -44,9 +53,7 @@ class SearchBase extends ProviderBase
       new RegExp(source, 'gi')
 
   initialize: ->
-    @regExpForSearchTerm = @getRegExpForSearchTerm()
-    @ui.highlighter.setRegExp(@regExpForSearchTerm)
-    @setGrammarSearchTerm(@regExpForSearchTerm)
+    @resetRegExpForSearchTerm()
 
   filterItems: (items, filterSpec) ->
     items = super

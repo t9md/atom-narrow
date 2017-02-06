@@ -4,9 +4,6 @@
     - `narrow:scan`: start `scan`.
     - `narrow:scan-by-current-word`: start `scan` by passing current-word as initial query input.
     - `narrow:scan:toggle-whole-word`: toggle whole word scan on narrow-editor.
-  - Config
-    - `Scan.searchWholeWord`: This is used initial whole-word search value.
-      - You can toggle it by `ctrl-cmd-t`( `narrow:scan:toggle-whole-word` ) on `narrow-editor`.
   - Why better than `narrow:lines`?
     - It can highlight.
     - It can show multiple matches on same line as different items.
@@ -19,6 +16,12 @@
     - It start with empty items, since no query means no scan-term provided.
 - Improve: Faster highlight than v0.20.0 by letting item hold range and use it for decoration.
   - No longer heavier `editor.scan` to matching start of range against item.point.
+- New: Config `searchWholeWord` is used to determine initial value of whole-word-search.
+  - You can toggle it by `alt-cmd-w`( `narrow-ui:toggle-search-whole-word` ) in `narrow-editor`.
+    - `Scan.searchWholeWord`
+    - `AtomScan.searchWholeWord`
+    - `Search.searchWholeWord`
+
 
 # 0.20.1:
 - Fix: #107 `Error: The workspace can only contain one instance of item [object Object](…)`

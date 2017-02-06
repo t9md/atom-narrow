@@ -112,7 +112,7 @@ module.exports = new Settings 'narrow',
       default: false
       description: """
       This provider is exceptional since it use first query as scan term.<br>
-      You can toggle value per narrow-editor via `narrow:scan:toggle-whole-word`( `ctrl-cmd-t` )<br>
+      You can toggle value per narrow-editor via `narrow:scan:toggle-whole-word`( `alt-cmd-w` )<br>
       """
   )
 

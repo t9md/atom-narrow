@@ -17,7 +17,9 @@
   # 'tab': 'narrow-ui:move-to-prompt-or-selected-item'
   'f5': 'narrow:refresh'
   'ctrl-l': 'narrow:refresh'
-  'ctrl-cmd-t': 'narrow:toggle-search-whole-word'
+
+  # Follow find-and-replace's key-setting
+  'alt-cmd-w': 'narrow-ui:toggle-search-whole-word'
 
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]:not(.vim-mode-plus)':
   'ctrl-r': 'narrow-ui:toggle-auto-preview'
