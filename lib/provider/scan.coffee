@@ -14,17 +14,13 @@ class Scan extends ProviderBase
   ignoreSideMovementOnSyncToEditor: false
   updateGrammarOnQueryChange: false # for manual update
   useHighlighter: true
-  wholeWord: null
 
   initialize: ->
     if @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
       # scan by word-boundry if scan-by-current-word is invoked with empty selection.
-      @wholeWord = true
+      @searchWholeWord = true
     else
-      @wholeWord = @getConfig('wholeWord')
-
-    atom.commands.add @ui.editorElement,
-      'narrow:scan:toggle-whole-word': => @toggleWholeWord()
+      @searchWholeWord = @getConfig('searchWholeWord')
 
   scanEditor: (regexp) ->
     items = []
@@ -36,15 +32,11 @@ class Scan extends ProviderBase
       })
     items
 
-  toggleWholeWord: ->
-    @wholeWord = not @wholeWord
-    @ui.refresh(force: true)
-
   getItems: ->
     {include} = @ui.getFilterSpec()
     if include.length
       regexp = setGlobalFlagForRegExp(include.shift())
-      if @wholeWord
+      if @searchWholeWord
         regexp = new RegExp("\\b#{regexp.source}\\b", regexp.flags)
 
       @ui.highlighter.setRegExp(regexp)

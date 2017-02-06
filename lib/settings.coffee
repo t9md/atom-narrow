@@ -101,14 +101,14 @@ module.exports = new Settings 'narrow',
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
-    wholeWord: false
+    searchWholeWord: false
   )
   Bookmarks: newProviderConfig()
   Fold: newProviderConfig()
   GitDiff: newProviderConfig()
   Lines: newProviderConfig()
   Scan: newProviderConfig(
-    wholeWord:
+    searchWholeWord:
       default: false
       description: """
       This provider is exceptional since it use first query as scan term.<br>
@@ -121,7 +121,7 @@ module.exports = new Settings 'narrow',
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
-    wholeWord: false
+    searchWholeWord: false
     agCommandArgs:
       default: "--nocolor --column --vimgrep"
       description: """

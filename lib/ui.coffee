@@ -117,6 +117,11 @@ class UI
       'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
       'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
       'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
+      'narrow-ui:toggle-search-whole-word': => @toggleSearchWholeWord()
+
+  toggleSearchWholeWord: ->
+    @provider.toggleSearchWholeWord()
+    @refresh(force: true)
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable

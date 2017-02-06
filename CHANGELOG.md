@@ -5,7 +5,7 @@
     - `narrow:scan-by-current-word`: start `scan` by passing current-word as initial query input.
     - `narrow:scan:toggle-whole-word`: toggle whole word scan on narrow-editor.
   - Config
-    - `Scan.wholeWord`: This is used initial whole-word search value.
+    - `Scan.searchWholeWord`: This is used initial whole-word search value.
       - You can toggle it by `ctrl-cmd-t`( `narrow:scan:toggle-whole-word` ) on `narrow-editor`.
   - Why better than `narrow:lines`?
     - It can highlight.

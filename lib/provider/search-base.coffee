@@ -2,7 +2,7 @@ _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
 {Disposable} = require 'atom'
-{getCurrentWordAndBoundary} = require '../utils'
+{getCurrentWord} = require '../utils'
 
 module.exports =
 class SearchBase extends ProviderBase
@@ -17,9 +17,12 @@ class SearchBase extends ProviderBase
 
   checkReady: ->
     if @options.currentWord
-      {word, boundary} = getCurrentWordAndBoundary(@editor)
-      @options.wordOnly = boundary
-      @options.search = word
+      @options.search = getCurrentWord(@editor)
+
+      if @editor.getSelectedBufferRange().isEmpty()
+        @searchWholeWord = true
+
+    @searchWholeWord ?= @getConfig('searchWholeWord')
 
     if @options.search
       Promise.resolve(true)
@@ -31,7 +34,7 @@ class SearchBase extends ProviderBase
   getRegExpForSearchTerm: ->
     searchTerm = @options.search
     source = _.escapeRegExp(searchTerm)
-    if @options.wordOnly
+    if @searchWholeWord
       source = "\\b#{source}\\b"
 
     sensitivity = @getConfig('caseSensitivityForSearchTerm')
