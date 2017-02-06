@@ -21,6 +21,7 @@ class ProviderBase
   ignoreSideMovementOnSyncToEditor: true
   showLineHeader: false
   showColumnOnLineHeader: false
+  updateGrammarOnQueryChange: true
 
   supportDirectEdit: false
   supportCacheItems: false
@@ -176,3 +177,11 @@ class ProviderBase
 
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
+
+  setGrammarSearchTerm: (regexp) ->
+    source = regexp.source
+    if regexp.ignoreCase
+      searchTerm = "(?i:#{source})"
+    else
+      searchTerm = source
+    @ui.grammar.setSearchTerm(searchTerm)

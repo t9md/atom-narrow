@@ -41,6 +41,7 @@ getOutputterForProject = (project, items) ->
 
       items.push({point, text, filePath, projectName})
 
+# Not used but keep it since I'm planning to introduce per file refresh on modification
 getOutputterForFile = (items) ->
   (data) ->
     for line in data.split("\n") when parsed = parseLine(line)
@@ -66,11 +67,8 @@ class Search extends SearchBase
 
   getItems: ->
     searchPromises = []
-    if @options.filePath?
-      searchPromises.push(@search(@regExpForSearchTerm, {filePath: @options.filePath}))
-    else
-      for project in @options.projects ? atom.project.getPaths()
-        searchPromises.push(@search(@regExpForSearchTerm, {project}))
+    for project in @options.projects ? atom.project.getPaths()
+      searchPromises.push(@search(@regExpForSearchTerm, {project}))
 
     Promise.all(searchPromises).then (values) ->
       _.flatten(values)

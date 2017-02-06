@@ -149,6 +149,12 @@ updateDecoration = (decoration, fn) ->
   klass = decoration.getProperties().class
   decoration.setProperties(type: type, class: fn(klass))
 
+setGlobalFlagForRegExp = (regexp) ->
+  if regexp.global
+    regexp
+  else
+    new RegExp(regexp.source, regexp.flags + 'g')
+
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
@@ -169,4 +175,5 @@ module.exports = {
   getVisibleEditors
   getFirstCharacterPositionForBufferRow
   updateDecoration
+  setGlobalFlagForRegExp
 }

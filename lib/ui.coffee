@@ -400,6 +400,9 @@ class UI
         {row} = @editor.getCursorBufferPosition()
         @editor.setCursorBufferPosition([row, column])
 
+  getFilterSpec: ->
+    getFilterSpecForQuery(@getQuery())
+
   refresh: ({force}={}) ->
     if force
       @cachedItems = null
@@ -414,9 +417,10 @@ class UI
           @cachedItems = items
         items
 
-    filterSpec = getFilterSpecForQuery(@getQuery())
-    # No need to highlight excluded items
-    @grammar.update(filterSpec.include)
+    filterSpec = @getFilterSpec()
+    if @provider.updateGrammarOnQueryChange
+      # No need to highlight excluded items
+      @grammar.update(filterSpec.include)
 
     promiseForItems.then (items) =>
       items = @provider.filterItems(items, filterSpec)
@@ -429,6 +433,12 @@ class UI
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
       @setModifiedState(false)
+      unless @hasItems()
+        @selectedItem = null
+        @previouslySelectedItem = null
+        @rowMarker?.destroy()
+        @rowMarker = null
+
       @emitDidRefresh()
       @emitDidStopRefreshing()
 
@@ -630,6 +640,11 @@ class UI
   preview: ->
     @preventSyncToEditor = true
     item = @getSelectedItem()
+    unless item
+      @preventSyncToEditor = false
+      @rowMarker?.destroy()
+      return
+
     @provider.openFileForItem(item).then (editor) =>
       editor.scrollToBufferPosition(item.point, center: true)
       @setRowMarker(editor, item.point)
@@ -736,6 +751,9 @@ class UI
     if (row = @getRowForItem(item)) >= 0
       @selectItemForRow(row)
 
+  hasItems: ->
+    @items.length > 1 # ignore prompt placeholder item
+
   selectItemForRow: (row) ->
     item = @items[row]
     if @isNormalItem(item)
@@ -796,6 +814,9 @@ class UI
     for item in normalItems
       item._lineHeader = @getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
     items
+
+  getNormalItems: ->
+    @items.filter (item) -> (not item.skip)
 
   getNormalItemsForFilePath: (filePath) ->
     @items.filter (item) ->
