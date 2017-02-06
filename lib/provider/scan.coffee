@@ -1,7 +1,6 @@
 path = require 'path'
 _ = require 'underscore-plus'
 {Point, Disposable} = require 'atom'
-{setGlobalFlagForRegExp} = require '../utils'
 ProviderBase = require './provider-base'
 
 module.exports =
