@@ -30,6 +30,7 @@ class ProviderBase
 
   # used by search, atom-scan, scan
   searchWholeWord: null
+  searchIgnoreCase: null
 
   getName: ->
     @constructor.name
@@ -176,6 +177,9 @@ class ProviderBase
   toggleSearchWholeWord: ->
     @searchWholeWord = not @searchWholeWord
 
+  toggleSearchIgnoreCase: ->
+    @searchIgnoreCase = not @searchIgnoreCase
+
   # Helpers
   # -------------------------
   readInput: ->
@@ -184,6 +188,19 @@ class ProviderBase
 
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
+
+  getRegExpForSearchSource: (source) ->
+    if @searchWholeWord
+      source = "\\b#{source}\\b"
+
+    @searchIgnoreCase ?= do =>
+      sensitivity = @getConfig('caseSensitivityForSearchTerm')
+      (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(source))
+
+    if @searchIgnoreCase
+      new RegExp(source, 'gi')
+    else
+      new RegExp(source, 'g')
 
   setGrammarSearchTerm: (regexp) ->
     source = regexp.source

@@ -118,9 +118,14 @@ class UI
       'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
       'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
       'narrow-ui:toggle-search-whole-word': => @toggleSearchWholeWord()
+      'narrow-ui:toggle-search-ignore-case': => @toggleSearchIgnoreCase()
 
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
+    @refresh(force: true)
+
+  toggleSearchIgnoreCase: ->
+    @provider.toggleSearchIgnoreCase()
     @refresh(force: true)
 
   constructor: (@provider, {@input}={}) ->

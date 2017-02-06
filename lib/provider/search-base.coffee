@@ -35,22 +35,15 @@ class SearchBase extends ProviderBase
     super
     @resetRegExpForSearchTerm()
 
+  toggleSearchIgnoreCase: ->
+    super
+    @resetRegExpForSearchTerm()
+
   resetRegExpForSearchTerm: ->
-    @regExpForSearchTerm = @getRegExpForSearchTerm()
+    source = _.escapeRegExp(@options.search)
+    @regExpForSearchTerm = @getRegExpForSearchSource(source)
     @ui.highlighter.setRegExp(@regExpForSearchTerm)
     @setGrammarSearchTerm(@regExpForSearchTerm)
-
-  getRegExpForSearchTerm: ->
-    searchTerm = @options.search
-    source = _.escapeRegExp(searchTerm)
-    if @searchWholeWord
-      source = "\\b#{source}\\b"
-
-    sensitivity = @getConfig('caseSensitivityForSearchTerm')
-    if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and /[A-Z]/.test(searchTerm))
-      new RegExp(source, 'g')
-    else
-      new RegExp(source, 'gi')
 
   initialize: ->
     @resetRegExpForSearchTerm()
