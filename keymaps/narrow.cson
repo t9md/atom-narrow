@@ -27,6 +27,11 @@
   'cmd-]': 'narrow-ui:fold:increase-fold-level'
   'cmd-[': 'narrow-ui:fold:decrease-fold-level'
 
+# narrow-editor.scan
+# -------------------------
+'atom-text-editor.narrow.narrow-editor.scan[data-grammar="source narrow"]':
+  'ctrl-cmd-t': 'narrow:scan:toggle-scan-word'
+
 'atom-text-editor.narrow.narrow-editor.read-only[data-grammar="source narrow"],
  atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   'enter': 'core:confirm'

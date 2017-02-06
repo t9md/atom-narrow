@@ -16,9 +16,13 @@ class Scan extends ProviderBase
   updateGrammarOnQueryChange: false # for manual update
 
   initialize: ->
+    @scanWord = @getConfig('scanWord')
     @highlighter = new Highlighter(this)
     @subscriptions.add new Disposable =>
       @highlighter.destroy()
+
+    atom.commands.add @ui.editorElement,
+      'narrow:scan:toggle-scan-word': => @toggleScanWord()
 
   scanEditor: (regexp) ->
     items = []
@@ -29,10 +33,17 @@ class Scan extends ProviderBase
       })
     items
 
+  toggleScanWord: ->
+    @scanWord = not @scanWord
+    @ui.refresh(force: true)
+
   getItems: ->
     {include} = @ui.getFilterSpec()
     if include.length
       regexp = setGlobalFlagForRegExp(include.shift())
+      if @scanWord
+        regexp = new RegExp("\\b#{regexp.source}\\b", regexp.flags)
+
       @highlighter.setRegExp(regexp)
       @setGrammarSearchTerm(regexp)
       @scanEditor(regexp)

@@ -106,7 +106,16 @@ module.exports = new Settings 'narrow',
   Fold: newProviderConfig()
   GitDiff: newProviderConfig()
   Lines: newProviderConfig()
-  Scan: newProviderConfig()
+  Scan: newProviderConfig(
+    scanWord:
+      default: false
+      description: """
+      This provider is exceptional since it use first query as scan term.<br>
+      This option control default word-boundry scan behavior.<br>
+      You can toggle value per narrow-editor via `narrow:scan:toggle-scan-word`( `ctrl-cmd-t` )<br>
+      """
+  )
+
   Linter: newProviderConfig()
   Search: newProviderConfig(
     caseSensitivityForSearchTerm:
