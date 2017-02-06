@@ -36,6 +36,7 @@ class AtomScan extends SearchBase
             filePath: filePath
             text: match.lineText
             point: Point.fromObject(match.range[0])
+            range: match.range
           })
       items
 

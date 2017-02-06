@@ -49,11 +49,9 @@ class Highlighter
     return unless items.length
 
     @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
-    editor.scan @regexp, ({range}) =>
-      if item = _.detect(items, ({point}) -> point.isEqual(range.start))
-        marker = markerLayer.markBufferRange(range, invalidate: 'inside')
-        decoration = editor.decorateMarker(marker, decorationOptions)
-        @decorationByItem.set(item, decoration)
+    for item in items
+      marker = markerLayer.markBufferRange(item.range, invalidate: 'inside')
+      @decorationByItem.set(item, editor.decorateMarker(marker, decorationOptions))
 
   updateCurrent: ->
     if decoration = @decorationByItem.get(@ui.getPreviouslySelectedItem())

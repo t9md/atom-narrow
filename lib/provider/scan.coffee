@@ -31,6 +31,7 @@ class Scan extends ProviderBase
       items.push({
         text: @editor.lineTextForBufferRow(range.start.row)
         point: range.start
+        range: range
       })
     items
 

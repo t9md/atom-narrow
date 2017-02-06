@@ -70,8 +70,12 @@ class Search extends SearchBase
     for project in @options.projects ? atom.project.getPaths()
       searchPromises.push(@search(@regExpForSearchTerm, {project}))
 
+    searchTermLength = @options.search.length
     Promise.all(searchPromises).then (values) ->
-      _.flatten(values)
+      _.flatten(values).map (item) ->
+        if point = item.point
+          item.range = [point, point.translate([0, searchTermLength])]
+        item
 
   search: (regexp, {project, filePath}) ->
     items = []
