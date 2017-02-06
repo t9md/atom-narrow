@@ -39,10 +39,13 @@ module.exports =
       'narrow:lines-by-current-word': => @narrow('lines', uiInput: @getCurrentWord())
       'narrow:fold-by-current-word': => @narrow('fold', uiInput: @getCurrentWord())
 
+      'narrow:scan': => @narrow('scan')
+      'narrow:scan-by-current-word': => @narrow('scan', uiInput: @getCurrentWord())
+
       # search family
       'narrow:search': => @narrow('search')
       'narrow:search-by-current-word': => @narrow('search', currentWord: true)
-      
+
       'narrow:search-current-project': => @narrow('search', currentProject: true)
       'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, currentWord: true)
 

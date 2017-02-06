@@ -106,6 +106,7 @@ module.exports = new Settings 'narrow',
   Fold: newProviderConfig()
   GitDiff: newProviderConfig()
   Lines: newProviderConfig()
+  Scan: newProviderConfig()
   Linter: newProviderConfig()
   Search: newProviderConfig(
     caseSensitivityForSearchTerm:

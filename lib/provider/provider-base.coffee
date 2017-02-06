@@ -21,6 +21,7 @@ class ProviderBase
   ignoreSideMovementOnSyncToEditor: true
   showLineHeader: false
   showColumnOnLineHeader: false
+  updateGrammarOnQueryChange: true
 
   supportDirectEdit: false
   supportCacheItems: false
