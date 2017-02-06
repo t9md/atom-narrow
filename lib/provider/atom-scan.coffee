@@ -1,3 +1,4 @@
+path = require 'path'
 _ = require 'underscore-plus'
 {Point} = require 'atom'
 SearchBase = require './search-base'
@@ -6,31 +7,51 @@ module.exports =
 class AtomScan extends SearchBase
   supportCacheItems: true
 
-  getItems: ->
-    resultsByFilePath = {}
-    scanPromise = atom.workspace.scan @regExpForSearchTerm, (result) ->
-      if result?.matches?.length
-        (resultsByFilePath[result.filePath] ?= []).push(result.matches...)
+  scanFile: (regexp, filePath) ->
+    items = []
+    atom.workspace.open(filePath, activateItem: false).then (editor) ->
+      editor.scan regexp, ({range}) ->
+        items.push({
+          filePath: filePath
+          text: editor.lineTextForBufferRow(range.start.row)
+          point: range.start
+        })
+      items
 
-    scanPromise.then ->
+  scanWorkspace: (regexp) ->
+    matchesByFilePath = {}
+    scanPromise = atom.workspace.scan regexp, (result) ->
+      if result?.matches?.length
+        matchesByFilePath[result.filePath] ?= []
+        matchesByFilePath[result.filePath].push(result.matches...)
+
+    itemizePromise = scanPromise.then ->
       items = []
-      for filePath, results of resultsByFilePath
-        items.push({header: "# #{filePath}", filePath, skip: true})
-        for item in results
+      for filePath, matches of matchesByFilePath
+        projectName = path.basename(atom.project.relativizePath(filePath)[0])
+        for match in matches
           items.push({
+            projectName: projectName
             filePath: filePath
-            text: item.lineText
-            point: Point.fromObject(item.range[0])
+            text: match.lineText
+            point: Point.fromObject(match.range[0])
           })
       items
 
-  filterItems: (items, filterSpec) ->
-    items = super
-    normalItems = _.reject(items, (item) -> item.skip)
-    filePaths = _.uniq(_.pluck(normalItems, "filePath"))
+    itemizePromise.then (_items) ->
+      items = []
+      for projectName, itemsInProject of _.groupBy(_items, (item) -> item.projectName)
+        header = "# #{projectName}"
+        items.push({header, projectName, projectHeader: true, skip: true})
 
-    _.filter items, (item) ->
-      if item.header?
-        item.filePath in filePaths
-      else
-        true
+        for filePath, itemsInFile of _.groupBy(itemsInProject, (item) -> item.filePath)
+          header = "## #{atom.project.relativize(filePath)}"
+          items.push({header, projectName, filePath, skip: true})
+          items.push(itemsInFile...)
+      items
+
+  getItems: ->
+    if @options.filePath
+      @scanFile(@regExpForSearchTerm, @options.filePath)
+    else
+      @scanWorkspace(@regExpForSearchTerm)

@@ -21,6 +21,9 @@ class SearchBase extends ProviderBase
   regExpForSearchTerm: null
 
   checkReady: ->
+    if @options.currentFile
+      @options.filePath = @editor.getPath()
+
     if @options.currentWord
       {word, boundary} = getCurrentWordAndBoundary(@editor)
       @options.wordOnly = boundary
@@ -64,6 +67,21 @@ class SearchBase extends ProviderBase
     else
       searchTerm = source
     @ui.grammar.setSearchTerm(searchTerm)
+
+  filterItems: (items, filterSpec) ->
+    items = super
+    normalItems = _.reject(items, (item) -> item.skip)
+    filePaths = _.uniq(_.pluck(normalItems, "filePath"))
+    projectNames = _.uniq(_.pluck(normalItems, "projectName"))
+
+    items.filter (item) ->
+      if item.header?
+        if item.projectHeader?
+          item.projectName in projectNames
+        else
+          item.filePath in filePaths
+      else
+        true
 
   # Highlight items
   # -------------------------

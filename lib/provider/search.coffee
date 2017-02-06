@@ -41,6 +41,12 @@ getOutputterForProject = (project, items) ->
 
       items.push({point, text, filePath, projectName})
 
+getOutputterForFile = (items) ->
+  (data) ->
+    for line in data.split("\n") when parsed = parseLine(line)
+      {relativePath, point, text} = parsed
+      items.push({point, text, filePath: relativePath})
+
 module.exports =
 class Search extends SearchBase
   supportCacheItems: true
@@ -59,14 +65,18 @@ class Search extends SearchBase
     super
 
   getItems: ->
-    @options.projects ?= atom.project.getPaths()
-    search = @search.bind(this, @getRegExpForSearchTerm())
-    Promise.all(@options.projects.map(search)).then (values) ->
+    searchPromises = []
+    if @options.filePath?
+      searchPromises.push(@search(@regExpForSearchTerm, {filePath: @options.filePath}))
+    else
+      for project in @options.projects ? atom.project.getPaths()
+        searchPromises.push(@search(@regExpForSearchTerm, {project}))
+
+    Promise.all(searchPromises).then (values) ->
       _.flatten(values)
 
-  search: (regexp, project) ->
+  search: (regexp, {project, filePath}) ->
     items = []
-    stdout = stderr = getOutputterForProject(project, items)
     args = @getConfig('agCommandArgs').split(/\s+/)
 
     if regexp.ignoreCase
@@ -74,7 +84,19 @@ class Search extends SearchBase
     else
       args.push('--case-sensitive')
 
+    options =
+      stdio: ['ignore', 'pipe', 'pipe']
+      env: process.env
+
     args.push(regexp.source)
+
+    if filePath?
+      stdout = stderr = getOutputterForFile(items)
+      args.push(filePath)
+    else
+      stdout = stderr = getOutputterForProject(project, items)
+      options.cwd = project
+
     new Promise (resolve) ->
       runCommand(
         command: 'ag'
@@ -82,23 +104,5 @@ class Search extends SearchBase
         stdout: stdout
         stderr: stderr
         exit: -> resolve(items)
-        options:
-          stdio: ['ignore', 'pipe', 'pipe']
-          cwd: project
-          env: process.env
+        options: options
       )
-
-  filterItems: (items, filterSpec) ->
-    items = super
-    normalItems = _.reject(items, (item) -> item.skip)
-    filePaths = _.uniq(_.pluck(normalItems, "filePath"))
-    projectNames = _.uniq(_.pluck(normalItems, "projectName"))
-
-    items.filter (item) ->
-      if item.header?
-        if item.projectHeader?
-          item.projectName in projectNames
-        else
-          item.filePath in filePaths
-      else
-        true
