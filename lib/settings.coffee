@@ -101,6 +101,7 @@ module.exports = new Settings 'narrow',
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
+    wholeWord: false
   )
   Bookmarks: newProviderConfig()
   Fold: newProviderConfig()
@@ -120,6 +121,7 @@ module.exports = new Settings 'narrow',
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
+    wholeWord: false
     agCommandArgs:
       default: "--nocolor --column --vimgrep"
       description: """
