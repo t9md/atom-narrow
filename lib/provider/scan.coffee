@@ -13,6 +13,7 @@ class Scan extends ProviderBase
   ignoreSideMovementOnSyncToEditor: false
   updateGrammarOnQueryChange: false # for manual update
   useHighlighter: true
+  showInformation: true
 
   initialize: ->
     if not @options.fromVmp and @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
@@ -37,12 +38,13 @@ class Scan extends ProviderBase
       # 'include' hold instance of RegExp
       regexp = @getRegExpForSearchSource(include.shift().source)
       @ui.highlighter.setRegExp(regexp)
-      @setGrammarSearchTerm(regexp)
+      # console.log regexp
+      @ui.setGrammarSearchTerm(regexp)
       @scanEditor(regexp)
     else
       @ui.highlighter.setRegExp(null)
       @ui.highlighter.clear()
-      @clearGrammarSearchTerm()
+      @ui.clearGrammarSearchTerm()
 
       @editor.buffer.getLines().map (text, row) ->
         point: new Point(row, 0)

@@ -14,6 +14,7 @@ class SearchBase extends ProviderBase
   showColumnOnLineHeader: true
   regExpForSearchTerm: null
   useHighlighter: true
+  showInformation: true
 
   checkReady: ->
     if @options.currentWord
@@ -43,7 +44,7 @@ class SearchBase extends ProviderBase
     source = _.escapeRegExp(@options.search)
     @regExpForSearchTerm = @getRegExpForSearchSource(source)
     @ui.highlighter.setRegExp(@regExpForSearchTerm)
-    @setGrammarSearchTerm(@regExpForSearchTerm)
+    @ui.setGrammarSearchTerm(@regExpForSearchTerm)
 
   initialize: ->
     @resetRegExpForSearchTerm()

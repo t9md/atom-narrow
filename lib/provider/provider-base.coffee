@@ -31,6 +31,7 @@ class ProviderBase
   # used by search, atom-scan, scan
   searchWholeWord: null
   searchIgnoreCase: null
+  showInformation: true
 
   getName: ->
     @constructor.name
@@ -210,15 +211,3 @@ class ProviderBase
       new RegExp(source, 'gi')
     else
       new RegExp(source, 'g')
-
-  setGrammarSearchTerm: (regexp) ->
-    source = regexp.source
-    if regexp.ignoreCase
-      searchTerm = "(?i:#{source})"
-    else
-      searchTerm = source
-    @ui.grammar.setSearchTerm(searchTerm)
-
-  clearGrammarSearchTerm: ->
-    @ui.grammar.setSearchTerm(null)
-    @ui.grammar.activate()
