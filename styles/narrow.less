@@ -106,6 +106,10 @@ atom-text-editor.narrow-editor {
   padding: @component-padding/3 @component-padding;
   color: @text-color-subtle;
   font-size: 0.9em;
+  span {
+    display: inline-block;
+    text-align: center;
+  }
   .search-term {
     color: @text-color-info;
   }
@@ -114,6 +118,8 @@ atom-text-editor.narrow-editor {
     font-size: 1.0em;
   }
   .item-counter {
+    min-width: 20px;
+    text-align: right;
     color: @text-color-warning;
   }
 }
