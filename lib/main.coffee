@@ -100,10 +100,12 @@ module.exports =
       vimState = getEditorState(editor)
       text = vimState.searchInput.editor.getText()
       vimState.searchInput.confirm()
+      atom.commands.dispatch(vimState.editorElement, 'vim-mode-plus:clear-highlight-search')
       return text
 
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
-      'vim-mode-plus-user:narrow:lines': => @narrow('lines', uiInput: confirmSearch())
-      'vim-mode-plus-user:narrow:search': => @narrow('search', search: confirmSearch())
-      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', search: confirmSearch())
-      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', search: confirmSearch(), currentProject: true)
+      'vim-mode-plus-user:narrow:lines': => @narrow('lines', uiInput: confirmSearch(), fromVmp: true)
+      'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', uiInput: confirmSearch(), fromVmp: true)
+      'vim-mode-plus-user:narrow:search': => @narrow('search', search: confirmSearch(), fromVmp: true)
+      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', search: confirmSearch(), fromVmp: true)
+      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', search: confirmSearch(), currentProject: true, fromVmp: true)

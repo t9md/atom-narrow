@@ -73,6 +73,6 @@
 # Invoke narrow command from vim-mode-plus's search-mini-editor
 # ---------------------------
 'atom-text-editor.vim-mode-plus-search':
-  'ctrl-l': 'vim-mode-plus-user:narrow:lines'
+  'ctrl-l': 'vim-mode-plus-user:narrow:scan'
   'cmd-/': 'vim-mode-plus-user:narrow:search'
   'ctrl-cmd-/': 'vim-mode-plus-user:narrow:search-current-project'

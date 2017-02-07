@@ -15,7 +15,7 @@ class Scan extends ProviderBase
   useHighlighter: true
 
   initialize: ->
-    if @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
+    if not @options.fromVmp and @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
       # scan by word-boundry if scan-by-current-word is invoked with empty selection.
       @searchWholeWord = true
     else
@@ -43,7 +43,7 @@ class Scan extends ProviderBase
       @ui.highlighter.setRegExp(null)
       @ui.highlighter.clear()
       @clearGrammarSearchTerm()
-      
+
       @editor.buffer.getLines().map (text, row) ->
         point: new Point(row, 0)
         text: text
