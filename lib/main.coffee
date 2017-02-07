@@ -60,7 +60,7 @@ module.exports =
         return ui
 
     visibleEditors = getVisibleEditors()
-    invisibleNarrowEditors = []
+    invisibleNarrowEditor = null
     narrowEditors = atom.workspace.getTextEditors().filter (editor) -> isNarrowEditor(editor)
     if skipProtected
       narrowEditors = narrowEditors.filter (editor) -> not Ui.get(editor).isProtected()
@@ -69,8 +69,8 @@ module.exports =
       if editor in visibleEditors
         return Ui.get(editor)
       else
-        invisibleNarrowEditors.push(editor)
-    Ui.get(otherEditors[0]) if invisibleNarrowEditors[0]?
+        invisibleNarrowEditor ?= editor
+    Ui.get(invisibleNarrowEditor) if invisibleNarrowEditor?
 
   # Return currently selected text or word under cursor.
   getCurrentWord: ->
