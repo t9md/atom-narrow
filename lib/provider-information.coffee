@@ -13,12 +13,12 @@ class ProviderInformation
     @container.innerHTML = """
     <div class='block'>
       <span class='loading loading-spinner-tiny inline-block'></span>
-      <span class='provider-name status-added'>#{@provider.getDashName()}</span>
+      <span class='provider-name'>#{@provider.getDashName()}</span>
+      <span class='item-counter'>0</span>
       <div class='btn-group btn-group-xs'>
         <button class='btn'>Aa</button>
         <button class='btn'>\\b</button>
       </div>
-      <span class='item-counter'>0</span>
       <span class='search-term'></span>
     </div>
     """
