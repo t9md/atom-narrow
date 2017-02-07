@@ -18,18 +18,23 @@ class ProviderInformation
         <button class='btn'>Aa</button>
         <button class='btn'>\\b</button>
       </div>
+      <span class='item-counter'>0</span>
       <span class='search-term'></span>
     </div>
     """
 
     loadingElement = @container.getElementsByClassName('loading')[0]
+    itemCountElement = @container.getElementsByClassName('item-counter')[0]
     @searchTermElement = @container.getElementsByClassName('search-term')[0]
     willRefreshClassName = 'loading loading-spinner-tiny inline-block'
     didRefreshClassName = 'ready icon icon-eye-watch'
     @ui.onWillRefresh ->
       loadingElement.className = willRefreshClassName
     @ui.onDidRefresh =>
+      itemCountElement.textContent = @ui.getNormalItems().length
       loadingElement.className = didRefreshClassName
+
+    # @ui.onDidStopRefreshing ->
 
     @ui.grammar.onDidChangeSearchTerm (source) =>
       @searchTermElement.textContent = source
