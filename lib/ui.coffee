@@ -232,7 +232,13 @@ class UI
           disposable.dispose()
           resolve()
 
-    activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
+    if isNarrowEditor(@provider.editor)
+      # if narrow is invoked from narrow-editor, open new narrow-editor
+      #  on same pane of existing narrow-editor
+      @provider.getPane().activateItem(@editor)
+    else
+      activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
+
     attachedPromise.then =>
       @grammar.activate()
       if @input

@@ -104,11 +104,20 @@ class ProviderBase
 
     {@editor, @editorSubscriptions} = {}
 
+  # When narrow was invoked from existing narrow-editor.
+  #  ( e.g. `narrow:search-by-current-word` on narrow-editor. )
+  # ui is opened at same pane of provider.editor( editor invoked narrow )
+  # In this case item should be opened on adjacent pane, not on provider.pane.
+  getPaneForOpenItem: ->
+    pane = @getPane()
+    if pane? and pane isnt @ui.getPane()
+      pane
+    else
+      getAdjacentPaneOrSplit(@ui.getPane(), split: settings.get('directionToOpen'))
+
   openFileForItem: ({filePath}, {activatePane}={}) ->
     filePath ?= @editor.getPath()
-
-    uiPane = @ui.getPane()
-    pane = @getPane() ? getAdjacentPaneOrSplit(uiPane, split: settings.get('directionToOpen'))
+    pane = @getPaneForOpenItem()
     if item = pane.itemForURI(filePath)
       pane.activate() if activatePane
       pane.activateItem(item, pending: true)
@@ -124,8 +133,8 @@ class ProviderBase
     # then trying to activate returned item on target-pane result in, one item activated on multiple-pane.
     # this situation cause exception.
     pane.activate()
-    atom.workspace.open(filePath, pending: true).then (editor) ->
-      uiPane.activate() unless activatePane
+    atom.workspace.open(filePath, pending: true).then (editor) =>
+      @ui.getPane().activate() unless activatePane
       editor
 
   confirmed: (item) ->
