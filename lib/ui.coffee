@@ -161,9 +161,6 @@ class UI
 
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
-    # Depends on ui.grammar
-    @providerInformation = new ProviderInformation(this) if @provider.showInformation
-
     @itemIndicator = new ItemIndicator(this)
 
     @disposables.add @onDidMoveToItemArea =>
@@ -177,6 +174,8 @@ class UI
       @observeCursorMove()
       @observeStopChangingActivePaneItem()
     )
+    # Depends on ui.grammar and commands bound to @editorElement, so have to come last
+    @providerInformation = new ProviderInformation(this) if @provider.showInformation
 
     @constructor.register(this)
     @disposables.add new Disposable =>

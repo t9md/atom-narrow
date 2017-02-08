@@ -1,3 +1,5 @@
+{CompositeDisposable} = require 'atom'
+
 toggleSelected = (element, bool) ->
   element.classList.toggle('selected', bool)
 
@@ -5,11 +7,10 @@ module.exports =
 class ProviderInformation
   constructor: (@ui) ->
     {@editor, @provider} = @ui
+    @disposables = new CompositeDisposable
 
     @container = document.createElement('div')
     @container.className = 'narrow-provider-information'
-    # <span class='loading loading-spinner-tiny inline-block'></span>
-      # <span class='eye icon icon-eye-watch'></span>
     @container.innerHTML = """
     <div class='block'>
       <span class='loading loading-spinner-tiny inline-block'></span>
@@ -41,12 +42,9 @@ class ProviderInformation
     @ignoreCaseButton.addEventListener('click', @toggleSearchIgnoreCase)
     @wholeWordButton.addEventListener('click', @toggleSearchWholeWord)
 
-  toggleSearchIgnoreCase: => @ui.toggleSearchIgnoreCase()
-  toggleSearchWholeWord: => @ui.toggleSearchWholeWord()
-
-  updateOptionState: ->
-    toggleSelected(@ignoreCaseButton, @provider.searchIgnoreCase)
-    toggleSelected(@wholeWordButton, @provider.searchWholeWord)
+  destroy: ->
+    @disposables.destroy()
+    @marker?.destroy()
 
   show: ->
     @editor.decorateMarker @editor.markBufferPosition([0, 0]),
@@ -54,6 +52,22 @@ class ProviderInformation
       item: @container
       position: 'before'
     @updateOptionState()
+    @activateToolTips()
 
-  destroy: ->
-    @marker?.destroy()
+  updateOptionState: ->
+    toggleSelected(@ignoreCaseButton, @provider.searchIgnoreCase)
+    toggleSelected(@wholeWordButton, @provider.searchWholeWord)
+
+  toggleSearchIgnoreCase: => @ui.toggleSearchIgnoreCase()
+  toggleSearchWholeWord: => @ui.toggleSearchWholeWord()
+
+  activateToolTips: ->
+    @disposables.add atom.tooltips.add @wholeWordButton,
+      title: "wholeWord"
+      keyBindingCommand: 'narrow-ui:toggle-search-whole-word'
+      keyBindingTarget: @ui.editorElement
+
+    @disposables.add atom.tooltips.add @ignoreCaseButton,
+      title: "ignoreCase"
+      keyBindingCommand: 'narrow-ui:toggle-search-ignore-case'
+      keyBindingTarget: @ui.editorElement
