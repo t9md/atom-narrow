@@ -14,7 +14,7 @@ class SearchBase extends ProviderBase
   showColumnOnLineHeader: true
   regExpForSearchTerm: null
   useHighlighter: true
-  showInformation: true
+  showSearchOption: true
 
   checkReady: ->
     if @options.currentWord

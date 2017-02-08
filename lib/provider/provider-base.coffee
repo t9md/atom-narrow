@@ -31,7 +31,7 @@ class ProviderBase
   # used by search, atom-scan, scan
   searchWholeWord: null
   searchIgnoreCase: null
-  showInformation: true
+  showSearchOption: false
 
   getName: ->
     @constructor.name

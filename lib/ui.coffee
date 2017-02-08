@@ -126,12 +126,12 @@ class UI
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
     @refresh(force: true)
-    @providerInformation.updateOptionState()
+    @providerInformation.updateSearchOptionState()
 
   toggleSearchIgnoreCase: ->
     @provider.toggleSearchIgnoreCase()
     @refresh(force: true)
-    @providerInformation.updateOptionState()
+    @providerInformation.updateSearchOptionState()
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
@@ -175,7 +175,8 @@ class UI
       @observeStopChangingActivePaneItem()
     )
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
-    @providerInformation = new ProviderInformation(this) if @provider.showInformation
+    {showSearchOption} = @provider
+    @providerInformation = new ProviderInformation(this, {showSearchOption})
 
     @constructor.register(this)
     @disposables.add new Disposable =>
@@ -251,7 +252,7 @@ class UI
         @setPrompt(@input)
       else
         @withIgnoreChange => @setPrompt(@input)
-      @providerInformation?.show()
+      @providerInformation.show()
       @moveToPrompt()
       @refresh()
 
@@ -299,6 +300,7 @@ class UI
     @editor.destroy()
     @activateProviderPane()
 
+    @providerInformation.destroy()
     @provider?.destroy?()
     @itemIndicator?.destroy()
     @rowMarker?.destroy()
@@ -479,7 +481,7 @@ class UI
         # Need to recover query prompt
         @setPrompt()
         @moveToPrompt()
-        @providerInformation?.show() # redraw providerInformation block decoration.
+        @providerInformation.show() # redraw providerInformation block decoration.
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @editorLastRow = range.end.row

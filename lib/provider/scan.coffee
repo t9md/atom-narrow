@@ -13,7 +13,7 @@ class Scan extends ProviderBase
   ignoreSideMovementOnSyncToEditor: false
   updateGrammarOnQueryChange: false # for manual update
   useHighlighter: true
-  showInformation: true
+  showSearchOption: true
   searchIgnoreCaseChangedManually: false
 
   initialize: ->
@@ -46,7 +46,7 @@ class Scan extends ProviderBase
         regexp = @getRegExpForSearchSource(source, null)
         if regexp.ignoreCase isnt @searchIgnoreCase
           @searchIgnoreCase = regexp.ignoreCase
-          @ui.providerInformation.updateOptionState()
+          @ui.providerInformation.updateSearchOptionState()
 
       @ui.highlighter.setRegExp(regexp)
       @ui.grammar.setSearchTerm(regexp)
