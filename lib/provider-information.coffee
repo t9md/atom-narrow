@@ -7,8 +7,6 @@ module.exports =
 class ProviderInformation
   constructor: (@ui) ->
     {@editor, @provider} = @ui
-    @disposables = new CompositeDisposable
-
     @container = document.createElement('div')
     @container.className = 'narrow-provider-information'
     @container.innerHTML = """
@@ -44,7 +42,7 @@ class ProviderInformation
     @wholeWordButton.addEventListener('click', @toggleSearchWholeWord)
 
   destroy: ->
-    @disposables.destroy()
+    @toolTipDisposables?.dispose()
     @marker?.destroy()
 
   # Can be called multiple times
@@ -64,12 +62,15 @@ class ProviderInformation
   toggleSearchWholeWord: => @ui.toggleSearchWholeWord()
 
   activateToolTips: ->
-    @disposables.add atom.tooltips.add @wholeWordButton,
+    @toolTipDisposables?.dispose()
+    @toolTipDisposables = disposables = new CompositeDisposable
+
+    disposables.add atom.tooltips.add @wholeWordButton,
       title: "wholeWord"
       keyBindingCommand: 'narrow-ui:toggle-search-whole-word'
       keyBindingTarget: @ui.editorElement
 
-    @disposables.add atom.tooltips.add @ignoreCaseButton,
+    disposables.add atom.tooltips.add @ignoreCaseButton,
       title: "ignoreCase"
       keyBindingCommand: 'narrow-ui:toggle-search-ignore-case'
       keyBindingTarget: @ui.editorElement
