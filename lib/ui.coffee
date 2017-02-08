@@ -14,7 +14,7 @@ Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
 Highlighter = require './highlighter'
 ItemIndicator = require './item-indicator'
-ProviderInformation = require './provider-information'
+ProviderPanel = require './provider-panel'
 
 module.exports =
 class UI
@@ -126,12 +126,12 @@ class UI
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
     @refresh(force: true)
-    @providerInformation.updateSearchOptionState()
+    @providerPanel.updateSearchOptionState()
 
   toggleSearchIgnoreCase: ->
     @provider.toggleSearchIgnoreCase()
     @refresh(force: true)
-    @providerInformation.updateSearchOptionState()
+    @providerPanel.updateSearchOptionState()
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
@@ -176,7 +176,7 @@ class UI
     )
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
     {showSearchOption} = @provider
-    @providerInformation = new ProviderInformation(this, {showSearchOption})
+    @providerPanel = new ProviderPanel(this, {showSearchOption})
 
     @constructor.register(this)
     @disposables.add new Disposable =>
@@ -252,7 +252,7 @@ class UI
         @setPrompt(@input)
       else
         @withIgnoreChange => @setPrompt(@input)
-      @providerInformation.show()
+      @providerPanel.show()
       @moveToPrompt()
       @refresh()
 
@@ -300,7 +300,7 @@ class UI
     @editor.destroy()
     @activateProviderPane()
 
-    @providerInformation.destroy()
+    @providerPanel.destroy()
     @provider?.destroy?()
     @itemIndicator?.destroy()
     @rowMarker?.destroy()
@@ -481,7 +481,7 @@ class UI
         # Need to recover query prompt
         @setPrompt()
         @moveToPrompt()
-        @providerInformation.show() # redraw providerInformation block decoration.
+        @providerPanel.show() # redraw providerPanel block decoration.
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @editorLastRow = range.end.row

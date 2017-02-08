@@ -3,12 +3,13 @@
 toggleSelected = (element, bool) ->
   element.classList.toggle('selected', bool)
 
+# This is NOT Panel in Atom's terminology, Just naming.
 module.exports =
-class ProviderInformation
+class ProviderPanel
   constructor: (@ui, {@showSearchOption}={}) ->
     {@editor, @provider} = @ui
     @container = document.createElement('div')
-    @container.className = 'narrow-provider-information'
+    @container.className = 'narrow-provider-panel'
     @container.innerHTML = """
       <div class='base inline-block'>
         <span class='icon icon-eye-watch'></span>
