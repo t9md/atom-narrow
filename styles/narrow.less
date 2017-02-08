@@ -99,3 +99,35 @@ atom-text-editor.narrow-editor {
     }
   }
 }
+
+// Hover Counter
+// =========================
+.narrow-provider-information {
+  padding: @component-padding/3 @component-padding;
+  color: @text-color-subtle;
+  font-size: 0.9em;
+  span {
+    display: inline-block;
+    text-align: center;
+  }
+  .icon {
+    vertical-align: middle;
+  }
+  .loading {
+    .hide {
+      display: none;
+    }
+  }
+  .search-term {
+    color: @text-color-info;
+  }
+  .provider-name {
+    color: @text-color-success;
+    font-size: 1.0em;
+  }
+  .item-counter {
+    min-width: 20px;
+    text-align: right;
+    color: @text-color-warning;
+  }
+}

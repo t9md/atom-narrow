@@ -13,6 +13,8 @@ class Scan extends ProviderBase
   ignoreSideMovementOnSyncToEditor: false
   updateGrammarOnQueryChange: false # for manual update
   useHighlighter: true
+  showInformation: true
+  searchIgnoreCaseChangedManually: false
 
   initialize: ->
     if not @options.fromVmp and @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
@@ -31,27 +33,36 @@ class Scan extends ProviderBase
       })
     items
 
+  toggleSearchIgnoreCase: ->
+    @searchIgnoreCaseChangedManually = true
+    super
+
   getItems: ->
-    {include} = @ui.getFilterSpec()
-    if include.length
-      # 'include' hold instance of RegExp
-      regexp = @getRegExpForSearchSource(include.shift().source)
+    source = @ui.getFilterSpec().include.shift()?.source
+    if source?
+      if @searchIgnoreCaseChangedManually
+        regexp = @getRegExpForSearchSource(source, @searchIgnoreCase)
+      else
+        regexp = @getRegExpForSearchSource(source, null)
+        if regexp.ignoreCase isnt @searchIgnoreCase
+          @searchIgnoreCase = regexp.ignoreCase
+          @ui.providerInformation.updateOptionState()
+
       @ui.highlighter.setRegExp(regexp)
-      @setGrammarSearchTerm(regexp)
+      @ui.grammar.setSearchTerm(regexp)
       @scanEditor(regexp)
     else
-      @ui.highlighter.setRegExp(null)
+      # Reset search term and grammar
       @ui.highlighter.clear()
-      @clearGrammarSearchTerm()
+      @ui.highlighter.setRegExp(null)
+      @ui.grammar.setSearchTerm(null)
+      @ui.grammar.activate()
 
       @editor.buffer.getLines().map (text, row) ->
         point: new Point(row, 0)
         text: text
 
-  filterItems: (items, {include, exclude}) ->
-    if include.length is 0
-      items
-    else
-      include.shift()
-      @ui.grammar.update(include)
-      super
+  filterItems: (items, {include}) ->
+    include.shift()
+    @ui.grammar.update(include)
+    super

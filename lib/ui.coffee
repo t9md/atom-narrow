@@ -14,6 +14,7 @@ Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
 Highlighter = require './highlighter'
 ItemIndicator = require './item-indicator'
+ProviderInformation = require './provider-information'
 
 module.exports =
 class UI
@@ -79,6 +80,8 @@ class UI
 
   onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
   emitDidRefresh: -> @emitter.emit('did-refresh')
+  onWillRefresh: (fn) -> @emitter.on('will-refresh', fn)
+  emitWillRefresh: -> @emitter.emit('will-refresh')
 
   onDidChangeSelectedItem: (fn) -> @emitter.on('did-change-selected-item', fn)
   emitDidChangeSelectedItem: (event) -> @emitter.emit('did-change-selected-item', event)
@@ -123,10 +126,12 @@ class UI
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
     @refresh(force: true)
+    @providerInformation.updateOptionState()
 
   toggleSearchIgnoreCase: ->
     @provider.toggleSearchIgnoreCase()
     @refresh(force: true)
+    @providerInformation.updateOptionState()
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
@@ -154,9 +159,9 @@ class UI
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
 
+    @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
     @itemIndicator = new ItemIndicator(this)
-    @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
 
     @disposables.add @onDidMoveToItemArea =>
       if settings.get('autoShiftReadOnlyOnMoveToItemArea')
@@ -169,6 +174,8 @@ class UI
       @observeCursorMove()
       @observeStopChangingActivePaneItem()
     )
+    # Depends on ui.grammar and commands bound to @editorElement, so have to come last
+    @providerInformation = new ProviderInformation(this) if @provider.showInformation
 
     @constructor.register(this)
     @disposables.add new Disposable =>
@@ -223,7 +230,6 @@ class UI
     # In this case, user see modified icon(mark) on tab.
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
-
     if @editorElement.component?
       attachedPromise = Promise.resolve()
     else
@@ -245,6 +251,7 @@ class UI
         @setPrompt(@input)
       else
         @withIgnoreChange => @setPrompt(@input)
+      @providerInformation?.show()
       @moveToPrompt()
       @refresh()
 
@@ -425,6 +432,8 @@ class UI
     getFilterSpecForQuery(@getQuery())
 
   refresh: ({force}={}) ->
+    @emitWillRefresh()
+
     if force
       @cachedItems = null
 
@@ -470,6 +479,7 @@ class UI
         # Need to recover query prompt
         @setPrompt()
         @moveToPrompt()
+        @providerInformation?.show() # redraw providerInformation block decoration.
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @editorLastRow = range.end.row

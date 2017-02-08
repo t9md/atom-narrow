@@ -1,3 +1,5 @@
+{Emitter} = require 'atom'
+
 path = require 'path'
 _ = require 'underscore-plus'
 
@@ -23,7 +25,11 @@ class Grammar
   filePath: path.join(__dirname, 'grammar', 'narrow.cson')
   scopeName: 'source.narrow'
 
+  onDidChangeSearchTerm: (fn) -> @emitter.on('did-change-search-term', fn)
+  emitDidChangeSearchTerm: (searchTerm) -> @emitter.emit('did-change-search-term', searchTerm)
+
   constructor: (@editor, {@includeHeaderRules}={}) ->
+    @emitter = new Emitter
 
   activate: (rule = @getRule()) ->
     atom.grammars.removeGrammarForScopeName(@scopeName)
@@ -46,7 +52,13 @@ class Grammar
       )
     @activate(rule)
 
-  setSearchTerm: (@searchTerm) ->
+  setSearchTerm: (regexp) ->
+    source = regexp?.source ? ''
+    if regexp?.ignoreCase
+      @searchTerm = "(?i:#{regexp.source})"
+    else
+      @searchTerm = source
+    @emitDidChangeSearchTerm(regexp)
 
   getRule: ->
     rule =
