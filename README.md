@@ -18,6 +18,13 @@ alpha
 - And sync current-item on narrow-UI as you move cursor on bound editor.
 - This **auto sync current-item to cursor of bound editor** gives you valuable context to keep focus on X.  
 
+# Roles in play.
+
+- `narrow-editor` or `narrow-ui`: handles user input and update narrowed item list.
+- `narrow-provider`: Provide items to narrow and action to jump to item selected.
+
+![overview](https://raw.githubusercontent.com/t9md/t9md/45e8b52a2fbe8a9d47a2f2d30e8f755f5d5cba25/img/atom-narrow/narrow-overview.png)
+
 # Features
 
 - Auto preview items under cursor(default `true` for all providers).
@@ -29,11 +36,6 @@ alpha
 - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration( I'm also maintainer of vim-mode-plus ).
 - For what can I use this?, See [Use case and flow of keystrokes](https://github.com/t9md/atom-narrow/issues/75).
 - Also see [Q&A](#qa) section at bottom of this README.
-
-# Roles in play.
-
-- `narrow-editor` or `narrow-ui`: handles user input and update narrowed item list.
-- `narrow-provider`: Provide items to narrow and action to jump to item selected.
 
 # Bundled providers
 
