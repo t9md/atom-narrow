@@ -683,6 +683,7 @@ class UI
       @emitDidPreview({editor, item})
 
   confirm: ({keepOpen}={}) ->
+    return unless @hasNormalItem()
     item = @getSelectedItem()
     @provider.confirmed(item).then =>
       if not keepOpen and not @isProtected() and @provider.getConfig('closeOnConfirm')
