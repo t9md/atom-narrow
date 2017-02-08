@@ -38,16 +38,18 @@ class ProviderPanel
       """
     @container.appendChild(element)
 
+    # loading
     loadingElement = element.getElementsByClassName('loading')[0]
-    searchTermElement = element.getElementsByClassName('search-term')[0]
-    [@ignoreCaseButton, @wholeWordButton] = element.getElementsByTagName('button')
-
     @ui.onWillRefresh -> loadingElement.classList.remove('hide')
     @ui.onDidRefresh -> loadingElement.classList.add('hide')
 
+    # searchTerm
+    searchTermElement = element.getElementsByClassName('search-term')[0]
     @ui.grammar.onDidChangeSearchTerm (regexp) ->
       searchTermElement.textContent = regexp?.toString() ? ''
 
+    # searchOptions
+    [@ignoreCaseButton, @wholeWordButton] = element.getElementsByTagName('button')
     @ignoreCaseButton.addEventListener('click', @toggleSearchIgnoreCase)
     @wholeWordButton.addEventListener('click', @toggleSearchWholeWord)
 
