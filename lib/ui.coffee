@@ -479,6 +479,7 @@ class UI
         # Need to recover query prompt
         @setPrompt()
         @moveToPrompt()
+        @providerInformation?.show() # redraw providerInformation block decoration.
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @editorLastRow = range.end.row

@@ -13,7 +13,7 @@ class ProviderInformation
     @container.className = 'narrow-provider-information'
     @container.innerHTML = """
     <div class='block'>
-      <span class='loading loading-spinner-tiny inline-block'></span>
+      <span class='icon icon-eye-watch'></span>
       <span class='provider-name'>#{@provider.getDashName()}</span>
       <span class='item-counter'>0</span>
       <div class='btn-group btn-group-xs'>
@@ -21,19 +21,20 @@ class ProviderInformation
         <button class='btn'>\\b</button>
       </div>
       <span class='search-term'></span>
+      <span class='loading loading-spinner-tiny inline-block'></span>
     </div>
     """
 
     loadingElement = @container.getElementsByClassName('loading')[0]
     itemCountElement = @container.getElementsByClassName('item-counter')[0]
     @searchTermElement = @container.getElementsByClassName('search-term')[0]
-    willRefreshClassName = 'search-progress loading loading-spinner-tiny inline-block'
-    didRefreshClassName = 'search-progress ready icon icon-eye-watch'
+
     @ui.onWillRefresh ->
-      loadingElement.className = willRefreshClassName
+      loadingElement.classList.remove('hide')
+
     @ui.onDidRefresh =>
       itemCountElement.textContent = @ui.getNormalItems().length
-      loadingElement.className = didRefreshClassName
+      loadingElement.classList.add('hide')
 
     @ui.grammar.onDidChangeSearchTerm (regexp) =>
       @searchTermElement.textContent = regexp?.toString() ? ''
@@ -46,11 +47,12 @@ class ProviderInformation
     @disposables.destroy()
     @marker?.destroy()
 
+  # Can be called multiple times
+  # Why? When narrow-editor's prompt row itself was removed, need to redraw to recover.
   show: ->
-    @editor.decorateMarker @editor.markBufferPosition([0, 0]),
-      type: 'block'
-      item: @container
-      position: 'before'
+    @marker?.destroy()
+    @marker = @editor.markBufferPosition([0, 0])
+    @editor.decorateMarker(@marker, type: 'block', item: @container, position: 'before')
     @updateOptionState()
     @activateToolTips()
 
