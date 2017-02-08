@@ -1,3 +1,20 @@
+# 0.22.0:
+- New: #118, Show provider specific information above prompt.
+  - All provider shows item count.
+  - For `scan`, `search`, `atom-scan` specific.
+    - Loading indicator.
+    - Button to toggle `ignoreCase`, `wholeWord` and show tooltips when mouseover.
+  - Achieved by block-decoration(since I want keep `narrow-editor` really normal text-editor).
+    - Recover block-decoration(destroy and re-decorate) when prompt on accidental prompt row removal.
+  - For `narrow:scan`, search term can be changed multiple times.
+    - Unless manually changed by button or shortcut, it respect `caseSensitivityForSearchTerm`
+- Improve UX: Show buffer lines on empty query( = empty searchTerm ) for `narrow:scan`.
+  - Also limit minimum column width to 2 to avoid side move items( since initial column is 1 ).
+- Fix: No longer throw error when confirm with empty item list
+- Fix: When `narrow:focus`. `ReferenceError: otherEditors is not defined`( oversight when renaming )
+- Breaking, Improve: #116 `ctrl-l` in vim-mode-plus-search input start `narrow:scan`( was `narrow:lines` before ).
+- Improve UX: #117 open `narrow-editor` on same pane of existing `narrow-editor` when narrow is started from `narrow-editor`.
+
 # 0.21.0:
 - New: Provider `scan` as better `narrow:lines`
   - Commands

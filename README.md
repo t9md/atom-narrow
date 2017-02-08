@@ -7,7 +7,7 @@ Code navigation tool inspired by unite.vim, emacs-helm.
 
 alpha
 
-![search](https://raw.githubusercontent.com/t9md/t9md/2c84dbbbaf4a5b625bcc22ed2d9896733bdb0f04/img/atom-narrow.gif)
+![narrow](https://raw.githubusercontent.com/t9md/t9md/4df5df86884a25bf8b62dc3b605df050a06c8232/img/atom-narrow/narrow.gif)
 
 # What's this
 
