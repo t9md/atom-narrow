@@ -42,9 +42,10 @@ class SearchBase extends ProviderBase
 
   resetRegExpForSearchTerm: ->
     source = _.escapeRegExp(@options.search)
-    @regExpForSearchTerm = @getRegExpForSearchSource(source)
+    @regExpForSearchTerm = @getRegExpForSearchSource(source, @searchIgnoreCase)
+    @searchIgnoreCase ?= @regExpForSearchTerm.ignoreCase
     @ui.highlighter.setRegExp(@regExpForSearchTerm)
-    @ui.setGrammarSearchTerm(@regExpForSearchTerm)
+    @ui.grammar.setSearchTerm(@regExpForSearchTerm)
 
   initialize: ->
     @resetRegExpForSearchTerm()

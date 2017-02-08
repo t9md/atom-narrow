@@ -34,8 +34,8 @@ class ProviderInformation
       itemCountElement.textContent = @ui.getNormalItems().length
       loadingElement.className = didRefreshClassName
 
-    @ui.grammar.onDidChangeSearchTerm (source) =>
-      @searchTermElement.textContent = source
+    @ui.grammar.onDidChangeSearchTerm (regexp) =>
+      @searchTermElement.textContent = regexp?.toString() ? ''
 
     [@ignoreCaseButton, @wholeWordButton] = @container.getElementsByTagName('button')
     @ignoreCaseButton.addEventListener('click', @toggleSearchIgnoreCase)

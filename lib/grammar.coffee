@@ -58,7 +58,7 @@ class Grammar
       @searchTerm = "(?i:#{regexp.source})"
     else
       @searchTerm = source
-    @emitDidChangeSearchTerm(source)
+    @emitDidChangeSearchTerm(regexp)
 
   getRule: ->
     rule =

@@ -867,13 +867,6 @@ class UI
       lineHeader = "#{lineHeader}:#{padding}#{columnText}"
     lineHeader + ": "
 
-  setGrammarSearchTerm: (regexp) ->
-    @grammar.setSearchTerm(regexp)
-
-  clearGrammarSearchTerm: ->
-    @grammar.setSearchTerm(null)
-    @grammar.activate()
-
   # vim-mode-plus integration
   # -------------------------
   vmpActivateNormalMode: ->
