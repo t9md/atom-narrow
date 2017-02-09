@@ -146,7 +146,7 @@ updateDecoration = (decoration, fn) ->
 itemForGitDiff = (diff, {editor, filePath}) ->
   row = limitNumber(diff.newStart - 1, min: 0)
   {
-    point: new Point(row, 0)
+    point: getFirstCharacterPositionForBufferRow(editor, row)
     text: editor.lineTextForBufferRow(row)
     filePath: filePath
   }

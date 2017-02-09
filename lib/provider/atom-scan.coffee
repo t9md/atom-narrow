@@ -29,10 +29,8 @@ class AtomScan extends SearchBase
     itemizePromise = scanPromise.then ->
       items = []
       for filePath, matches of matchesByFilePath
-        projectName = path.basename(atom.project.relativizePath(filePath)[0])
         for match in matches
           items.push({
-            projectName: projectName
             filePath: filePath
             text: match.lineText
             point: Point.fromObject(match.range[0])
@@ -40,17 +38,8 @@ class AtomScan extends SearchBase
           })
       items
 
-    itemizePromise.then (_items) ->
-      items = []
-      for projectName, itemsInProject of _.groupBy(_items, (item) -> item.projectName)
-        header = "# #{projectName}"
-        items.push({header, projectName, projectHeader: true, skip: true})
-
-        for filePath, itemsInFile of _.groupBy(itemsInProject, (item) -> item.filePath)
-          header = "## #{atom.project.relativize(filePath)}"
-          items.push({header, projectName, filePath, skip: true})
-          items.push(itemsInFile...)
-      items
+    itemizePromise.then (items) =>
+      @getItemsWithHeaders(items)
 
   getItems: ->
     @scanWorkspace(@regExpForSearchTerm)

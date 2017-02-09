@@ -51,16 +51,4 @@ class SearchBase extends ProviderBase
     @resetRegExpForSearchTerm()
 
   filterItems: (items, filterSpec) ->
-    items = super
-    normalItems = _.reject(items, (item) -> item.skip)
-    filePaths = _.uniq(_.pluck(normalItems, "filePath"))
-    projectNames = _.uniq(_.pluck(normalItems, "projectName"))
-
-    items.filter (item) ->
-      if item.header?
-        if item.projectHeader?
-          item.projectName in projectNames
-        else
-          item.filePath in filePaths
-      else
-        true
+    @filterHeaderWithItems(super)
