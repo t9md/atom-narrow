@@ -51,6 +51,7 @@ class Highlighter
     @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
     for item in items when range = item.range
       marker = markerLayer.markBufferRange(range, invalidate: 'inside')
+      # FIXME: BUG decorationByItem should managed by per editor.
       @decorationByItem.set(item, editor.decorateMarker(marker, decorationOptions))
 
   updateCurrent: ->
