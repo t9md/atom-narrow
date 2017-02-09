@@ -107,7 +107,7 @@ class UI
       'core:confirm': => @confirm()
       'narrow:close': (event) => @narrowClose(event)
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
-      'narrow-ui:protect': => @toggleProtect()
+      'narrow-ui:protect': => @toggleProtected()
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:preview-next-item': => @previewNextItem()
       'narrow-ui:preview-previous-item': => @previewPreviousItem()
@@ -129,12 +129,12 @@ class UI
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
     @refresh(force: true)
-    @providerPanel.updateSearchOptionState()
+    @providerPanel.updateStateElements(wholeWordButton: @provider.searchWholeWord)
 
   toggleSearchIgnoreCase: ->
     @provider.toggleSearchIgnoreCase()
     @refresh(force: true)
-    @providerPanel.updateSearchOptionState()
+    @providerPanel.updateStateElements(ignoreCaseButton: @provider.searchIgnoreCase)
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
@@ -183,14 +183,12 @@ class UI
     @disposables.add new Disposable =>
       @constructor.unregister(this)
 
-  toggleProtect: ->
+  toggleProtected: ->
     @setProtected(not @protected)
-
-  isProtected: ->
-    @protected
 
   setProtected: (@protected) ->
     @itemIndicator.redraw()
+    @providerPanel.updateStateElements({@protected})
 
   setReadOnly: (readOnly) ->
     @readOnly = readOnly
@@ -345,7 +343,7 @@ class UI
   #   invoked from protected narrow-editor
   # 2. To re-focus to caller editor for not interfering regular preview-then-close-by-ctrl-g flow.
   narrowClose: (event) ->
-    if @isProtected()
+    if @protected
       event.stopImmediatePropagation()
       @setPrompt('') # clear query
       @activateProviderPane()
@@ -408,8 +406,14 @@ class UI
     @previewItemForDirection('previous')
 
   toggleAutoPreview: ->
-    @autoPreview = not @autoPreview
-    @preview() if @autoPreview
+    @setAutoPreview(not @autoPreview)
+
+  setAutoPreview: (@autoPreview) ->
+    @providerPanel.updateStateElements({@autoPreview})
+    if @autoPreview
+      @preview()
+    else
+      @rowMarker?.destroy()
 
   getQuery: ->
     @lastNarrowQuery = @editor.lineTextForBufferRow(0)
@@ -698,7 +702,7 @@ class UI
     return unless @hasNormalItem()
     item = @getSelectedItem()
     @provider.confirmed(item).then =>
-      if not keepOpen and not @isProtected() and @provider.getConfig('closeOnConfirm')
+      if not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
         @editor.destroy()
 
   # Return row

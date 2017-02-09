@@ -104,34 +104,48 @@ atom-text-editor.narrow-editor {
 // =========================
 .narrow-provider-panel {
   padding: @component-padding/3 @component-padding;
-  color: @text-color-subtle;
-  font-size: 0.9em;
+  vertical-align: middle;
+  text-align: justify;
   div {
     display: inline-block;
   }
   span {
     display: inline-block;
   }
-  .icon {
-    vertical-align: middle;
-  }
   .base {
+    .enabled::before {
+      color: @text-color-success;
+    }
+    ::before {
+      color: @text-color-subtle;
+    }
     .provider-name {
       color: @text-color-success;
-      font-size: 1.0em;
+    }
+    .auto-preview {
+      .octicon(eye, 1.0em);
     }
     .item-counter {
-      min-width: 20px;
       text-align: right;
+      min-width: 25px;
       color: @text-color-warning;
+    }
+    .protected {
+      .octicon(lock, 1.0em);
+    }
+    .refresh {
+      .octicon(repo-sync, 1.0em);
+      &.running {
+        .octicon(x, 1.0em);
+        pointer-events: none;
+        cursor: default;
+        &::before {
+          color: @text-color-error;
+        }
+      }
     }
   }
   .search-options {
-    .loading {
-      .hide {
-        display: none;
-      }
-    }
     .search-term {
       color: @text-color-info;
     }

@@ -46,7 +46,7 @@ class Scan extends ProviderBase
         regexp = @getRegExpForSearchSource(source, null)
         if regexp.ignoreCase isnt @searchIgnoreCase
           @searchIgnoreCase = regexp.ignoreCase
-          @ui.providerPanel.updateSearchOptionState()
+          @ui.providerPanel.updateStateElements(ignoreCaseButton: @searchIgnoreCase)
 
       @ui.highlighter.setRegExp(regexp)
       @ui.grammar.setSearchTerm(regexp)

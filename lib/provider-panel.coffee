@@ -12,19 +12,42 @@ module.exports =
 class ProviderPanel
   constructor: (@ui, {@showSearchOption}={}) ->
     {@editor, @provider} = @ui
+    @stateElements = {}
     @container = document.createElement('div')
     @container.className = 'narrow-provider-panel'
     @container.innerHTML = """
       <div class='base inline-block'>
-        <span class='icon icon-eye-watch'></span>
+        <a class='auto-preview'></a>
         <span class='provider-name'>#{@provider.getDashName()}</span>
         <span class='item-counter'>0</span>
+        <a class='refresh'></a>
+        <a class='protected'></a>
       </div>
       """
+
+    # NOTE: Avoid mousedown event propagated up to belonging narrow-editor's element
+    # If propagated, button clicking cause narrow-editor's cursor move etc See #123.
+    @container.addEventListener('mousedown', suppressEvent)
+
+    # autoPreview
+    # -------------------------
+    @stateElements.autoPreview = @container.getElementsByClassName('auto-preview')[0]
+    @stateElements.autoPreview.addEventListener('click', @toggleAutoPreview)
+    @stateElements.protected = @container.getElementsByClassName('protected')[0]
+    @stateElements.protected.addEventListener('click', @toggleProtected)
 
     itemCountElement = @container.getElementsByClassName('item-counter')[0]
     @ui.onDidRefresh =>
       itemCountElement.textContent = @ui.getNormalItems().length
+
+    # loading
+    refreshElement = @container.getElementsByClassName('refresh')[0]
+    refreshElement.addEventListener('click', @refresh)
+
+    @ui.onWillRefresh ->
+      refreshElement.classList.add('running')
+    @ui.onDidRefresh ->
+      refreshElement.classList.remove('running')
 
     if @showSearchOption
       @setupSearchOption()
@@ -38,28 +61,20 @@ class ProviderPanel
         <button class='btn'>\\b</button>
       </div>
       <span class='search-term'></span>
-      <span class='loading loading-spinner-tiny inline-block'></span>
       """
     @container.appendChild(element)
-
-    # loading
-    loadingElement = element.getElementsByClassName('loading')[0]
-    @ui.onWillRefresh -> loadingElement.classList.remove('hide')
-    @ui.onDidRefresh -> loadingElement.classList.add('hide')
 
     # searchTerm
     searchTermElement = element.getElementsByClassName('search-term')[0]
     @ui.grammar.onDidChangeSearchTerm (regexp) ->
       searchTermElement.textContent = regexp?.toString() ? ''
 
-    # NOTE: Avoid mousedown event propagated up to belonging narrow-editor's element
-    # If propagated, button clicking cause narrow-editor's cursor move etc See #123.
-    @container.addEventListener('mousedown', suppressEvent)
-
     # searchOptions
-    [@ignoreCaseButton, @wholeWordButton] = element.getElementsByTagName('button')
-    @ignoreCaseButton.addEventListener('click', @toggleSearchIgnoreCase)
-    @wholeWordButton.addEventListener('click', @toggleSearchWholeWord)
+    [ignoreCaseButton, wholeWordButton] = element.getElementsByTagName('button')
+    @stateElements.ignoreCaseButton = ignoreCaseButton
+    @stateElements.wholeWordButton = wholeWordButton
+    ignoreCaseButton.addEventListener('click', @toggleSearchIgnoreCase)
+    wholeWordButton.addEventListener('click', @toggleSearchWholeWord)
 
   destroy: ->
     @toolTipDisposables?.dispose()
@@ -71,13 +86,35 @@ class ProviderPanel
     @marker?.destroy()
     @marker = @editor.markBufferPosition([0, 0])
     @editor.decorateMarker(@marker, type: 'block', item: @container, position: 'before')
-    if @showSearchOption
-      @updateSearchOptionState()
-      @activateSearchOptionButtonToolTips()
 
-  updateSearchOptionState: ->
-    toggleSelected(@ignoreCaseButton, @provider.searchIgnoreCase)
-    toggleSelected(@wholeWordButton, @provider.searchWholeWord)
+    states = {
+      autoPreview: @ui.autoPreview
+      protected: @ui.protected
+    }
+    if @showSearchOption
+      @activateSearchOptionButtonToolTips()
+      states.ignoreCaseButton = @provider.searchIgnoreCase
+      states.wholeWordButton = @provider.searchWholeWord
+    @updateStateElements(states)
+
+  updateStateElements: (states) ->
+    for state, value of states
+      if state.endsWith('Button')
+        @stateElements[state].classList.toggle('selected', value)
+      else
+        @stateElements[state].classList.toggle('enabled', value)
+
+  refresh: (event) =>
+    suppressEvent(event)
+    @ui.refresh(force: true)
+
+  toggleProtected: (event) =>
+    suppressEvent(event)
+    @ui.toggleProtected()
+
+  toggleAutoPreview: (event) =>
+    suppressEvent(event)
+    @ui.toggleAutoPreview()
 
   toggleSearchIgnoreCase: (event) =>
     suppressEvent(event)
@@ -91,12 +128,12 @@ class ProviderPanel
     @toolTipDisposables?.dispose()
     @toolTipDisposables = disposables = new CompositeDisposable
 
-    disposables.add atom.tooltips.add @wholeWordButton,
+    disposables.add atom.tooltips.add @stateElements.wholeWordButton,
       title: "wholeWord"
       keyBindingCommand: 'narrow-ui:toggle-search-whole-word'
       keyBindingTarget: @ui.editorElement
 
-    disposables.add atom.tooltips.add @ignoreCaseButton,
+    disposables.add atom.tooltips.add @stateElements.ignoreCaseButton,
       title: "ignoreCase"
       keyBindingCommand: 'narrow-ui:toggle-search-ignore-case'
       keyBindingTarget: @ui.editorElement
