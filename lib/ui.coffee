@@ -377,7 +377,12 @@ class UI
     @confirmItemForDirection('next')
 
   previousItem: ->
-    @confirmItemForDirection('previous')
+    cursorPosition = atom.workspace.getActiveTextEditor().getCursorBufferPosition()
+    item = @getSelectedItem()
+    if item? and cursorPosition.isGreaterThan(item.range?.end ? item.point)
+      @confirm(keepOpen: true)
+    else
+      @confirmItemForDirection('previous')
 
   previewItemForDirection: (direction) ->
     if not @rowMarker? and direction is 'next'

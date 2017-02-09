@@ -1,6 +1,6 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{Point, BufferedProcess} = require 'atom'
+{Point, Range, BufferedProcess} = require 'atom'
 SearchBase = require './search-base'
 
 runCommand = (options) ->
@@ -74,7 +74,7 @@ class Search extends SearchBase
     Promise.all(searchPromises).then (values) ->
       _.flatten(values).map (item) ->
         if point = item.point
-          item.range = [point, point.translate([0, searchTermLength])]
+          item.range = Range.fromPointWithDelta(point, 0, searchTermLength)
         item
 
   search: (regexp, {project, filePath}) ->
