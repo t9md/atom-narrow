@@ -33,7 +33,7 @@ class Highlighter
   # -------------------------
   clear: ->
     @markerLayerByEditor.forEach (markerLayer) ->
-      marker.destroy() for marker in markerLayer.getMarkers()
+      markerLayer.clear()
     @markerLayerByEditor.clear()
     @decorationByItem.clear()
 
