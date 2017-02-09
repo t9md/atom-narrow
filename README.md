@@ -23,7 +23,14 @@ alpha
 - `narrow-editor` or `narrow-ui`: handles user input and update narrowed item list.
 - `narrow-provider`: Provide items to narrow and action to jump to item selected.
 
+
+### overview
+
 ![overview](https://raw.githubusercontent.com/t9md/t9md/45e8b52a2fbe8a9d47a2f2d30e8f755f5d5cba25/img/atom-narrow/narrow-overview.png)
+
+### provider panel
+
+![provider-panel](https://raw.githubusercontent.com/t9md/t9md/9d2b606d56f7aa88565821b60df45adc9207b245/img/atom-narrow/provider-panel.png)
 
 # Features
 
