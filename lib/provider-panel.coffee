@@ -16,15 +16,40 @@ class ProviderPanel
     @container.className = 'narrow-provider-panel'
     @container.innerHTML = """
       <div class='base inline-block'>
-        <span class='icon icon-eye-watch'></span>
+        <a class='auto-preview'></a>
         <span class='provider-name'>#{@provider.getDashName()}</span>
         <span class='item-counter'>0</span>
+        <a class='refresh'></a>
+        <a class='protect'></a>
       </div>
       """
+
+    # NOTE: Avoid mousedown event propagated up to belonging narrow-editor's element
+    # If propagated, button clicking cause narrow-editor's cursor move etc See #123.
+    @container.addEventListener('mousedown', suppressEvent)
+
+    # autoPreview
+    # -------------------------
+    @autoPreviewElement = @container.getElementsByClassName('auto-preview')[0]
+    @autoPreviewElement.addEventListener('click', @toggleAutoPreview)
+    @updateAutoPreviewState()
+
+    @protectedElement = @container.getElementsByClassName('protect')[0]
+    @protectedElement.addEventListener('click', @toggleProtect)
+    @updateProtectedState()
 
     itemCountElement = @container.getElementsByClassName('item-counter')[0]
     @ui.onDidRefresh =>
       itemCountElement.textContent = @ui.getNormalItems().length
+
+    # loading
+    refreshElement = @container.getElementsByClassName('refresh')[0]
+    refreshElement.addEventListener('click', @refresh)
+
+    @ui.onWillRefresh ->
+      refreshElement.classList.add('running')
+    @ui.onDidRefresh ->
+      refreshElement.classList.remove('running')
 
     if @showSearchOption
       @setupSearchOption()
@@ -38,23 +63,13 @@ class ProviderPanel
         <button class='btn'>\\b</button>
       </div>
       <span class='search-term'></span>
-      <span class='loading loading-spinner-tiny inline-block'></span>
       """
     @container.appendChild(element)
-
-    # loading
-    loadingElement = element.getElementsByClassName('loading')[0]
-    @ui.onWillRefresh -> loadingElement.classList.remove('hide')
-    @ui.onDidRefresh -> loadingElement.classList.add('hide')
 
     # searchTerm
     searchTermElement = element.getElementsByClassName('search-term')[0]
     @ui.grammar.onDidChangeSearchTerm (regexp) ->
       searchTermElement.textContent = regexp?.toString() ? ''
-
-    # NOTE: Avoid mousedown event propagated up to belonging narrow-editor's element
-    # If propagated, button clicking cause narrow-editor's cursor move etc See #123.
-    @container.addEventListener('mousedown', suppressEvent)
 
     # searchOptions
     [@ignoreCaseButton, @wholeWordButton] = element.getElementsByTagName('button')
@@ -75,9 +90,27 @@ class ProviderPanel
       @updateSearchOptionState()
       @activateSearchOptionButtonToolTips()
 
+  updateProtectedState: ->
+    @protectedElement.classList.toggle('enabled', @ui.protected)
+
+  updateAutoPreviewState: ->
+    @autoPreviewElement.classList.toggle('enabled', @ui.autoPreview)
+
   updateSearchOptionState: ->
     toggleSelected(@ignoreCaseButton, @provider.searchIgnoreCase)
     toggleSelected(@wholeWordButton, @provider.searchWholeWord)
+
+  refresh: (event) =>
+    suppressEvent(event)
+    @ui.refresh(force: true)
+
+  toggleProtect: (event) =>
+    suppressEvent(event)
+    @ui.toggleProtect()
+
+  toggleAutoPreview: (event) =>
+    suppressEvent(event)
+    @ui.toggleAutoPreview()
 
   toggleSearchIgnoreCase: (event) =>
     suppressEvent(event)

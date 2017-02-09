@@ -185,6 +185,7 @@ class UI
 
   toggleProtect: ->
     @setProtected(not @protected)
+    @providerPanel.updateProtectedState()
 
   isProtected: ->
     @protected
@@ -410,6 +411,7 @@ class UI
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
     @preview() if @autoPreview
+    @providerPanel.updateAutoPreviewState()
 
   getQuery: ->
     @lastNarrowQuery = @editor.lineTextForBufferRow(0)
