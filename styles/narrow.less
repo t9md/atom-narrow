@@ -109,6 +109,9 @@ atom-text-editor.narrow-editor {
   div {
     display: inline-block;
   }
+  span {
+    display: inline-block;
+  }
   .base {
     .enabled::before {
       color: @text-color-success;
@@ -127,7 +130,7 @@ atom-text-editor.narrow-editor {
       min-width: 25px;
       color: @text-color-warning;
     }
-    .protect {
+    .protected {
       .octicon(lock, 1.0em);
     }
     .refresh {

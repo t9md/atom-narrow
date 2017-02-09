@@ -14,7 +14,7 @@ class ItemIndicator
       item: @item
 
   getClassName: ->
-    if @ui.isProtected()
+    if @ui.protected
       "narrow-ui-item-indicator-protected"
     else
       "narrow-ui-item-indicator"

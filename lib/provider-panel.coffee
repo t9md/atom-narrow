@@ -12,6 +12,7 @@ module.exports =
 class ProviderPanel
   constructor: (@ui, {@showSearchOption}={}) ->
     {@editor, @provider} = @ui
+    @stateElements = {}
     @container = document.createElement('div')
     @container.className = 'narrow-provider-panel'
     @container.innerHTML = """
@@ -20,7 +21,7 @@ class ProviderPanel
         <span class='provider-name'>#{@provider.getDashName()}</span>
         <span class='item-counter'>0</span>
         <a class='refresh'></a>
-        <a class='protect'></a>
+        <a class='protected'></a>
       </div>
       """
 
@@ -30,13 +31,10 @@ class ProviderPanel
 
     # autoPreview
     # -------------------------
-    @autoPreviewElement = @container.getElementsByClassName('auto-preview')[0]
-    @autoPreviewElement.addEventListener('click', @toggleAutoPreview)
-    @updateAutoPreviewState()
-
-    @protectedElement = @container.getElementsByClassName('protect')[0]
-    @protectedElement.addEventListener('click', @toggleProtect)
-    @updateProtectedState()
+    @stateElements.autoPreview = @container.getElementsByClassName('auto-preview')[0]
+    @stateElements.autoPreview.addEventListener('click', @toggleAutoPreview)
+    @stateElements.protected = @container.getElementsByClassName('protected')[0]
+    @stateElements.protected.addEventListener('click', @toggleProtected)
 
     itemCountElement = @container.getElementsByClassName('item-counter')[0]
     @ui.onDidRefresh =>
@@ -72,9 +70,11 @@ class ProviderPanel
       searchTermElement.textContent = regexp?.toString() ? ''
 
     # searchOptions
-    [@ignoreCaseButton, @wholeWordButton] = element.getElementsByTagName('button')
-    @ignoreCaseButton.addEventListener('click', @toggleSearchIgnoreCase)
-    @wholeWordButton.addEventListener('click', @toggleSearchWholeWord)
+    [ignoreCaseButton, wholeWordButton] = element.getElementsByTagName('button')
+    @stateElements.ignoreCaseButton = ignoreCaseButton
+    @stateElements.wholeWordButton = wholeWordButton
+    ignoreCaseButton.addEventListener('click', @toggleSearchIgnoreCase)
+    wholeWordButton.addEventListener('click', @toggleSearchWholeWord)
 
   destroy: ->
     @toolTipDisposables?.dispose()
@@ -86,27 +86,31 @@ class ProviderPanel
     @marker?.destroy()
     @marker = @editor.markBufferPosition([0, 0])
     @editor.decorateMarker(@marker, type: 'block', item: @container, position: 'before')
+
+    states = {
+      autoPreview: @ui.autoPreview
+      protected: @ui.protected
+    }
     if @showSearchOption
-      @updateSearchOptionState()
       @activateSearchOptionButtonToolTips()
+      states.ignoreCaseButton = @provider.searchIgnoreCase
+      states.wholeWordButton = @provider.searchWholeWord
+    @updateStateElements(states)
 
-  updateProtectedState: ->
-    @protectedElement.classList.toggle('enabled', @ui.protected)
-
-  updateAutoPreviewState: ->
-    @autoPreviewElement.classList.toggle('enabled', @ui.autoPreview)
-
-  updateSearchOptionState: ->
-    toggleSelected(@ignoreCaseButton, @provider.searchIgnoreCase)
-    toggleSelected(@wholeWordButton, @provider.searchWholeWord)
+  updateStateElements: (states) ->
+    for state, value of states
+      if state.endsWith('Button')
+        @stateElements[state].classList.toggle('selected', value)
+      else
+        @stateElements[state].classList.toggle('enabled', value)
 
   refresh: (event) =>
     suppressEvent(event)
     @ui.refresh(force: true)
 
-  toggleProtect: (event) =>
+  toggleProtected: (event) =>
     suppressEvent(event)
-    @ui.toggleProtect()
+    @ui.toggleProtected()
 
   toggleAutoPreview: (event) =>
     suppressEvent(event)
@@ -124,12 +128,12 @@ class ProviderPanel
     @toolTipDisposables?.dispose()
     @toolTipDisposables = disposables = new CompositeDisposable
 
-    disposables.add atom.tooltips.add @wholeWordButton,
+    disposables.add atom.tooltips.add @stateElements.wholeWordButton,
       title: "wholeWord"
       keyBindingCommand: 'narrow-ui:toggle-search-whole-word'
       keyBindingTarget: @ui.editorElement
 
-    disposables.add atom.tooltips.add @ignoreCaseButton,
+    disposables.add atom.tooltips.add @stateElements.ignoreCaseButton,
       title: "ignoreCase"
       keyBindingCommand: 'narrow-ui:toggle-search-ignore-case'
       keyBindingTarget: @ui.editorElement

@@ -32,7 +32,7 @@ module.exports =
       'narrow:lines': => @narrow('lines')
       'narrow:fold': => @narrow('fold')
       'narrow:symbols': => @narrow('symbols')
-      
+
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:git-diff-all': => @narrow('git-diff-all')
 
@@ -58,7 +58,7 @@ module.exports =
   getUi: ({skipProtected}={}) ->
     if ui = Ui.get(@lastFocusedNarrowEditor)
       if skipProtected
-        return ui unless ui.isProtected()
+        return ui unless ui.protected
       else
         return ui
 
@@ -66,7 +66,7 @@ module.exports =
     invisibleNarrowEditor = null
     narrowEditors = atom.workspace.getTextEditors().filter (editor) -> isNarrowEditor(editor)
     if skipProtected
-      narrowEditors = narrowEditors.filter (editor) -> not Ui.get(editor).isProtected()
+      narrowEditors = narrowEditors.filter (editor) -> not Ui.get(editor).protected
 
     for editor in narrowEditors
       if editor in visibleEditors
