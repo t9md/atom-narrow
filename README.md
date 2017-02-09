@@ -44,7 +44,8 @@ alpha
 - `lines`: Narrow current editors lines.
 - `scan`: Scan current editor by `TextEditor.prototype.scan`. created for better replacement of `narrow:lines`.
 - `fold`: Provide fold-starting rows as item.
-- `git-diff`: Info source is from core `git-diff` package.
+- `git-diff`: Show git-diff for current active-editor. Info source is from core `git-diff` package.
+- `git-diff-all`: Show all modified state file across project.
 - `bookmarks`: For core `bookmarks` package
 - `symbols`: Symbols are provided by core `symbols-views` package's.
 - `linter`: Use message provided by [linter](https://atom.io/packages/linter) package.
@@ -132,6 +133,7 @@ No keymaps are provided
 - `narrow:linter`
 - `narrow:bookmarks`
 - `narrow:git-diff`
+- `narrow:git-diff-all`
 
 ### narrow-editor(narrow-ui)
 
@@ -172,16 +174,16 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
       closeOnConfirm: false
     GitDiff:
       closeOnConfirm: false
+    GitDiffAll:
+      closeOnConfirm: false
     Lines:
       closeOnConfirm: false
     Linter:
       closeOnConfirm: false
-    Scan:
-      closeOnConfirm: false
+    Scan: {}
     Search:
       closeOnConfirm: false
-    Symbols:
-      closeOnConfirm: false
+    Symbols: {}
     confirmOnUpdateRealFile: false
 ```
 
@@ -196,6 +198,9 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
 
   'space l': 'narrow:scan'
   'space L': 'narrow:scan-by-current-word'
+  'cmd-l': 'narrow:scan-by-current-word'
+  'shift-cmd-g': 'narrow:search-by-current-word'
+
   # 'space l': 'narrow:lines'
   # 'space L': 'narrow:lines-by-current-word'
   'space c': 'narrow:linter'
@@ -203,7 +208,7 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
   'space S': 'narrow:search-by-current-word'
   'space a': 'narrow:atom-scan'
   'space A': 'narrow:atom-scan-by-current-word'
-  'space G': 'narrow:git-diff'
+  'space G': 'narrow:git-diff-all'
   'space B': 'narrow:bookmarks'
 
 # Only on narrow-editor
