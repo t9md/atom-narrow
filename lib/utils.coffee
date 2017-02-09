@@ -143,6 +143,14 @@ updateDecoration = (decoration, fn) ->
   klass = decoration.getProperties().class
   decoration.setProperties(type: type, class: fn(klass))
 
+itemForGitDiff = (diff, {editor, filePath}) ->
+  row = limitNumber(diff.newStart - 1, min: 0)
+  {
+    point: new Point(row, 0)
+    text: editor.lineTextForBufferRow(row)
+    filePath: filePath
+  }
+
 module.exports = {
   getAdjacentPaneForPane
   activatePaneItemInAdjacentPane
@@ -162,4 +170,5 @@ module.exports = {
   getVisibleEditors
   getFirstCharacterPositionForBufferRow
   updateDecoration
+  itemForGitDiff
 }

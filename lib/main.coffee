@@ -32,7 +32,10 @@ module.exports =
       'narrow:lines': => @narrow('lines')
       'narrow:fold': => @narrow('fold')
       'narrow:symbols': => @narrow('symbols')
+      
       'narrow:git-diff': => @narrow('git-diff')
+      'narrow:git-diff-all': => @narrow('git-diff-all')
+
       'narrow:bookmarks': => @narrow('bookmarks')
       'narrow:linter': => @narrow('linter')
 

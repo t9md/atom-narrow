@@ -106,6 +106,7 @@ module.exports = new Settings 'narrow',
   Bookmarks: newProviderConfig()
   Fold: newProviderConfig()
   GitDiff: newProviderConfig()
+  GitDiffAll: newProviderConfig()
   Lines: newProviderConfig()
   Scan: newProviderConfig(
     searchWholeWord:
