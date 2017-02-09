@@ -256,7 +256,6 @@ class UI
       @moveToPrompt()
       @refresh()
 
-
   getPane: ->
     paneForItem(@editor)
 
