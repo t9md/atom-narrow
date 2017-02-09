@@ -16,6 +16,9 @@ Highlighter = require './highlighter'
 ItemIndicator = require './item-indicator'
 ProviderPanel = require './provider-panel'
 
+# Used to return unique title for editor.getTitle()
+narrowEditorCount = 0
+
 module.exports =
 class UI
   # UI static
@@ -150,11 +153,9 @@ class UI
     # Hide line number gutter for empty indent provider
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: @provider.indentTextForLineHeader)
 
-    # FIXME
-    # Opening multiple narrow-editor for same provider get title `undefined`
-    # (e.g multiple narrow-editor for lines provider)
     providerDashName = @provider.getDashName()
-    @editor.getTitle = -> providerDashName
+    title = providerDashName + '-' + @constructor.uiByEditor.size
+    @editor.getTitle = -> title
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
