@@ -3,6 +3,10 @@
 toggleSelected = (element, bool) ->
   element.classList.toggle('selected', bool)
 
+suppressEvent: (event) ->
+  event.preventDefault()
+  event.stopPropagation()
+
 # This is NOT Panel in Atom's terminology, Just naming.
 module.exports =
 class ProviderPanel
@@ -48,6 +52,10 @@ class ProviderPanel
     @ui.grammar.onDidChangeSearchTerm (regexp) ->
       searchTermElement.textContent = regexp?.toString() ? ''
 
+    # NOTE: Avoid mousedown event propagated up to belonging narrow-editor's element
+    # If propagated, button clicking cause narrow-editor's cursor move etc See #123.
+    @container.addEventListener('mousedown', suppressEvent)
+
     # searchOptions
     [@ignoreCaseButton, @wholeWordButton] = element.getElementsByTagName('button')
     @ignoreCaseButton.addEventListener('click', @toggleSearchIgnoreCase)
@@ -71,8 +79,13 @@ class ProviderPanel
     toggleSelected(@ignoreCaseButton, @provider.searchIgnoreCase)
     toggleSelected(@wholeWordButton, @provider.searchWholeWord)
 
-  toggleSearchIgnoreCase: => @ui.toggleSearchIgnoreCase()
-  toggleSearchWholeWord: => @ui.toggleSearchWholeWord()
+  toggleSearchIgnoreCase: (event) =>
+    suppressEvent(event)
+    @ui.toggleSearchIgnoreCase()
+
+  toggleSearchWholeWord: (event) =>
+    suppressEvent(event)
+    @ui.toggleSearchWholeWord()
 
   activateSearchOptionButtonToolTips: ->
     @toolTipDisposables?.dispose()
