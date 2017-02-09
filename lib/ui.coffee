@@ -374,7 +374,12 @@ class UI
       @confirm(keepOpen: true)
 
   nextItem: ->
-    @confirmItemForDirection('next')
+    cursorPosition = atom.workspace.getActiveTextEditor().getCursorBufferPosition()
+    item = @getSelectedItem()
+    if item? and cursorPosition.isLessThan(item.range?.start ? item.point)
+      @confirm(keepOpen: true)
+    else
+      @confirmItemForDirection('next')
 
   previousItem: ->
     cursorPosition = atom.workspace.getActiveTextEditor().getCursorBufferPosition()
