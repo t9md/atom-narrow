@@ -14,32 +14,21 @@ parseLine = (line) ->
   if m?
     {
       relativePath: m[1]
-      point: new Point(parseInt(m[2]) - 1, parseInt(m[3]) - 1)
+      row: parseInt(m[2]) - 1
+      column: parseInt(m[3]) - 1
       text: m[4]
     }
   else
     null
 
 getOutputterForProject = (project, items) ->
-  projectName = path.basename(project)
-  projectHeaderAdded = false
-  currentFilePath = null
   (data) ->
-    unless projectHeaderAdded
-      header = "# #{projectName}"
-      items.push({header, projectName, projectHeader: true, skip: true})
-      projectHeaderAdded = true
-
     for line in data.split("\n") when parsed = parseLine(line)
-      {relativePath, point, text} = parsed
-      filePath = path.join(project, relativePath)
-
-      if currentFilePath isnt filePath
-        currentFilePath = filePath
-        header = "## #{relativePath}"
-        items.push({header, projectName, filePath, skip: true})
-
-      items.push({point, text, filePath, projectName})
+      items.push({
+        point: new Point(parsed.row, parsed.column)
+        filePath: path.join(project, parsed.relativePath)
+        text: parsed.text
+      })
 
 # Not used but keep it since I'm planning to introduce per file refresh on modification
 getOutputterForFile = (items) ->
@@ -71,11 +60,14 @@ class Search extends SearchBase
       searchPromises.push(@search(@regExpForSearchTerm, {project}))
 
     searchTermLength = @options.search.length
-    Promise.all(searchPromises).then (values) ->
-      _.flatten(values).map (item) ->
-        if point = item.point
-          item.range = Range.fromPointWithDelta(point, 0, searchTermLength)
-        item
+    Promise.all(searchPromises).then (values) =>
+      items = _.flatten(values)
+
+      # Inject range
+      for item in items
+        item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
+
+      @getItemsWithHeaders(items)
 
   search: (regexp, {project, filePath}) ->
     items = []
