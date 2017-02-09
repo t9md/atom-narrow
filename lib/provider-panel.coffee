@@ -3,7 +3,7 @@
 toggleSelected = (element, bool) ->
   element.classList.toggle('selected', bool)
 
-suppressEvent: (event) ->
+suppressEvent = (event) ->
   event.preventDefault()
   event.stopPropagation()
 

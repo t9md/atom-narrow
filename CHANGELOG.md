@@ -1,6 +1,9 @@
 # 0.23.0: WIP
 - New: #121, New provider `git-diff-all`.
   - Show git diff items across projects( Existing `git-diff` shows diff for current file only )
+- Fix: #123, Prevent mouse event propagation for provider-panel
+  - When search-option button on provider-panel was clicked, no longer move cursor of `narrow-editor`.
+  - `provider-panel` is embedded as narrow-editor's block-decoration, so need to explicitly suppress event propagation.
 
 # 0.22.0:
 - New: #118, Show provider specific information above prompt.
