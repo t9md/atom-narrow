@@ -1,3 +1,7 @@
+# 0.23.0: WIP
+- New: #121, New provider `git-diff-all`.
+  - Show git diff items across projects( Existing `git-diff` shows diff for current file only )
+
 # 0.22.0:
 - New: #118, Show provider specific information above prompt.
   - All provider shows item count.
