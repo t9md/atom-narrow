@@ -36,4 +36,4 @@ class GitDiffAll extends ProviderBase
       @getItemsWithHeaders(items)
 
   filterItems: (items, filterSpec) ->
-    @filterHeaderWithItems(super)
+    @getItemsWithoutNoItemHeader(super)

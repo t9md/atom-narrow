@@ -217,7 +217,7 @@ class ProviderBase
     flags += 'i' if ignoreCase
     new RegExp(source, flags)
 
-  filterHeaderWithItems: (items) ->
+  getItemsWithoutNoItemHeader: (items) ->
     normalItems = _.reject(items, (item) -> item.skip)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))
     projectNames = _.uniq(_.pluck(normalItems, "projectName"))

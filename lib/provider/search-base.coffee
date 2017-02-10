@@ -51,4 +51,4 @@ class SearchBase extends ProviderBase
     @resetRegExpForSearchTerm()
 
   filterItems: (items, filterSpec) ->
-    @filterHeaderWithItems(super)
+    @getItemsWithoutNoItemHeader(super)
