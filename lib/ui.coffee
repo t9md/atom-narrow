@@ -56,7 +56,7 @@ class UI
   destroyed: false
   items: []
   cachedItems: null # Used to cache result
-  lastNarrowQuery: ''
+  lastQuery: ''
   modifiedState: null
   readOnly: false
   protected: false
@@ -199,16 +199,15 @@ class UI
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
   observeStopChangingActivePaneItem: ->
+    needToSync = (item) =>
+      isTextEditor(item) and not isNarrowEditor(item) and paneForItem(item) isnt @getPane()
+
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
       @syncSubcriptions?.dispose()
       return if item is @editor
 
       @rowMarker?.destroy()
-      # Only sync to text-editor which meet following conditions
-      # - Not narrow-editor
-      # - Contained in different pane from narrow-editor is contained.
-      if (not isTextEditor(item)) or isNarrowEditor(item) or (paneForItem(item) is @getPane())
-        return
+      return unless needToSync(item)
 
       if @provider.boundToEditor
         if @provider.editor is item
@@ -218,9 +217,8 @@ class UI
           @refresh(force: true).then =>
             @startSyncToEditor(item)
       else
-        filePath = item.getPath()
-        if @items.some((item) -> item.filePath is filePath)
-          @startSyncToEditor(item)
+        @startSyncToEditor(item) if @hasSomeNormalItemForFilePath(item.getPath())
+
 
   start: ->
     # When initial getItems() take very long time, it means refresh get delayed.
@@ -247,7 +245,7 @@ class UI
       if @query
         @insertQuery(@query)
       else
-        @withIgnoreChange => @insertQuery('')
+        @withIgnoreChange => @insertQuery()
       @providerPanel.show()
       @moveToPrompt()
       @refresh()
@@ -257,9 +255,6 @@ class UI
 
   isActive: ->
     isActiveEditor(@editor)
-
-  isPromptRow: (row) ->
-    row is 0
 
   focus: ->
     pane = @getPane()
@@ -413,7 +408,7 @@ class UI
       @rowMarker?.destroy()
 
   getQuery: ->
-    @lastNarrowQuery = @editor.lineTextForBufferRow(0)
+    @lastQuery = @editor.lineTextForBufferRow(0)
 
   excludeFile: ->
     return if @provider.boundToEditor
@@ -441,9 +436,6 @@ class UI
         {row} = @editor.getCursorBufferPosition()
         @editor.setCursorBufferPosition([row, column])
 
-  getFilterSpec: ->
-    getFilterSpecForQuery(@getQuery())
-
   refresh: ({force}={}) ->
     @emitWillRefresh()
 
@@ -458,7 +450,7 @@ class UI
         @cachedItems = items if @provider.supportCacheItems
         items
 
-    filterSpec = @getFilterSpec()
+    filterSpec = getFilterSpecForQuery(@getQuery())
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
@@ -473,7 +465,7 @@ class UI
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
       @setModifiedState(false)
-      unless @hasItems()
+      unless @hasNormalItem()
         @selectedItem = null
         @previouslySelectedItem = null
         @rowMarker?.destroy()
@@ -554,7 +546,6 @@ class UI
 
     return {success, message}
 
-
   observeStopChanging: ->
     @editor.onDidStopChanging =>
       if @autoPreviewOnNextStopChanging
@@ -576,8 +567,7 @@ class UI
           # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
           for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
-          @withIgnoreChange =>
-            @insertQuery(@lastNarrowQuery) # Recover query
+          @withIgnoreChange => @insertQuery(@lastQuery) # Recover query
         else
           @refresh().then =>
             if @autoPreviewOnQueryChange and @isActive()
@@ -611,7 +601,7 @@ class UI
       newRow = newBufferPosition.row
       oldRow = oldBufferPosition.row
 
-      if isHeaderRow = @isHeaderRow(newRow)
+      if isHeaderRow = not @isPromptRow(newRow) and not @isNormalItemRow(newRow)
         direction = if newRow > oldRow then 'next' else 'previous'
         newRow = @findRowForNormalOrPromptItem(newRow, direction)
 
@@ -626,21 +616,21 @@ class UI
         @preview() if @autoPreview
 
   findClosestItemForEditor: (editor) ->
-    # Detect item
-    # - cursor position is equal or greather than that item.
-    cursorPosition = editor.getCursorBufferPosition()
+    # * Closest item is
+    #  - Same filePath of current active-editor
+    #  - It's point is less than or equal to active-editor's cursor position.
     if @provider.boundToEditor
-      items = _.reject(@items, (item) -> item.skip)
+      items = @getNormalItems()
     else
-      # Item must support filePath
-      filePath = editor.getPath()
-      items = @items.filter((item) -> not item.skip and (item.filePath is filePath))
+      items = @getNormalItemsForFilePath(editor.getPath())
 
-    for item in items by -1 when @isNormalItem(item)
-      # It have only point(no filePath field in each item)
-      if item.point.isLessThanOrEqual(cursorPosition)
-        break
-    return item # return items[0] as fallback
+    return null unless items.length
+
+    cursorPosition = editor.getCursorBufferPosition()
+    for item in items by -1 when item.point.isLessThanOrEqual(cursorPosition)
+      return item
+
+    return items[0]
 
   syncToEditor: (editor) ->
     return if @preventSyncToEditor
@@ -719,15 +709,15 @@ class UI
 
   findDifferentFileItem: (direction) ->
     return if @provider.boundToEditor
-    return null unless @hasNormalItem()
     return null unless selectedItem = @getSelectedItem()
 
     delta = switch direction
       when 'next' then +1
       when 'previous' then -1
 
+    nextRow = (row) => getValidIndexForList(@items, row + delta)
     startRow = row = @getRowForSelectedItem()
-    while (row = getValidIndexForList(@items, row + delta)) isnt startRow
+    while (row = nextRow(row)) isnt startRow
       if @isNormalItemRow(row) and @items[row].filePath isnt selectedItem.filePath
         return @items[row]
 
@@ -745,8 +735,8 @@ class UI
       @moveToSelectedItem(ignoreCursorMove: false)
       return
 
-    # Fallback to selected item incase there is only single filePath in all items
-    # But whant to move to that item from query-prompt.
+    # Fallback to selected item in case there is only single filePath in all items
+    # But want to move to item from query-prompt.
     if item = @findDifferentFileItem(direction) ? @getSelectedItem()
       @selectItem(item)
       @moveToSelectedItem(ignoreCursorMove: false)
@@ -759,9 +749,6 @@ class UI
       # move to current item
       @editor.setCursorBufferPosition([row, 0])
 
-  isNormalItem: (item) ->
-    item? and not item.skip
-
   getRowForSelectedItem: ->
     @getRowForItem(@getSelectedItem())
 
@@ -771,25 +758,39 @@ class UI
       @setReadOnly(false)
       @emitDidMoveToPrompt()
 
+  isPromptRow: (row) ->
+    row is 0
+
+  isNormalItem: (item) ->
+    item? and not item.skip
+
   isNormalItemRow: (row) ->
     @isNormalItem(@items[row])
-
-  isHeaderRow: (row) ->
-    not @isPromptRow(row) and not @isNormalItemRow(row)
-
-  hasNormalItem: ->
-    normalItems = @items.filter (item) => @isNormalItem(item)
-    normalItems.length > 0
 
   getRowForItem: (item) ->
     @items.indexOf(item)
 
   selectItem: (item) ->
-    if (row = @getRowForItem(item)) >= 0
-      @selectItemForRow(row)
+    @selectItemForRow(row) if (row = @getRowForItem(item)) >= 0
 
-  hasItems: ->
-    @items.length > 1 # ignore prompt placeholder item
+  hasNormalItem: ->
+    @items.some (item) -> (not item.skip)
+    #
+    # @getNormalItems().length > 0
+
+  hasSomeNormalItemForFilePath: (filePath) ->
+    @items.some (item) ->
+      (not item.skip) and (item.filePath is filePath)
+
+  getNormalItems: ->
+    @items.filter (item) -> (not item.skip)
+
+  getNormalItemsForFilePath: (filePath) ->
+    @items.filter (item) ->
+      (not item.skip) and (item.filePath is filePath)
+
+  updateProviderPanel: (states) ->
+    @providerPanel.updateStateElements(states)
 
   selectItemForRow: (row) ->
     item = @items[row]
@@ -817,25 +818,27 @@ class UI
     @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
 
   startSyncToEditor: (editor) ->
-    @syncToEditor(editor)
+    syncToEditor = @syncToEditor.bind(this, editor)
+    syncToEditor()
+
     @syncSubcriptions = new CompositeDisposable
-    @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
-      if isActiveEditor(editor) and (not event.textChanged)
-        if @provider.ignoreSideMovementOnSyncToEditor
-          return if event.oldBufferPosition.row is event.newBufferPosition.row
+    ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
-        @syncToEditor(editor)
+    @syncSubcriptions.add editor.onDidChangeCursorPosition (event) ->
+      return unless isActiveEditor(editor)
+      return if event.textChanged
+      return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
+      syncToEditor()
 
-    @syncSubcriptions.add @onDidRefresh =>
-      @syncToEditor(editor)
+    @syncSubcriptions.add @onDidRefresh(syncToEditor)
+
+    refresh = => @refresh(force: true) unless @isActive()
 
     if @provider.boundToEditor
-      @syncSubcriptions.add editor.onDidStopChanging =>
-        # Surppress refreshing while editor is active to avoid auto-refreshing while direct-edit.
-        @refresh(force: true) unless @isActive()
+      # Surppress refreshing while editor is active to avoid auto-refreshing while direct-edit.
+      @syncSubcriptions.add editor.onDidStopChanging(refresh)
     else
-      @syncSubcriptions.add editor.onDidSave =>
-        @refresh(force: true) unless @isActive()
+      @syncSubcriptions.add editor.onDidSave(refresh)
 
   # Return intems which are injected maxLineTextWidth(used to align lineHeader)
   injectLineHeader: (items) ->
@@ -849,13 +852,6 @@ class UI
       item._lineHeader = @getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
     items
 
-  getNormalItems: ->
-    @items.filter (item) -> (not item.skip)
-
-  getNormalItemsForFilePath: (filePath) ->
-    @items.filter (item) ->
-      (not item.skip) and (item.filePath is filePath)
-
   getLineHeaderForItem: (point, maxLineWidth, maxColumnWidth) ->
     lineText = String(point.row + 1)
     padding = " ".repeat(maxLineWidth - lineText.length)
@@ -865,9 +861,6 @@ class UI
       padding = " ".repeat(maxColumnWidth - columnText.length)
       lineHeader = "#{lineHeader}:#{padding}#{columnText}"
     lineHeader + ": "
-
-  updateProviderPanel: (states) ->
-    @providerPanel.updateStateElements(states)
 
   # vim-mode-plus integration
   # -------------------------
