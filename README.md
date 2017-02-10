@@ -203,8 +203,10 @@ Frequently using keymap with my keymap.
 - `enter`: start `narrow:search-by-current-word`
   - In `vim-mode-plus`'s `normal-mode`, `enter` to start `narrow:search` with cursor word.
   - Of course in `narrow-editor`, I can `enter` to open new `narrow:search-by-current-word`.
+  - This **conflict** normal-mode's `enter` to confirm current-item. but I use `;` for this purpose.
 - `backspace`, `ctrl-g`: Close `narrow-editor` from wherever.
 - `tab`, `shift-tab`: Navigate cursor to next/previous item.
+- `;`: confirm current-item without closing `narrow-editor`, I always close `narrow-editor` explicitly by `backspace` or `ctrl-g`.
 
 ```coffeescript
 # From outside of narrow-editor
@@ -257,7 +259,7 @@ Frequently using keymap with my keymap.
 # Solution comes in future by differentiating scope in prompt and item-area.
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"],
 atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
-  ';': 'core:confirm' # Confirm by `;`
+  ';': 'core:confirm-keep-open' # Confirm by `;`
   ']': 'narrow-ui:preview-next-item' # preview next while cursor is at prompt
   '[': 'narrow-ui:preview-previous-item' # preview previous while cursor is at prompt
   'backspace': 'narrow:close' # I use ctrl-h for delete. So no problem.
