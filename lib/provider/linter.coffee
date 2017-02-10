@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 
-
 module.exports =
 class Linter extends ProviderBase
   includeHeaderGrammar: true
