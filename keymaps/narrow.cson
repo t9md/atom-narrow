@@ -54,9 +54,9 @@
 
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"],
  atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
-  # 'escape': 'narrow-ui:stop-insert'
-  'tab': 'narrow-ui:preview-next-item'
-  'shift-tab': 'narrow-ui:preview-previous-item'
+    # 'escape': 'narrow-ui:stop-insert'
+    'tab': 'narrow-ui:preview-next-item'
+    'shift-tab': 'narrow-ui:preview-previous-item'
 
 # -------------------------
 # Vim-mode-plus user only

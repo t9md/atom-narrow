@@ -65,13 +65,13 @@ class ProviderBase
 
   getPane: ->
     # If editor was pending item, it will destroyed on next pending-item opened
-    if (pane = paneForItem(@editor))?.isAlive()
-      return (@lastPane = pane)
+    if pane = paneForItem(@editor) and pane?.isAlive()
+      @lastPane = pane
 
     if @lastPane?.isAlive()
-      return @lastPane
-
-    null
+      @lastPane
+    else
+      null
 
   isActive: ->
     isActiveEditor(@editor)

@@ -84,12 +84,16 @@ class ProviderPanel
     @marker = @editor.markBufferPosition([0, 0])
     @editor.decorateMarker(@marker, type: 'block', item: @container, position: 'before')
 
-    states = {
-      autoPreview: @ui.autoPreview
-      protected: @ui.protected
-    }
     if @showSearchOption
       @activateSearchOptionButtonToolTips()
+    @syncStateElements()
+
+  syncStateElements: ->
+    states =
+      autoPreview: @ui.autoPreview
+      protected: @ui.protected
+
+    if @showSearchOption
       states.ignoreCaseButton = @provider.searchIgnoreCase
       states.wholeWordButton = @provider.searchWholeWord
     @updateStateElements(states)

@@ -95,9 +95,9 @@ module.exports =
         vimState.modeManager.onDidActivateMode ({mode, submode}) ->
           switch mode
             when 'insert'
-              Ui.get(vimState.editor).setReadOnly(false)
+              Ui.get(vimState.editor)?.setReadOnly(false)
             when 'normal'
-              Ui.get(vimState.editor).setReadOnly(true)
+              Ui.get(vimState.editor)?.setReadOnly(true)
 
     confirmSearch = -> # return search text
       editor = atom.workspace.getActiveTextEditor()
