@@ -35,7 +35,8 @@ class Bookmarks extends ProviderBase
   getItems: ->
     items = []
     for {editor, markerLayer} in getBookmarks() when markerLayer.getMarkerCount() > 0
-      filePath = editor.getPath()
-      items.push(header: "# #{filePath}", filePath: filePath, skip: true)
       items.push(@getItemsForEditor(editor, markerLayer)...)
-    items
+    @getItemsWithHeaders(items)
+
+  filterItems: (items, filterSpec) ->
+    @getItemsWithoutUnusedHeader(super)
