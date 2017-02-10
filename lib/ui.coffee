@@ -143,7 +143,7 @@ class UI
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
     @highlighter = new Highlighter(this) if @provider.useHighlighter
 
-    # Special item used to translate narrow editor row to items without pain
+    # Special place holder item used to translate narrow-editor row to item row without mess.
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
@@ -163,8 +163,8 @@ class UI
 
     @itemIndicator = new ItemIndicator(this)
 
-    @disposables.add @onDidMoveToItemArea =>
-      if settings.get('autoShiftReadOnlyOnMoveToItemArea')
+    if settings.get('autoShiftReadOnlyOnMoveToItemArea')
+      @disposables.add @onDidMoveToItemArea =>
         @setReadOnly(true)
 
     @disposables.add(
@@ -175,8 +175,7 @@ class UI
       @observeStopChangingActivePaneItem()
     )
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
-    {showSearchOption} = @provider
-    @providerPanel = new ProviderPanel(this, {showSearchOption})
+    @providerPanel = new ProviderPanel(this, showSearchOption: @provider.showSearchOption)
 
     @constructor.register(this)
     @disposables.add new Disposable =>
@@ -821,8 +820,7 @@ class UI
 
   # Return range
   insertQuery: (text='') ->
-    range = @editor.bufferRangeForBufferRow(0, includeNewline: true)
-    @editor.setTextInBufferRange(range, text + "\n")
+    @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
 
   startSyncToEditor: (editor) ->
     @syncToEditor(editor)
