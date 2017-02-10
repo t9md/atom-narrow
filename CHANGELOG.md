@@ -1,6 +1,18 @@
-# 0.23.0: WIP
+# 0.23.0:
+- Fix: #123, Prevent mouse event propagation for provider-panel
+  - When search-option button on provider-panel was clicked, no longer move cursor of `narrow-editor`.
+  - `provider-panel` is embedded as narrow-editor's block-decoration, so need to explicitly suppress event propagation.
+- Fix: Set unique title for each `narrow-editor`. So tab title no longer become `undefined`( title must not conflict within pane ).
 - New: #121, New provider `git-diff-all`.
   - Show git diff items across projects( Existing `git-diff` shows diff for current file only )
+- Improve: #119, #124 Usability/usefulness improve for `next-item` and `previous-item`.
+  - These command is to move cursor to next/previous item without focusing `narrow-editor`
+  - Mapped to `tab`, `shift-tab` for `vim-mode-plus` user, `ctrl-cmd-n`, `ctrl-cmd-p` for normal user.
+  - What was changed?:
+    - Land to `current-item` when `next-item` and `narrow-editor`'s current-item is forwarding to active-editor's cursor.
+    - Land to `current-item` When `previous-item` and `narrow-editor`'s current-item is backwarding to active-editor's cursor.
+    - In previous version, simply landed chose next/previous item's position regardless of active-editor's position.
+    - So sometimes, user need `tab`, `shift-tab` to go/back to adjust exceeded movement.
 - New: #128 Relaxed whole-word search.
   - What's benefit?: Now can search `@editor\b` by search `@editor` with `whole-word` enabled.
   - In previous release, when `whole-word` was enabled, search simply `\beditor\b`( `editor` is searching word here).
@@ -11,9 +23,13 @@
     - `@editor`, -> `@editor\b` ( relaxed start boundary ).
     - `editor!`, -> `\beditor!` ( relaxed end boundary ).
     - `@editor!`, -> `\b@editor!\b` ( No relax, relaxing both boundary means no-whole-word, contradict to user's intention ).
-- Fix: #123, Prevent mouse event propagation for provider-panel
-  - When search-option button on provider-panel was clicked, no longer move cursor of `narrow-editor`.
-  - `provider-panel` is embedded as narrow-editor's block-decoration, so need to explicitly suppress event propagation.
+- New: Command `symbols-by-current-word`, since it sometime useful to quickly preview function definition under cursor.
+- New: #126 New button in provider-panel( see README GIF to quick overview ).
+  - Auto preview: click eye icon to toggle-auto-preview.
+  - Protect: click lock icon to toggle protect narrow-editor( protected narrow-editor is no longer closedb by `ctrl-g` or confirm by `enter` ).
+  - Refresh: clicking it manually refresh item. Also when search options was changed, it indicate search is running by changing icon to `X` icon.
+- Internal, Performance: Use faster `DisplayMarkerLayer.clear()`
+- Internal: #122 Consolidate file/project header injection/filter-out logic( was done in per provider, but now done by base-provider).
 
 # 0.22.0:
 - New: #118, Show provider specific information above prompt.
