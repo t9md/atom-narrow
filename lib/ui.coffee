@@ -62,17 +62,6 @@ class UI
   protected: false
   excludedFiles: null
 
-  isModified: ->
-    @modifiedState
-
-  setModifiedState: (state) ->
-    if state isnt @modifiedState
-      # HACK: overwrite TextBuffer:isModified to return static state.
-      # This state is used for tabs package to show modified icon on tab.
-      @modifiedState = state
-      @editor.buffer.isModified = -> state
-      @editor.buffer.emitModifiedStatusChanged(state)
-
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
 
@@ -124,6 +113,27 @@ class UI
       'narrow-ui:toggle-search-whole-word': => @toggleSearchWholeWord()
       'narrow-ui:toggle-search-ignore-case': => @toggleSearchIgnoreCase()
 
+  withIgnoreCursorMove: (fn) ->
+    @ignoreCursorMove = true
+    fn()
+    @ignoreCursorMove = false
+
+  withIgnoreChange: (fn) ->
+    @ignoreChange = true
+    fn()
+    @ignoreChange = false
+
+  isModified: ->
+    @modifiedState
+
+  setModifiedState: (state) ->
+    if state isnt @modifiedState
+      # HACK: overwrite TextBuffer:isModified to return static state.
+      # This state is used for tabs package to show modified icon on tab.
+      @modifiedState = state
+      @editor.buffer.isModified = -> state
+      @editor.buffer.emitModifiedStatusChanged(state)
+
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
     @refresh(force: true)
@@ -133,6 +143,30 @@ class UI
     @provider.toggleSearchIgnoreCase()
     @refresh(force: true)
     @updateProviderPanel(ignoreCaseButton: @provider.searchIgnoreCase)
+
+  toggleProtected: ->
+    @protected = not @protected
+    @itemIndicator.redraw()
+    @updateProviderPanel({@protected})
+
+  toggleAutoPreview: ->
+    @autoPreview = not @autoPreview
+    @updateProviderPanel({@autoPreview})
+    if @autoPreview
+      @preview()
+    else
+      @rowMarker?.destroy()
+
+  setReadOnly: (readOnly) ->
+    @readOnly = readOnly
+    if @readOnly
+      @editorElement.component?.setInputEnabled(false)
+      @editorElement.classList.add('read-only')
+      @vmpActivateNormalMode() if @vmpIsInsertMode()
+    else
+      @editorElement.component.setInputEnabled(true)
+      @editorElement.classList.remove('read-only')
+      @vmpActivateInsertMode() if @vmpIsNormalMode()
 
   constructor: (@provider, {@query}={}) ->
     @disposables = new CompositeDisposable
@@ -180,46 +214,6 @@ class UI
     @disposables.add new Disposable =>
       @constructor.unregister(this)
 
-  toggleProtected: ->
-    @setProtected(not @protected)
-
-  setProtected: (@protected) ->
-    @itemIndicator.redraw()
-    @updateProviderPanel({@protected})
-
-  setReadOnly: (readOnly) ->
-    @readOnly = readOnly
-    if @readOnly
-      @editorElement.component?.setInputEnabled(false)
-      @editorElement.classList.add('read-only')
-      @vmpActivateNormalMode() if @vmpIsInsertMode()
-    else
-      @editorElement.component.setInputEnabled(true)
-      @editorElement.classList.remove('read-only')
-      @vmpActivateInsertMode() if @vmpIsNormalMode()
-
-  observeStopChangingActivePaneItem: ->
-    needToSync = (item) =>
-      isTextEditor(item) and not isNarrowEditor(item) and paneForItem(item) isnt @getPane()
-
-    atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @syncSubcriptions?.dispose()
-      return if item is @editor
-
-      @provider.needRestoreEditorState = false
-      @rowMarker?.destroy()
-      return unless needToSync(item)
-
-      if @provider.boundToEditor
-        if @provider.editor is item
-          @startSyncToEditor(item)
-        else
-          @provider.bindEditor(item)
-          @refresh(force: true).then =>
-            @startSyncToEditor(item)
-      else
-        @startSyncToEditor(item) if @hasSomeNormalItemForFilePath(item.getPath())
-
   start: ->
     # When initial getItems() take very long time, it means refresh get delayed.
     # In this case, user see modified icon(mark) on tab.
@@ -249,6 +243,28 @@ class UI
       @providerPanel.show()
       @moveToPrompt()
       @refresh()
+
+  observeStopChangingActivePaneItem: ->
+    needToSync = (item) =>
+      isTextEditor(item) and not isNarrowEditor(item) and paneForItem(item) isnt @getPane()
+
+    atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      @syncSubcriptions?.dispose()
+      return if item is @editor
+
+      @provider.needRestoreEditorState = false
+      @rowMarker?.destroy()
+      return unless needToSync(item)
+
+      if @provider.boundToEditor
+        if @provider.editor is item
+          @startSyncToEditor(item)
+        else
+          @provider.bindEditor(item)
+          @refresh(force: true).then =>
+            @startSyncToEditor(item)
+      else
+        @startSyncToEditor(item) if @hasSomeNormalItemForFilePath(item.getPath())
 
   getPane: ->
     paneForItem(@editor)
@@ -294,40 +310,6 @@ class UI
     @provider?.destroy?()
     @itemIndicator?.destroy()
     @rowMarker?.destroy()
-
-  updateRealFile: ->
-    return unless @provider.supportDirectEdit
-    return unless @isModified()
-
-    if settings.get('confirmOnUpdateRealFile')
-      unless atom.confirm(message: 'Update real file?', buttons: ['Update', 'Cancel']) is 0
-        return
-
-    return unless @ensureNarrowEditorIsValidState()
-
-    changes = []
-    lines = @editor.buffer.getLines()
-    for line, row in lines when @isNormalItem(item = @items[row])
-      if item._lineHeader?
-        line = line[item._lineHeader.length...] # Strip lineHeader
-      if line isnt item.text
-        changes.push({newText: line, item})
-
-    return unless changes.length
-
-    unless @provider.boundToEditor
-      {success, message} = @ensureNoModifiedFileForChanges(changes)
-      unless success
-        atom.notifications.addWarning(message, dismissable: true)
-        return
-
-    {success, message} = @ensureNoConflictForChanges(changes)
-    unless success
-      atom.notifications.addWarning(message, dismissable: true)
-      return
-
-    @provider.updateRealFile(changes)
-    @setModifiedState(false)
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
@@ -397,16 +379,6 @@ class UI
 
   previewPreviousItem: ->
     @previewItemForDirection('previous')
-
-  toggleAutoPreview: ->
-    @setAutoPreview(not @autoPreview)
-
-  setAutoPreview: (@autoPreview) ->
-    @updateProviderPanel({@autoPreview})
-    if @autoPreview
-      @preview()
-    else
-      @rowMarker?.destroy()
 
   getQuery: ->
     @lastQuery = @editor.lineTextForBufferRow(0)
@@ -487,66 +459,6 @@ class UI
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @editorLastRow = range.end.row
 
-  ensureNarrowEditorIsValidState: ->
-    unless @editorLastRow is @editor.getLastBufferRow()
-      return false
-
-    # Ensure all item have valid line header
-    if @provider.showLineHeader
-      for line, row in @editor.buffer.getLines() when @isNormalItem(item = @items[row])
-        return false unless line.startsWith(item._lineHeader)
-
-    true
-
-  detectConflictForChanges: (changes) ->
-    conflictChanges = {}
-    changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
-    for filePath, changesInFile of changesByFilePath
-      changesByRow = _.groupBy(changesInFile, ({item}) -> item.point.row)
-      for row, changesInRow of changesByRow
-        newTexts = _.pluck(changesInRow, 'newText')
-        if _.uniq(newTexts).length > 1
-          conflictChanges[filePath] ?= []
-          conflictChanges[filePath].push(changesInRow...)
-    conflictChanges
-
-  ensureNoConflictForChanges: (changes) ->
-    message = []
-    conflictChanges = @detectConflictForChanges(changes)
-    success = _.isEmpty(conflictChanges)
-    unless success
-      message.push """
-        Cancelled `update-real-file`.
-        Detected **conflicting change to same line**.
-        """
-      for filePath, changesInFile of conflictChanges
-        message.push("- #{filePath}")
-        for {newText, item} in changesInFile
-          message.push("  - #{item.point.translate([1, 1]).toString()}, #{newText}")
-
-    return {success, message: message.join("\n")}
-
-  getModifiedFilePathsInChanges: (changes) ->
-    _.uniq(changes.map ({item}) -> item.filePath).filter (filePath) ->
-      atom.project.isPathModified(filePath)
-
-  ensureNoModifiedFileForChanges: (changes) ->
-    message = ''
-    modifiedFilePaths = @getModifiedFilePathsInChanges(changes)
-    success = modifiedFilePaths.length is 0
-    unless success
-      modifiedFilePathsAsString = modifiedFilePaths.map((filePath) -> " - `#{filePath}`").join("\n")
-      message = """
-        Cancelled `update-real-file`.
-        You are trying to update file which have **unsaved modification**.
-        But `narrow:#{@provider.getDashName()}` can not detect unsaved change.
-        To use `update-real-file`, you need to save these files.
-
-        #{modifiedFilePathsAsString}
-        """
-
-    return {success, message}
-
   observeStopChanging: ->
     @editor.onDidStopChanging =>
       if @autoPreviewOnNextStopChanging
@@ -579,16 +491,6 @@ class UI
                 @autoPreviewOnNextStopChanging = true
       else
         @setModifiedState(true)
-
-  withIgnoreCursorMove: (fn) ->
-    @ignoreCursorMove = true
-    fn()
-    @ignoreCursorMove = false
-
-  withIgnoreChange: (fn) ->
-    @ignoreChange = true
-    fn()
-    @ignoreChange = false
 
   observeCursorMove: ->
     @editor.onDidChangeCursorPosition (event) =>
@@ -776,8 +678,6 @@ class UI
 
   hasNormalItem: ->
     @items.some (item) -> (not item.skip)
-    #
-    # @getNormalItems().length > 0
 
   hasSomeNormalItemForFilePath: (filePath) ->
     @items.some (item) ->
@@ -879,3 +779,101 @@ class UI
 
   vmpIsEnabled: ->
     @editorElement.classList.contains('vim-mode-plus')
+
+  # Direct-edit related
+  # -------------------------
+  updateRealFile: ->
+    # action = require './ui-action/update-real-file'
+    # new action(this).run()
+    return unless @provider.supportDirectEdit
+    return unless @isModified()
+
+    if settings.get('confirmOnUpdateRealFile')
+      unless atom.confirm(message: 'Update real file?', buttons: ['Update', 'Cancel']) is 0
+        return
+
+    return unless @ensureNarrowEditorIsValidState()
+
+    changes = []
+    lines = @editor.buffer.getLines()
+    for line, row in lines when @isNormalItem(item = @items[row])
+      if item._lineHeader?
+        line = line[item._lineHeader.length...] # Strip lineHeader
+      if line isnt item.text
+        changes.push({newText: line, item})
+
+    return unless changes.length
+
+    unless @provider.boundToEditor
+      {success, message} = @ensureNoModifiedFileForChanges(changes)
+      unless success
+        atom.notifications.addWarning(message, dismissable: true)
+        return
+
+    {success, message} = @ensureNoConflictForChanges(changes)
+    unless success
+      atom.notifications.addWarning(message, dismissable: true)
+      return
+
+    @provider.updateRealFile(changes)
+    @setModifiedState(false)
+
+  ensureNarrowEditorIsValidState: ->
+    unless @editorLastRow is @editor.getLastBufferRow()
+      return false
+
+    # Ensure all item have valid line header
+    if @provider.showLineHeader
+      for line, row in @editor.buffer.getLines() when @isNormalItem(item = @items[row])
+        return false unless line.startsWith(item._lineHeader)
+
+    true
+
+  getModifiedFilePathsInChanges: (changes) ->
+    _.uniq(changes.map ({item}) -> item.filePath).filter (filePath) ->
+      atom.project.isPathModified(filePath)
+
+  ensureNoModifiedFileForChanges: (changes) ->
+    message = ''
+    modifiedFilePaths = @getModifiedFilePathsInChanges(changes)
+    success = modifiedFilePaths.length is 0
+    unless success
+      modifiedFilePathsAsString = modifiedFilePaths.map((filePath) -> " - `#{filePath}`").join("\n")
+      message = """
+        Cancelled `update-real-file`.
+        You are trying to update file which have **unsaved modification**.
+        But `narrow:#{@provider.getDashName()}` can not detect unsaved change.
+        To use `update-real-file`, you need to save these files.
+
+        #{modifiedFilePathsAsString}
+        """
+
+    return {success, message}
+
+  ensureNoConflictForChanges: (changes) ->
+    message = []
+    conflictChanges = @detectConflictForChanges(changes)
+    success = _.isEmpty(conflictChanges)
+    unless success
+      message.push """
+        Cancelled `update-real-file`.
+        Detected **conflicting change to same line**.
+        """
+      for filePath, changesInFile of conflictChanges
+        message.push("- #{filePath}")
+        for {newText, item} in changesInFile
+          message.push("  - #{item.point.translate([1, 1]).toString()}, #{newText}")
+
+    return {success, message: message.join("\n")}
+
+  detectConflictForChanges: (changes) ->
+    conflictChanges = {}
+    changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
+    for filePath, changesInFile of changesByFilePath
+      changesByRow = _.groupBy(changesInFile, ({item}) -> item.point.row)
+      for row, changesInRow of changesByRow
+        newTexts = _.pluck(changesInRow, 'newText')
+        if _.uniq(newTexts).length > 1
+          conflictChanges[filePath] ?= []
+          conflictChanges[filePath].push(changesInRow...)
+    conflictChanges
