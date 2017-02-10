@@ -1,6 +1,16 @@
 # 0.23.0: WIP
 - New: #121, New provider `git-diff-all`.
   - Show git diff items across projects( Existing `git-diff` shows diff for current file only )
+- New: #128 Relaxed whole-word search.
+  - What's benefit?: Now can search `@editor\b` by search `@editor` with `whole-word` enabled.
+  - In previous release, when `whole-word` was enabled, search simply `\beditor\b`( `editor` is searching word here).
+  - So when user search `@editor`, searched wth pattern `\b@editor\b`( never match ).
+  - From this release, `word-boundary`(`b`) is **automatically relaxed as long as start or end can match with boundary**
+  - Example
+    - `editor`, -> `\beditor\b` ( start and end is word-char).
+    - `@editor`, -> `@editor\b` ( relaxed start boundary ).
+    - `editor!`, -> `\beditor!` ( relaxed end boundary ).
+    - `@editor!`, -> `\b@editor!\b` ( No relax, relaxing both boundary means no-whole-word, contradict to user's intention ).
 - Fix: #123, Prevent mouse event propagation for provider-panel
   - When search-option button on provider-panel was clicked, no longer move cursor of `narrow-editor`.
   - `provider-panel` is embedded as narrow-editor's block-decoration, so need to explicitly suppress event propagation.
