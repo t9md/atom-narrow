@@ -1,8 +1,5 @@
 {CompositeDisposable} = require 'atom'
 
-toggleSelected = (element, bool) ->
-  element.classList.toggle('selected', bool)
-
 suppressEvent = (event) ->
   event.preventDefault()
   event.stopPropagation()
@@ -32,8 +29,8 @@ class ProviderPanel
     # autoPreview
     # -------------------------
     @stateElements.autoPreview = @container.getElementsByClassName('auto-preview')[0]
-    @stateElements.autoPreview.addEventListener('click', @toggleAutoPreview)
     @stateElements.protected = @container.getElementsByClassName('protected')[0]
+    @stateElements.autoPreview.addEventListener('click', @toggleAutoPreview)
     @stateElements.protected.addEventListener('click', @toggleProtected)
 
     itemCountElement = @container.getElementsByClassName('item-counter')[0]
@@ -99,10 +96,7 @@ class ProviderPanel
 
   updateStateElements: (states) ->
     for state, value of states
-      if state.endsWith('Button')
-        @stateElements[state].classList.toggle('selected', value)
-      else
-        @stateElements[state].classList.toggle('enabled', value)
+      @stateElements[state].classList.toggle('selected', value)
 
   refresh: (event) =>
     suppressEvent(event)

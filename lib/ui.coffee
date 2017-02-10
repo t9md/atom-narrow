@@ -49,7 +49,6 @@ class UI
   autoPreview: null
   autoPreviewOnQueryChange: null
   autoPreviewOnNextStopChanging: false
-  syncingEditor: null
 
   preventAutoPreview: false
   preventSyncToEditor: false
@@ -129,12 +128,12 @@ class UI
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
     @refresh(force: true)
-    @providerPanel.updateStateElements(wholeWordButton: @provider.searchWholeWord)
+    @updateProviderPanel(wholeWordButton: @provider.searchWholeWord)
 
   toggleSearchIgnoreCase: ->
     @provider.toggleSearchIgnoreCase()
     @refresh(force: true)
-    @providerPanel.updateStateElements(ignoreCaseButton: @provider.searchIgnoreCase)
+    @updateProviderPanel(ignoreCaseButton: @provider.searchIgnoreCase)
 
   constructor: (@provider, {@input}={}) ->
     @disposables = new CompositeDisposable
@@ -188,7 +187,7 @@ class UI
 
   setProtected: (@protected) ->
     @itemIndicator.redraw()
-    @providerPanel.updateStateElements({@protected})
+    @updateProviderPanel({@protected})
 
   setReadOnly: (readOnly) ->
     @readOnly = readOnly
@@ -248,9 +247,9 @@ class UI
     attachedPromise.then =>
       @grammar.activate()
       if @input
-        @setPrompt(@input)
+        @insertQuery(@input)
       else
-        @withIgnoreChange => @setPrompt(@input)
+        @withIgnoreChange => @insertQuery('')
       @providerPanel.show()
       @moveToPrompt()
       @refresh()
@@ -345,7 +344,7 @@ class UI
   narrowClose: (event) ->
     if @protected
       event.stopImmediatePropagation()
-      @setPrompt('') # clear query
+      @insertQuery() # clear query
       @activateProviderPane()
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
@@ -409,7 +408,7 @@ class UI
     @setAutoPreview(not @autoPreview)
 
   setAutoPreview: (@autoPreview) ->
-    @providerPanel.updateStateElements({@autoPreview})
+    @updateProviderPanel({@autoPreview})
     if @autoPreview
       @preview()
     else
@@ -457,16 +456,13 @@ class UI
       promiseForItems = Promise.resolve(@cachedItems)
     else
       promiseForItems = Promise.resolve(@provider.getItems()).then (items) =>
-        if @provider.showLineHeader
-          @injectLineHeader(items)
-        if @provider.supportCacheItems
-          @cachedItems = items
+        @injectLineHeader(items) if @provider.showLineHeader
+        @cachedItems = items if @provider.supportCacheItems
         items
 
     filterSpec = @getFilterSpec()
     if @provider.updateGrammarOnQueryChange
-      # No need to highlight excluded items
-      @grammar.update(filterSpec.include)
+      @grammar.update(filterSpec.include) # No need to highlight excluded items
 
     promiseForItems.then (items) =>
       items = @provider.filterItems(items, filterSpec)
@@ -493,7 +489,7 @@ class UI
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         # Need to recover query prompt
-        @setPrompt()
+        @insertQuery()
         @moveToPrompt()
         @providerPanel.show() # redraw providerPanel block decoration.
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
@@ -583,7 +579,7 @@ class UI
           for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
           @withIgnoreChange =>
-            @setPrompt(@lastNarrowQuery) # Recover query
+            @insertQuery(@lastNarrowQuery) # Recover query
         else
           @refresh().then =>
             if @autoPreviewOnQueryChange and @isActive()
@@ -824,17 +820,11 @@ class UI
     @editor.bufferRangeForBufferRow(0)
 
   # Return range
-  setPrompt: (text='') ->
-    if @editor.getLastBufferRow() is 0
-      text += "\n"
-    range = @editor.setTextInBufferRange(@getPromptRange(0), text)
-    range
-
-  isSyncingEditor: (editor) ->
-    @syncingEditor? and @syncingEditor is editor
+  insertQuery: (text='') ->
+    range = @editor.bufferRangeForBufferRow(0, includeNewline: true)
+    @editor.setTextInBufferRange(range, text + "\n")
 
   startSyncToEditor: (editor) ->
-    @syncingEditor = editor
     @syncToEditor(editor)
     @syncSubcriptions = new CompositeDisposable
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
@@ -883,6 +873,9 @@ class UI
       padding = " ".repeat(maxColumnWidth - columnText.length)
       lineHeader = "#{lineHeader}:#{padding}#{columnText}"
     lineHeader + ": "
+
+  updateProviderPanel: (states) ->
+    @providerPanel.updateStateElements(states)
 
   # vim-mode-plus integration
   # -------------------------
