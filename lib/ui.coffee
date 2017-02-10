@@ -16,9 +16,6 @@ Highlighter = require './highlighter'
 ItemIndicator = require './item-indicator'
 ProviderPanel = require './provider-panel'
 
-# Used to return unique title for editor.getTitle()
-narrowEditorCount = 0
-
 module.exports =
 class UI
   # UI static
