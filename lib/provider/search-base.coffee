@@ -12,7 +12,7 @@ class SearchBase extends ProviderBase
   supportDirectEdit: true
   showLineHeader: true
   showColumnOnLineHeader: true
-  regExpForSearchTerm: null
+  searchRegExp: null
   useHighlighter: true
   showSearchOption: true
 
@@ -42,10 +42,10 @@ class SearchBase extends ProviderBase
 
   resetRegExpForSearchTerm: ->
     source = _.escapeRegExp(@options.search)
-    @regExpForSearchTerm = @getRegExpForSearchSource(source, @searchIgnoreCase)
-    @searchIgnoreCase ?= @regExpForSearchTerm.ignoreCase
-    @ui.highlighter.setRegExp(@regExpForSearchTerm)
-    @ui.grammar.setSearchTerm(@regExpForSearchTerm)
+    @searchRegExp = @getRegExpForSearchSource(source, {@searchWholeWord, @searchIgnoreCase})
+    @searchIgnoreCase ?= @searchRegExp.ignoreCase
+    @ui.highlighter.setRegExp(@searchRegExp)
+    @ui.grammar.setSearchTerm(@searchRegExp)
 
   initialize: ->
     @resetRegExpForSearchTerm()

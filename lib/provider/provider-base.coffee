@@ -157,7 +157,7 @@ class ProviderBase
     if item.header?
       item.header
     else
-      if @showLineHeader
+      if item._lineHeader?
         item._lineHeader + item.text
       else
         item.text
@@ -203,18 +203,18 @@ class ProviderBase
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
 
-  getRegExpForSearchSource: (source, ignoreCase) ->
-    if @searchWholeWord
+  getRegExpForSearchSource: (source, {searchWholeWord, searchIgnoreCase}) ->
+    if searchWholeWord
       source = "\\b#{source}\\b"
 
-    ignoreCase ?= do =>
+    searchIgnoreCase ?= do =>
       # only when explict ignoreCase value are NOT provided.
       # determine it from config and search term
       sensitivity = @getConfig('caseSensitivityForSearchTerm')
       (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(source))
 
     flags = 'g'
-    flags += 'i' if ignoreCase
+    flags += 'i' if searchIgnoreCase
     new RegExp(source, flags)
 
   getItemsWithoutNoItemHeader: (items) ->

@@ -42,4 +42,4 @@ class AtomScan extends SearchBase
       @getItemsWithHeaders(items)
 
   getItems: ->
-    @scanWorkspace(@regExpForSearchTerm)
+    @scanWorkspace(@searchRegExp)

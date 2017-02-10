@@ -57,7 +57,7 @@ class Search extends SearchBase
   getItems: ->
     searchPromises = []
     for project in @options.projects ? atom.project.getPaths()
-      searchPromises.push(@search(@regExpForSearchTerm, {project}))
+      searchPromises.push(@search(@searchRegExp, {project}))
 
     searchTermLength = @options.search.length
     Promise.all(searchPromises).then (values) =>

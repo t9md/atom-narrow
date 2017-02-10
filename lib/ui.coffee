@@ -50,7 +50,6 @@ class UI
   autoPreviewOnQueryChange: null
   autoPreviewOnNextStopChanging: false
 
-  preventAutoPreview: false
   preventSyncToEditor: false
   ignoreChange: false
   ignoreCursorMove: false
@@ -600,11 +599,6 @@ class UI
     fn()
     @ignoreChange = false
 
-  withPreventAutoPreview: (fn) ->
-    @preventAutoPreview = true
-    fn()
-    @preventAutoPreview = false
-
   observeCursorMove: ->
     @editor.onDidChangeCursorPosition (event) =>
       return if @ignoreCursorMove
@@ -629,7 +623,7 @@ class UI
         @selectItemForRow(newRow)
         @moveToSelectedItem() if isHeaderRow
         @emitDidMoveToItemArea() if @isPromptRow(oldRow)
-        @preview() if @autoPreview and not @preventAutoPreview
+        @preview() if @autoPreview
 
   findClosestItemForEditor: (editor) ->
     # Detect item
