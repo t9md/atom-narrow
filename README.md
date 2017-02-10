@@ -202,6 +202,7 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
 'atom-text-editor.vim-mode-plus.normal-mode':
   'space f': 'narrow:fold'
   'space o': 'narrow:symbols'
+  'cmd-o': 'narrow:symbols-by-current-word' # quick preview function
 
   'space l': 'narrow:scan'
   'space L': 'narrow:scan-by-current-word'

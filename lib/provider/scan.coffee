@@ -17,7 +17,7 @@ class Scan extends ProviderBase
   searchIgnoreCaseChangedManually: false
 
   initialize: ->
-    if not @options.fromVmp and @options.uiInput? and @editor.getSelectedBufferRange().isEmpty()
+    if not @options.fromVmp and @options.query? and @editor.getSelectedBufferRange().isEmpty()
       # scan by word-boundry if scan-by-current-word is invoked with empty selection.
       @searchWholeWord = true
     else

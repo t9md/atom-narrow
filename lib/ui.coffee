@@ -135,7 +135,7 @@ class UI
     @refresh(force: true)
     @updateProviderPanel(ignoreCaseButton: @provider.searchIgnoreCase)
 
-  constructor: (@provider, {@input}={}) ->
+  constructor: (@provider, {@query}={}) ->
     @disposables = new CompositeDisposable
     @emitter = new Emitter
     @excludedFiles = []
@@ -203,8 +203,8 @@ class UI
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
       @syncSubcriptions?.dispose()
       return if item is @editor
-      @rowMarker?.destroy()
 
+      @rowMarker?.destroy()
       # Only sync to text-editor which meet following conditions
       # - Not narrow-editor
       # - Contained in different pane from narrow-editor is contained.
@@ -245,8 +245,8 @@ class UI
 
     attachedPromise.then =>
       @grammar.activate()
-      if @input
-        @insertQuery(@input)
+      if @query
+        @insertQuery(@query)
       else
         @withIgnoreChange => @insertQuery('')
       @providerPanel.show()

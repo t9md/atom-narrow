@@ -32,6 +32,7 @@ module.exports =
       'narrow:lines': => @narrow('lines')
       'narrow:fold': => @narrow('fold')
       'narrow:symbols': => @narrow('symbols')
+      'narrow:symbols-by-current-word': => @narrow('symbols', query: @getCurrentWord())
 
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:git-diff-all': => @narrow('git-diff-all')
@@ -39,11 +40,11 @@ module.exports =
       'narrow:bookmarks': => @narrow('bookmarks')
       'narrow:linter': => @narrow('linter')
 
-      'narrow:lines-by-current-word': => @narrow('lines', uiInput: @getCurrentWord())
-      'narrow:fold-by-current-word': => @narrow('fold', uiInput: @getCurrentWord())
+      'narrow:lines-by-current-word': => @narrow('lines', query: @getCurrentWord())
+      'narrow:fold-by-current-word': => @narrow('fold', query: @getCurrentWord())
 
       'narrow:scan': => @narrow('scan')
-      'narrow:scan-by-current-word': => @narrow('scan', uiInput: @getCurrentWord())
+      'narrow:scan-by-current-word': => @narrow('scan', query: @getCurrentWord())
 
       # search family
       'narrow:search': => @narrow('search')
@@ -107,8 +108,8 @@ module.exports =
       return text
 
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
-      'vim-mode-plus-user:narrow:lines': => @narrow('lines', uiInput: confirmSearch(), fromVmp: true)
-      'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', uiInput: confirmSearch(), fromVmp: true)
+      'vim-mode-plus-user:narrow:lines': => @narrow('lines', query: confirmSearch(), fromVmp: true)
+      'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', query: confirmSearch(), fromVmp: true)
       'vim-mode-plus-user:narrow:search': => @narrow('search', search: confirmSearch(), fromVmp: true)
       'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', search: confirmSearch(), fromVmp: true)
       'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', search: confirmSearch(), currentProject: true, fromVmp: true)

@@ -56,20 +56,23 @@ class ProviderBase
   bindEditor: (editor) ->
     @editorSubscriptions?.dispose()
     @editorSubscriptions = new CompositeDisposable
-    oldEditor = @editor
-    @editor = newEditor = editor
+    event = {
+      newEditor: editor
+      oldEditor: @editor
+    }
+    @editor = editor
     @restoreEditorState = saveEditorState(@editor)
-    @onBindEditor({oldEditor, newEditor})
+    @onBindEditor(event)
 
   getPane: ->
-    # If editor was pending item, it will destroyed on next pending open
-    pane = paneForItem(@editor)
-    if pane?.isAlive()
-      @lastPane = pane
-    else if @lastPane?.isAlive()
-      @lastPane
-    else
-      null
+    # If editor was pending item, it will destroyed on next pending-item opened
+    if (pane = paneForItem(@editor))?.isAlive()
+      return (@lastPane = pane)
+
+    if @lastPane?.isAlive()
+      return @lastPane
+
+    null
 
   isActive: ->
     isActiveEditor(@editor)
@@ -77,7 +80,7 @@ class ProviderBase
   constructor: (editor, @options={}) ->
     @subscriptions = new CompositeDisposable
     @bindEditor(editor)
-    @ui = new UI(this, {input: @options.uiInput})
+    @ui = new UI(this, query: @options.query)
 
     @checkReady().then (ready) =>
       if ready
