@@ -219,7 +219,6 @@ class UI
       else
         @startSyncToEditor(item) if @hasSomeNormalItemForFilePath(item.getPath())
 
-
   start: ->
     # When initial getItems() take very long time, it means refresh get delayed.
     # In this case, user see modified icon(mark) on tab.
