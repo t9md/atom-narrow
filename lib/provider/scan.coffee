@@ -38,12 +38,15 @@ class Scan extends ProviderBase
     super
 
   getItems: ->
-    source = @ui.getFilterSpec().include.shift()?.source
-    if source?
-      regexp = @getRegExpForSearchSource(source, {@searchIgnoreCase, @searchWholeWord})
-      if not @searchIgnoreCaseChangedManually and regexp.ignoreCase isnt @searchIgnoreCase
-        @searchIgnoreCase = regexp.ignoreCase
-        @ui.updateProviderPanel(ignoreCaseButton: @searchIgnoreCase)
+    firstQuery = @ui.getQuery().split(/\s+/)[0]
+    if firstQuery
+      if @searchIgnoreCaseChangedManually
+        regexp = @getRegExpForSearchTerm(firstQuery, {@searchWholeWord, @searchIgnoreCase})
+      else
+        regexp = @getRegExpForSearchTerm(firstQuery, {@searchWholeWord})
+        if regexp.ignoreCase isnt @searchIgnoreCase
+          @searchIgnoreCase = regexp.ignoreCase
+          @ui.updateProviderPanel(ignoreCaseButton: @searchIgnoreCase)
 
       @ui.highlighter.setRegExp(regexp)
       @ui.grammar.setSearchTerm(regexp)
