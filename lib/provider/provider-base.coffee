@@ -203,15 +203,23 @@ class ProviderBase
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
 
-  getRegExpForSearchSource: (source, {searchWholeWord, searchIgnoreCase}) ->
+  getRegExpForSearchTerm: (term, {searchWholeWord, searchIgnoreCase}) ->
+    source = _.escapeRegExp(term)
     if searchWholeWord
-      source = "\\b#{source}\\b"
+      startBoundary = /^\w/.test(term)
+      endBoundary = /\w$/.test(term)
+      if not startBoundary and not endBoundary
+        # Go strict
+        source = "\\b" + source + "\\b"
+      else
+        # Relaxed if I can set end or start boundary
+        startBoundaryString = if startBoundary then "\\b" else ''
+        endBoundaryString = if endBoundary then "\\b" else ''
+        source = startBoundaryString + source + endBoundaryString
 
-    searchIgnoreCase ?= do =>
-      # only when explict ignoreCase value are NOT provided.
-      # determine it from config and search term
+    unless searchIgnoreCase?
       sensitivity = @getConfig('caseSensitivityForSearchTerm')
-      (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(source))
+      searchIgnoreCase = (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(term))
 
     flags = 'g'
     flags += 'i' if searchIgnoreCase
