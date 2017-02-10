@@ -105,6 +105,7 @@ class ProviderBase
     pane = paneForItem(@editor)
     if @editor.isAlive() and pane.isAlive() and @needRestoreEditorState
       @restoreEditorState()
+      pane.activate()
       pane.activateItem(@editor)
 
     {@editor, @editorSubscriptions} = {}
