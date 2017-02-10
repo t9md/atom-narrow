@@ -196,6 +196,16 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
 
 ###### `keymap.cson`
 
+Frequently using keymap with my keymap.
+
+- `cmd-f`: To focus to narrow-editor AND focus-back to original-editor
+- `cmd-i`: To focus to narrow-editor's prompt AND focus-back to original-editor
+- `enter`: start `narrow:search-by-current-word`
+  - In `vim-mode-plus`'s `normal-mode`, `enter` to start `narrow:search` with cursor word.
+  - Of course in `narrow-editor`, I can `enter` to open new `narrow:search-by-current-word`.
+- `backspace`, `ctrl-g`: Close `narrow-editor` from wherever.
+- `tab`, `shift-tab`: Navigate cursor to next/previous item.
+
 ```coffeescript
 # From outside of narrow-editor
 # -------------------------
@@ -220,12 +230,6 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
   'space A': 'narrow:atom-scan-by-current-word'
   'space G': 'narrow:git-diff-all'
   'space B': 'narrow:bookmarks'
-
-# Only on narrow-editor
-# -------------------------
-# - Use these TWO key very frequently
-#   - cmd-f: To focus to narrow-editor AND focus-back to original-editor
-#   - cmd-i: To focus to narrow-editor's prompt AND focus-back to original-editor
 
 # When workspace has narrow-editor
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode':
