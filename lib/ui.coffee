@@ -296,12 +296,13 @@ class UI
     @rowMarker?.destroy()
 
   updateRealFile: ->
+    return unless @provider.supportDirectEdit
     return unless @isModified()
+
     if settings.get('confirmOnUpdateRealFile')
       unless atom.confirm(message: 'Update real file?', buttons: ['Update', 'Cancel']) is 0
         return
 
-    return unless @provider.supportDirectEdit
     return unless @ensureNarrowEditorIsValidState()
 
     changes = []
