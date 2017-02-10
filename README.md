@@ -200,15 +200,17 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
 # From outside of narrow-editor
 # -------------------------
 'atom-text-editor.vim-mode-plus.normal-mode':
-  'space f': 'narrow:fold'
-  'space o': 'narrow:symbols'
+  # For frequent uses, assign shorter keymap(non-2-step keymap).
   'cmd-o': 'narrow:symbols-by-current-word' # quick preview function
-
-  'space l': 'narrow:scan'
-  'space L': 'narrow:scan-by-current-word'
   'cmd-l': 'narrow:scan-by-current-word'
+  'enter': 'narrow:search-by-current-word'
   'shift-cmd-g': 'narrow:search-by-current-word'
 
+  # assign consistently
+  'space f': 'narrow:fold'
+  'space o': 'narrow:symbols'
+  'space l': 'narrow:scan'
+  'space L': 'narrow:scan-by-current-word'
   # 'space l': 'narrow:lines'
   # 'space L': 'narrow:lines-by-current-word'
   'space c': 'narrow:linter'
@@ -239,6 +241,7 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
   'cmd-i': 'narrow:focus-prompt' # cmd-i to return to calling editor.
   # Danger: apply change on narrow-editor to real file by `cmd-s`.
   'cmd-s': 'narrow-ui:update-real-file'
+  'backspace': 'narrow:close'
 
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   # Danger: I use direct-edit very frequently, so intentionally recover `i` of vim-mode-plus.
@@ -253,6 +256,7 @@ atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="so
   ';': 'core:confirm' # Confirm by `;`
   ']': 'narrow-ui:preview-next-item' # preview next while cursor is at prompt
   '[': 'narrow-ui:preview-previous-item' # preview previous while cursor is at prompt
+  'backspace': 'narrow:close' # I use ctrl-h for delete. So no problem.
 ```
 
 # Recommended configuration for other packages.
