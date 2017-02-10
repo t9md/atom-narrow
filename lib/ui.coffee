@@ -206,6 +206,7 @@ class UI
       @syncSubcriptions?.dispose()
       return if item is @editor
 
+      @provider.needRestoreEditorState = false
       @rowMarker?.destroy()
       return unless needToSync(item)
 

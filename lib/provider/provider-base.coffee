@@ -14,7 +14,7 @@ Input = null
 
 module.exports =
 class ProviderBase
-  wasConfirmed: false
+  needRestoreEditorState: true
   boundToEditor: false
   includeHeaderGrammar: false
 
@@ -61,7 +61,6 @@ class ProviderBase
       oldEditor: @editor
     }
     @editor = editor
-    @restoreEditorState = saveEditorState(@editor)
     @onBindEditor(event)
 
   getPane: ->
@@ -79,6 +78,7 @@ class ProviderBase
 
   constructor: (editor, @options={}) ->
     @subscriptions = new CompositeDisposable
+    @restoreEditorState = saveEditorState(editor)
     @bindEditor(editor)
     @ui = new UI(this, query: @options.query)
 
@@ -103,7 +103,7 @@ class ProviderBase
     @subscriptions.dispose()
     @editorSubscriptions.dispose()
     pane = paneForItem(@editor)
-    if @editor.isAlive() and pane.isAlive() and not @wasConfirmed
+    if @editor.isAlive() and pane.isAlive() and @needRestoreEditorState
       @restoreEditorState()
       pane.activateItem(@editor)
 
@@ -143,7 +143,7 @@ class ProviderBase
       editor
 
   confirmed: (item) ->
-    @wasConfirmed = true
+    @needRestoreEditorState = false
     {point} = item
     @openFileForItem(item, activatePane: true).then (editor) ->
       newPoint = @adjustPoint?(point)
