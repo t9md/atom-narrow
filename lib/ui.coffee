@@ -571,7 +571,6 @@ class UI
     @clearCurrentMarkers()
     @rowMarker = editor.markBufferRange([point, point])
     editor.decorateMarker(@rowMarker, type: 'line', class: 'narrow-result')
-    # @flashCurrentItem(editor, item)
 
   flashCurrentItem: (editor, item) ->
     @currentMatchMarker?.destroy()
