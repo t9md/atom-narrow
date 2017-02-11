@@ -286,19 +286,18 @@ atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="so
 
 # Notes for vim-mode-plus user
 
-Learn [keymap](https://github.com/t9md/atom-narrow/blob/make-it-stable/keymaps/narrow.cson) available as default.  
+Learn [keymap](https://github.com/t9md/atom-narrow/blob/master/keymaps/narrow.cson) available as default.  
 e.g. You can move to next or previous item by `tab`, `shift-tab`(for this to work, you need vim-mode-plus v0.81.0 or later).  
 
 ## Start narrow from vim-mode-plus's search-input-form
 
 If you are [vim-mode-plus](https://atom.io/packages/vim-mode-plus) user.
 Following command are available from vim-mode-plus's search(`/` or `?`) mini-editor.
-See [keymap definition](https://github.com/t9md/atom-narrow/blob/make-it-stable/keymaps/narrow.cson)
 
-- `vim-mode-plus-user:narrow:lines`
+- `vim-mode-plus-user:narrow:scan`
 - `vim-mode-plus-user:narrow:search`
-- `vim-mode-plus-user:narrow:atom-scan`
 - `vim-mode-plus-user:narrow:search-current-project`
+- `vim-mode-plus-user:narrow:atom-scan`
 
 ## How to edit item-area for direct-edit.
 
