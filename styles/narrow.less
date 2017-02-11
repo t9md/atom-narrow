@@ -70,22 +70,53 @@ atom-text-editor {
   }
 }
 
+div.narrow-section {
+  color: lighten(@text-color-success, 5%);
+}
+
+// atom-text-editor .gutter .line-numbers {
+//   min-width: 4em;
+// }
+
+atom-text-editor .gutter .narrow-item-line-header {
+  // display: inline-block;
+  min-width: 4em;
+  // text-align: right;
+  color: lighten(@text-color-warning, 5%);
+  position: relative;
+  white-space: nowrap;
+  opacity: 1;
+  &.cursor-line {
+    opacity: 1;
+  }
+}
+
+
 atom-text-editor.narrow-editor {
+  // .gutter {
+  // .narrow-item-line-header {
+  //   // min-width: 10px;
+  //   min-width: 4.5ch
+  //   color: red;
+  //   // width: 5em;
+  // }
+    // }
+  // }
   // Hide linumber gutter but still shows icon to fold/un-fold.
   // https://discuss.atom.io/t/use-the-gutter-without-enabling-linenumbers/2461/16
-  .gutter {
-    .line-numbers {
-      text-indent: 999em;
-      width: 23px;
-      overflow: hidden;
-      position: relative;
-      .icon-right {
-        position: absolute;
-        left: 0;
-        text-indent: 0;
-      }
-    }
-  }
+  // .gutter {
+    // .line-numbers {
+    //   text-indent: 999em;
+    //   width: 23px;
+    //   overflow: hidden;
+    //   position: relative;
+    //   .icon-right {
+    //     position: absolute;
+    //     left: 0;
+    //     text-indent: 0;
+    //   }
+    // }
+  // }
   // block-cursor on read-only mode
   &.read-only {
     &.is-focused {
