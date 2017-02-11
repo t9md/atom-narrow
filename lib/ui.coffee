@@ -180,7 +180,8 @@ class UI
     # Setup narrow-editor
     # -------------------------
     # Hide line number gutter for empty indent provider
-    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: @provider.indentTextForLineHeader)
+    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
+    # @provider.indentTextForLineHeader)
 
     providerDashName = @provider.getDashName()
     title = providerDashName + '-' + @constructor.uiByEditor.size
@@ -296,6 +297,7 @@ class UI
 
   destroy: ->
     return if @destroyed
+    @markersForHeaderDecoration = []
     @destroyed = true
     @highlighter?.destroy()
     @syncSubcriptions?.dispose()
@@ -416,7 +418,7 @@ class UI
       promiseForItems = Promise.resolve(@cachedItems)
     else
       promiseForItems = Promise.resolve(@provider.getItems()).then (items) =>
-        @injectLineHeader(items) if @provider.showLineHeader
+        # @injectLineHeader(items) if @provider.showLineHeader
         @cachedItems = items if @provider.supportCacheItems
         items
 
@@ -429,8 +431,10 @@ class UI
       if not @provider.boundToEditor and @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
 
-      @items = [@promptItem, items...]
       @renderItems(items)
+      normalItems = items.filter (item) -> not item.header
+      @items = [@promptItem, normalItems...]
+      # @renderItems(items)
 
       if @isActive()
         @selectItemForRow(@findRowForNormalItem(0, 'next'))
@@ -444,8 +448,50 @@ class UI
       @emitDidRefresh()
       @emitDidStopRefreshing()
 
+  addBlockDecorationForBufferRow: (row, item) ->
+    element = @itemForBlockDecoration(item.header)
+    marker = @editor.markBufferPosition([row, 0])
+    @markersForHeaderDecoration.push(marker)
+    @editor.decorateMarker(marker, type: 'block', item: element, position: 'before')
+
+  itemForBlockDecoration: (text) ->
+    element = document.createElement("div")
+    element.className = 'narrow-section'
+    element.textContent = text
+    element
+
+  renderLineHeaderOnGutter: (row, text) ->
+    container = document.createElement('div')
+    element = document.createElement('span')
+    element.classList.add('narrow-item-line-header')
+    element.textContent = text
+    container.appendChild(element)
+    marker = @editor.markBufferPosition([row, 0])
+    @gutter.decorateMarker(marker, item: container, type: 'gutter')
+    marker
+
+  addSpacer: (width) ->
+    # console.log 'called!'
+    gutterElement = atom.views.getView(@gutter)
+    container = document.createElement("div")
+    span = document.createElement("span")
+    span.textContent = "_".repeat(width)
+    container.appendChild(span)
+    gutterElement.appendChild(container)
+    span
+
   renderItems: (items) ->
-    texts = items.map (item) => @provider.viewForItem(item)
+    @gutter ?= @editor.addGutter(name: 'narrow-item-line-header', priority: 101)
+
+    marker.destroy() for marker in @markersForHeaderDecoration ? []
+    @markersForHeaderDecoration = []
+
+    marker.destroy() for marker in @gutterMarkers ? []
+    @gutterMarkers = []
+
+    headerItemAndRow = ([i, item] for item, i in items when item.header)
+    normalItems = items.filter (item) -> not item.header?
+    texts = normalItems.map (item) => @provider.viewForItem(item)
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         # Need to recover query prompt
@@ -455,6 +501,43 @@ class UI
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @editorLastRow = range.end.row
+
+    {maxLineWidth, maxColumnWidth} = @getInfoForLineHeader(items)
+
+    if @provider.showLineHeader
+      for item, i in normalItems
+        lineHeaderText = @_getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
+        @gutterMarkers.push @renderLineHeaderOnGutter(i + 1, lineHeaderText)
+      if normalItems.length
+        @spacerElement ?= @addSpacer(maxLineWidth + maxColumnWidth + 2)
+        # @spacerElement.textContent =
+      # else
+      #   @spacerElement.textContent = "_".repeat(maxLineWidth + maxColumnWidth)
+
+    for [row, item], i in headerItemAndRow
+      @addBlockDecorationForBufferRow(row + 1 - i, item)
+
+  _getLineHeaderForItem: (point, maxLineWidth, maxColumnWidth) ->
+    lineText = String(point.row + 1)
+    pad = "\u00a0"
+    padding = pad.repeat(maxLineWidth - lineText.length)
+    # padding = "\u00a0".repeat(maxLineNumberWidth - relativeRow.length)
+
+    lineHeader = "#{@provider.indentTextForLineHeader}#{padding}#{lineText}"
+    if @provider.showColumnOnLineHeader
+      columnText = String(point.column + 1)
+      padding = pad.repeat(maxColumnWidth - columnText.length)
+      lineHeader = "#{lineHeader}:#{padding}#{columnText}"
+    lineHeader
+
+  getInfoForLineHeader: (items) ->
+    normalItems = _.reject(items, (item) -> item.skip)
+    points = _.pluck(normalItems, 'point')
+    maxLine = Math.max(_.pluck(points, 'row')...) + 1
+    maxColumn = Math.max(_.pluck(points, 'column')...) + 1
+    maxLineWidth = String(maxLine).length
+    maxColumnWidth = Math.max(String(maxColumn).length, 2)
+    {maxLineWidth, maxColumnWidth}
 
   observeStopChanging: ->
     @editor.onDidStopChanging =>
@@ -501,17 +584,12 @@ class UI
       newRow = newBufferPosition.row
       oldRow = oldBufferPosition.row
 
-      if isHeaderRow = not @isPromptRow(newRow) and not @isNormalItemRow(newRow)
-        direction = if newRow > oldRow then 'next' else 'previous'
-        newRow = @findRowForNormalOrPromptItem(newRow, direction)
-
       if @isPromptRow(newRow)
         @withIgnoreCursorMove =>
           @editor.setCursorBufferPosition([newRow, newBufferPosition.column])
           @emitDidMoveToPrompt()
       else
         @selectItemForRow(newRow)
-        @moveToSelectedItem() if isHeaderRow
         @emitDidMoveToItemArea() if @isPromptRow(oldRow)
         @preview() if @autoPreview
 
