@@ -5,12 +5,6 @@
 // item-indicator
 // =========================
 .narrow-ui-item-indicator-base () {
-  // .octicon(arrow-right, 1em);
-  // .octicon(playback-play, 1em);
-  // .octicon(playback-fast-forward, 1em);
-  // .octicon(mirror-private);
-  // .octicon(check, 1em);
-  // .octicon(dash, 1em);
   .octicon(chevron-right, 1em);
   padding: 0 .4em;
   left: 0;
@@ -40,8 +34,23 @@ atom-text-editor {
   }
 }
 
-// row-marker
+// match highlight
 // =========================
+.flash-animation (@name, @color) {
+  @keyframes @name {
+    from { background-color: @color; }
+    to { background-color: transparent; }
+  }
+}
+.flash (@name; @duration) {
+  animation-name: @name;
+  animation-duration: @duration;
+  animation-iteration-count: 1;
+}
+
+@flash-color: fadeout(darken(@syntax-selection-flash-color, 10%), 20%);
+.flash-animation(narrow-match-flash, @flash-color);
+
 atom-text-editor {
   .narrow-match {
     .region {
@@ -56,8 +65,12 @@ atom-text-editor {
       border-color: @syntax-result-marker-color-selected;
       transition-duration: .1s;
     }
+    &.flash .region {
+      .flash(narrow-match-flash, .5s);
+    }
   }
 }
+
 
 // search min editor
 // =========================

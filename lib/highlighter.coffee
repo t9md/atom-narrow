@@ -58,8 +58,9 @@ class Highlighter
     if decoration = @decorationByItem.get(@ui.getPreviouslySelectedItem())
       updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
 
-    if decoration = @decorationByItem.get(@ui.getSelectedItem())
-      updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', '') + ' current')
+    if @ui.isActive()
+      if decoration = @decorationByItem.get(@ui.getSelectedItem())
+        updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', '') + ' current')
 
   observeUiStopRefreshing: ->
     @ui.onDidStopRefreshing =>

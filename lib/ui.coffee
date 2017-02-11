@@ -152,7 +152,7 @@ class UI
     if @autoPreview
       @preview()
     else
-      @rowMarker?.destroy()
+      @clearCurrentMarkers()
 
   setReadOnly: (readOnly) ->
     @readOnly = readOnly
@@ -250,7 +250,7 @@ class UI
       return if item is @editor
 
       @provider.needRestoreEditorState = false
-      @rowMarker?.destroy()
+      @clearCurrentMarkers()
       return unless needToSync(item)
 
       if @provider.boundToEditor
@@ -306,7 +306,7 @@ class UI
     @providerPanel.destroy()
     @provider?.destroy?()
     @itemIndicator?.destroy()
-    @rowMarker?.destroy()
+    @clearCurrentMarkers()
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
@@ -341,13 +341,13 @@ class UI
     row = @findRowForNormalItem(@getRowForSelectedItem(), direction)
     if row?
       @selectItemForRow(row)
-      @confirm(keepOpen: true)
+      @confirm(keepOpen: true, flash: true)
 
   nextItem: ->
     cursorPosition = atom.workspace.getActiveTextEditor().getCursorBufferPosition()
     item = @getSelectedItem()
     if item? and cursorPosition.isLessThan(item.range?.start ? item.point)
-      @confirm(keepOpen: true)
+      @confirm(keepOpen: true, flash: true)
     else
       @confirmItemForDirection('next')
 
@@ -355,12 +355,12 @@ class UI
     cursorPosition = atom.workspace.getActiveTextEditor().getCursorBufferPosition()
     item = @getSelectedItem()
     if item? and cursorPosition.isGreaterThan(item.range?.end ? item.point)
-      @confirm(keepOpen: true)
+      @confirm(keepOpen: true, flash: true)
     else
       @confirmItemForDirection('previous')
 
   previewItemForDirection: (direction) ->
-    if not @rowMarker? and direction is 'next'
+    if not @hasCurrentMarker() and direction is 'next'
       # When initial invocation not cause preview(since initial query input was empty).
       # Don't want `tab` skip first seleted item.
       row = @getRowForSelectedItem()
@@ -438,8 +438,7 @@ class UI
       unless @hasNormalItem()
         @selectedItem = null
         @previouslySelectedItem = null
-        @rowMarker?.destroy()
-        @rowMarker = null
+        @clearCurrentMarkers()
 
       @emitDidRefresh()
       @emitDidStopRefreshing()
@@ -558,31 +557,56 @@ class UI
       else
         moveAndScroll()
 
-  setRowMarker: (editor, point) ->
+  clearCurrentMarkers: ->
     @rowMarker?.destroy()
+    @currentMatchMarker?.destroy()
+    @rowMarker = null
+    @currentMatchMarker = null
+
+  hasCurrentMarker: ->
+    @rowMarker? or @currentMatchMarker?
+
+  setRowMarker: (editor, item) ->
+    point = item.point
+    @clearCurrentMarkers()
     @rowMarker = editor.markBufferRange([point, point])
     editor.decorateMarker(@rowMarker, type: 'line', class: 'narrow-result')
+    # @flashCurrentItem(editor, item)
+
+  flashCurrentItem: (editor, item) ->
+    @currentMatchMarker?.destroy()
+
+    if item.range?
+      @currentMatchMarker = marker = editor.markBufferRange(item.range)
+      editor.decorateMarker(marker, type: 'highlight', class: 'narrow-match flash')
+      setTimeout ->
+        marker.destroy()
+      , 500
 
   preview: ->
     @preventSyncToEditor = true
     item = @getSelectedItem()
     unless item
       @preventSyncToEditor = false
-      @rowMarker?.destroy()
+      @clearCurrentMarkers()
       return
 
     @provider.openFileForItem(item).then (editor) =>
       editor.scrollToBufferPosition(item.point, center: true)
-      @setRowMarker(editor, item.point)
+      @setRowMarker(editor, item)
       @preventSyncToEditor = false
       @emitDidPreview({editor, item})
 
-  confirm: ({keepOpen}={}) ->
+  confirm: ({keepOpen, flash}={}) ->
     return unless @hasNormalItem()
     item = @getSelectedItem()
-    @provider.confirmed(item).then =>
-      if not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
+    needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
+
+    @provider.confirmed(item).then (editor) =>
+      if needDestroy
         @editor.destroy()
+      else
+        @flashCurrentItem(editor, item) if flash
 
   # Return row
   # Never fail since prompt is row 0 and always exists
@@ -780,8 +804,6 @@ class UI
   # Direct-edit related
   # -------------------------
   updateRealFile: ->
-    # action = require './ui-action/update-real-file'
-    # new action(this).run()
     return unless @provider.supportDirectEdit
     return unless @isModified()
 
