@@ -51,7 +51,7 @@ class ProviderBase
     # to override
 
   checkReady: ->
-    Promise.resolve(true)
+    Promise.resolve()
 
   bindEditor: (editor) ->
     @editorSubscriptions?.dispose()
@@ -80,13 +80,11 @@ class ProviderBase
     @subscriptions = new CompositeDisposable
     @restoreEditorState = saveEditorState(editor)
     @bindEditor(editor)
-    {query, activate, pending} = @options
-    @ui = new UI(this, {query, activate, pending})
-
-    @checkReady().then (ready) =>
-      if ready
-        @initialize()
-        @ui.start()
+    @checkReady().then =>
+      {query, activate, pending} = @options
+      @ui = new UI(this, {query, activate, pending})
+      @initialize()
+      @ui.start()
 
   subscribeEditor: (args...) ->
     @editorSubscriptions.add(args...)
