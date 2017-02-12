@@ -12,7 +12,7 @@ class Scan extends ProviderBase
   showColumnOnLineHeader: true
   ignoreSideMovementOnSyncToEditor: false
   updateGrammarOnQueryChange: false # for manual update
-  useHighlighter: true
+  supportRangeHighlight: true
   showSearchOption: true
   searchIgnoreCaseChangedManually: false
 

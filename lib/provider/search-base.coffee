@@ -13,7 +13,7 @@ class SearchBase extends ProviderBase
   showLineHeader: true
   showColumnOnLineHeader: true
   searchRegExp: null
-  useHighlighter: true
+  supportRangeHighlight: true
   showSearchOption: true
 
   checkReady: ->

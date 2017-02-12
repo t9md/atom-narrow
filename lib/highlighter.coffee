@@ -10,16 +10,21 @@ _ = require 'underscore-plus'
 module.exports =
 class Highlighter
   regexp: null
+  lineMarker: null
 
   constructor: (@ui) ->
     @provider = @ui.provider
+    @needHighlight = @provider.supportRangeHighlight
     @markerLayerByEditor = new Map()
     @decorationByItem = new Map()
     @subscriptions = new CompositeDisposable
+
+    if @needHighlight
+      @subscriptions.add @observeUiStopRefreshing()
+
     @subscriptions.add(
-      @observeUiStopRefreshing()
-      @observeUiChangeSelectedItem()
       @observeUiPreview()
+      @observeUiConfirm()
       @observeStopChangingActivePaneItem()
     )
 
@@ -27,6 +32,7 @@ class Highlighter
 
   destroy: ->
     @clear()
+    @clearLineMarker()
     @subscriptions.dispose()
 
   # Highlight items
@@ -40,7 +46,11 @@ class Highlighter
   decorationOptions = {type: 'highlight', class: 'narrow-match'}
   highlight: (editor) ->
     return unless @regexp
+    return unless @needHighlight
+    return if isNarrowEditor(editor)
     return if @provider.boundToEditor and editor isnt @provider.editor
+    return if @markerLayerByEditor.has(editor)
+
     # Get items shown on narrow-editor and also matching editor's filePath
     if @provider.boundToEditor
       items = @ui.getNormalItems()
@@ -54,33 +64,77 @@ class Highlighter
       # FIXME: BUG decorationByItem should managed by per editor.
       @decorationByItem.set(item, editor.decorateMarker(marker, decorationOptions))
 
-  updateCurrent: ->
-    if decoration = @decorationByItem.get(@ui.getPreviouslySelectedItem())
-      updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
+  # modify current item decoration
+  # -------------------------
+  resetCurrent: ->
+    return unless @needHighlight
+    @clearCurrent()
 
     if decoration = @decorationByItem.get(@ui.getSelectedItem())
-      updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', '') + ' current')
+      updateDecoration(decoration, (cssClass) -> cssClass + ' current')
 
+  clearCurrent: ->
+    return unless @needHighlight
+    items = [@ui.getPreviouslySelectedItem(), @ui.getSelectedItem()]
+    for item in items when item?
+      if decoration = @decorationByItem.get(item)
+        updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
+
+  # lineMarker
+  # -------------------------
+  hasLineMarker: ->
+    @lineMarker?
+
+  drawLineMarker: (editor, item) ->
+    @clearLineMarker()
+    @lineMarker = editor.markBufferPosition(item.point)
+    editor.decorateMarker(@lineMarker, type: 'line', class: 'narrow-line-marker')
+
+  clearLineMarker: ->
+    @lineMarker?.destroy()
+    @lineMarker = null
+
+  # flash
+  # -------------------------
+  flashItem: (editor, item) ->
+    return unless @needHighlight
+
+    @flashMarker?.destroy()
+    clearTimeout(@clearFlashTimeout) if @clearFlashTimeout?
+
+    clearFlashMarker = =>
+      @clearFlashTimeout = null
+      @flashMarker?.destroy()
+      @flashMarker = null
+
+    @flashMarker = editor.markBufferRange(item.range)
+    editor.decorateMarker(@flashMarker, type: 'highlight', class: 'narrow-match flash')
+    @clearFlashTimeout = setTimeout(clearFlashMarker, 1000)
+
+  # Event observation
+  # -------------------------
   observeUiStopRefreshing: ->
     @ui.onDidStopRefreshing =>
       @clear()
-      for editor in getVisibleEditors() when not isNarrowEditor(editor)
-        @highlight(editor)
-      @updateCurrent()
+      @highlight(editor) for editor in getVisibleEditors()
+      @resetCurrent()
 
   observeUiPreview: ->
-    @ui.onDidPreview ({editor}) =>
-      unless @markerLayerByEditor.has(editor)
-        @highlight(editor)
-        @updateCurrent()
+    @ui.onDidPreview ({editor, item}) =>
+      @drawLineMarker(editor, item)
+      @highlight(editor)
+      @resetCurrent()
+
+  observeUiConfirm: ->
+    @ui.onDidConfirm ({editor, item}) =>
+      @clearLineMarker()
+      @clearCurrent()
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      if isTextEditor(item) and not isNarrowEditor(item)
-        unless @markerLayerByEditor.has(item)
-          @highlight(item)
-          @updateCurrent()
+      return unless isTextEditor(item)
+      if item isnt @ui.editor
+        @clearLineMarker()
+        @clearCurrent()
 
-  observeUiChangeSelectedItem: ->
-    @ui.onDidChangeSelectedItem =>
-      @updateCurrent()
+      @highlight(item)

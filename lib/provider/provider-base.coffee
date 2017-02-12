@@ -23,7 +23,7 @@ class ProviderBase
   showLineHeader: false
   showColumnOnLineHeader: false
   updateGrammarOnQueryChange: true
-  useHighlighter: false
+  supportRangeHighlight: false
 
   supportDirectEdit: false
   supportCacheItems: false
@@ -151,6 +151,7 @@ class ProviderBase
       point = newPoint if newPoint?
       editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
+      return editor
 
   # View
   # -------------------------
