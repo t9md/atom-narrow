@@ -1,3 +1,18 @@
+# 0.25.0:
+- New: [Experimental] #136, #135 double click start `narrow:search`
+  - When new `Search.startByDoubleClick` config set to `true`( default `false` )
+  - Mouse double click start `narrow:search-by-current-word`.
+  - `narrow-editor` for `search` is opened with pending state.
+  - You can continue click and search without messing lots of `narrow-editor`.
+  - command `narrow:toggle-search-start-by-double-click` toggle `Search.startByDoubleClick` value
+- Fix, Critical: #137 When mini-editor for `search` `atom-scan` closed by canceled, `workspace.has-narrow` scope (css class) remain unnecessary.
+  - Because UI instance was registered BEFORE reading input from mini-editor.
+  - From this version UI instantiation is delayed until it really get prepared.
+- Improve: `search`, `atom-scan` now can detect new match at `onDidSave` for every editor.
+  - In previous release, the save event on editor which have no item was just ignored.
+- Improve: keep originally selectedItem on manual refresh.
+- Internal: Allow `narrow-editor` open in pending state, activate providerPane if activate set false( default = true )
+
 # 0.24.0:
 - Doc: Update keymap example in README
 - Doc: #132 Fix link for `keymap.cson` pointed to stale branch.

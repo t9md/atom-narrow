@@ -105,6 +105,12 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 7. DONE, changes you made on narrow-editor items are applied to real-file(and saved).
 8. You can undo changes by re-edit items on narrow-editor and reapply changes by `Narrow Ui: Update Real File`.
 
+### Step4. [Experimental] search keyword by mouse
+
+1. Set `Search.startByDoubleClick` to `true` from settings-view.
+2. Double click keyword in editor.
+3. Each time you duble click keyword, new `narrow-editor` open and old one is replaced.
+4. You can continue double click which ever `narrow-editor` or normal-editor.
 
 # Commands
 
@@ -190,7 +196,9 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
     Scan: {}
     Search:
       closeOnConfirm: false
+      startByDoubleClick: true
     Symbols: {}
+    caseSensitivityForNarrowQuery: "sensitive"
     confirmOnUpdateRealFile: false
 ```
 
