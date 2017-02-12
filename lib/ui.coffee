@@ -234,8 +234,10 @@ class UI
       pane = providerPane
     else
       pane = getAdjacentPaneOrSplit(providerPane, split: settings.get('directionToOpen'))
+
     pane.activate() unless pane.isActive()
     pane.activateItem(@editor, {@pending})
+
     @grammar.activate()
     if @query
       @insertQuery(@query)
@@ -247,25 +249,11 @@ class UI
       @activateProviderPane() unless @activate
 
   observeStopChangingActivePaneItem: ->
-    needToSync = (item) =>
-      isTextEditor(item) and not isNarrowEditor(item) and paneForItem(item) isnt @getPane()
-
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @syncSubcriptions?.dispose()
-      return if item is @editor
-
       @provider.needRestoreEditorState = false
-      return unless needToSync(item)
-
-      if @provider.boundToEditor
-        if @provider.editor is item
-          @startSyncToEditor(item)
-        else
-          @provider.bindEditor(item)
-          @refresh(force: true).then =>
-            @startSyncToEditor(item)
-      else
-        @startSyncToEditor(item) if @hasSomeNormalItemForFilePath(item.getPath())
+      return if not isTextEditor(item) or isNarrowEditor(item)
+      return if paneForItem(item) is @getPane()
+      @startSyncToEditor(item)
 
   getPane: ->
     paneForItem(@editor)
@@ -436,8 +424,8 @@ class UI
       @items = [@promptItem, items...]
       @renderItems(items)
 
-      if @isActive()
-        @selectItemForRow(@findRowForNormalItem(0, 'next'))
+      @selectItemForRow(@findRowForNormalItem(0, 'next'))
+
       @setModifiedState(false)
       unless @hasNormalItem()
         @selectedItem = null
@@ -718,10 +706,18 @@ class UI
     @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
 
   startSyncToEditor: (editor) ->
+    if @provider.boundToEditor and @provider.editor isnt editor
+      @provider.bindEditor(editor)
+      @refresh(force: true).then =>
+        @startSyncToEditor(editor)
+      return
+
+    @syncSubcriptions?.dispose()
+    @syncSubcriptions = new CompositeDisposable
+
     syncToEditor = @syncToEditor.bind(this, editor)
     syncToEditor()
 
-    @syncSubcriptions = new CompositeDisposable
     ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) ->
