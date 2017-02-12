@@ -42,10 +42,10 @@ class UI
 
   stopRefreshingDelay: 100
   stopRefreshingTimeout: null
+  debouncedPreviewDelay: 100
 
   autoPreview: null
   autoPreviewOnQueryChange: null
-  autoPreviewOnNextStopChanging: false
 
   preventSyncToEditor: false
   ignoreChange: false
@@ -203,7 +203,6 @@ class UI
     @disposables.add(
       @registerCommands()
       @observeChange()
-      @observeStopChanging()
       @observeCursorMove()
       @observeStopChangingActivePaneItem()
     )
@@ -457,11 +456,12 @@ class UI
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @editorLastRow = range.end.row
 
-  observeStopChanging: ->
-    @editor.onDidStopChanging =>
-      if @autoPreviewOnNextStopChanging
-        @preview()
-        @autoPreviewOnNextStopChanging = false
+  debouncedPreview: ->
+    clearTimeout(@debouncedPreviewTimeout) if @debouncedPreviewTimeout?
+    preview = =>
+      @debouncedPreviewTimeout = null
+      @preview()
+    @debouncedPreviewTimeout = setTimeout(preview, @debouncedPreviewDelay)
 
   observeChange: ->
     @editor.buffer.onDidChange ({newRange, oldRange}) =>
@@ -485,8 +485,7 @@ class UI
               if @provider.boundToEditor
                 @preview()
               else
-                # Delay immediate preview unless @provider is boundToEditor
-                @autoPreviewOnNextStopChanging = true
+                @debouncedPreview()
       else
         @setModifiedState(true)
 
