@@ -220,7 +220,6 @@ class UI
 
     @constructor.register(this)
     @disposables.add new Disposable =>
-      console.log "unregister"
       @constructor.unregister(this)
 
   start: ->
