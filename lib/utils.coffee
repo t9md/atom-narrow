@@ -15,8 +15,8 @@ getAdjacentPaneForPane = (pane) ->
 # return pane
 getAdjacentPaneOrSplit = (basePane, {split}) ->
   pane = getAdjacentPaneForPane(atom.workspace.getActivePane()) ? switch split
-    when 'right' then currentPane.splitRight()
-    when 'down' then currentPane.splitDown()
+    when 'right' then basePane.splitRight()
+    when 'down' then basePane.splitDown()
 
   # Can not 'split' without activating new pane so rever it here
   basePane.activate() if pane.isActive()
