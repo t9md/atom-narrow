@@ -398,7 +398,7 @@ class UI
         {row} = @editor.getCursorBufferPosition()
         @editor.setCursorBufferPosition([row, column])
 
-  refresh: ({force}={}) ->
+  refresh: ({force, selectFirstItem}={}) ->
     @emitWillRefresh()
 
     if force
@@ -424,7 +424,10 @@ class UI
       @items = [@promptItem, items...]
       @renderItems(items)
 
-      @selectItemForRow(@findRowForNormalItem(0, 'next'))
+      if (not selectFirstItem) and item = @findItem(@selectedItem)
+        @selectItem(item)
+      else
+        @selectFirstNormalItem()
 
       @setModifiedState(false)
       unless @hasNormalItem()
@@ -471,7 +474,7 @@ class UI
             selection.destroy()
           @withIgnoreChange => @insertQuery(@lastQuery) # Recover query
         else
-          @refresh().then =>
+          @refresh(selectFirstItem: true).then =>
             if @autoPreviewOnQueryChange and @isActive()
               if @provider.boundToEditor
                 @preview()
@@ -525,12 +528,12 @@ class UI
 
   syncToEditor: (editor) ->
     return if @preventSyncToEditor
+    return if @isActive()
     if item = @findClosestItemForEditor(editor)
       @selectItem(item)
-      unless @isActive()
-        {row} = @editor.getCursorBufferPosition()
-        @moveToSelectedItem(scrollToColumnZero: true)
-        @emitDidMoveToItemArea() if @isPromptRow(row)
+      {row} = @editor.getCursorBufferPosition()
+      @moveToSelectedItem(scrollToColumnZero: true)
+      @emitDidMoveToItemArea() if @isPromptRow(row)
 
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove}={}) ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -677,8 +680,17 @@ class UI
     @items.filter (item) ->
       (not item.skip) and (item.filePath is filePath)
 
+  # When filePath is undefined, it OK cause, `undefined` is `undefined`
+  findItem: ({point, filePath}={}) ->
+    for item in @getNormalItems()
+      if item.point.isEqual(point) and item.filePath is filePath
+        return item
+
   updateProviderPanel: (states) ->
     @providerPanel.updateStateElements(states)
+
+  selectFirstNormalItem: ->
+    @selectItemForRow(@findRowForNormalItem(0, 'next'))
 
   selectItemForRow: (row) ->
     item = @items[row]
