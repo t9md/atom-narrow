@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
 {
-  activatePaneItemInAdjacentPane
+  getAdjacentPaneOrSplit
   isActiveEditor
   getValidIndexForList
   setBufferRow
@@ -168,7 +168,9 @@ class UI
       @editorElement.classList.remove('read-only')
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
-  constructor: (@provider, {@query}={}) ->
+  constructor: (@provider, {@query, @activate, @pending}={}) ->
+    @pending ?= false
+    @activate ?= true
     @disposables = new CompositeDisposable
     @emitter = new Emitter
     @excludedFiles = []
@@ -218,30 +220,24 @@ class UI
     # In this case, user see modified icon(mark) on tab.
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
-    if @editorElement.component?
-      attachedPromise = Promise.resolve()
-    else
-      attachedPromise = new Promise (resolve) =>
-        disposable = @editorElement.onDidAttach ->
-          disposable.dispose()
-          resolve()
 
+    providerPane = @provider.getPane()
     if isNarrowEditor(@provider.editor)
-      # if narrow is invoked from narrow-editor, open new narrow-editor
-      #  on same pane of existing narrow-editor
-      @provider.getPane().activateItem(@editor)
+      # If narrow is invoked from narrow-editor, open in same pane.
+      pane = providerPane
     else
-      activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
-
-    attachedPromise.then =>
-      @grammar.activate()
-      if @query
-        @insertQuery(@query)
-      else
-        @withIgnoreChange => @insertQuery()
-      @providerPanel.show()
-      @moveToPrompt()
-      @refresh()
+      pane = getAdjacentPaneOrSplit(providerPane, split: settings.get('directionToOpen'))
+    pane.activate() unless pane.isActive()
+    pane.activateItem(@editor, {@pending})
+    @grammar.activate()
+    if @query
+      @insertQuery(@query)
+    else
+      @withIgnoreChange => @insertQuery()
+    @providerPanel.show()
+    @moveToPrompt()
+    @refresh().then =>
+      @activateProviderPane() unless @activate
 
   observeStopChangingActivePaneItem: ->
     needToSync = (item) =>

@@ -80,7 +80,8 @@ class ProviderBase
     @subscriptions = new CompositeDisposable
     @restoreEditorState = saveEditorState(editor)
     @bindEditor(editor)
-    @ui = new UI(this, query: @options.query)
+    {query, activate, pending} = @options
+    @ui = new UI(this, {query, activate, pending})
 
     @checkReady().then (ready) =>
       if ready
@@ -138,7 +139,7 @@ class ProviderBase
     # Why? if current active pane have item for that path, `workspace.open` return that item.
     # then trying to activate returned item on target-pane result in, one item activated on multiple-pane.
     # this situation cause exception.
-    pane.activate()
+    pane.activate() unless pane.isActive()
     atom.workspace.open(filePath, pending: true).then (editor) =>
       @ui.getPane().activate() unless activatePane
       editor
