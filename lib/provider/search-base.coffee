@@ -30,7 +30,6 @@ class SearchBase extends ProviderBase
     else
       @readInput().then (input) =>
         @options.search = input
-        true
 
   toggleSearchWholeWord: ->
     super

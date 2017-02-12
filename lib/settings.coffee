@@ -129,6 +129,12 @@ module.exports = new Settings 'narrow',
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
     searchWholeWord: false
+    startByDoubleClick:
+      default: false
+      description: """
+      [Experimental]: start by dounble click.
+      You can toggle this value by command `narrow:toggle-search-start-by-double-click`
+      """
     agCommandArgs:
       default: "--nocolor --column --vimgrep"
       description: """

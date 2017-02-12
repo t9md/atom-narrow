@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
 {
-  activatePaneItemInAdjacentPane
+  getAdjacentPaneOrSplit
   isActiveEditor
   getValidIndexForList
   setBufferRow
@@ -34,6 +34,12 @@ class UI
 
   @updateWorkspaceClassList: ->
     atom.views.getView(atom.workspace).classList.toggle('has-narrow', @uiByEditor.size)
+
+  @getNextTitleNumber: ->
+    numbers = [0]
+    @uiByEditor.forEach (ui) ->
+      numbers.push(ui.titleNumber)
+    Math.max(numbers...) + 1
 
   # UI.prototype
   # -------------------------
@@ -168,7 +174,10 @@ class UI
       @editorElement.classList.remove('read-only')
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
-  constructor: (@provider, {@query}={}) ->
+  constructor: (@provider, {@query, @activate, @pending}={}) ->
+    @titleNumber = @constructor.getNextTitleNumber()
+    @pending ?= false
+    @activate ?= true
     @disposables = new CompositeDisposable
     @emitter = new Emitter
     @excludedFiles = []
@@ -186,7 +195,7 @@ class UI
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: @provider.indentTextForLineHeader)
 
     providerDashName = @provider.getDashName()
-    title = providerDashName + '-' + @constructor.uiByEditor.size
+    title = providerDashName + '-' + @titleNumber
     @editor.getTitle = -> title
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
@@ -218,51 +227,33 @@ class UI
     # In this case, user see modified icon(mark) on tab.
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
-    if @editorElement.component?
-      attachedPromise = Promise.resolve()
-    else
-      attachedPromise = new Promise (resolve) =>
-        disposable = @editorElement.onDidAttach ->
-          disposable.dispose()
-          resolve()
 
+    providerPane = @provider.getPane()
     if isNarrowEditor(@provider.editor)
-      # if narrow is invoked from narrow-editor, open new narrow-editor
-      #  on same pane of existing narrow-editor
-      @provider.getPane().activateItem(@editor)
+      # If narrow is invoked from narrow-editor, open in same pane.
+      pane = providerPane
     else
-      activatePaneItemInAdjacentPane(@editor, split: settings.get('directionToOpen'))
+      pane = getAdjacentPaneOrSplit(providerPane, split: settings.get('directionToOpen'))
 
-    attachedPromise.then =>
-      @grammar.activate()
-      if @query
-        @insertQuery(@query)
-      else
-        @withIgnoreChange => @insertQuery()
-      @providerPanel.show()
-      @moveToPrompt()
-      @refresh()
+    pane.activate() unless pane.isActive()
+    pane.activateItem(@editor, {@pending})
+
+    @grammar.activate()
+    if @query
+      @insertQuery(@query)
+    else
+      @withIgnoreChange => @insertQuery()
+    @providerPanel.show()
+    @moveToPrompt()
+    @refresh().then =>
+      @activateProviderPane() unless @activate
 
   observeStopChangingActivePaneItem: ->
-    needToSync = (item) =>
-      isTextEditor(item) and not isNarrowEditor(item) and paneForItem(item) isnt @getPane()
-
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @syncSubcriptions?.dispose()
-      return if item is @editor
-
       @provider.needRestoreEditorState = false
-      return unless needToSync(item)
-
-      if @provider.boundToEditor
-        if @provider.editor is item
-          @startSyncToEditor(item)
-        else
-          @provider.bindEditor(item)
-          @refresh(force: true).then =>
-            @startSyncToEditor(item)
-      else
-        @startSyncToEditor(item) if @hasSomeNormalItemForFilePath(item.getPath())
+      return if not isTextEditor(item) or isNarrowEditor(item)
+      return if paneForItem(item) is @getPane()
+      @startSyncToEditor(item)
 
   getPane: ->
     paneForItem(@editor)
@@ -433,8 +424,8 @@ class UI
       @items = [@promptItem, items...]
       @renderItems(items)
 
-      if @isActive()
-        @selectItemForRow(@findRowForNormalItem(0, 'next'))
+      @selectItemForRow(@findRowForNormalItem(0, 'next'))
+
       @setModifiedState(false)
       unless @hasNormalItem()
         @selectedItem = null
@@ -715,10 +706,18 @@ class UI
     @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
 
   startSyncToEditor: (editor) ->
+    if @provider.boundToEditor and @provider.editor isnt editor
+      @provider.bindEditor(editor)
+      @refresh(force: true).then =>
+        @startSyncToEditor(editor)
+      return
+
+    @syncSubcriptions?.dispose()
+    @syncSubcriptions = new CompositeDisposable
+
     syncToEditor = @syncToEditor.bind(this, editor)
     syncToEditor()
 
-    @syncSubcriptions = new CompositeDisposable
     ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) ->

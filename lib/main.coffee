@@ -56,6 +56,12 @@ module.exports =
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', currentWord: true)
 
+      'narrow:toggle-search-start-by-double-click': -> settings.toggle('Search.startByDoubleClick')
+
+    @subscriptions.add atom.commands.add 'atom-text-editor', 'dblclick', =>
+      if settings.get('Search.startByDoubleClick')
+        @narrow('search', currentWord: true, activate: false, pending: true)
+
   getUi: ({skipProtected}={}) ->
     if ui = Ui.get(@lastFocusedNarrowEditor)
       if skipProtected

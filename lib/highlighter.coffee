@@ -69,6 +69,7 @@ class Highlighter
   resetCurrent: ->
     return unless @needHighlight
     @clearCurrent()
+    return unless @ui.isActive()
 
     if decoration = @decorationByItem.get(@ui.getSelectedItem())
       updateDecoration(decoration, (cssClass) -> cssClass + ' current')
