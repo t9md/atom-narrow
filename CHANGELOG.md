@@ -1,13 +1,13 @@
 # 0.24.0:
 - Doc: Update keymap example in README
 - Doc: #132 Fix link for `keymap.cson` pointed to stale branch.
-- Improve: #130 No longer restore editor state( cursor, scroll-top ), once active editor was changed after starting narrow.
+- Improve: Auto preview on focus narrow-editor.
+- Improve: #130 No longer restore editor state( cursor, scroll-top ), if non-narrow-editor was clicked.
   - In previous release, clicking non-narrow-editor is not treated as confirmation, so cursor had been restored after `narrow:close`.
-  - But this is not user expect, now when user click non-narrow-editor no longer restore on `narrow:close`
 - Improve: #134 highlight improve
-  - Internal: All highlight related logic was moved to `highlighter.coffee` from `ui.coffee`
   - Flash current match on `next-item`, `previous-item`
-  - No longer emphasize current match unless in previewing.
+  - Limit emphasizing current match only in previewing.
+  - Internal: All highlight related logic was moved to `highlighter.coffee` from `ui.coffee`
 
 # 0.23.0:
 - Fix: #123, Prevent mouse event propagation for provider-panel
