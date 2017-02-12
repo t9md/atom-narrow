@@ -36,12 +36,10 @@ class UI
     atom.views.getView(atom.workspace).classList.toggle('has-narrow', @uiByEditor.size)
 
   @getNextTitleNumber: ->
-    titleNumbers = [0]
-    console.log 'size', @uiByEditor.size
-
+    numbers = [0]
     @uiByEditor.forEach (ui) ->
-      titleNumbers.push(ui.titleNumber)
-    Math.max(titleNumbers...) + 1
+      numbers.push(ui.titleNumber)
+    Math.max(numbers...) + 1
 
   # UI.prototype
   # -------------------------
@@ -178,7 +176,6 @@ class UI
 
   constructor: (@provider, {@query, @activate, @pending}={}) ->
     @titleNumber = @constructor.getNextTitleNumber()
-    console.log @titleNumber
     @pending ?= false
     @activate ?= true
     @disposables = new CompositeDisposable
@@ -199,12 +196,7 @@ class UI
 
     providerDashName = @provider.getDashName()
     title = providerDashName + '-' + @titleNumber
-    # console.log title
     @editor.getTitle = -> title
-      # @title ?= providerDashName + '-' + @constructor.uiByEditor.size
-      # console.log @title
-      # @title
-      # # @title ?= providerDashName + '-' + @constructor.uiByEditor.size
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
