@@ -86,6 +86,9 @@ class UI
   onDidPreview: (fn) -> @emitter.on('did-preview', fn)
   emitDidPreview: (event) -> @emitter.emit('did-preview', event)
 
+  onDidConfirm: (fn) -> @emitter.on('did-confirm', fn)
+  emitDidConfirm: (event) -> @emitter.emit('did-confirm', event)
+
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
@@ -152,7 +155,7 @@ class UI
     if @autoPreview
       @preview()
     else
-      @clearCurrentMarkers()
+      @highlighter.clearLineMarker()
 
   setReadOnly: (readOnly) ->
     @readOnly = readOnly
@@ -171,7 +174,7 @@ class UI
     @excludedFiles = []
     @autoPreview = @provider.getConfig('autoPreview')
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
-    @highlighter = new Highlighter(this) if @provider.useHighlighter
+    @highlighter = new Highlighter(this)
 
     # Special place holder item used to translate narrow-editor row to item row without mess.
     @promptItem = Object.freeze({_prompt: true, skip: true})
@@ -250,7 +253,6 @@ class UI
       return if item is @editor
 
       @provider.needRestoreEditorState = false
-      @clearCurrentMarkers()
       return unless needToSync(item)
 
       if @provider.boundToEditor
@@ -273,6 +275,7 @@ class UI
     pane = @getPane()
     pane.activate()
     pane.activateItem(@editor)
+    @preview() if @autoPreview
 
   focusPrompt: ->
     if @isActive() and @isPromptRow(@editor.getCursorBufferPosition().row)
@@ -297,7 +300,7 @@ class UI
   destroy: ->
     return if @destroyed
     @destroyed = true
-    @highlighter?.destroy()
+    @highlighter.destroy()
     @syncSubcriptions?.dispose()
     @disposables.dispose()
     @editor.destroy()
@@ -306,7 +309,6 @@ class UI
     @providerPanel.destroy()
     @provider?.destroy?()
     @itemIndicator?.destroy()
-    @clearCurrentMarkers()
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
@@ -360,7 +362,7 @@ class UI
       @confirmItemForDirection('previous')
 
   previewItemForDirection: (direction) ->
-    if not @hasCurrentMarker() and direction is 'next'
+    if not @highlighter.hasLineMarker() and direction is 'next'
       # When initial invocation not cause preview(since initial query input was empty).
       # Don't want `tab` skip first seleted item.
       row = @getRowForSelectedItem()
@@ -438,7 +440,7 @@ class UI
       unless @hasNormalItem()
         @selectedItem = null
         @previouslySelectedItem = null
-        @clearCurrentMarkers()
+        @highlighter.clearLineMarker()
 
       @emitDidRefresh()
       @emitDidStopRefreshing()
@@ -557,42 +559,16 @@ class UI
       else
         moveAndScroll()
 
-  clearCurrentMarkers: ->
-    @rowMarker?.destroy()
-    @currentMatchMarker?.destroy()
-    @rowMarker = null
-    @currentMatchMarker = null
-
-  hasCurrentMarker: ->
-    @rowMarker? or @currentMatchMarker?
-
-  setRowMarker: (editor, item) ->
-    point = item.point
-    @clearCurrentMarkers()
-    @rowMarker = editor.markBufferRange([point, point])
-    editor.decorateMarker(@rowMarker, type: 'line', class: 'narrow-result')
-
-  flashCurrentItem: (editor, item) ->
-    @currentMatchMarker?.destroy()
-
-    if item.range?
-      @currentMatchMarker = marker = editor.markBufferRange(item.range)
-      editor.decorateMarker(marker, type: 'highlight', class: 'narrow-match flash')
-      setTimeout ->
-        marker.destroy()
-      , 500
-
   preview: ->
     @preventSyncToEditor = true
     item = @getSelectedItem()
     unless item
       @preventSyncToEditor = false
-      @clearCurrentMarkers()
+      @highlighter.clearLineMarker()
       return
 
     @provider.openFileForItem(item).then (editor) =>
       editor.scrollToBufferPosition(item.point, center: true)
-      @setRowMarker(editor, item)
       @preventSyncToEditor = false
       @emitDidPreview({editor, item})
 
@@ -605,7 +581,8 @@ class UI
       if needDestroy
         @editor.destroy()
       else
-        @flashCurrentItem(editor, item) if flash
+        @highlighter.flashItem(editor, item) if flash
+        @emitDidConfirm({editor, item})
 
   # Return row
   # Never fail since prompt is row 0 and always exists
