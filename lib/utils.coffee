@@ -14,7 +14,7 @@ getAdjacentPaneForPane = (pane) ->
 # Split is used when fail to find adjacent pane.
 # return pane
 getAdjacentPaneOrSplit = (basePane, {split}) ->
-  pane = getAdjacentPaneForPane(atom.workspace.getActivePane()) ? switch split
+  pane = getAdjacentPaneForPane(basePane) ? switch split
     when 'right' then basePane.splitRight()
     when 'down' then basePane.splitDown()
 
