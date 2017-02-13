@@ -176,6 +176,7 @@ class UI
 
   constructor: (@provider, {@query, @activate, @pending}={}) ->
     @titleNumber = @constructor.getNextTitleNumber()
+    @query ?= ''
     @pending ?= false
     @activate ?= true
     @disposables = new CompositeDisposable
@@ -209,12 +210,8 @@ class UI
       @disposables.add @onDidMoveToItemArea =>
         @setReadOnly(true)
 
-    @disposables.add(
-      @registerCommands()
-      @observeChange()
-      @observeCursorMove()
-      @observeStopChangingActivePaneItem()
-    )
+    @disposables.add(@registerCommands())
+
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
     @providerPanel = new ProviderPanel(this, showSearchOption: @provider.showSearchOption)
 
@@ -228,29 +225,47 @@ class UI
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
 
-    providerPane = @provider.getPane()
     if isNarrowEditor(@provider.editor)
-      # If narrow is invoked from narrow-editor, open in same pane.
-      pane = providerPane
-    else
-      pane = getAdjacentPaneOrSplit(providerPane, split: settings.get('directionToOpen'))
+      exNarrowEditor = @provider.editor
+      # Invoked from another narrow-editor(= ex-narrow-editor).
+      # Rebind provider's editor to behaves like it invoked from normal-editor.
+      @provider.bindEditor(@constructor.get(exNarrowEditor).provider.editor)
 
-    pane.activate() unless pane.isActive()
+    pane = getAdjacentPaneOrSplit(@provider.getPane(), split: settings.get('directionToOpen'))
+    # pane.activate() unless pane.isActive()
+
+    # [NOTE] When new item is activated, existing PENDING item is destroyed.
+    # So existing PENDING narrow-editor is destroyed at this timing.
+    # And PENDING narrow-editor's provider's editor have foucsed.
+    # So pane.activate must be called AFTER activateItem
     pane.activateItem(@editor, {@pending})
+    pane.activate()
 
     @grammar.activate()
-    if @query
-      @insertQuery(@query)
-    else
-      @withIgnoreChange => @insertQuery()
+    @insertQuery(@query)
     @providerPanel.show()
+
+    @disposables.add(
+      @registerCommands()
+      @observeChange()
+      @observeCursorMove()
+      @observeStopChangingActivePaneItem()
+    )
+
     @moveToPrompt()
     @refresh().then =>
-      @activateProviderPane() unless @activate
+      if @activate
+        @preview() if @query and @autoPreview
+      else
+        @activateProviderPane()
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @provider.needRestoreEditorState = false
+      if item isnt @editor
+        # When item other than narrow-editor was activated,
+        # No longer restore editor's state.
+        # This guard is necessary since initial narrow-editor open fire this event.
+        @provider.needRestoreEditorState = false
       return if not isTextEditor(item) or isNarrowEditor(item)
       return if paneForItem(item) is @getPane()
       @startSyncToEditor(item)
@@ -370,7 +385,7 @@ class UI
     @previewItemForDirection('previous')
 
   getQuery: ->
-    @lastQuery = @editor.lineTextForBufferRow(0)
+    @editor.lineTextForBufferRow(0)
 
   excludeFile: ->
     return if @provider.boundToEditor
@@ -412,7 +427,7 @@ class UI
         @cachedItems = items if @provider.supportCacheItems
         items
 
-    filterSpec = getFilterSpecForQuery(@getQuery())
+    filterSpec = getFilterSpecForQuery(@lastQuery = @getQuery())
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
@@ -528,7 +543,6 @@ class UI
 
   syncToEditor: (editor) ->
     return if @preventSyncToEditor
-    return if @isActive()
     if item = @findClosestItemForEditor(editor)
       @selectItem(item)
       {row} = @editor.getCursorBufferPosition()
@@ -726,24 +740,23 @@ class UI
 
     @syncSubcriptions?.dispose()
     @syncSubcriptions = new CompositeDisposable
-
-    syncToEditor = @syncToEditor.bind(this, editor)
-    syncToEditor()
+    @syncToEditor(editor)
 
     ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
-    @syncSubcriptions.add editor.onDidChangeCursorPosition (event) ->
+    @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
       return unless isActiveEditor(editor)
       return if event.textChanged
       return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
-      syncToEditor()
+      @syncToEditor(editor)
 
-    @syncSubcriptions.add @onDidRefresh(syncToEditor)
+    @syncSubcriptions.add @onDidRefresh =>
+      @syncToEditor(editor)
 
+    # Avoid refresh while active, important to update-real-file don't cause auto-refresh.
     refresh = => @refresh(force: true) unless @isActive()
 
     if @provider.boundToEditor
-      # Surppress refreshing while editor is active to avoid auto-refreshing while direct-edit.
       @syncSubcriptions.add editor.onDidStopChanging(refresh)
     else
       @syncSubcriptions.add editor.onDidSave(refresh)
