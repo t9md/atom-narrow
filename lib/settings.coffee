@@ -72,10 +72,10 @@ newProviderConfig = (otherProperties) ->
     autoPreviewOnQueryChange: true
     closeOnConfirm: true
     revealOnStartCondition:
-      default: 'never'
+      default: 'always'
       enum: ['never', 'always', 'on-input']
 
-  _.extend(properties, otherProperties) if otherProperties?
+  _.deepExtend(properties, otherProperties) if otherProperties?
 
   return {
     type: 'object'
@@ -101,11 +101,19 @@ module.exports = new Settings 'narrow',
   # Per providers settings
   # -------------------------
   GitDiffAll: newProviderConfig()
-  Fold: newProviderConfig()
-  Symbols: newProviderConfig()
+  Fold: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
+  )
+  Symbols: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
+  )
   Linter: newProviderConfig()
   Bookmarks: newProviderConfig()
   Scan: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
     searchWholeWord:
       default: false
       description: """
@@ -151,5 +159,8 @@ module.exports = new Settings 'narrow',
       enum: ['smartcase', 'sensitive', 'insensitive']
     searchWholeWord: false
   )
-  Lines: newProviderConfig()
+  Lines: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
+  )
   GitDiff: newProviderConfig()
