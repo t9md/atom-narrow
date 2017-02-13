@@ -10,7 +10,7 @@ repositoryForPath = (goalPath) ->
 
 module.exports =
 class GitDiff extends ProviderBase
-  boundToEditor: true
+  boundToSingleFile: true
   supportCacheItems: true
   showLineHeader: true
 

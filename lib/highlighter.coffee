@@ -48,11 +48,11 @@ class Highlighter
     return unless @regexp
     return unless @needHighlight
     return if isNarrowEditor(editor)
-    return if @provider.boundToEditor and editor isnt @provider.editor
+    return if @provider.boundToSingleFile and editor isnt @provider.editor
     return if @markerLayerByEditor.has(editor)
 
     # Get items shown on narrow-editor and also matching editor's filePath
-    if @provider.boundToEditor
+    if @provider.boundToSingleFile
       items = @ui.getNormalItems()
     else
       items = @ui.getNormalItemsForFilePath(editor.getPath())

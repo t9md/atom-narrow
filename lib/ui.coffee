@@ -399,7 +399,7 @@ class UI
     @editor.lineTextForBufferRow(0)
 
   excludeFile: ->
-    return if @provider.boundToEditor
+    return if @provider.boundToSingleFile
     return unless selectedItem = @getSelectedItem()
     unless selectedItem.filePath in @excludedFiles
       @excludedFiles.push(selectedItem.filePath)
@@ -444,7 +444,7 @@ class UI
 
     promiseForItems.then (items) =>
       items = @provider.filterItems(items, filterSpec)
-      if not @provider.boundToEditor and @excludedFiles.length
+      if @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
 
       @items = [@promptItem, items...]
@@ -502,7 +502,7 @@ class UI
         else
           @refresh(selectFirstItem: true).then =>
             if @autoPreviewOnQueryChange and @isActive()
-              if @provider.boundToEditor
+              if @provider.boundToSingleFile
                 @preview()
               else
                 @debouncedPreview()
@@ -539,7 +539,7 @@ class UI
     # * Closest item is
     #  - Same filePath of current active-editor
     #  - It's point is less than or equal to active-editor's cursor position.
-    if @provider.boundToEditor
+    if @provider.boundToSingleFile
       items = @getNormalItems()
     else
       items = @getNormalItemsForFilePath(editor.getPath())
@@ -629,7 +629,7 @@ class UI
         return row
 
   findDifferentFileItem: (direction) ->
-    return if @provider.boundToEditor
+    return if @provider.boundToSingleFile
     return null unless selectedItem = @getSelectedItem()
 
     delta = switch direction
@@ -769,7 +769,7 @@ class UI
     # Avoid refresh while active, important to update-real-file don't cause auto-refresh.
     refresh = => @refresh(force: true) unless @isActive()
 
-    if @provider.boundToEditor
+    if @provider.boundToSingleFile
       # Refresh only when newFilePath is undefined or different from oldFilePath
       unless isDefinedAndEqual(oldFilePath, newFilePath)
         @refresh(force: true)
@@ -838,7 +838,7 @@ class UI
 
     return unless changes.length
 
-    unless @provider.boundToEditor
+    unless @provider.boundToSingleFile
       {success, message} = @ensureNoModifiedFileForChanges(changes)
       unless success
         atom.notifications.addWarning(message, dismissable: true)

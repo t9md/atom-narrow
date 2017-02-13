@@ -15,7 +15,7 @@ Input = null
 module.exports =
 class ProviderBase
   needRestoreEditorState: true
-  boundToEditor: false
+  boundToSingleFile: false
   includeHeaderGrammar: false
 
   indentTextForLineHeader: ""
@@ -177,7 +177,7 @@ class ProviderBase
   # Direct Edit
   # -------------------------
   updateRealFile: (changes) ->
-    if @boundToEditor
+    if @boundToSingleFile
       # Intentionally avoid direct use of @editor to skip observation event
       # subscribed to @editor.
       # This prevent auto refresh, so undoable narrow-editor to last state.
@@ -195,7 +195,7 @@ class ProviderBase
           editor.setTextInBufferRange(range, newText)
 
           # Sync item's text state
-          # To allow re-edit if not saved and non-boundToEditor provider
+          # To allow re-edit if not saved and non-boundToSingleFile provider
           item.text = newText
 
       editor.save()
