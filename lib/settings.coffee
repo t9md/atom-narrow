@@ -71,6 +71,9 @@ newProviderConfig = (otherProperties) ->
     autoPreview: true
     autoPreviewOnQueryChange: true
     closeOnConfirm: true
+    revealOnStartCondition:
+      default: 'never'
+      enum: ['never', 'always', 'on-input']
 
   _.extend(properties, otherProperties) if otherProperties?
 

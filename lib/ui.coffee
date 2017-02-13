@@ -253,8 +253,19 @@ class UI
       @observeStopChangingActivePaneItem()
     )
 
-    @moveToPrompt()
     @refresh().then =>
+      if @provider.needAutoReveal()
+        @syncToEditor(@provider.editor)
+        row = @editor.getCursorBufferPosition().row
+        if @provider.showLineHeader
+          column = @getSelectedItem()._lineHeader.length - 1
+        else
+          column = 0
+        @editor.setCursorBufferPosition([row, column])
+        @preview()
+      else
+        @moveToPrompt()
+
       if @activate
         @preview() if @query and @autoPreview
       else

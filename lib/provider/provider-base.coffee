@@ -43,6 +43,15 @@ class ProviderBase
   getConfig: (name) ->
     settings.get("#{@getName()}.#{name}")
 
+  needAutoReveal: ->
+    switch @getConfig('revealOnStartCondition')
+      when 'never'
+        false
+      when 'always'
+        true
+      when 'on-input'
+        @options.query?.length
+
   initialize: ->
     # to override
 
