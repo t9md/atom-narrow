@@ -245,6 +245,7 @@ class UI
     @grammar.activate()
     @insertQuery(@query)
     @providerPanel.show()
+    @moveToPrompt()
 
     @disposables.add(
       @registerCommands()
@@ -263,8 +264,6 @@ class UI
           column = 0
         @editor.setCursorBufferPosition([row, column])
         @preview()
-      else
-        @moveToPrompt()
 
       if @activate
         @preview() if @query and @autoPreview
