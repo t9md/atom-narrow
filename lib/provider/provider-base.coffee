@@ -54,6 +54,8 @@ class ProviderBase
     Promise.resolve()
 
   bindEditor: (editor) ->
+    return if editor is @editor
+
     @editorSubscriptions?.dispose()
     @editorSubscriptions = new CompositeDisposable
     event = {

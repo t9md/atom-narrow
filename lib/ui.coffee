@@ -542,6 +542,9 @@ class UI
 
     return items[0]
 
+  syncToBoundEditor: ->
+    syncToEditor(@provider.editor)
+
   syncToEditor: (editor) ->
     return if @preventSyncToEditor
     if item = @findClosestItemForEditor(editor)
@@ -733,19 +736,14 @@ class UI
     @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
 
   startSyncToEditor: (editor) ->
-    if @provider.boundToEditor and @provider.editor isnt editor
-      oldFilePath = @provider.editor.getPath()
-      newFilePath = editor.getPath()
-      @provider.bindEditor(editor)
-      # Refresh only when newFilePath is undefined or different from oldFilePath
-      unless isDefinedAndEqual(oldFilePath, newFilePath)
-        @refresh(force: true).then =>
-          @startSyncToEditor(editor)
-        return
-
     @syncSubcriptions?.dispose()
     @syncSubcriptions = new CompositeDisposable
-    @syncToEditor(editor)
+
+    oldFilePath = @provider.editor.getPath()
+    newFilePath = editor.getPath()
+
+    @provider.bindEditor(editor)
+    @syncToBoundEditor()
 
     ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
@@ -753,15 +751,18 @@ class UI
       return unless isActiveEditor(editor)
       return if event.textChanged
       return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
-      @syncToEditor(editor)
+      @syncToBoundEditor()
 
     @syncSubcriptions.add @onDidRefresh =>
-      @syncToEditor(editor)
+      @syncToBoundEditor()
 
     # Avoid refresh while active, important to update-real-file don't cause auto-refresh.
     refresh = => @refresh(force: true) unless @isActive()
 
     if @provider.boundToEditor
+      # Refresh only when newFilePath is undefined or different from oldFilePath
+      unless isDefinedAndEqual(oldFilePath, newFilePath)
+        @refresh(force: true)
       @syncSubcriptions.add editor.onDidStopChanging(refresh)
     else
       @syncSubcriptions.add editor.onDidSave(refresh)
