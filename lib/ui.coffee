@@ -256,14 +256,15 @@ class UI
 
     @refresh().then =>
       if @provider.needAutoReveal()
-        @syncToEditor(@provider.editor)
-        row = @editor.getCursorBufferPosition().row
-        if @provider.showLineHeader
-          column = @getSelectedItem()._lineHeader.length - 1
-        else
-          column = 0
-        @editor.setCursorBufferPosition([row, column])
-        @preview()
+        if @syncToEditor()
+          row = @editor.getCursorBufferPosition().row
+          if @provider.showLineHeader
+            lineHeader = @getSelectedItem()?._lineHeader
+            column = lineHeader?.length - 1 or 0
+          else
+            column = 0
+          @editor.setCursorBufferPosition([row, column])
+          @preview()
 
       if @activate
         @preview() if @query and @autoPreview
@@ -552,16 +553,19 @@ class UI
 
     return items[0]
 
-  syncToBoundEditor: ->
-    @syncToEditor(@provider.editor)
+  # Return success or fail
+  syncToEditor: ->
+    return false if @preventSyncToEditor
 
-  syncToEditor: (editor) ->
-    return if @preventSyncToEditor
+    editor = @provider.editor
     if item = @findClosestItemForEditor(editor)
       @selectItem(item)
       {row} = @editor.getCursorBufferPosition()
       @moveToSelectedItem(scrollToColumnZero: true)
       @emitDidMoveToItemArea() if @isPromptRow(row)
+      true
+    else
+      false
 
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove}={}) ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -753,7 +757,7 @@ class UI
     newFilePath = editor.getPath()
 
     @provider.bindEditor(editor)
-    @syncToBoundEditor()
+    @syncToEditor()
 
     ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
@@ -761,10 +765,10 @@ class UI
       return unless isActiveEditor(editor)
       return if event.textChanged
       return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
-      @syncToBoundEditor()
+      @syncToEditor()
 
     @syncSubcriptions.add @onDidRefresh =>
-      @syncToBoundEditor()
+      @syncToEditor()
 
     # Avoid refresh while active, important to update-real-file don't cause auto-refresh.
     refresh = => @refresh(force: true) unless @isActive()
