@@ -133,6 +133,9 @@ itemForGitDiff = (diff, {editor, filePath}) ->
     filePath: filePath
   }
 
+isDefinedAndEqual = (a, b) ->
+  a? and b? and a is b
+
 module.exports = {
   getAdjacentPaneForPane
   getAdjacentPaneOrSplit
@@ -152,4 +155,5 @@ module.exports = {
   getFirstCharacterPositionForBufferRow
   updateDecoration
   itemForGitDiff
+  isDefinedAndEqual
 }

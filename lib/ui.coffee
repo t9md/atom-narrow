@@ -8,6 +8,7 @@ _ = require 'underscore-plus'
   isTextEditor
   isNarrowEditor
   paneForItem
+  isDefinedAndEqual
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -733,10 +734,14 @@ class UI
 
   startSyncToEditor: (editor) ->
     if @provider.boundToEditor and @provider.editor isnt editor
+      oldFilePath = @provider.editor.getPath()
+      newFilePath = editor.getPath()
       @provider.bindEditor(editor)
-      @refresh(force: true).then =>
-        @startSyncToEditor(editor)
-      return
+      # Refresh only when newFilePath is undefined or different from oldFilePath
+      unless isDefinedAndEqual(oldFilePath, newFilePath)
+        @refresh(force: true).then =>
+          @startSyncToEditor(editor)
+        return
 
     @syncSubcriptions?.dispose()
     @syncSubcriptions = new CompositeDisposable
