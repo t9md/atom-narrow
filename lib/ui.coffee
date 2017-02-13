@@ -543,7 +543,7 @@ class UI
     return items[0]
 
   syncToBoundEditor: ->
-    syncToEditor(@provider.editor)
+    @syncToEditor(@provider.editor)
 
   syncToEditor: (editor) ->
     return if @preventSyncToEditor
