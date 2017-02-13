@@ -100,17 +100,11 @@ module.exports = new Settings 'narrow',
 
   # Per providers settings
   # -------------------------
-  AtomScan: newProviderConfig(
-    caseSensitivityForSearchTerm:
-      default: 'smartcase'
-      enum: ['smartcase', 'sensitive', 'insensitive']
-    searchWholeWord: false
-  )
-  Bookmarks: newProviderConfig()
-  Fold: newProviderConfig()
-  GitDiff: newProviderConfig()
   GitDiffAll: newProviderConfig()
-  Lines: newProviderConfig()
+  Fold: newProviderConfig()
+  Symbols: newProviderConfig()
+  Linter: newProviderConfig()
+  Bookmarks: newProviderConfig()
   Scan: newProviderConfig(
     searchWholeWord:
       default: false
@@ -125,8 +119,6 @@ module.exports = new Settings 'narrow',
       Search term is first word of query, is used as search term
       """
   )
-
-  Linter: newProviderConfig()
   Search: newProviderConfig(
     caseSensitivityForSearchTerm:
       default: 'smartcase'
@@ -153,4 +145,11 @@ module.exports = new Settings 'narrow',
         Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
       """
   )
-  Symbols: newProviderConfig()
+  AtomScan: newProviderConfig(
+    caseSensitivityForSearchTerm:
+      default: 'smartcase'
+      enum: ['smartcase', 'sensitive', 'insensitive']
+    searchWholeWord: false
+  )
+  Lines: newProviderConfig()
+  GitDiff: newProviderConfig()
