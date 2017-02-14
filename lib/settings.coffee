@@ -71,8 +71,11 @@ newProviderConfig = (otherProperties) ->
     autoPreview: true
     autoPreviewOnQueryChange: true
     closeOnConfirm: true
+    revealOnStartCondition:
+      default: 'always'
+      enum: ['never', 'always', 'on-input']
 
-  _.extend(properties, otherProperties) if otherProperties?
+  _.deepExtend(properties, otherProperties) if otherProperties?
 
   return {
     type: 'object'
@@ -97,18 +100,20 @@ module.exports = new Settings 'narrow',
 
   # Per providers settings
   # -------------------------
-  AtomScan: newProviderConfig(
-    caseSensitivityForSearchTerm:
-      default: 'smartcase'
-      enum: ['smartcase', 'sensitive', 'insensitive']
-    searchWholeWord: false
-  )
-  Bookmarks: newProviderConfig()
-  Fold: newProviderConfig()
-  GitDiff: newProviderConfig()
   GitDiffAll: newProviderConfig()
-  Lines: newProviderConfig()
+  Fold: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
+  )
+  Symbols: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
+  )
+  Linter: newProviderConfig()
+  Bookmarks: newProviderConfig()
   Scan: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
     searchWholeWord:
       default: false
       description: """
@@ -122,8 +127,6 @@ module.exports = new Settings 'narrow',
       Search term is first word of query, is used as search term
       """
   )
-
-  Linter: newProviderConfig()
   Search: newProviderConfig(
     caseSensitivityForSearchTerm:
       default: 'smartcase'
@@ -150,4 +153,14 @@ module.exports = new Settings 'narrow',
         Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
       """
   )
-  Symbols: newProviderConfig()
+  AtomScan: newProviderConfig(
+    caseSensitivityForSearchTerm:
+      default: 'smartcase'
+      enum: ['smartcase', 'sensitive', 'insensitive']
+    searchWholeWord: false
+  )
+  Lines: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
+  )
+  GitDiff: newProviderConfig()

@@ -267,6 +267,7 @@ Frequently using keymap with my keymap.
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"],
 atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
   ';': 'core:confirm-keep-open' # Confirm by `;`
+  "enter": 'core:confirm'
   ']': 'narrow-ui:preview-next-item' # preview next while cursor is at prompt
   '[': 'narrow-ui:preview-previous-item' # preview previous while cursor is at prompt
   'backspace': 'narrow:close' # I use ctrl-h for delete. So no problem.

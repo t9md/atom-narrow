@@ -5,7 +5,7 @@ ProviderBase = require './provider-base'
 
 module.exports =
 class Scan extends ProviderBase
-  boundToEditor: true
+  boundToSingleFile: true
   supportCacheItems: false
   supportDirectEdit: true
   showLineHeader: true

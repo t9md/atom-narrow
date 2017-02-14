@@ -7,6 +7,7 @@ _ = require 'underscore-plus'
   paneForItem
   getAdjacentPaneOrSplit
   getFirstCharacterPositionForBufferRow
+  isNarrowEditor
 } = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
@@ -15,7 +16,7 @@ Input = null
 module.exports =
 class ProviderBase
   needRestoreEditorState: true
-  boundToEditor: false
+  boundToSingleFile: false
   includeHeaderGrammar: false
 
   indentTextForLineHeader: ""
@@ -43,6 +44,15 @@ class ProviderBase
   getConfig: (name) ->
     settings.get("#{@getName()}.#{name}")
 
+  needAutoReveal: ->
+    switch @getConfig('revealOnStartCondition')
+      when 'never'
+        false
+      when 'always'
+        true
+      when 'on-input'
+        @options.query?.length
+
   initialize: ->
     # to override
 
@@ -52,6 +62,9 @@ class ProviderBase
 
   checkReady: ->
     Promise.resolve()
+
+  saveEditorState: ->
+    @restoreEditorState = saveEditorState(@editor)
 
   bindEditor: (editor) ->
     return if editor is @editor
@@ -80,12 +93,22 @@ class ProviderBase
 
   constructor: (editor, @options={}) ->
     @subscriptions = new CompositeDisposable
-    @restoreEditorState = saveEditorState(editor)
+
     @bindEditor(editor)
+    @saveEditorState()
     @checkReady().then =>
       {query, activate, pending} = @options
       @ui = new UI(this, {query, activate, pending})
       @initialize()
+
+      if isNarrowEditor(@editor)
+        # Invoked from another narrow-editor(= ex-narrow-editor).
+        # Rebind provider's editor to behaves like it invoked from normal-editor.
+        # Since checkReady, initialize take cursor word on narrow-editor,
+        #  re-bind must come AFTER checkReady() and initialize()
+        @bindEditor(UI.get(@editor).provider.editor)
+        @saveEditorState()
+
       @ui.start()
 
   subscribeEditor: (args...) ->
@@ -168,7 +191,7 @@ class ProviderBase
   # Direct Edit
   # -------------------------
   updateRealFile: (changes) ->
-    if @boundToEditor
+    if @boundToSingleFile
       # Intentionally avoid direct use of @editor to skip observation event
       # subscribed to @editor.
       # This prevent auto refresh, so undoable narrow-editor to last state.
@@ -186,7 +209,7 @@ class ProviderBase
           editor.setTextInBufferRange(range, newText)
 
           # Sync item's text state
-          # To allow re-edit if not saved and non-boundToEditor provider
+          # To allow re-edit if not saved and non-boundToSingleFile provider
           item.text = newText
 
       editor.save()

@@ -7,11 +7,11 @@ TagGenerator = requireFrom('symbols-view', 'tag-generator')
 # Symbols provider depending on ctag via TagGenerator.
 # Which read tag info from file on disk.
 # So we cant update symbol unless it's saved on disk.
-# This is very exceptional provider not supportCacheItems in spite of boundToEditor.
+# This is very exceptional provider not supportCacheItems in spite of boundToSingleFile.
 
 module.exports =
 class Symbols extends ProviderBase
-  boundToEditor: true
+  boundToSingleFile: true
   supportCacheItems: false # manage manually
   items: null
 

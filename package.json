@@ -5,7 +5,8 @@
   "description": "narrow something",
   "keywords": [
     "unite.vim",
-    "emacs-helm"
+    "emacs-helm",
+    "helm-swoop"
   ],
   "repository": "https://github.com/t9md/atom-narrow",
   "license": "MIT",

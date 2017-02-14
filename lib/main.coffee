@@ -60,7 +60,7 @@ module.exports =
 
     @subscriptions.add atom.commands.add 'atom-text-editor', 'dblclick', =>
       if settings.get('Search.startByDoubleClick')
-        @narrow('search', currentWord: true, activate: false, pending: true)
+        @narrow('search', currentWord: true, pending: true)
 
   getUi: ({skipProtected}={}) ->
     if ui = Ui.get(@lastFocusedNarrowEditor)

@@ -4,7 +4,7 @@ ProviderBase = require './provider-base'
 
 module.exports =
 class Lines extends ProviderBase
-  boundToEditor: true
+  boundToSingleFile: true
   supportDirectEdit: true
   supportCacheItems: true
   showLineHeader: true

@@ -226,12 +226,6 @@ class UI
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
 
-    if isNarrowEditor(@provider.editor)
-      exNarrowEditor = @provider.editor
-      # Invoked from another narrow-editor(= ex-narrow-editor).
-      # Rebind provider's editor to behaves like it invoked from normal-editor.
-      @provider.bindEditor(@constructor.get(exNarrowEditor).provider.editor)
-
     pane = getAdjacentPaneOrSplit(@provider.getPane(), split: settings.get('directionToOpen'))
     # pane.activate() unless pane.isActive()
 
@@ -245,6 +239,7 @@ class UI
     @grammar.activate()
     @insertQuery(@query)
     @providerPanel.show()
+    @moveToPrompt()
 
     @disposables.add(
       @registerCommands()
@@ -253,12 +248,27 @@ class UI
       @observeStopChangingActivePaneItem()
     )
 
-    @moveToPrompt()
     @refresh().then =>
+      if @provider.needAutoReveal()
+        if @syncToEditor()
+          row = @editor.getCursorBufferPosition().row
+          column = (@getSelectedItem()?._lineHeader?.length - 1) or 0
+          @editor.setCursorBufferPosition([row, column])
+          @preview()
+          previewd = true
+
       if @activate
-        @preview() if @query and @autoPreview
+        if @query and @autoPreviewOnQueryChange
+          @preview() unless previewd
       else
         @activateProviderPane()
+
+  revealClosestItem: ->
+    if @syncToEditor()
+      row = @editor.getCursorBufferPosition().row
+      column = (@getSelectedItem()?._lineHeader?.length - 1) or 0
+      @editor.setCursorBufferPosition([row, column])
+      @preview()
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
@@ -389,7 +399,7 @@ class UI
     @editor.lineTextForBufferRow(0)
 
   excludeFile: ->
-    return if @provider.boundToEditor
+    return if @provider.boundToSingleFile
     return unless selectedItem = @getSelectedItem()
     unless selectedItem.filePath in @excludedFiles
       @excludedFiles.push(selectedItem.filePath)
@@ -434,7 +444,7 @@ class UI
 
     promiseForItems.then (items) =>
       items = @provider.filterItems(items, filterSpec)
-      if not @provider.boundToEditor and @excludedFiles.length
+      if @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
 
       @items = [@promptItem, items...]
@@ -492,7 +502,7 @@ class UI
         else
           @refresh(selectFirstItem: true).then =>
             if @autoPreviewOnQueryChange and @isActive()
-              if @provider.boundToEditor
+              if @provider.boundToSingleFile
                 @preview()
               else
                 @debouncedPreview()
@@ -529,7 +539,7 @@ class UI
     # * Closest item is
     #  - Same filePath of current active-editor
     #  - It's point is less than or equal to active-editor's cursor position.
-    if @provider.boundToEditor
+    if @provider.boundToSingleFile
       items = @getNormalItems()
     else
       items = @getNormalItemsForFilePath(editor.getPath())
@@ -542,16 +552,19 @@ class UI
 
     return items[0]
 
-  syncToBoundEditor: ->
-    @syncToEditor(@provider.editor)
+  # Return success or fail
+  syncToEditor: ->
+    return false if @preventSyncToEditor
 
-  syncToEditor: (editor) ->
-    return if @preventSyncToEditor
+    editor = @provider.editor
     if item = @findClosestItemForEditor(editor)
       @selectItem(item)
       {row} = @editor.getCursorBufferPosition()
       @moveToSelectedItem(scrollToColumnZero: true)
       @emitDidMoveToItemArea() if @isPromptRow(row)
+      true
+    else
+      false
 
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove}={}) ->
     if (row = @getRowForSelectedItem()) >= 0
@@ -619,7 +632,7 @@ class UI
         return row
 
   findDifferentFileItem: (direction) ->
-    return if @provider.boundToEditor
+    return if @provider.boundToSingleFile
     return null unless selectedItem = @getSelectedItem()
 
     delta = switch direction
@@ -743,7 +756,7 @@ class UI
     newFilePath = editor.getPath()
 
     @provider.bindEditor(editor)
-    @syncToBoundEditor()
+    @syncToEditor()
 
     ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
@@ -751,15 +764,15 @@ class UI
       return unless isActiveEditor(editor)
       return if event.textChanged
       return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
-      @syncToBoundEditor()
+      @syncToEditor()
 
     @syncSubcriptions.add @onDidRefresh =>
-      @syncToBoundEditor()
+      @syncToEditor()
 
     # Avoid refresh while active, important to update-real-file don't cause auto-refresh.
     refresh = => @refresh(force: true) unless @isActive()
 
-    if @provider.boundToEditor
+    if @provider.boundToSingleFile
       # Refresh only when newFilePath is undefined or different from oldFilePath
       unless isDefinedAndEqual(oldFilePath, newFilePath)
         @refresh(force: true)
@@ -828,7 +841,7 @@ class UI
 
     return unless changes.length
 
-    unless @provider.boundToEditor
+    unless @provider.boundToSingleFile
       {success, message} = @ensureNoModifiedFileForChanges(changes)
       unless success
         atom.notifications.addWarning(message, dismissable: true)
