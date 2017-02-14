@@ -1,3 +1,26 @@
+# 0.26.0: Reveal on closest item on start! Now more helm-swoop-ish.
+- New: Reveal closest item on start
+  - New config param `revealOnStartCondition` control this behavior.
+  - Value can be
+    - `never`: never reveal( previous version's behavior )
+    - `always`: always try to reveal
+    - `on-input`: only when initial input query was provided via `-by-current-word` commands.
+  - Each provider have different default value( opinionated ). So no global default.
+    - Basic strategy to choose default value is here.
+      - boundToSingleFile( `scan`, `fold`, `symbols` ) provider have `on-input` default
+      - Other have `always` default( `search`, `atom-scan`, `git-diff-all` ).
+  - If you want previous version's behavior back, set `never` to each.
+- New: Rebind all text-editor except narrow-editor #140
+  - This is big design change.
+  - Now can `next-item`, `previous-item` for each active editor on every provider.
+    - In previous release, `next-item`, `previous-item` is tied to bound editor.
+    - So regardless os active-text-editor, these commands move cursor of narrow-invoking-editor.
+- Fix: Editor's scroll-top was not restored correctly on cancel.
+- Cosmetic: Change config order to less important providers come last.
+- Doc: Update keymap example
+- Improve: Avoid unnecessary refresh on re-bind to editor which have same filePath.
+- Internal: #139 Rename `boundToEditor` provider property to `boundToSingleFile` since now every provider have editor bound
+
 # 0.25.0:
 - New: [Experimental] #136, #135 double click start `narrow:search`
   - When new `Search.startByDoubleClick` config set to `true`( default `false` )
