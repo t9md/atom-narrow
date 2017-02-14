@@ -171,7 +171,6 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 ### My keymap(vim-mode-plus user) and config
 
-
 I set `closeOnConfirm` to `false` for all provider.  
 Since I want to close manually by `ctrl-g`(Maybe change default in future).  
 
@@ -179,26 +178,12 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
 
 ```
   narrow:
-    AtomScan:
-      closeOnConfirm: false
-    Bookmarks:
-      closeOnConfirm: false
-    Fold:
-      closeOnConfirm: false
-    GitDiff:
-      closeOnConfirm: false
     GitDiffAll:
-      closeOnConfirm: false
-    Lines:
-      closeOnConfirm: false
-    Linter:
       closeOnConfirm: false
     Scan: {}
     Search:
       closeOnConfirm: false
       startByDoubleClick: true
-    Symbols: {}
-    caseSensitivityForNarrowQuery: "sensitive"
     confirmOnUpdateRealFile: false
 ```
 
@@ -316,6 +301,21 @@ Following command are available from vim-mode-plus's search(`/` or `?`) mini-edi
 - Other than `I`, you can start `insert-mode` by `A`, `c` etc..
 
 # Q&A
+
+### What providers are you seriously using?
+
+In daily editing, I use.
+
+`scan`, `search`, `git-diff-all`, `symbols`.
+
+Why I'm not using others? reason is here.
+
+- `fold`: Since it similar to `symbols`.
+- `lines`: since `scan` is better.
+- `git-diff`: since `git-diff-all` is better.
+- `bookmarks`: since I don' use `bookmarks` feature
+- `linter`: rarely use it( this is just-tried-idea state, not polished ).
+- `atom-scan`: it is provided for windows user who can't use `search`(need `ag`).
 
 ### How can I exclude particular file from `narrow:search`
 
