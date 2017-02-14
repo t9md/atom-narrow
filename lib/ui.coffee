@@ -10,6 +10,7 @@ _ = require 'underscore-plus'
   paneForItem
   isDefinedAndEqual
   injectLineHeader
+  ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
 } = require './utils'
 settings = require './settings'
@@ -811,7 +812,14 @@ class Ui
       unless atom.confirm(message: 'Update real file?', buttons: ['Update', 'Cancel']) is 0
         return
 
-    return unless @ensureNarrowEditorIsValidState()
+    return if @editorLastRow isnt @editor.getLastBufferRow()
+
+    # Ensure all item have valid line header
+    if @provider.showLineHeader
+      itemHaveOriginalLineHeader = (item) =>
+        @editor.lineTextForBufferRow(@getRowForItem(item)).startsWith(item._lineHeader)
+      unless @getNormalItems().every(itemHaveOriginalLineHeader)
+        return
 
     changes = []
     lines = @editor.buffer.getLines()
@@ -824,7 +832,7 @@ class Ui
     return unless changes.length
 
     unless @provider.boundToSingleFile
-      {success, message} = @ensureNoModifiedFileForChanges(changes)
+      {success, message} = ensureNoModifiedFileForChanges(changes)
       unless success
         atom.notifications.addWarning(message, dismissable: true)
         return
@@ -836,35 +844,3 @@ class Ui
 
     @provider.updateRealFile(changes)
     @setModifiedState(false)
-
-  ensureNarrowEditorIsValidState: ->
-    unless @editorLastRow is @editor.getLastBufferRow()
-      return false
-
-    # Ensure all item have valid line header
-    if @provider.showLineHeader
-      for line, row in @editor.buffer.getLines() when @isNormalItem(item = @items[row])
-        return false unless line.startsWith(item._lineHeader)
-
-    true
-
-  getModifiedFilePathsInChanges: (changes) ->
-    _.uniq(changes.map ({item}) -> item.filePath).filter (filePath) ->
-      atom.project.isPathModified(filePath)
-
-  ensureNoModifiedFileForChanges: (changes) ->
-    message = ''
-    modifiedFilePaths = @getModifiedFilePathsInChanges(changes)
-    success = modifiedFilePaths.length is 0
-    unless success
-      modifiedFilePathsAsString = modifiedFilePaths.map((filePath) -> " - `#{filePath}`").join("\n")
-      message = """
-        Cancelled `update-real-file`.
-        You are trying to update file which have **unsaved modification**.
-        But `narrow:#{@provider.getDashName()}` can not detect unsaved change.
-        To use `update-real-file`, you need to save these files.
-
-        #{modifiedFilePathsAsString}
-        """
-
-    return {success, message}
