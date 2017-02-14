@@ -226,12 +226,6 @@ class UI
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
 
-    if isNarrowEditor(@provider.editor)
-      exNarrowEditor = @provider.editor
-      # Invoked from another narrow-editor(= ex-narrow-editor).
-      # Rebind provider's editor to behaves like it invoked from normal-editor.
-      @provider.bindEditor(@constructor.get(exNarrowEditor).provider.editor)
-
     pane = getAdjacentPaneOrSplit(@provider.getPane(), split: settings.get('directionToOpen'))
     # pane.activate() unless pane.isActive()
 
@@ -258,18 +252,23 @@ class UI
       if @provider.needAutoReveal()
         if @syncToEditor()
           row = @editor.getCursorBufferPosition().row
-          if @provider.showLineHeader
-            lineHeader = @getSelectedItem()?._lineHeader
-            column = lineHeader?.length - 1 or 0
-          else
-            column = 0
+          column = (@getSelectedItem()?._lineHeader?.length - 1) or 0
           @editor.setCursorBufferPosition([row, column])
           @preview()
+          previewd = true
 
       if @activate
-        @preview() if @query and @autoPreview
+        if @query and @autoPreviewOnQueryChange
+          @preview() unless previewd
       else
         @activateProviderPane()
+
+  revealClosestItem: ->
+    if @syncToEditor()
+      row = @editor.getCursorBufferPosition().row
+      column = (@getSelectedItem()?._lineHeader?.length - 1) or 0
+      @editor.setCursorBufferPosition([row, column])
+      @preview()
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>

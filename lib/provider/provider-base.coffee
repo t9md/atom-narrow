@@ -7,6 +7,7 @@ _ = require 'underscore-plus'
   paneForItem
   getAdjacentPaneOrSplit
   getFirstCharacterPositionForBufferRow
+  isNarrowEditor
 } = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
@@ -62,6 +63,9 @@ class ProviderBase
   checkReady: ->
     Promise.resolve()
 
+  saveEditorState: ->
+    @restoreEditorState = saveEditorState(@editor)
+
   bindEditor: (editor) ->
     return if editor is @editor
 
@@ -89,12 +93,22 @@ class ProviderBase
 
   constructor: (editor, @options={}) ->
     @subscriptions = new CompositeDisposable
-    @restoreEditorState = saveEditorState(editor)
+
     @bindEditor(editor)
+    @saveEditorState()
     @checkReady().then =>
       {query, activate, pending} = @options
       @ui = new UI(this, {query, activate, pending})
       @initialize()
+
+      if isNarrowEditor(@editor)
+        # Invoked from another narrow-editor(= ex-narrow-editor).
+        # Rebind provider's editor to behaves like it invoked from normal-editor.
+        # Since checkReady, initialize take cursor word on narrow-editor,
+        #  re-bind must come AFTER checkReady() and initialize()
+        @bindEditor(UI.get(@editor).provider.editor)
+        @saveEditorState()
+
       @ui.start()
 
   subscribeEditor: (args...) ->
