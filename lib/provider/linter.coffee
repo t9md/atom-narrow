@@ -1,6 +1,8 @@
 _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 
+{isNormalItem} = require '../utils'
+
 module.exports =
 class Linter extends ProviderBase
   includeHeaderGrammar: true
@@ -34,7 +36,7 @@ class Linter extends ProviderBase
 
   filterItems: (items, filterSpec) ->
     items = super
-    normalItems = _.reject(items, (item) -> item.skip)
+    normalItems = items.filter(isNormalItem)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))
 
     _.filter items, (item) ->

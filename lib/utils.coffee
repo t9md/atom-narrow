@@ -134,7 +134,7 @@ isDefinedAndEqual = (a, b) ->
 # item presenting
 # -------------------------
 injectLineHeader = (items, {showColumn}={}) ->
-  normalItems = _.reject(items, (item) -> item.skip)
+  normalItems = items.filter(isNormalItem)
   points = _.pluck(normalItems, 'point')
   maxLine = Math.max(_.pluck(points, 'row')...) + 1
   maxLineWidth = String(maxLine).length
@@ -209,6 +209,11 @@ detectConflictForChanges = (changes) ->
         conflictChanges[filePath].push(changesInRow...)
   conflictChanges
 
+# item utils
+# -------------------------
+isNormalItem = (item) ->
+  item? and not item.skip
+
 # -------------------------
 module.exports = {
   getAdjacentPaneForPane
@@ -233,4 +238,5 @@ module.exports = {
   injectLineHeader
   ensureNoConflictForChanges
   ensureNoModifiedFileForChanges
+  isNormalItem
 }

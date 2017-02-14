@@ -8,6 +8,7 @@ _ = require 'underscore-plus'
   getAdjacentPaneOrSplit
   getFirstCharacterPositionForBufferRow
   isNarrowEditor
+  isNormalItem
 } = require '../utils'
 UI = require '../ui'
 settings = require '../settings'
@@ -251,7 +252,7 @@ class ProviderBase
     new RegExp(source, flags)
 
   getItemsWithoutUnusedHeader: (items) ->
-    normalItems = _.reject(items, (item) -> item.skip)
+    normalItems = items.filter(isNormalItem)
     filePaths = _.uniq(_.pluck(normalItems, "filePath"))
     projectNames = _.uniq(_.pluck(normalItems, "projectName"))
 

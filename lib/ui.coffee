@@ -12,6 +12,7 @@ _ = require 'underscore-plus'
   injectLineHeader
   ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
+  isNormalItem
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -689,31 +690,23 @@ class Ui
   isPromptRow: (row) ->
     row is 0
 
-  isNormalItem: (item) ->
-    item? and not item.skip
-
   isNormalItemRow: (row) ->
-    @isNormalItem(@items[row])
+    isNormalItem(@items[row])
 
   getRowForItem: (item) ->
     @items.indexOf(item)
 
-  selectItem: (item) ->
-    @selectItemForRow(row) if (row = @getRowForItem(item)) >= 0
+  getNormalItems: ->
+    @items.filter(isNormalItem)
 
   hasNormalItem: ->
-    @items.some (item) -> (not item.skip)
-
-  hasSomeNormalItemForFilePath: (filePath) ->
-    @items.some (item) ->
-      (not item.skip) and (item.filePath is filePath)
-
-  getNormalItems: ->
-    @items.filter (item) -> (not item.skip)
+    @items.some(isNormalItem)
 
   getNormalItemsForFilePath: (filePath) ->
-    @items.filter (item) ->
-      (not item.skip) and (item.filePath is filePath)
+    @items.filter (item) -> isNormalItem(item) and (item.filePath is filePath)
+
+  hasSomeNormalItemForFilePath: (filePath) ->
+    @items.some (item) -> isNormalItem(item) and (item.filePath is filePath)
 
   # When filePath is undefined, it OK cause, `undefined` is `undefined`
   findItem: ({point, filePath}={}) ->
@@ -727,9 +720,11 @@ class Ui
   selectFirstNormalItem: ->
     @selectItemForRow(@findRowForNormalItem(0, 'next'))
 
+  selectItem: (item) ->
+    @selectItemForRow(@getRowForItem(item))
+
   selectItemForRow: (row) ->
-    item = @items[row]
-    if @isNormalItem(item)
+    if isNormalItem(item = @items[row])
       @itemIndicator.setToRow(row)
       @previouslySelectedItem = @selectedItem
       @selectedItem = item
@@ -823,7 +818,7 @@ class Ui
 
     changes = []
     lines = @editor.buffer.getLines()
-    for line, row in lines when @isNormalItem(item = @items[row])
+    for line, row in lines when isNormalItem(item = @items[row])
       if item._lineHeader?
         line = line[item._lineHeader.length...] # Strip lineHeader
       if line isnt item.text
