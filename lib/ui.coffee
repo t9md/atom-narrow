@@ -215,8 +215,6 @@ class Ui
       @disposables.add @onDidMoveToItemArea =>
         @setReadOnly(true)
 
-    @disposables.add(@registerCommands())
-
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
     @providerPanel = new ProviderPanel(this, showSearchOption: @provider.showSearchOption)
 
