@@ -14,23 +14,16 @@ getAdjacentPaneForPane = (pane) ->
 # Split is used when fail to find adjacent pane.
 # return pane
 getAdjacentPaneOrSplit = (basePane, {split}) ->
+  wasActive = basePane.isActive()
   pane = getAdjacentPaneForPane(basePane) ? switch split
     when 'right' then basePane.splitRight()
     when 'down' then basePane.splitDown()
 
-  # Can not 'split' without activating new pane so rever it here
-  basePane.activate() if pane.isActive()
+  # Can not 'split' without activating new pane
+  # re-activte basePane if it was active.
+  if wasActive and not basePane.isActive()
+    basePane.activate()
   pane
-
-smartScrollToBufferPosition = (editor, point) ->
-  editorElement = editor.element
-  editorAreaHeight = editor.getLineHeightInPixels() * (editor.getRowsPerPage() - 1)
-  onePageUp = editorElement.getScrollTop() - editorAreaHeight # No need to limit to min=0
-  onePageDown = editorElement.getScrollBottom() + editorAreaHeight
-  target = editorElement.pixelPositionForBufferPosition(point).top
-
-  center = (onePageDown < target) or (target < onePageUp)
-  editor.scrollToBufferPosition(point, {center})
 
 # Reloadable registerElement
 registerElement = (name, options) ->
@@ -136,10 +129,37 @@ itemForGitDiff = (diff, {editor, filePath}) ->
 isDefinedAndEqual = (a, b) ->
   a? and b? and a is b
 
+# Utils used in UI
+# -------------------------
+injectLineHeader = (items, {showColumn}={}) ->
+  normalItems = _.reject(items, (item) -> item.skip)
+  points = _.pluck(normalItems, 'point')
+  maxLine = Math.max(_.pluck(points, 'row')...) + 1
+  maxLineWidth = String(maxLine).length
+
+  if showColumn
+    maxColumn = Math.max(_.pluck(points, 'column')...) + 1
+    maxColumnWidth = Math.max(String(maxColumn).length, 2)
+
+  for item in normalItems
+    item._lineHeader = getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
+  items
+
+getLineHeaderForItem = (point, maxLineWidth, maxColumnWidth) ->
+  lineText = String(point.row + 1)
+  padding = " ".repeat(maxLineWidth - lineText.length)
+  lineHeader = "#{padding}#{lineText}"
+  if maxColumnWidth?
+    columnText = String(point.column + 1)
+    padding = " ".repeat(maxColumnWidth - columnText.length)
+    lineHeader = "#{lineHeader}:#{padding}#{columnText}"
+  lineHeader + ": "
+
+# -------------------------
+
 module.exports = {
   getAdjacentPaneForPane
   getAdjacentPaneOrSplit
-  smartScrollToBufferPosition
   registerElement
   saveEditorState
   requireFrom
@@ -156,4 +176,6 @@ module.exports = {
   updateDecoration
   itemForGitDiff
   isDefinedAndEqual
+
+  injectLineHeader
 }

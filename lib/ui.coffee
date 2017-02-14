@@ -9,6 +9,7 @@ _ = require 'underscore-plus'
   isNarrowEditor
   paneForItem
   isDefinedAndEqual
+  injectLineHeader
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -194,7 +195,7 @@ class Ui
     # Setup narrow-editor
     # -------------------------
     # Hide line number gutter for empty indent provider
-    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: @provider.indentTextForLineHeader)
+    @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
 
     providerDashName = @provider.getDashName()
     title = providerDashName + '-' + @titleNumber
@@ -434,7 +435,8 @@ class Ui
       promiseForItems = Promise.resolve(@cachedItems)
     else
       promiseForItems = Promise.resolve(@provider.getItems()).then (items) =>
-        @injectLineHeader(items) if @provider.showLineHeader
+        if @provider.showLineHeader
+          injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
         @cachedItems = items if @provider.supportCacheItems
         items
 
@@ -761,7 +763,7 @@ class Ui
     ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
-      return unless isActiveEditor(editor)
+      return unless @provider.isActive()
       return if event.textChanged
       return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
       @syncToEditor()
@@ -769,7 +771,8 @@ class Ui
     @syncSubcriptions.add @onDidRefresh =>
       @syncToEditor()
 
-    # Avoid refresh while active, important to update-real-file don't cause auto-refresh.
+    # Suppress refresh while ui is active.
+    # Important to update-real-file don't cause auto-refresh.
     refresh = => @refresh(force: true) unless @isActive()
 
     if @provider.boundToSingleFile
@@ -779,28 +782,6 @@ class Ui
       @syncSubcriptions.add editor.onDidStopChanging(refresh)
     else
       @syncSubcriptions.add editor.onDidSave(refresh)
-
-  # Return intems which are injected maxLineTextWidth(used to align lineHeader)
-  injectLineHeader: (items) ->
-    normalItems = _.reject(items, (item) -> item.skip)
-    points = _.pluck(normalItems, 'point')
-    maxLine = Math.max(_.pluck(points, 'row')...) + 1
-    maxColumn = Math.max(_.pluck(points, 'column')...) + 1
-    maxLineWidth = String(maxLine).length
-    maxColumnWidth = Math.max(String(maxColumn).length, 2)
-    for item in normalItems
-      item._lineHeader = @getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
-    items
-
-  getLineHeaderForItem: (point, maxLineWidth, maxColumnWidth) ->
-    lineText = String(point.row + 1)
-    padding = " ".repeat(maxLineWidth - lineText.length)
-    lineHeader = "#{@provider.indentTextForLineHeader}#{padding}#{lineText}"
-    if @provider.showColumnOnLineHeader
-      columnText = String(point.column + 1)
-      padding = " ".repeat(maxColumnWidth - columnText.length)
-      lineHeader = "#{lineHeader}:#{padding}#{columnText}"
-    lineHeader + ": "
 
   # vim-mode-plus integration
   # -------------------------

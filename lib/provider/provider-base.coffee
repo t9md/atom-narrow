@@ -19,7 +19,6 @@ class ProviderBase
   boundToSingleFile: false
   includeHeaderGrammar: false
 
-  indentTextForLineHeader: ""
   ignoreSideMovementOnSyncToEditor: true
   showLineHeader: false
   showColumnOnLineHeader: false
