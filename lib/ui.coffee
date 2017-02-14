@@ -18,8 +18,8 @@ ItemIndicator = require './item-indicator'
 ProviderPanel = require './provider-panel'
 
 module.exports =
-class UI
-  # UI static
+class Ui
+  # Ui static
   # -------------------------
   @uiByEditor: new Map()
   @unregister: (ui) ->
@@ -42,7 +42,7 @@ class UI
       numbers.push(ui.titleNumber)
     Math.max(numbers...) + 1
 
-  # UI.prototype
+  # Ui.prototype
   # -------------------------
   selectedItem: null
   previouslySelectedItem: null
