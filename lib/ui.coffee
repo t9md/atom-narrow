@@ -10,6 +10,7 @@ _ = require 'underscore-plus'
   paneForItem
   isDefinedAndEqual
   injectLineHeader
+  ensureNoConflictForChanges
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -828,7 +829,7 @@ class Ui
         atom.notifications.addWarning(message, dismissable: true)
         return
 
-    {success, message} = @ensureNoConflictForChanges(changes)
+    {success, message} = ensureNoConflictForChanges(changes)
     unless success
       atom.notifications.addWarning(message, dismissable: true)
       return
@@ -867,31 +868,3 @@ class Ui
         """
 
     return {success, message}
-
-  ensureNoConflictForChanges: (changes) ->
-    message = []
-    conflictChanges = @detectConflictForChanges(changes)
-    success = _.isEmpty(conflictChanges)
-    unless success
-      message.push """
-        Cancelled `update-real-file`.
-        Detected **conflicting change to same line**.
-        """
-      for filePath, changesInFile of conflictChanges
-        message.push("- #{filePath}")
-        for {newText, item} in changesInFile
-          message.push("  - #{item.point.translate([1, 1]).toString()}, #{newText}")
-
-    return {success, message: message.join("\n")}
-
-  detectConflictForChanges: (changes) ->
-    conflictChanges = {}
-    changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
-    for filePath, changesInFile of changesByFilePath
-      changesByRow = _.groupBy(changesInFile, ({item}) -> item.point.row)
-      for row, changesInRow of changesByRow
-        newTexts = _.pluck(changesInRow, 'newText')
-        if _.uniq(newTexts).length > 1
-          conflictChanges[filePath] ?= []
-          conflictChanges[filePath].push(changesInRow...)
-    conflictChanges

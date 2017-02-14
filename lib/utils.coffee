@@ -130,6 +130,8 @@ isDefinedAndEqual = (a, b) ->
   a? and b? and a is b
 
 # Utils used in UI
+# =========================
+# item presenting
 # -------------------------
 injectLineHeader = (items, {showColumn}={}) ->
   normalItems = _.reject(items, (item) -> item.skip)
@@ -155,8 +157,37 @@ getLineHeaderForItem = (point, maxLineWidth, maxColumnWidth) ->
     lineHeader = "#{lineHeader}:#{padding}#{columnText}"
   lineHeader + ": "
 
+# direct-edit related
 # -------------------------
+ensureNoConflictForChanges = (changes) ->
+  message = []
+  conflictChanges = detectConflictForChanges(changes)
+  success = _.isEmpty(conflictChanges)
+  unless success
+    message.push """
+      Cancelled `update-real-file`.
+      Detected **conflicting change to same line**.
+      """
+    for filePath, changesInFile of conflictChanges
+      message.push("- #{filePath}")
+      for {newText, item} in changesInFile
+        message.push("  - #{item.point.translate([1, 1]).toString()}, #{newText}")
 
+  return {success, message: message.join("\n")}
+
+detectConflictForChanges: (changes) ->
+  conflictChanges = {}
+  changesByFilePath =  _.groupBy(changes, ({item}) -> item.filePath)
+  for filePath, changesInFile of changesByFilePath
+    changesByRow = _.groupBy(changesInFile, ({item}) -> item.point.row)
+    for row, changesInRow of changesByRow
+      newTexts = _.pluck(changesInRow, 'newText')
+      if _.uniq(newTexts).length > 1
+        conflictChanges[filePath] ?= []
+        conflictChanges[filePath].push(changesInRow...)
+  conflictChanges
+
+# -------------------------
 module.exports = {
   getAdjacentPaneForPane
   getAdjacentPaneOrSplit
@@ -178,4 +209,5 @@ module.exports = {
   isDefinedAndEqual
 
   injectLineHeader
+  ensureNoConflictForChanges
 }
