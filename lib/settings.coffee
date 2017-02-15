@@ -131,6 +131,10 @@ module.exports = new Settings 'narrow',
     revealOnStartCondition:
       default: "on-input"
   )
+  ProjectSymbols: newProviderConfig(
+    revealOnStartCondition:
+      default: "always"
+  )
   Linter: newProviderConfig()
   Bookmarks: newProviderConfig()
   Scan: newProviderConfig(
