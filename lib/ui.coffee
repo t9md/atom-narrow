@@ -419,7 +419,9 @@ class Ui
         @cachedItems = items if @provider.supportCacheItems
         items
 
-    filterSpec = getFilterSpecForQuery(@lastQuery = @getQuery())
+    @lastQuery = @getQuery()
+    sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
+    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity})
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
