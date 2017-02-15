@@ -31,8 +31,11 @@ module.exports =
       # Providers
       'narrow:lines': => @narrow('lines')
       'narrow:fold': => @narrow('fold')
+      
       'narrow:symbols': => @narrow('symbols')
       'narrow:symbols-by-current-word': => @narrow('symbols', query: @getCurrentWord())
+      'narrow:project-symbols': => @narrow('project-symbols')
+      'narrow:project-symbols-by-current-word': => @narrow('project-symbols', query: @getCurrentWord())
 
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:git-diff-all': => @narrow('git-diff-all')
