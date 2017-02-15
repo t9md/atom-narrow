@@ -1,3 +1,6 @@
+# 0.26.1:
+- Fix, Critical: Duplicate ui command registration.
+
 # 0.26.0: Reveal on closest item on start! Now more helm-swoop-ish.
 - New: Reveal closest item on start
   - New config param `revealOnStartCondition` control this behavior.

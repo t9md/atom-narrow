@@ -51,11 +51,7 @@ class Highlighter
     return if @provider.boundToSingleFile and editor isnt @provider.editor
     return if @markerLayerByEditor.has(editor)
 
-    # Get items shown on narrow-editor and also matching editor's filePath
-    if @provider.boundToSingleFile
-      items = @ui.getNormalItems()
-    else
-      items = @ui.getNormalItemsForFilePath(editor.getPath())
+    items = @ui.getNormalItemsForEditor(editor)
     return unless items.length
 
     @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
@@ -71,12 +67,12 @@ class Highlighter
     @clearCurrent()
     return unless @ui.isActive()
 
-    if decoration = @decorationByItem.get(@ui.getSelectedItem())
+    if decoration = @decorationByItem.get(@ui.items.getSelectedItem())
       updateDecoration(decoration, (cssClass) -> cssClass + ' current')
 
   clearCurrent: ->
     return unless @needHighlight
-    items = [@ui.getPreviouslySelectedItem(), @ui.getSelectedItem()]
+    items = [@ui.items.getPreviouslySelectedItem(), @ui.items.getSelectedItem()]
     for item in items when item?
       if decoration = @decorationByItem.get(item)
         updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))

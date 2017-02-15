@@ -35,7 +35,7 @@ class ProviderPanel
 
     itemCountElement = @container.getElementsByClassName('item-counter')[0]
     @ui.onDidRefresh =>
-      itemCountElement.textContent = @ui.getNormalItems().length
+      itemCountElement.textContent = @ui.items.getCount()
 
     # loading
     refreshElement = @container.getElementsByClassName('refresh')[0]
