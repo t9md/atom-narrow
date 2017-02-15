@@ -45,7 +45,7 @@ class ProviderBase
 
   getConfig: (name) ->
     value = settings.get("#{@getName()}.#{name}")
-    if value is 'inherit'
+    if value is 'inherit' or not value?
       settings.get(name)
     else
       value
