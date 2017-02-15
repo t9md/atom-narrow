@@ -26,7 +26,7 @@ class Symbols extends ProviderBase
     scopeName = @editor.getGrammar().scopeName
     new TagGenerator(filePath, scopeName).generate().then (tags) =>
       tags = _.uniq(tags, (tag) -> tag.position.row)
-      @items = tags.map ({position}) =>
+      @items = tags.map ({position, name}) =>
         point: @getFirstCharacterPointOfRow(position.row)
-        text: @editor.lineTextForBufferRow(position.row)
+        text: '  '.repeat(@editor.indentationForBufferRow(position.row)) + name
       @items
