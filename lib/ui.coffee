@@ -20,6 +20,7 @@ getFilterSpecForQuery = require './get-filter-spec-for-query'
 Highlighter = require './highlighter'
 ItemIndicator = require './item-indicator'
 ProviderPanel = require './provider-panel'
+Items = require './items'
 
 module.exports =
 class Ui
@@ -181,6 +182,7 @@ class Ui
 
   constructor: (@provider, {@query, @activate, @pending}={}) ->
     @titleNumber = @constructor.getNextTitleNumber()
+    @items = new Items(this)
     @query ?= ''
     @pending ?= false
     @activate ?= true
@@ -352,13 +354,13 @@ class Ui
       # this command do nothing and default behavior is still executed.
       ensureCursorIsOneColumnLeftFromEOL = @vmpIsNormalMode()
       event.stopImmediatePropagation()
-      row = @findRowForNormalOrPromptItem(row, direction)
+      row = @items.findRowForNormalOrPromptItem(row, direction)
       setBufferRow(cursor, row, {ensureCursorIsOneColumnLeftFromEOL})
 
   # Even in movemnt not happens, it should confirm current item
   # This ensure next-item/previous-item always move to selected item.
   confirmItemForDirection: (direction) ->
-    row = @findRowForNormalItem(@getRowForSelectedItem(), direction)
+    row = @items.findRowForNormalItem(@getRowForSelectedItem(), direction)
     if row?
       @selectItemForRow(row)
       @confirm(keepOpen: true, flash: true)
@@ -385,7 +387,7 @@ class Ui
       # Don't want `tab` skip first seleted item.
       row = @getRowForSelectedItem()
     else
-      row = @findRowForNormalItem(@getRowForSelectedItem(), direction)
+      row = @items.findRowForNormalItem(@getRowForSelectedItem(), direction)
 
     if row?
       @selectItemForRow(row)
@@ -405,7 +407,7 @@ class Ui
     return unless selectedItem = @getSelectedItem()
     unless selectedItem.filePath in @excludedFiles
       @excludedFiles.push(selectedItem.filePath)
-      nextFileItem = @findDifferentFileItem('next')
+      nextFileItem = @items.findDifferentFileItem('next')
       {column} = @editor.getCursorBufferPosition()
       @refresh().then =>
         if nextFileItem
@@ -450,16 +452,16 @@ class Ui
       if @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
 
-      @items = [@promptItem, items...]
+      @items.setItems([@promptItem, items...])
       @renderItems(items)
 
-      if (not selectFirstItem) and item = @findItem(@selectedItem)
+      if (not selectFirstItem) and item = @items.findItem(@selectedItem)
         @selectItem(item)
       else
         @selectFirstNormalItem()
 
       @setModifiedState(false)
-      unless @hasNormalItem()
+      unless @items.hasNormalItem()
         @selectedItem = null
         @previouslySelectedItem = null
         @highlighter.clearLineMarker()
@@ -524,9 +526,9 @@ class Ui
       newRow = newBufferPosition.row
       oldRow = oldBufferPosition.row
 
-      if isHeaderRow = not @isPromptRow(newRow) and not @isNormalItemRow(newRow)
+      if isHeaderRow = not @isPromptRow(newRow) and not @items.isNormalItemRow(newRow)
         direction = if newRow > oldRow then 'next' else 'previous'
-        newRow = @findRowForNormalOrPromptItem(newRow, direction)
+        newRow = @items.findRowForNormalOrPromptItem(newRow, direction)
 
       if @isPromptRow(newRow)
         @withIgnoreCursorMove =>
@@ -600,7 +602,7 @@ class Ui
       @emitDidPreview({editor, item})
 
   confirm: ({keepOpen, flash}={}) ->
-    return unless @hasNormalItem()
+    return unless @items.hasNormalItem()
     item = @getSelectedItem()
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
 
@@ -610,43 +612,6 @@ class Ui
       else
         @highlighter.flashItem(editor, item) if flash
         @emitDidConfirm({editor, item})
-
-  # Return row
-  # Never fail since prompt is row 0 and always exists
-  findRowForNormalOrPromptItem: (row, direction) ->
-    delta = switch direction
-      when 'next' then +1
-      when 'previous' then -1
-
-    loop
-      row = getValidIndexForList(@items, row + delta)
-      if @isNormalItemRow(row) or @isPromptRow(row)
-        return row
-
-  # Return row
-  findRowForNormalItem: (row, direction) ->
-    return null unless @hasNormalItem()
-    delta = switch direction
-      when 'next' then +1
-      when 'previous' then -1
-
-    loop
-      if @isNormalItemRow(row = getValidIndexForList(@items, row + delta))
-        return row
-
-  findDifferentFileItem: (direction) ->
-    return if @provider.boundToSingleFile
-    return null unless selectedItem = @getSelectedItem()
-
-    delta = switch direction
-      when 'next' then +1
-      when 'previous' then -1
-
-    nextRow = (row) => getValidIndexForList(@items, row + delta)
-    startRow = row = @getRowForSelectedItem()
-    while (row = nextRow(row)) isnt startRow
-      if @isNormalItemRow(row) and @items[row].filePath isnt selectedItem.filePath
-        return @items[row]
 
   isCursorOutOfSyncWithSelectedItem: ->
     @editor.getCursorBufferPosition().row isnt @getRowForSelectedItem()
@@ -664,7 +629,7 @@ class Ui
 
     # Fallback to selected item in case there is only single filePath in all items
     # But want to move to item from query-prompt.
-    if item = @findDifferentFileItem(direction) ? @getSelectedItem()
+    if item = @items.findDifferentFileItem(direction) ? @getSelectedItem()
       @selectItem(item)
       @moveToSelectedItem(ignoreCursorMove: false)
 
@@ -676,9 +641,6 @@ class Ui
       # move to current item
       @editor.setCursorBufferPosition([row, 0])
 
-  getRowForSelectedItem: ->
-    @getRowForItem(@getSelectedItem())
-
   moveToPrompt: ->
     @withIgnoreCursorMove =>
       @editor.setCursorBufferPosition(@getPromptRange().end)
@@ -688,41 +650,26 @@ class Ui
   isPromptRow: (row) ->
     row is 0
 
-  isNormalItemRow: (row) ->
-    isNormalItem(@items[row])
-
-  getRowForItem: (item) ->
-    @items.indexOf(item)
+  getRowForSelectedItem: ->
+    @items.getRowForItem(@getSelectedItem())
 
   getNormalItems: ->
-    @items.filter(isNormalItem)
-
-  hasNormalItem: ->
-    @items.some(isNormalItem)
+    @items.getNormalItems()
 
   getNormalItemsForFilePath: (filePath) ->
-    @items.filter (item) -> isNormalItem(item) and (item.filePath is filePath)
-
-  hasSomeNormalItemForFilePath: (filePath) ->
-    @items.some (item) -> isNormalItem(item) and (item.filePath is filePath)
-
-  # When filePath is undefined, it OK cause, `undefined` is `undefined`
-  findItem: ({point, filePath}={}) ->
-    for item in @getNormalItems()
-      if item.point.isEqual(point) and item.filePath is filePath
-        return item
+    @items.getNormalItemsForFilePath(filePath)
 
   updateProviderPanel: (states) ->
     @providerPanel.updateStateElements(states)
 
   selectFirstNormalItem: ->
-    @selectItemForRow(@findRowForNormalItem(0, 'next'))
+    @selectItemForRow(@items.findRowForNormalItem(0, 'next'))
 
   selectItem: (item) ->
-    @selectItemForRow(@getRowForItem(item))
+    @selectItemForRow(@items.getRowForItem(item))
 
   selectItemForRow: (row) ->
-    if isNormalItem(item = @items[row])
+    if isNormalItem(item = @items.getItemForRow(row))
       @itemIndicator.setToRow(row)
       @previouslySelectedItem = @selectedItem
       @selectedItem = item
@@ -810,13 +757,13 @@ class Ui
     # Ensure all item have valid line header
     if @provider.showLineHeader
       itemHaveOriginalLineHeader = (item) =>
-        @editor.lineTextForBufferRow(@getRowForItem(item)).startsWith(item._lineHeader)
+        @editor.lineTextForBufferRow(@items.getRowForItem(item)).startsWith(item._lineHeader)
       unless @getNormalItems().every(itemHaveOriginalLineHeader)
         return
 
     changes = []
     lines = @editor.buffer.getLines()
-    for line, row in lines when isNormalItem(item = @items[row])
+    for line, row in lines when isNormalItem(item = @items.getItemForRow(row))
       if item._lineHeader?
         line = line[item._lineHeader.length...] # Strip lineHeader
       if line isnt item.text
