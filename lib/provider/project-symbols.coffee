@@ -30,20 +30,33 @@ class ProjectSymbols extends ProviderBase
   stop: ->
     @loadTagsTask?.terminate()
 
+  cacheItems: (items) ->
+    @constructor.cachedItems = items
+
+  getCachedItems: ->
+    @constructor.cachedItems
+
   start: ->
     @stop()
 
+    # excludeKinds = ['v']
+    kindOfInterests = 'cfm'
+
     new Promise (resolve) =>
-      if @cache?
-        resolve(@cache)
+      cache = @getCachedItems()
+      if cache?
+        return resolve(cache)
 
       @loadTagsTask = TagReader.getAllTags (tags) =>
         items = tags
+          .filter (tag) -> tag.kind in kindOfInterests
           .map(@itemForTag)
           .filter (item) -> item?
           .sort (a, b) -> a.point.compare(b.point)
-        @cache = @getItemsWithHeaders(items)
-        resolve(@cache)
+        items = _.uniq items, (item) -> item.filePath + item.text
+        items = @getItemsWithHeaders(items)
+        @cacheItems(items)
+        resolve(items)
 
   getItems: ->
     @start()
