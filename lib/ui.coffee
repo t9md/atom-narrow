@@ -218,13 +218,18 @@ class Ui
 
   getPaneToOpen: ->
     basePane = @provider.getPane()
-    pane = switch settings.get('adjacentPaneToOpen')
-      when 'next'
+
+    [direction, adjacentPanePreference] = @provider.getConfig('directionToOpen').split(':')
+
+    pane = switch adjacentPanePreference
+      when 'always-new-pane'
+        null
+      when 'never-use-previous-adjacent-pane'
         getNextAdjacentPaneForPane(basePane)
-      when 'next, previous'
+      else
         getNextAdjacentPaneForPane(basePane) ? getPreviousAdjacentPaneForPane(basePane)
 
-    pane ? splitPane(basePane, split: settings.get('directionToOpen'))
+    pane ? splitPane(basePane, split: direction)
 
   start: ->
     # When initial getItems() take very long time, it means refresh get delayed.

@@ -68,6 +68,17 @@ class Settings
 
 newProviderConfig = (otherProperties) ->
   properties =
+    directionToOpen:
+      default: 'inherit'
+      enum: [
+        'inherit'
+        'right'
+        'right:never-use-previous-adjacent-pane'
+        'right:always-new-pane'
+        'down'
+        'down:never-use-previous-adjacent-pane'
+        'down:always-new-pane'
+      ]
     autoPreview: true
     autoPreviewOnQueryChange: true
     closeOnConfirm: true
@@ -87,18 +98,16 @@ module.exports = new Settings 'narrow',
     default: true
     description: "When cursor moved to item area automatically change to read-only mode"
 
-  adjacentPaneToOpen:
-    default: 'next, previous'
-    enum: [
-      'next, previous'
-      'next'
-      'none'
-    ]
-    description: "Where to open narrow-editor when adjacent pane was available"
-
   directionToOpen:
     default: 'right'
-    enum: ['right', 'down']
+    enum: [
+      'right'
+      'right:never-use-previous-adjacent-pane'
+      'right:always-new-pane'
+      'down'
+      'down:never-use-previous-adjacent-pane'
+      'down:always-new-pane'
+    ]
     description: "Where to open narrow-editor when open by split pane."
 
   caseSensitivityForNarrowQuery:

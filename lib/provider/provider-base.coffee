@@ -44,7 +44,11 @@ class ProviderBase
     _.dasherize(@getName())
 
   getConfig: (name) ->
-    settings.get("#{@getName()}.#{name}")
+    value = settings.get("#{@getName()}.#{name}")
+    if value is 'inherit'
+      settings.get(name)
+    else
+      value
 
   needAutoReveal: ->
     switch @getConfig('revealOnStartCondition')
@@ -149,7 +153,7 @@ class ProviderBase
     else
       getPreviousAdjacentPaneForPane(paneForUi) or
         getNextAdjacentPaneForPane(paneForUi) or
-        splitPane(paneForUi, split: settings.get('directionToOpen'))
+        splitPane(paneForUi, split: @getConfig('directionToOpen').split(':')[0])
 
   openFileForItem: ({filePath}, {activatePane}={}) ->
     filePath ?= @editor.getPath()
