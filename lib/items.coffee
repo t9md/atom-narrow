@@ -99,27 +99,29 @@ class Items
     for item in @getNormalItems(filePath) when item.point.isEqual(point)
       return item
 
-  # Return row
-  # Never fail since prompt is row 0 and always exists
-  findRowForNormalOrPromptItem: (row, direction) ->
+  findRowBy: (row, direction, fn) ->
+    startRow = row
     delta = switch direction
       when 'next' then +1
       when 'previous' then -1
 
     loop
       row = getValidIndexForList(@items, row + delta)
-      if @isNormalItemRow(row) or @isPromptRow(row)
+      if fn(row)
         return row
+
+      if row is startRow
+        return null
+
+  # Return row
+  # Never fail since prompt is row 0 and always exists
+  findRowForNormalOrPromptItem: (row, direction) ->
+    @findRowBy row, direction, (row) =>
+      @isNormalItemRow(row) or @isPromptRow(row)
 
   findRowForNormalItem: (row, direction) ->
     return null unless @hasNormalItem()
-    delta = switch direction
-      when 'next' then +1
-      when 'previous' then -1
-
-    loop
-      if @isNormalItemRow(row = getValidIndexForList(@items, row + delta))
-        return row
+    @findRowBy row, direction, (row) => @isNormalItemRow(row)
 
   findNormalItemInDirection: (row, direction) ->
     row = @findRowForNormalItem(row, direction)
@@ -128,16 +130,10 @@ class Items
   findDifferentFileItem: (direction) ->
     return if @ui.provider.boundToSingleFile
     return null unless selectedItem = @getSelectedItem()
-
-    delta = switch direction
-      when 'next' then +1
-      when 'previous' then -1
-
-    nextRow = (row) => getValidIndexForList(@items, row + delta)
-    startRow = row = @getRowForSelectedItem()
-    while (row = nextRow(row)) isnt startRow
-      if @isNormalItemRow(row) and @items[row].filePath isnt selectedItem.filePath
-        return @items[row]
+    filePath = selectedItem.filePath
+    row = @findRowBy @getRowForSelectedItem(), direction, (row) =>
+      @isNormalItemRow(row) and @getItemForRow(row).filePath isnt filePath
+    @getItemForRow(row)
 
   findClosestItemForBufferPosition: (point, {filePath}={}) ->
     items = @getNormalItems(filePath)

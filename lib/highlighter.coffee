@@ -67,12 +67,12 @@ class Highlighter
     @clearCurrent()
     return unless @ui.isActive()
 
-    if decoration = @decorationByItem.get(@ui.getSelectedItem())
+    if decoration = @decorationByItem.get(@ui.items.getSelectedItem())
       updateDecoration(decoration, (cssClass) -> cssClass + ' current')
 
   clearCurrent: ->
     return unless @needHighlight
-    items = [@ui.getPreviouslySelectedItem(), @ui.getSelectedItem()]
+    items = [@ui.items.getPreviouslySelectedItem(), @ui.items.getSelectedItem()]
     for item in items when item?
       if decoration = @decorationByItem.get(item)
         updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
