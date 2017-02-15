@@ -22,6 +22,7 @@ class Items
     @indicator.destroy()
 
   setItems: (@items) ->
+    @reset()
 
   isPromptRow: (row) ->
     row is 0
@@ -94,10 +95,6 @@ class Items
   getCount: ->
     @getNormalItems().length
 
-  # When filePath is undefined, it OK cause, `undefined` is `undefined`
-  findSelectedItem: ->
-    @findItem(@selectedItem)
-
   findItem: ({point, filePath}={}) ->
     for item in @getNormalItems(filePath) when item.point.isEqual(point)
       return item
@@ -124,6 +121,10 @@ class Items
       if @isNormalItemRow(row = getValidIndexForList(@items, row + delta))
         return row
 
+  findNormalItemInDirection: (row, direction) ->
+    row = @findRowForNormalItem(row, direction)
+    @getItemForRow(row) if row?
+
   findDifferentFileItem: (direction) ->
     return if @ui.provider.boundToSingleFile
     return null unless selectedItem = @getSelectedItem()
@@ -145,16 +146,16 @@ class Items
       return item
     return items[0]
 
-  findRowForClosestItemInDirection: (point, direction) ->
+  selectItemInDirection: (point, direction) ->
+    itemToSelect = null
     item = @getSelectedItem()
-    rowForSelectedItem = @getRowForItem(item)
-    switch direction
-      when 'next'
-        if item? and point.isLessThan(item.range?.start ? item.point)
-          return rowForSelectedItem
 
-      when 'previous'
-        if item? and point.isGreaterThan(item.range?.end ? item.point)
-          return rowForSelectedItem
+    if item?
+      switch direction
+        when 'next'
+          itemToSelect = item if point.isLessThan(item.point)
+        when 'previous'
+          itemToSelect = item if point.isGreaterThan(item.range?.end ? item.point)
 
-    @findRowForNormalItem(rowForSelectedItem, direction)
+    itemToSelect ?= @findNormalItemInDirection(@getRowForItem(item), direction)
+    @selectItem(itemToSelect)

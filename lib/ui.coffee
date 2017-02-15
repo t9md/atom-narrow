@@ -205,7 +205,6 @@ class Ui
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
 
     @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
-
     @items = new Items(this)
 
     if settings.get('autoShiftReadOnlyOnMoveToItemArea')
@@ -350,11 +349,9 @@ class Ui
   # Even in movemnt not happens, it should confirm current item
   # This ensure next-item/previous-item always move to selected item.
   confirmItemForDirection: (direction) ->
-    cursorPosition = @provider.editor.getCursorBufferPosition()
-    row = @items.findRowForClosestItemInDirection(cursorPosition, direction)
-    if row?
-      @items.selectItemForRow(row)
-      @confirm(keepOpen: true, flash: true)
+    point = @provider.editor.getCursorBufferPosition()
+    @items.selectItemInDirection(point, direction)
+    @confirm(keepOpen: true, flash: true)
 
   nextItem: ->
     @confirmItemForDirection('next')
@@ -434,10 +431,11 @@ class Ui
       if @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
 
+      selectedItem = @items.getSelectedItem()
       @items.setItems([@promptItem, items...])
       @renderItems(items)
 
-      if (not selectFirstItem) and item = @items.findSelectedItem()
+      if (not selectFirstItem) and item = @items.findItem(selectedItem)
         @items.selectItem(item)
       else
         @items.selectFirstNormalItem()
@@ -573,8 +571,7 @@ class Ui
       @emitDidPreview({editor, item})
 
   confirm: ({keepOpen, flash}={}) ->
-    return unless @items.hasNormalItem()
-    item = @getSelectedItem()
+    return unless item = @getSelectedItem()
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
 
     @provider.confirmed(item).then (editor) =>
