@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
 {
-  getAdjacentPaneForPane
+  getNextAdjacentPaneForPane
   splitPane
   isActiveEditor
   setBufferRow
@@ -222,7 +222,7 @@ class Ui
     @setModifiedState(false)
 
     providerPane = @provider.getPane()
-    pane = getAdjacentPaneForPane(providerPane)
+    pane = getNextAdjacentPaneForPane(providerPane)
     pane ?= splitPane(providerPane, split: settings.get('directionToOpen'))
 
     # [NOTE] When new item is activated, existing PENDING item is destroyed.

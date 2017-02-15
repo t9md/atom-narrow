@@ -5,7 +5,8 @@ _ = require 'underscore-plus'
   saveEditorState
   isActiveEditor
   paneForItem
-  getAdjacentPaneForPane
+  getNextAdjacentPaneForPane
+  getPreviousAdjacentPaneForPane
   splitPane
   getFirstCharacterPositionForBufferRow
   isNarrowEditor
@@ -146,7 +147,9 @@ class ProviderBase
     if pane? and pane isnt paneForUi
       pane
     else
-      getAdjacentPaneForPane(paneForUi) ? splitPane(paneForUi, split: settings.get('directionToOpen'))
+      getPreviousAdjacentPaneForPane(paneForUi) or
+        getNextAdjacentPaneForPane(paneForUi) or
+        splitPane(paneForUi, split: settings.get('directionToOpen'))
 
   openFileForItem: ({filePath}, {activatePane}={}) ->
     filePath ?= @editor.getPath()

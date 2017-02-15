@@ -1,15 +1,24 @@
 {Disposable, Point} = require 'atom'
 _ = require 'underscore-plus'
 
-getAdjacentPaneForPane = (pane) ->
-  return unless children = pane.getParent().getChildren?()
-  index = children.indexOf(pane)
+getAdjacentPane = (basePane, which) ->
+  return unless children = basePane.getParent().getChildren?()
+  index = children.indexOf(basePane)
+  index = switch which
+    when 'next' then index + 1
+    when 'previous' then index - 1
 
-  _.chain([children[index-1], children[index+1]])
-    .filter (pane) ->
-      pane?.constructor?.name is 'Pane'
-    .last()
-    .value()
+  pane = children[index]
+  if pane?.constructor?.name is 'Pane'
+    pane
+  else
+    null
+
+getNextAdjacentPaneForPane = (basePane) ->
+  getAdjacentPane(basePane, 'next')
+
+getPreviousAdjacentPaneForPane = (basePane) ->
+  getAdjacentPane(basePane, 'previous')
 
 splitPane = (basePane, {split}) ->
   wasActive = basePane.isActive()
@@ -213,7 +222,7 @@ isNormalItem = (item) ->
 
 # -------------------------
 module.exports = {
-  getAdjacentPaneForPane
+  getNextAdjacentPaneForPane
   splitPane
   registerElement
   saveEditorState
