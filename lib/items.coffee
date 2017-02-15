@@ -1,3 +1,5 @@
+{Emitter, Point} = require 'atom'
+ItemIndicator = require './item-indicator'
 {
   isNormalItem
   getValidIndexForList
@@ -5,16 +7,65 @@
 
 module.exports =
 class Items
+  selectedItem: null
+  previouslySelectedItem: null
   items: []
+
+  onDidChangeSelectedItem: (fn) -> @emitter.on('did-change-selected-item', fn)
+  emitDidChangeSelectedItem: (event) -> @emitter.emit('did-change-selected-item', event)
+
   constructor: (@ui) ->
+    @emitter = new Emitter
+    @indicator = new ItemIndicator(@ui)
+
+  destroy: ->
+    @indicator.destroy()
 
   setItems: (@items) ->
 
   isPromptRow: (row) ->
     row is 0
 
+  reset: ->
+    @selectedItem = null
+    @previouslySelectedItem = null
+
+  redrawIndicator: ->
+    @indicator.redraw()
+
+  selectItem: (item) ->
+    @selectItemForRow(@getRowForItem(item))
+
+  selectItemForRow: (row) ->
+    if isNormalItem(item = @getItemForRow(row))
+      @indicator.setToRow(row)
+      @previouslySelectedItem = @selectedItem
+      @selectedItem = item
+      event = {
+        oldItem: @previouslySelectedItem
+        newItem: @selectedItem
+      }
+      @emitDidChangeSelectedItem(event)
+
+  selectFirstNormalItem: ->
+    @selectItemForRow(@findRowForNormalItem(0, 'next'))
+
+  getFirstPositionForSelectedItem: ->
+    row = @getRowForItem(@selectedItem)
+    column = @getFirstColumnForItem(@selectedItem)
+    new Point(row, column)
+
+  getFirstColumnForItem: (item) ->
+    item._lineHeader?.length - 1 ? 0
+
   getSelectedItem: ->
-    @ui.getSelectedItem()
+    @selectedItem
+
+  hasSelectedItem: ->
+    @selectedItem?
+
+  getPreviouslySelectedItem: ->
+    @previouslySelectedItem
 
   getRowForSelectedItem: ->
     @getRowForItem(@getSelectedItem())
@@ -28,20 +79,25 @@ class Items
   getItemForRow: (row) ->
     @items[row]
 
-  getNormalItems: ->
-    @items.filter(isNormalItem)
+  getNormalItems: (filePath=null) ->
+    if filePath?
+      @items.filter (item) -> isNormalItem(item) and (item.filePath is filePath)
+    else
+      @items.filter(isNormalItem)
 
   hasNormalItem: ->
     @items.some(isNormalItem)
 
-  getNormalItemsForFilePath: (filePath) ->
-    @items.filter (item) -> isNormalItem(item) and (item.filePath is filePath)
+  getCount: ->
+    @getNormalItems().length
 
   # When filePath is undefined, it OK cause, `undefined` is `undefined`
+  findSelectedItem: ->
+    @findItem(@selectedItem)
+
   findItem: ({point, filePath}={}) ->
-    for item in @getNormalItems()
-      if item.point.isEqual(point) and item.filePath is filePath
-        return item
+    for item in @getNormalItems(filePath) when item.point.isEqual(point)
+      return item
 
   # Return row
   # Never fail since prompt is row 0 and always exists
@@ -78,3 +134,24 @@ class Items
     while (row = nextRow(row)) isnt startRow
       if @isNormalItemRow(row) and @items[row].filePath isnt selectedItem.filePath
         return @items[row]
+
+  findClosestItemForBufferPosition: (point, {filePath}={}) ->
+    items = @getNormalItems(filePath)
+    return null unless items.length
+    for item in items by -1 when item.point.isLessThanOrEqual(point)
+      return item
+    return items[0]
+
+  findRowForClosestItemInDirection: (point, direction) ->
+    item = @getSelectedItem()
+    rowForSelectedItem = @getRowForItem(item)
+    switch direction
+      when 'next'
+        if item? and point.isLessThan(item.range?.start ? item.point)
+          return rowForSelectedItem
+
+      when 'previous'
+        if item? and point.isGreaterThan(item.range?.end ? item.point)
+          return rowForSelectedItem
+
+    @findRowForNormalItem(rowForSelectedItem, direction)
