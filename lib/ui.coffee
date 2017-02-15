@@ -2,6 +2,7 @@ _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
 {
   getNextAdjacentPaneForPane
+  getPreviousAdjacentPaneForPane
   splitPane
   isActiveEditor
   setBufferRow
@@ -215,20 +216,27 @@ class Ui
     @disposables.add new Disposable =>
       @constructor.unregister(this)
 
+  getPaneToOpen: ->
+    basePane = @provider.getPane()
+    pane = switch settings.get('adjacentPaneToOpen')
+      when 'next'
+        getNextAdjacentPaneForPane(basePane)
+      when 'next, previous'
+        getNextAdjacentPaneForPane(basePane) ? getPreviousAdjacentPaneForPane(basePane)
+
+    pane ? splitPane(basePane, split: settings.get('directionToOpen'))
+
   start: ->
     # When initial getItems() take very long time, it means refresh get delayed.
     # In this case, user see modified icon(mark) on tab.
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
 
-    providerPane = @provider.getPane()
-    pane = getNextAdjacentPaneForPane(providerPane)
-    pane ?= splitPane(providerPane, split: settings.get('directionToOpen'))
-
     # [NOTE] When new item is activated, existing PENDING item is destroyed.
     # So existing PENDING narrow-editor is destroyed at this timing.
     # And PENDING narrow-editor's provider's editor have foucsed.
     # So pane.activate must be called AFTER activateItem
+    pane = @getPaneToOpen()
     pane.activateItem(@editor, {@pending})
     pane.activate()
 

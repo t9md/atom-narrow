@@ -223,6 +223,7 @@ isNormalItem = (item) ->
 # -------------------------
 module.exports = {
   getNextAdjacentPaneForPane
+  getPreviousAdjacentPaneForPane
   splitPane
   registerElement
   saveEditorState

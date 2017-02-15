@@ -87,15 +87,25 @@ module.exports = new Settings 'narrow',
     default: true
     description: "When cursor moved to item area automatically change to read-only mode"
 
+  adjacentPaneToOpen:
+    default: 'next, previous'
+    enum: [
+      'next, previous'
+      'next'
+      'none'
+    ]
+    description: "Where to open narrow-editor when adjacent pane was available"
+
   directionToOpen:
     default: 'right'
     enum: ['right', 'down']
-    description: "Where to open narrow-editor"
+    description: "Where to open narrow-editor when open by split pane."
 
   caseSensitivityForNarrowQuery:
     default: 'smartcase'
     enum: ['smartcase', 'sensitive', 'insensitive']
     description: "Case sensitivity of your query in narrow-editor"
+
   confirmOnUpdateRealFile: true
 
   # Per providers settings
