@@ -431,18 +431,16 @@ class Ui
       if @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
 
-      selectedItem = @items.getSelectedItem()
+      oldSelectedItem = @items.getSelectedItem()
       @items.setItems([@promptItem, items...])
       @renderItems(items)
 
-      if (not selectFirstItem) and item = @items.findItem(selectedItem)
-        @items.selectItem(item)
+      if @items.hasNormalItem()
+        if (not selectFirstItem) and item = @items.findItem(oldSelectedItem)
+          @items.selectItem(item)
+        else
+          @items.selectFirstNormalItem()
       else
-        @items.selectFirstNormalItem()
-
-      @setModifiedState(false)
-      unless @items.hasNormalItem()
-        @items.reset()
         @highlighter.clearLineMarker()
 
       @emitDidRefresh()
@@ -458,6 +456,7 @@ class Ui
         @providerPanel.show() # redraw providerPanel block decoration.
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
+      @setModifiedState(false)
       @editorLastRow = range.end.row
 
   debouncedPreview: ->
