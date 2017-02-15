@@ -11,14 +11,11 @@ getAdjacentPaneForPane = (pane) ->
     .last()
     .value()
 
-# Split is used when fail to find adjacent pane.
-# return pane
-getAdjacentPaneOrSplit = (basePane, {split}) ->
+splitPane = (basePane, {split}) ->
   wasActive = basePane.isActive()
-  pane = getAdjacentPaneForPane(basePane) ? switch split
+  pane = switch split
     when 'right' then basePane.splitRight()
     when 'down' then basePane.splitDown()
-
   # Can not 'split' without activating new pane
   # re-activte basePane if it was active.
   if wasActive and not basePane.isActive()
@@ -217,7 +214,7 @@ isNormalItem = (item) ->
 # -------------------------
 module.exports = {
   getAdjacentPaneForPane
-  getAdjacentPaneOrSplit
+  splitPane
   registerElement
   saveEditorState
   requireFrom

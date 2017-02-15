@@ -5,7 +5,8 @@ _ = require 'underscore-plus'
   saveEditorState
   isActiveEditor
   paneForItem
-  getAdjacentPaneOrSplit
+  getAdjacentPaneForPane
+  splitPane
   getFirstCharacterPositionForBufferRow
   isNarrowEditor
   isNormalItem
@@ -140,10 +141,12 @@ class ProviderBase
   # In this case item should be opened on adjacent pane, not on provider.pane.
   getPaneForOpenItem: ->
     pane = @getPane()
-    if pane? and pane isnt @ui.getPane()
+    paneForUi = @ui.getPane()
+
+    if pane? and pane isnt paneForUi
       pane
     else
-      getAdjacentPaneOrSplit(@ui.getPane(), split: settings.get('directionToOpen'))
+      getAdjacentPaneForPane(paneForUi) ? splitPane(paneForUi, split: settings.get('directionToOpen'))
 
   openFileForItem: ({filePath}, {activatePane}={}) ->
     filePath ?= @editor.getPath()

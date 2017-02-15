@@ -1,7 +1,8 @@
 _ = require 'underscore-plus'
 {Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
 {
-  getAdjacentPaneOrSplit
+  getAdjacentPaneForPane
+  splitPane
   isActiveEditor
   setBufferRow
   isTextEditor
@@ -220,8 +221,9 @@ class Ui
     # Explicitly setting modified start here prevent this
     @setModifiedState(false)
 
-    pane = getAdjacentPaneOrSplit(@provider.getPane(), split: settings.get('directionToOpen'))
-    # pane.activate() unless pane.isActive()
+    providerPane = @provider.getPane()
+    pane = getAdjacentPaneForPane(providerPane)
+    pane ?= splitPane(providerPane, split: settings.get('directionToOpen'))
 
     # [NOTE] When new item is activated, existing PENDING item is destroyed.
     # So existing PENDING narrow-editor is destroyed at this timing.
@@ -424,7 +426,7 @@ class Ui
         if (not selectFirstItem) and item = @items.findItem(oldSelectedItem)
           @items.selectItem(item)
           if wasCursorSyncWithSelectedItem
-            @moveToSelectedItem(ignoreCursorMove: false)
+            @moveToSelectedItem(ignoreCursorMove: not @isActive())
             row = @editor.getCursorBufferPosition().row
             @editor.setCursorBufferPosition([row, oldColumn])
         else
