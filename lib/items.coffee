@@ -56,7 +56,10 @@ class Items
     new Point(row, column)
 
   getFirstColumnForItem: (item) ->
-    item._lineHeader?.length - 1 ? 0
+    if item._lineHeader?
+      item._lineHeader.length - 1
+    else
+      0
 
   getSelectedItem: ->
     @selectedItem
