@@ -35,7 +35,7 @@ alpha
 # Features
 
 - Auto preview items under cursor(default `true` for all providers).
-- Auto update items on narrow-editor when item changed(e.g. `narrow:lines` refresh items when text changed).
+- Auto update items on narrow-editor when item changed(e.g. `narrow:scan` refresh items when text changed).
 - Auto refresh items on active text-editor change(e.g. `narrow:symbols` always shows current-editor's symbol list).
 - Auto sync editor's cursor position to selected item on narrow-editor(narrowing UI).
 - Navigate between narrowed items without focusing narrow-editor.
@@ -46,28 +46,28 @@ alpha
 
 # Bundled providers
 
+- `scan`: Scan current editor.
 - `search`: Search by `ag`( you need to install `ag` by yourself).
 - `atom-scan`: Similar to `search` but use Atom's `atom.workspace.scan`.
-- `lines`: Narrow current editors lines.
-- `scan`: Scan current editor by `TextEditor.prototype.scan`. created for better replacement of `narrow:lines`.
 - `fold`: Provide fold-starting rows as item.
 - `git-diff`: Show git-diff for current active-editor. Info source is from core `git-diff` package.
 - `git-diff-all`: Show all modified state file across project.
 - `bookmarks`: For core `bookmarks` package
-- `symbols`: Symbols are provided by core `symbols-views` package's.
+- `symbols`: Provide symbols for current file.
+- `project-symbols`: Provide project-wide symbols information by reading `tags` file.
 - `linter`: Use message provided by [linter](https://atom.io/packages/linter) package.
 
 # Quick tour
 
 To follow this quick-tour, you don't need custom keymap.
 
-### Step1. basic by using `narrow:lines`
+### Step1. basic by using `narrow:scan`
 
-Items are each lines on editor.
+Initial items are each lines on editor.
 
-1. Open some text-editor, then via command-palette, invoke `Narrow Line`.
+1. Open some text-editor, then via command-palette, invoke `Narrow Scan`.
 2. narrow-editor opened, as you type, you can narrow items.
-3. When you type `apple lemon` as query. lines which matched both `apple` and `lemon` are listed.
+3. When you type `apple` as query. all `apple` matching items are listed.
 4. You can move normal `up`, `down`(or `j`, `k` in read-only mode) key to quick-preview items.
 5. `enter` to confirm. When confirmed, narrow-editor closed.
 
@@ -75,7 +75,7 @@ The read-only mode is enabled by default.
 
 ### Step2. navigate from outside of `narrow-editor`.
 
-1. Open some text-editor, then via command-palette, invoke `Narrow Line`.
+1. Open some text-editor, then via command-palette, invoke `Narrow Scan`.
 2. narrow-editor opened, as you type, you can narrow items.
 3. Click invoking editor. And see your clicked position is auto reflected narrow-editor.
 4. `ctrl-cmd-n` to move to `next-item`, `ctrl-cmd-p` to move to `previous-item`.
@@ -89,7 +89,7 @@ The read-only mode is enabled by default.
 ### Step3. [DANGER] direct-edit
 
 Direct-edit is "edit on narrow-editor then save to real-file" feature.  
-Available for these three providers `lines`, `search` and `atom-scan`.  
+Available for these three providers `scan`, `search` and `atom-scan`.  
 
 ⚠️ This feature is really new and still experimental state.  
 ⚠️ Don't try code-base which is not managed by SCM.  
@@ -109,14 +109,14 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 
 1. Set `Search.startByDoubleClick` to `true` from settings-view.
 2. Double click keyword in editor.
-3. Each time you duble click keyword, new `narrow-editor` open and old one is replaced.
-4. You can continue double click which ever `narrow-editor` or normal-editor.
+3. Each time you duble click keyword, new narrow-editor open and old one is replaced.
+4. You can continue double click which ever narrow-editor or normal-editor.
 
 # Commands
 
 ### Available in all text-editor
 
-##### Ohters
+##### Other
 
 - `narrow:focus`: ( `ctrl-cmd-f` ) Focus to `narrow-editor`, if executed in `narrow-editor`, it re-focus to original editor.
 - `narrow:focus-prompt`: ( `ctrl-cmd-i` ) Focus to `narrow-editor`'s query input prompt, if executed in `narrow-editor`, it re-focus to original editor.
@@ -125,12 +125,10 @@ Available for these three providers `lines`, `search` and `atom-scan`.
 - `narrow:next-item`: ( `ctrl-cmd-n` ) Move cursor to position of next-item.
 - `narrow:previous-item`: ( `ctrl-cmd-p` ) Move cursor to position of previous-item.
 
-##### Provider commands
+##### Invoke narrow provide
 
 No keymaps are provided
 
-- `narrow:lines`
-- `narrow:lines-by-current-word`
 - `narrow:scan`
 - `narrow:scan-by-current-word`
 - `narrow:fold`
@@ -141,14 +139,16 @@ No keymaps are provided
 - `narrow:search-current-project-by-current-word`
 - `narrow:atom-scan`
 - `narrow:atom-scan-by-current-word`
-- `narrow:focus`
 - `narrow:symbols`
+- `narrow:symbols-by-current-word`
+- `narrow:project-symbols`:
+- `narrow:project-symbols-by-current-word`:
 - `narrow:linter`
 - `narrow:bookmarks`
 - `narrow:git-diff`
 - `narrow:git-diff-all`
 
-### narrow-editor(narrow-ui)
+### Available in narrow-editor(narrow-ui)
 
 - `core:confirm`: ( `enter` ) Close `narrow-editor`
 - `narrow-ui:confirm-keep-open`: keep open `narrow-editor`
@@ -164,7 +164,7 @@ No keymaps are provided
 
 # Keymaps
 
-No keymap to invoke narrow provider(e.g `narrow:lines`).  
+No keymap to invoke narrow provider(e.g `narrow:scan`).  
 Start it from command-palette or set keymap in `keymap.cson`.
 
 ⚠️ [default keymap](https://github.com/t9md/atom-narrow/blob/master/keymaps/narrow.cson) is not yet settled, this will likely to change in future version.   
@@ -174,16 +174,17 @@ Start it from command-palette or set keymap in `keymap.cson`.
 I set `closeOnConfirm` to `false` for all provider.  
 Since I want to close manually by `ctrl-g`(Maybe change default in future).  
 
-###### config
+###### `config.cson`
 
 ```
   narrow:
     GitDiffAll:
       closeOnConfirm: false
-    Scan: {}
     Search:
       closeOnConfirm: false
       startByDoubleClick: true
+    Symbols:
+      directionToOpen: "down:always-new-pane"
     confirmOnUpdateRealFile: false
 ```
 
@@ -211,13 +212,14 @@ Frequently using keymap with my keymap.
   'enter': 'narrow:search-by-current-word'
   'shift-cmd-g': 'narrow:search-by-current-word'
 
+  'shift-cmd-o': 'narrow:project-symbols-by-current-word'
+  'shift-cmd-r': 'narrow:project-symbols'
+
   # assign consistently
   'space f': 'narrow:fold'
   'space o': 'narrow:symbols'
   'space l': 'narrow:scan'
   'space L': 'narrow:scan-by-current-word'
-  # 'space l': 'narrow:lines'
-  # 'space L': 'narrow:lines-by-current-word'
   'space c': 'narrow:linter'
   'space s': 'narrow:search'
   'space S': 'narrow:search-by-current-word'
@@ -311,7 +313,6 @@ In daily editing, I use.
 Why I'm not using others? reason is here.
 
 - `fold`: Since it similar to `symbols`.
-- `lines`: since `scan` is better.
 - `git-diff`: since `git-diff-all` is better.
 - `bookmarks`: since I don' use `bookmarks` feature
 - `linter`: rarely use it( this is just-tried-idea state, not polished ).
