@@ -1,4 +1,4 @@
-# 0.27.1:
+# 0.27.0:
 - New: `project-symbols` provider, following commands are available
   - `narrow:project-symbols`:
   - `narrow:project-symbols-by-current-word`:
