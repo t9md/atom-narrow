@@ -66,7 +66,6 @@ itemForTag = (tag) ->
 
 module.exports =
 class ProjectSymbols extends ProviderBase
-  includeHeaderGrammar: true
   supportCacheItems: false # manage manually
   showLineHeader: false
 

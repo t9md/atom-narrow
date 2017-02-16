@@ -20,7 +20,6 @@ module.exports =
 class ProviderBase
   needRestoreEditorState: true
   boundToSingleFile: false
-  includeHeaderGrammar: false
 
   showLineHeader: true
   showColumnOnLineHeader: false

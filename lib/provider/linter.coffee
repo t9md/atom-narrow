@@ -5,7 +5,6 @@ ProviderBase = require './provider-base'
 
 module.exports =
 class Linter extends ProviderBase
-  includeHeaderGrammar: true
   supportDirectEdit: true
 
   injectLineText: (filePath, items) ->

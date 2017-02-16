@@ -205,7 +205,7 @@ class Ui
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
 
-    @grammar = new Grammar(@editor, includeHeaderRules: @provider.includeHeaderGrammar)
+    @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
     @items = new Items(this)
 
     if settings.get('autoShiftReadOnlyOnMoveToItemArea')
