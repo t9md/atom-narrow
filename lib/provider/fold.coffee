@@ -15,6 +15,7 @@ getCodeFoldStartRows = (editor, indentLevel) ->
 module.exports =
 class Fold extends ProviderBase
   boundToSingleFile: true
+  showLineHeader: false
   foldLevel: 2
   supportCacheItems: true
 

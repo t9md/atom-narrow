@@ -13,6 +13,8 @@ module.exports =
 class Symbols extends ProviderBase
   boundToSingleFile: true
   supportCacheItems: false # manage manually
+  showLineHeader: false
+
   items: null
 
   onBindEditor: ({newEditor}) ->

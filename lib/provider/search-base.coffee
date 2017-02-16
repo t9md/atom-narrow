@@ -8,7 +8,6 @@ module.exports =
 class SearchBase extends ProviderBase
   includeHeaderGrammar: true
   supportDirectEdit: true
-  showLineHeader: true
   showColumnOnLineHeader: true
   searchRegExp: null
   itemHaveRange: true

@@ -22,7 +22,7 @@ class ProviderBase
   boundToSingleFile: false
   includeHeaderGrammar: false
 
-  showLineHeader: false
+  showLineHeader: true
   showColumnOnLineHeader: false
   updateGrammarOnQueryChange: true
   itemHaveRange: false

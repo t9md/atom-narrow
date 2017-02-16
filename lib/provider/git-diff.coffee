@@ -12,7 +12,6 @@ module.exports =
 class GitDiff extends ProviderBase
   boundToSingleFile: true
   supportCacheItems: true
-  showLineHeader: true
 
   getItems: ->
     filePath = @editor.getPath()

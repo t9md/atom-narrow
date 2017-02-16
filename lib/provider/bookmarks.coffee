@@ -19,7 +19,6 @@ getBookmarks = ->
 module.exports =
 class Bookmarks extends ProviderBase
   includeHeaderGrammar: true
-  showLineHeader: true
   supportCacheItems: false
 
   getItemsForEditor: (editor, markerLayer) ->

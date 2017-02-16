@@ -7,7 +7,6 @@ module.exports =
 class Linter extends ProviderBase
   includeHeaderGrammar: true
   supportDirectEdit: true
-  showLineHeader: true
 
   injectLineText: (filePath, items) ->
     # Inject real lineText

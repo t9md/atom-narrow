@@ -24,7 +24,6 @@ module.exports =
 class GitDiffAll extends ProviderBase
   supportCacheItems: false
   includeHeaderGrammar: true
-  showLineHeader: true
 
   getItems: ->
     promises = []

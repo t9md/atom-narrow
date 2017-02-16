@@ -8,7 +8,6 @@ class Scan extends ProviderBase
   boundToSingleFile: true
   supportCacheItems: false
   supportDirectEdit: true
-  showLineHeader: true
   showColumnOnLineHeader: true
   updateGrammarOnQueryChange: false # for manual update
   itemHaveRange: true

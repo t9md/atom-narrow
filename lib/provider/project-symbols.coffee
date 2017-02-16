@@ -68,6 +68,7 @@ module.exports =
 class ProjectSymbols extends ProviderBase
   includeHeaderGrammar: true
   supportCacheItems: false # manage manually
+  showLineHeader: false
 
   onBindEditor: ({newEditor}) ->
     # Refresh item.point in cachedItems for saved filePath.
