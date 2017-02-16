@@ -262,7 +262,7 @@ class Ui
 
     @refresh().then =>
       if @provider.needAutoReveal()
-        if @syncToEditor()
+        if @syncToEditor(@provider.editor)
           @moveToBeginningOfSelectedItem()
           @preview()
           previewd = true
@@ -532,9 +532,8 @@ class Ui
         @preview() if @autoPreview
 
   # Return success or fail
-  syncToEditor: ->
+  syncToEditor: (editor) ->
     return false if @preventSyncToEditor
-    editor = @provider.editor
 
     point = editor.getCursorBufferPosition()
     if @provider.boundToSingleFile
@@ -657,18 +656,17 @@ class Ui
     newFilePath = editor.getPath()
 
     @provider.bindEditor(editor)
-    @syncToEditor()
+    @syncToEditor(editor)
 
     ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
 
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
-      return unless @provider.isActive()
       return if event.textChanged
       return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
-      @syncToEditor()
+      @syncToEditor(editor) if isActiveEditor(editor)
 
     @syncSubcriptions.add @onDidRefresh =>
-      @syncToEditor()
+      @syncToEditor(editor) if isActiveEditor(editor)
 
     # Suppress refresh while ui is active.
     # Important to update-real-file don't cause auto-refresh.
