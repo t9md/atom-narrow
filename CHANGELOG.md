@@ -1,3 +1,8 @@
+# 0.28.0: WIP
+- Breaking: #146 Remove `narrow:lines` in favor of `narrow:scan`
+  - Use `narrow:scan`, it's better than old `narrow:lines`
+  - Removed to stop user continue to use `narrow:lines`.
+
 # 0.27.0:
 - New: `project-symbols` provider, following commands are available
   - `narrow:project-symbols`:
