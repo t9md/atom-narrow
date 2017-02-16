@@ -178,10 +178,9 @@ class Ui
       @editorElement.classList.remove('read-only')
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
-  constructor: (@provider, {@query, @activate, @pending}={}) ->
+  constructor: (@provider, {@query, @pending}={}) ->
     @query ?= ''
     @pending ?= false
-    @activate ?= true
     @disposables = new CompositeDisposable
     @emitter = new Emitter
     @excludedFiles = []
@@ -262,11 +261,8 @@ class Ui
           @preview()
           previewd = true
 
-      if @activate
-        if @query and @autoPreviewOnQueryChange
-          @preview() unless previewd
-      else
-        @activateProviderPane()
+      if @query and @autoPreviewOnQueryChange
+        @preview() unless previewd
 
   moveToBeginningOfSelectedItem: ->
     point = @items.getFirstPositionForSelectedItem()

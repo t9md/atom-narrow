@@ -98,8 +98,8 @@ class ProviderBase
     @bindEditor(editor)
     @saveEditorState()
     @checkReady().then =>
-      {query, activate, pending} = @options
-      @ui = new Ui(this, {query, activate, pending})
+      {query, pending} = @options
+      @ui = new Ui(this, {query, pending})
       @initialize()
 
       if isNarrowEditor(@editor)
