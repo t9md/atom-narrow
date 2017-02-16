@@ -10,9 +10,8 @@ class Scan extends ProviderBase
   supportDirectEdit: true
   showLineHeader: true
   showColumnOnLineHeader: true
-  ignoreSideMovementOnSyncToEditor: false
   updateGrammarOnQueryChange: false # for manual update
-  supportRangeHighlight: true
+  itemHaveRange: true
   showSearchOption: true
   searchIgnoreCaseChangedManually: false
 

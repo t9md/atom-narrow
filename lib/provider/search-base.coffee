@@ -6,14 +6,12 @@ ProviderBase = require './provider-base'
 
 module.exports =
 class SearchBase extends ProviderBase
-  ignoreSideMovementOnSyncToEditor: false
-
   includeHeaderGrammar: true
   supportDirectEdit: true
   showLineHeader: true
   showColumnOnLineHeader: true
   searchRegExp: null
-  supportRangeHighlight: true
+  itemHaveRange: true
   showSearchOption: true
 
   checkReady: ->

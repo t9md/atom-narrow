@@ -14,7 +14,7 @@ class Highlighter
 
   constructor: (@ui) ->
     @provider = @ui.provider
-    @needHighlight = @provider.supportRangeHighlight
+    @needHighlight = @provider.itemHaveRange
     @markerLayerByEditor = new Map()
     @decorationByItem = new Map()
     @subscriptions = new CompositeDisposable

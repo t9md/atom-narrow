@@ -658,7 +658,7 @@ class Ui
     @provider.bindEditor(editor)
     @syncToEditor(editor)
 
-    ignoreColumnChange = @provider.ignoreSideMovementOnSyncToEditor
+    ignoreColumnChange = not @provider.itemHaveRange
 
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
       return if event.textChanged

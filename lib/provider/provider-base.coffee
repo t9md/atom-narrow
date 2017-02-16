@@ -22,11 +22,10 @@ class ProviderBase
   boundToSingleFile: false
   includeHeaderGrammar: false
 
-  ignoreSideMovementOnSyncToEditor: true
   showLineHeader: false
   showColumnOnLineHeader: false
   updateGrammarOnQueryChange: true
-  supportRangeHighlight: false
+  itemHaveRange: false
 
   supportDirectEdit: false
   supportCacheItems: false
@@ -96,7 +95,7 @@ class ProviderBase
 
   isActive: ->
     isActiveEditor(@editor)
-    
+
   constructor: (editor, @options={}) ->
     @subscriptions = new CompositeDisposable
 
