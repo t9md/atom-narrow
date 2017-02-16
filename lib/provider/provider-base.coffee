@@ -12,7 +12,7 @@ _ = require 'underscore-plus'
   isNarrowEditor
   isNormalItem
 } = require '../utils'
-UI = require '../ui'
+Ui = require '../ui'
 settings = require '../settings'
 Input = null
 
@@ -103,7 +103,7 @@ class ProviderBase
     @saveEditorState()
     @checkReady().then =>
       {query, activate, pending} = @options
-      @ui = new UI(this, {query, activate, pending})
+      @ui = new Ui(this, {query, activate, pending})
       @initialize()
 
       if isNarrowEditor(@editor)
@@ -111,7 +111,7 @@ class ProviderBase
         # Rebind provider's editor to behaves like it invoked from normal-editor.
         # Since checkReady, initialize take cursor word on narrow-editor,
         #  re-bind must come AFTER checkReady() and initialize()
-        @bindEditor(UI.get(@editor).provider.editor)
+        @bindEditor(Ui.get(@editor).provider.editor)
         @saveEditorState()
 
       @ui.start()
@@ -131,12 +131,7 @@ class ProviderBase
   destroy: ->
     @subscriptions.dispose()
     @editorSubscriptions.dispose()
-    pane = paneForItem(@editor)
-    if @editor.isAlive() and pane.isAlive() and @needRestoreEditorState
-      @restoreEditorState()
-      pane.activate()
-      pane.activateItem(@editor)
-
+    @restoreEditorState() if @needRestoreEditorState
     {@editor, @editorSubscriptions} = {}
 
   # When narrow was invoked from existing narrow-editor.

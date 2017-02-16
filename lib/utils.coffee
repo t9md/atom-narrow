@@ -49,6 +49,11 @@ saveEditorState = (editor) ->
 
   foldStartRows = editor.displayLayer.foldsMarkerLayer.findMarkers({}).map (m) -> m.getStartPosition().row
   ->
+    pane = paneForItem(editor)
+    return unless pane?
+    pane.activate()
+    pane.activateItem(editor)
+
     unless editor.getCursorBufferPosition().isEqual(cursorPosition)
       editor.setCursorBufferPosition(cursorPosition)
     for row in foldStartRows.reverse() when not editor.isFoldedAtBufferRow(row)
@@ -135,7 +140,7 @@ itemForGitDiff = (diff, {editor, filePath}) ->
 isDefinedAndEqual = (a, b) ->
   a? and b? and a is b
 
-# Utils used in UI
+# Utils used in Ui
 # =========================
 # item presenting
 # -------------------------
