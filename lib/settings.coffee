@@ -133,7 +133,7 @@ module.exports = new Settings 'narrow',
   )
   ProjectSymbols: newProviderConfig(
     revealOnStartCondition:
-      default: "always"
+      default: "on-input"
   )
   Linter: newProviderConfig()
   Bookmarks: newProviderConfig()

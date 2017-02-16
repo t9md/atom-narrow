@@ -1,6 +1,7 @@
 {CompositeDisposable} = require 'atom'
 settings = require './settings'
 Ui = require './ui'
+globalSubscriptions = require './global-subscriptions'
 
 {isNarrowEditor, getCurrentWord, getVisibleEditors} = require './utils'
 
@@ -31,7 +32,7 @@ module.exports =
       # Providers
       'narrow:lines': => @narrow('lines')
       'narrow:fold': => @narrow('fold')
-      
+
       'narrow:symbols': => @narrow('symbols')
       'narrow:symbols-by-current-word': => @narrow('symbols', query: @getCurrentWord())
       'narrow:project-symbols': => @narrow('project-symbols')
@@ -95,6 +96,7 @@ module.exports =
     new klass(editor, options)
 
   deactivate: ->
+    globalSubscriptions.dispose()
     @subscriptions?.dispose()
     {@subscriptions} = {}
 
