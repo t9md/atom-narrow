@@ -27,7 +27,6 @@ module.exports =
       'narrow:previous-item': => @getUi()?.previousItem()
 
       # Providers
-      'narrow:lines': => @narrow('lines')
       'narrow:fold': => @narrow('fold')
 
       'narrow:symbols': => @narrow('symbols')
@@ -41,7 +40,6 @@ module.exports =
       'narrow:bookmarks': => @narrow('bookmarks')
       'narrow:linter': => @narrow('linter')
 
-      'narrow:lines-by-current-word': => @narrow('lines', query: @getCurrentWord())
       'narrow:fold-by-current-word': => @narrow('fold', query: @getCurrentWord())
 
       'narrow:scan': => @narrow('scan')
@@ -116,7 +114,6 @@ module.exports =
       return text
 
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
-      'vim-mode-plus-user:narrow:lines': => @narrow('lines', query: confirmSearch(), fromVmp: true)
       'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', query: confirmSearch(), fromVmp: true)
       'vim-mode-plus-user:narrow:search': => @narrow('search', search: confirmSearch(), fromVmp: true)
       'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', search: confirmSearch(), fromVmp: true)

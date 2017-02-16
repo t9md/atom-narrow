@@ -185,8 +185,4 @@ module.exports = new Settings 'narrow',
       enum: ['smartcase', 'sensitive', 'insensitive']
     searchWholeWord: false
   )
-  Lines: newProviderConfig(
-    revealOnStartCondition:
-      default: "on-input"
-  )
   GitDiff: newProviderConfig()
