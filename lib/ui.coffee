@@ -78,6 +78,9 @@ class Ui
   onWillRefresh: (fn) -> @emitter.on('will-refresh', fn)
   emitWillRefresh: -> @emitter.emit('will-refresh')
 
+  onWillRefreshManually: (fn) -> @emitter.on('will-refresh-manually', fn)
+  emitWillRefreshManually: -> @emitter.emit('will-refresh-manually')
+
   onDidChangeSelectedItem: (fn) -> @items.onDidChangeSelectedItem(fn)
 
   # 'did-stop-refreshing' event is debounced, fired after stopRefreshingDelay
@@ -404,6 +407,10 @@ class Ui
       @excludedFiles = []
       @refresh()
 
+  refreshManually: (options) ->
+    @emitWillRefreshManually()
+    @refresh(options)
+
   refresh: ({force, selectFirstItem}={}) ->
     @emitWillRefresh()
 
@@ -419,7 +426,9 @@ class Ui
         @cachedItems = items if @provider.supportCacheItems
         items
 
-    filterSpec = getFilterSpecForQuery(@lastQuery = @getQuery())
+    @lastQuery = @getQuery()
+    sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
+    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity})
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 

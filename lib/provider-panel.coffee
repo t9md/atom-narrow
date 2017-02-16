@@ -104,7 +104,7 @@ class ProviderPanel
 
   refresh: (event) =>
     suppressEvent(event)
-    @ui.refresh(force: true)
+    @ui.refreshManually(force: true)
 
   toggleProtected: (event) =>
     suppressEvent(event)

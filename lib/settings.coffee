@@ -79,6 +79,9 @@ newProviderConfig = (otherProperties) ->
         'down:never-use-previous-adjacent-pane'
         'down:always-new-pane'
       ]
+    caseSensitivityForNarrowQuery:
+      default: 'inherit'
+      enum: ['inherit', 'smartcase', 'sensitive', 'insensitive']
     autoPreview: true
     autoPreviewOnQueryChange: true
     closeOnConfirm: true
@@ -125,6 +128,10 @@ module.exports = new Settings 'narrow',
       default: "on-input"
   )
   Symbols: newProviderConfig(
+    revealOnStartCondition:
+      default: "on-input"
+  )
+  ProjectSymbols: newProviderConfig(
     revealOnStartCondition:
       default: "on-input"
   )

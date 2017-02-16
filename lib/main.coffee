@@ -1,6 +1,7 @@
 {CompositeDisposable} = require 'atom'
 settings = require './settings'
 Ui = require './ui'
+globalSubscriptions = require './global-subscriptions'
 
 {isNarrowEditor, getCurrentWord, getVisibleEditors} = require './utils'
 
@@ -20,10 +21,7 @@ module.exports =
       # Shared commands
       'narrow:focus': => @getUi()?.toggleFocus()
       'narrow:focus-prompt': => @getUi()?.focusPrompt()
-      'narrow:refresh': =>
-        if (ui = @getUi())?
-          ui.refresh(force: true)
-          ui.moveToPrompt() if ui.isActive()
+      'narrow:refresh': => @getUi()?.refreshManually(force: true)
       'narrow:close': => @getUi(skipProtected: true)?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()
@@ -31,8 +29,11 @@ module.exports =
       # Providers
       'narrow:lines': => @narrow('lines')
       'narrow:fold': => @narrow('fold')
+
       'narrow:symbols': => @narrow('symbols')
       'narrow:symbols-by-current-word': => @narrow('symbols', query: @getCurrentWord())
+      'narrow:project-symbols': => @narrow('project-symbols')
+      'narrow:project-symbols-by-current-word': => @narrow('project-symbols', query: @getCurrentWord())
 
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:git-diff-all': => @narrow('git-diff-all')
@@ -92,6 +93,7 @@ module.exports =
     new klass(editor, options)
 
   deactivate: ->
+    globalSubscriptions.dispose()
     @subscriptions?.dispose()
     {@subscriptions} = {}
 
