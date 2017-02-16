@@ -11,6 +11,7 @@ class SearchBase extends ProviderBase
   searchRegExp: null
   itemHaveRange: true
   showSearchOption: true
+  supportCacheItems: true
 
   checkReady: ->
     if @options.currentWord

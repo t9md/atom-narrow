@@ -39,8 +39,6 @@ getOutputterForFile = (items) ->
 
 module.exports =
 class Search extends SearchBase
-  supportCacheItems: true
-
   checkReady: ->
     if @options.currentProject
       for dir in atom.project.getDirectories() when dir.contains(@editor.getPath())

@@ -18,7 +18,6 @@ getBookmarks = ->
 
 module.exports =
 class Bookmarks extends ProviderBase
-  supportCacheItems: false
 
   getItemsForEditor: (editor, markerLayer) ->
     filePath = editor.getPath()

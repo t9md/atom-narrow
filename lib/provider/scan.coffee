@@ -6,7 +6,6 @@ ProviderBase = require './provider-base'
 module.exports =
 class Scan extends ProviderBase
   boundToSingleFile: true
-  supportCacheItems: false
   supportDirectEdit: true
   showColumnOnLineHeader: true
   updateGrammarOnQueryChange: false # for manual update

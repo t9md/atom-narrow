@@ -5,8 +5,6 @@ SearchBase = require './search-base'
 
 module.exports =
 class AtomScan extends SearchBase
-  supportCacheItems: true
-
   # Not used but keep it since I'm planning to introduce per file refresh on modification
   scanFile: (regexp, filePath) ->
     items = []

@@ -66,7 +66,6 @@ itemForTag = (tag) ->
 
 module.exports =
 class ProjectSymbols extends ProviderBase
-  supportCacheItems: false # manage manually
   showLineHeader: false
 
   onBindEditor: ({newEditor}) ->

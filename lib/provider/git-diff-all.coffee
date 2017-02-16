@@ -22,7 +22,6 @@ getItemsForFilePath = (repo, filePath) ->
 
 module.exports =
 class GitDiffAll extends ProviderBase
-  supportCacheItems: false
 
   getItems: ->
     promises = []
