@@ -196,14 +196,12 @@ class Ui
     # Setup narrow-editor
     # -------------------------
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
-
-    providerDashName = @provider.getDashName()
     @titleNumber = @constructor.getNextTitleNumber()
-    title = providerDashName + '-' + @titleNumber
+    title = @provider.dashName + '-' + @titleNumber
     @editor.getTitle = -> title
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
-    @editorElement.classList.add('narrow', 'narrow-editor', providerDashName)
+    @editorElement.classList.add('narrow', 'narrow-editor', @provider.dashName)
 
     @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
     @items = new Items(this)

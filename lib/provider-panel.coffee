@@ -15,7 +15,7 @@ class ProviderPanel
     @container.innerHTML = """
       <div class='base inline-block'>
         <a class='auto-preview'></a>
-        <span class='provider-name'>#{@provider.getDashName()}</span>
+        <span class='provider-name'>#{@provider.dashName}</span>
         <span class='item-counter'>0</span>
         <a class='refresh'></a>
         <a class='protected'></a>

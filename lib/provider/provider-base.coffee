@@ -35,14 +35,8 @@ class ProviderBase
   searchIgnoreCase: null
   showSearchOption: false
 
-  getName: ->
-    @constructor.name
-
-  getDashName: ->
-    _.dasherize(@getName())
-
   getConfig: (name) ->
-    value = settings.get("#{@getName()}.#{name}")
+    value = settings.get("#{@name}.#{name}")
     if value is 'inherit' or not value?
       settings.get(name)
     else
@@ -96,6 +90,9 @@ class ProviderBase
     isActiveEditor(@editor)
 
   constructor: (editor, @options={}) ->
+    @name = @constructor.name
+    @dashName = _.dasherize(@name)
+
     @subscriptions = new CompositeDisposable
 
     @bindEditor(editor)
