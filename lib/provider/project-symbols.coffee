@@ -57,17 +57,25 @@ itemForTag = (tag) ->
   # - Result is cached, so not cahange-aware
   # - Point determination by getTagLine is done by searching tags.pattern, so it resilient agains small changes.
   # - If point determined at confirmation, it less likely to land incorrect position.
-  return null unless point = getTagLine(tag)
   {
-    point: point
+    point: getTagLine(tag)
     filePath: path.join(tag.directory, tag.file)
     text: tag.name
+    refreshPoint: -> @point = getTagLine(tag)
   }
 
 module.exports =
 class ProjectSymbols extends ProviderBase
   includeHeaderGrammar: true
   supportCacheItems: false # manage manually
+
+  onBindEditor: ({newEditor}) ->
+    # Refresh item.point in cachedItems for saved filePath.
+    @subscribeEditor newEditor.onDidSave (event) ->
+      return unless items = getCachedItems()
+      filePath = event.path
+      for item in items when item.filePath is filePath
+        item.refreshPoint()
 
   destroy: ->
     @stop()
@@ -80,29 +88,34 @@ class ProjectSymbols extends ProviderBase
     # When user manually refresh, clear cache
     @subscriptions.add @ui.onWillRefreshManually(clearCachedItems)
 
+  readTags: ->
+    new Promise (resolve) =>
+      @loadTagsTask = TagReader.getAllTags (tags) ->
+        resolve(tags)
+
   getItems: ->
     @stop()
     # Refresh watching target tagFile on each execution to catch-up change in outer-world.
     watchTagsFiles()
 
-    # Better interests suggestion? I want this less noisy.
-    kindOfInterests = 'cfm'
+    if cache = getCachedItems()
+      itemsPromise = Promise.resolve(cache)
+    else
+      itemsPromise = @readTags().then (tags) ->
+        # Better interests suggestion? I want this less noisy.
+        kindOfInterests = 'cfm'
 
-    new Promise (resolve) =>
-      cache = getCachedItems()
-      if cache?
-        return resolve(cache)
-
-      @loadTagsTask = TagReader.getAllTags (tags) =>
         items = tags
           .filter (tag) -> tag.kind in kindOfInterests
           .map(itemForTag)
-          .filter (item) -> item?
+          .filter (item) -> item.point?
           .sort (a, b) -> a.point.compare(b.point)
         items = _.uniq items, (item) -> item.filePath + item.text
-        items = @getItemsWithHeaders(items)
         setCachedItems(items)
-        resolve(items)
+        items
+
+    itemsPromise.then (items) =>
+      @getItemsWithHeaders(items)
 
   filterItems: (items, filterSpec) ->
     @getItemsWithoutUnusedHeader(super)
