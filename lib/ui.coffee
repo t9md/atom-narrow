@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-{Point, Range, CompositeDisposable, Emitter, Disposable} = require 'atom'
+{Point, Range, CompositeDisposable, Emitter} = require 'atom'
 {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -212,10 +212,7 @@ class Ui
 
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
     @providerPanel = new ProviderPanel(this, showSearchOption: @provider.showSearchOption)
-
     @constructor.register(this)
-    @disposables.add new Disposable =>
-      @constructor.unregister(this)
 
   getPaneToOpen: ->
     basePane = @provider.getPane()
@@ -321,6 +318,7 @@ class Ui
   destroy: ->
     return if @destroyed
     @destroyed = true
+    @constructor.unregister(this)
     @highlighter.destroy()
     @syncSubcriptions?.dispose()
     @disposables.dispose()
