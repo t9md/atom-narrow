@@ -15,7 +15,8 @@
 - New: #147 [Experimental] Provider specific `caseSensitivityForNarrowQuery`
 - Improve, Breaking: #147, symbols no longer use line text, use tag name instead for better match.
   - Basically indented by line indent, special indentation handling for markdown header.
-- Internal: Introduce `globalSubscriptions` to dispose long-lived subscriptions( currently not used ).
+- Internal: Introduce `globalSubscriptions` to dispose long-lived subscriptions
+  - Currently, used for watching tags file change for `project-symbols` provider.
 - Internal: #144 Extract item concern( selecting, finding ) to `Items` class
 
 # 0.26.1:
