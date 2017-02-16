@@ -28,7 +28,7 @@ class Symbols extends ProviderBase
 
   getLevelForRow: (row) ->
     # For gfm source, determine level by counting leading '#' chars( use header level ).
-    if @editor.getGrammar().scopeName is 'source.gfm'
+    if @editor.getGrammar().scopeName in ['source.gfm', 'text.md']
       lineText = @editor.lineTextForBufferRow(row)
       (lineText.match(/#+/)?[0]?.length - 1) ? 0
     else
