@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 path = require 'path'
-{Point, CompositeDisposable, File, Disposable} = require 'atom'
+{CompositeDisposable, File, Disposable} = require 'atom'
 
 # ProjectSymbols
 # =========================

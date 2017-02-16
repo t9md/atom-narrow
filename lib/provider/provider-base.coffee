@@ -96,6 +96,7 @@ class ProviderBase
 
   isActive: ->
     isActiveEditor(@editor)
+    
   constructor: (editor, @options={}) ->
     @subscriptions = new CompositeDisposable
 
