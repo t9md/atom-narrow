@@ -21,10 +21,7 @@ module.exports =
       # Shared commands
       'narrow:focus': => @getUi()?.toggleFocus()
       'narrow:focus-prompt': => @getUi()?.focusPrompt()
-      'narrow:refresh': =>
-        if (ui = @getUi())?
-          ui.refresh(force: true)
-          ui.moveToPrompt() if ui.isActive()
+      'narrow:refresh': => @getUi()?.refreshManually(force: true)
       'narrow:close': => @getUi(skipProtected: true)?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()

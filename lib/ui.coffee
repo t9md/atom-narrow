@@ -78,6 +78,9 @@ class Ui
   onWillRefresh: (fn) -> @emitter.on('will-refresh', fn)
   emitWillRefresh: -> @emitter.emit('will-refresh')
 
+  onWillRefreshManually: (fn) -> @emitter.on('will-refresh-manually', fn)
+  emitWillRefreshManually: -> @emitter.emit('will-refresh-manually')
+
   onDidChangeSelectedItem: (fn) -> @items.onDidChangeSelectedItem(fn)
 
   # 'did-stop-refreshing' event is debounced, fired after stopRefreshingDelay
@@ -403,6 +406,10 @@ class Ui
     if @excludedFiles.length
       @excludedFiles = []
       @refresh()
+
+  refreshManually: (options) ->
+    @emitWillRefreshManually()
+    @refresh(options)
 
   refresh: ({force, selectFirstItem}={}) ->
     @emitWillRefresh()

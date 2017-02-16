@@ -76,6 +76,10 @@ class ProjectSymbols extends ProviderBase
   stop: ->
     @loadTagsTask?.terminate()
 
+  initialize: ->
+    # When user manually refresh, clear cache
+    @subscriptions.add @ui.onWillRefreshManually(clearCachedItems)
+
   getItems: ->
     @stop()
     # Refresh watching target tagFile on each execution to catch-up change in outer-world.
