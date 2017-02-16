@@ -1,3 +1,24 @@
+# 0.27.1: WIP
+- Merge branch 'patch-for-ui-commmand-registrawtion-twice'
+- Internal: #144 Extracting item concern( selecting, finding ) to `Items` class
+- New: #145 [Experiment] Per provider config for existing `directionToOpen` with new values.
+  - Each provider can override global `directionToOpen` setting.
+  - Possible value and short descriptions are here.
+    - `inherit`: pick global setting.
+    - `right`: default, no behavior change
+    - `right:never-use-previous-adjacent-pane`: don't use previous adjacent pane( only use next-adjacent )
+    - `right:always-new-pane`:
+    - `down`:
+    - `down:never-use-previous-adjacent-pane`:
+    - `down:always-new-pane`:
+- Improve, Breaking: #147, symbols no longer use line text, use tag name instead for better match.
+  - Basically indented by line indent, special indentation handling for markdown header.
+- New: #147 Provider specific `caseSensitivityForNarrowQuery`
+- New: `project-symbols` provider, following commands are available
+  - `narrow:project-symbols`:
+  - `narrow:project-symbols-by-current-word`:
+- Internal: Introduce globalSubscriptions to dispose long-lived subscriptions( currently not used ).
+
 # 0.26.1:
 - Fix, Critical: Duplicate ui command registration.
 
