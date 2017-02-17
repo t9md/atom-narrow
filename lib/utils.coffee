@@ -224,22 +224,6 @@ detectConflictForChanges = (changes) ->
 # -------------------------
 isNormalItem = (item) ->
   item? and not item.skip
-# -------------------------
-
-# Usage of debouncedSetTimeout
-#
-# In example below, only 'hello-3' is displayed.
-# NOTE: MUST pass identical "options object", don't create no each call.
-# options = {timeout: 1000}
-# debouncedSetTimeout options, -> console.log 'hello-1'
-# debouncedSetTimeout options, -> console.log 'hello-2'
-# debouncedSetTimeout options, -> console.log 'hello-3'
-debouncedSetTimeout = (options, fn) ->
-  clearTimeout(options.id) if options.id?
-  _fn = ->
-    options.id = null
-    fn()
-  options.id = setTimeout(_fn, options.timeout)
 
 module.exports = {
   getNextAdjacentPaneForPane
@@ -266,5 +250,4 @@ module.exports = {
   ensureNoConflictForChanges
   ensureNoModifiedFileForChanges
   isNormalItem
-  debouncedSetTimeout
 }

@@ -14,7 +14,6 @@ _ = require 'underscore-plus'
   ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
   isNormalItem
-  debouncedSetTimeout
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -86,8 +85,8 @@ class Ui
   # 'did-stop-refreshing' event is debounced, fired after stopRefreshingDelay
   onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
   emitDidStopRefreshing: ->
-    @emitDidStopRefreshingOptions ?= {timeout: 100}
-    debouncedSetTimeout @emitDidStopRefreshingOptions, => @emitter.emit('did-stop-refreshing')
+    @_emitDidStopRefreshing ?= _.debounce((=> @emitter.emit('did-stop-refreshing')), 100)
+    @_emitDidStopRefreshing()
 
   onDidPreview: (fn) -> @emitter.on('did-preview', fn)
   emitDidPreview: (event) -> @emitter.emit('did-preview', event)
@@ -457,8 +456,8 @@ class Ui
       @editorLastRow = range.end.row
 
   debouncedPreview: ->
-    @debouncedPreviewOptions ?= {timeout: 100}
-    debouncedSetTimeout @debouncedPreviewOptions, => @preview()
+    @_debouncedPreview ?= _.debounce((=> @preview()), 100)
+    @_debouncedPreview()
 
   observeChange: ->
     @editor.buffer.onDidChange ({newRange, oldRange}) =>
