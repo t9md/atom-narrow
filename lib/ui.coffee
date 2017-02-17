@@ -49,9 +49,6 @@ class Ui
 
   # Ui.prototype
   # -------------------------
-  emitDidStopRefreshingOptions: null
-  debouncedPreviewOptions: null
-
   autoPreview: null
   autoPreviewOnQueryChange: null
 
@@ -397,10 +394,7 @@ class Ui
   refresh: ({force, selectFirstItem}={}) ->
     @emitWillRefresh()
 
-    if force
-      @cachedItems = null
-
-    if @cachedItems?
+    if @cachedItems? and not force
       promiseForItems = Promise.resolve(@cachedItems)
     else
       promiseForItems = Promise.resolve(@provider.getItems()).then (items) =>
@@ -643,7 +637,6 @@ class Ui
     @syncToEditor(editor)
 
     ignoreColumnChange = not @provider.itemHaveRange
-
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
       return if event.textChanged
       return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
