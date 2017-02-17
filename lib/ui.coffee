@@ -52,7 +52,7 @@ class Ui
   autoPreview: null
   autoPreviewOnQueryChange: null
 
-  preventSyncToEditor: false
+  inPreview: false
   ignoreChange: false
   ignoreCursorMove: false
   destroyed: false
@@ -510,7 +510,7 @@ class Ui
 
   # Return success or fail
   syncToEditor: (editor) ->
-    return false if @preventSyncToEditor
+    return false if @inPreview
 
     point = editor.getCursorBufferPosition()
     if @provider.boundToSingleFile
@@ -546,16 +546,12 @@ class Ui
       moveAndScroll()
 
   preview: ->
-    @preventSyncToEditor = true
-    item = @items.getSelectedItem()
-    unless item?
-      @preventSyncToEditor = false
-      @highlighter.clearLineMarker()
-      return
+    return unless item = @items.getSelectedItem()
 
+    @inPreview = true
     @provider.openFileForItem(item).then (editor) =>
       editor.scrollToBufferPosition(item.point, center: true)
-      @preventSyncToEditor = false
+      @inPreview = false
       @emitDidPreview({editor, item})
 
   confirm: ({keepOpen, flash}={}) ->
