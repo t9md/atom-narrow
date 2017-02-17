@@ -112,10 +112,8 @@ class ProviderBase
 
   getInitialQuery: (editor) ->
     query = @options.query
-    if (not query) and @querySelectedText
-      query = editor.getSelectedText()
-    if (not query) and @options.queryCurrentWord
-      query = getCurrentWord(editor)
+    query or= editor.getSelectedText() if @querySelectedText
+    query or= getCurrentWord(editor) if @options.queryCurrentWord
     query
 
   subscribeEditor: (args...) ->
