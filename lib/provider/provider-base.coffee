@@ -51,7 +51,7 @@ class ProviderBase
       when 'always'
         true
       when 'on-input'
-        @options.query?.length
+        @query?.length
 
   initialize: ->
     # to override
@@ -102,10 +102,11 @@ class ProviderBase
 
     @bindEditor(editorToBind)
     @restoreEditorState = saveEditorState(@editor)
+    @query = @getInitialQuery(editor)
 
     @checkReady().then (ready) =>
       if ready
-        @ui = new Ui(this, query: @getInitialQuery(editor))
+        @ui = new Ui(this, {@query})
         @initialize()
         @ui.open(pending: @options.pending)
 
