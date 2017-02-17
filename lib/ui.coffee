@@ -170,9 +170,8 @@ class Ui
       @editorElement.classList.remove('read-only')
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
-  constructor: (@provider, {@query, @pending}={}) ->
+  constructor: (@provider, {@query}={}) ->
     @query ?= ''
-    @pending ?= false
     @disposables = new CompositeDisposable
     @emitter = new Emitter
     @excludedFiles = []
@@ -220,7 +219,9 @@ class Ui
 
     pane ? splitPane(basePane, split: direction)
 
-  start: ->
+  open: ({pending}={}) ->
+    pending ?= false
+
     # When initial getItems() take very long time, it means refresh get delayed.
     # In this case, user see modified icon(mark) on tab.
     # Explicitly setting modified start here prevent this
@@ -231,7 +232,7 @@ class Ui
     # And PENDING narrow-editor's provider's editor have foucsed.
     # So pane.activate must be called AFTER activateItem
     pane = @getPaneToOpen()
-    pane.activateItem(@editor, {@pending})
+    pane.activateItem(@editor, {pending})
     pane.activate()
 
     @grammar.activate()

@@ -61,9 +61,6 @@ class ProviderBase
   checkReady: ->
     Promise.resolve()
 
-  saveEditorState: ->
-    @restoreEditorState = saveEditorState(@editor)
-
   bindEditor: (editor) ->
     return if editor is @editor
 
@@ -92,14 +89,11 @@ class ProviderBase
   constructor: (editor, @options={}) ->
     @name = @constructor.name
     @dashName = _.dasherize(@name)
-
     @subscriptions = new CompositeDisposable
 
     @bindEditor(editor)
-    @saveEditorState()
     @checkReady().then =>
-      {query, pending} = @options
-      @ui = new Ui(this, {query, pending})
+      @ui = new Ui(this, query: @options.query)
       @initialize()
 
       if isNarrowEditor(@editor)
@@ -108,9 +102,9 @@ class ProviderBase
         # Since checkReady, initialize take cursor word on narrow-editor,
         #  re-bind must come AFTER checkReady() and initialize()
         @bindEditor(Ui.get(@editor).provider.editor)
-        @saveEditorState()
 
-      @ui.start()
+      @restoreEditorState = saveEditorState(@editor)
+      @ui.open(pending: @options.pending)
 
   subscribeEditor: (args...) ->
     @editorSubscriptions.add(args...)
@@ -134,7 +128,7 @@ class ProviderBase
   #  ( e.g. `narrow:search-by-current-word` on narrow-editor. )
   # ui is opened at same pane of provider.editor( editor invoked narrow )
   # In this case item should be opened on adjacent pane, not on provider.pane.
-  getPaneForOpenItem: ->
+  getPaneToOpenItem: ->
     pane = @getPane()
     paneForUi = @ui.getPane()
 
@@ -147,7 +141,7 @@ class ProviderBase
 
   openFileForItem: ({filePath}, {activatePane}={}) ->
     filePath ?= @editor.getPath()
-    pane = @getPaneForOpenItem()
+    pane = @getPaneToOpenItem()
     if item = pane.itemForURI(filePath)
       pane.activate() if activatePane
       pane.activateItem(item, pending: true)
