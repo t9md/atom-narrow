@@ -1,6 +1,6 @@
 _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
-{requireFrom, padStringLeft} = require '../utils'
+{requireFrom, padStringLeft, compareByPoint} = require '../utils'
 
 # HACK: Core bookmarks package
 # I need to get all bookmarks instances, but bookmarks package currently not have service for this.
@@ -26,8 +26,7 @@ class Bookmarks extends ProviderBase
         point = marker.getStartBufferPosition()
         text = editor.lineTextForBufferRow(point.row)
         {point, text, filePath}
-      .sort (a, b) ->
-        a.point.compare(b.point)
+      .sort(compareByPoint)
 
   getItems: ->
     items = []

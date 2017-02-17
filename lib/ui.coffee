@@ -129,12 +129,13 @@ class Ui
     @modifiedState
 
   setModifiedState: (state) ->
-    if state isnt @modifiedState
-      # HACK: overwrite TextBuffer:isModified to return static state.
-      # This state is used for tabs package to show modified icon on tab.
-      @modifiedState = state
-      @editor.buffer.isModified = -> state
-      @editor.buffer.emitModifiedStatusChanged(state)
+    return if state is @modifiedState
+
+    # HACK: overwrite TextBuffer:isModified to return static state.
+    # This state is used for tabs package to show modified icon on tab.
+    @modifiedState = state
+    @editor.buffer.isModified = -> state
+    @editor.buffer.emitModifiedStatusChanged(state)
 
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
@@ -302,6 +303,7 @@ class Ui
 
   destroy: ->
     return if @destroyed
+
     @destroyed = true
     @constructor.unregister(this)
     @highlighter.destroy()

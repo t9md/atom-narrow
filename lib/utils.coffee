@@ -1,4 +1,4 @@
-{Disposable, Point} = require 'atom'
+{Point} = require 'atom'
 _ = require 'underscore-plus'
 
 getAdjacentPane = (basePane, which) ->
@@ -225,6 +225,9 @@ detectConflictForChanges = (changes) ->
 isNormalItem = (item) ->
   item? and not item.skip
 
+compareByPoint = (a, b) ->
+  a.point.compare(b.point)
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -250,4 +253,5 @@ module.exports = {
   ensureNoConflictForChanges
   ensureNoModifiedFileForChanges
   isNormalItem
+  compareByPoint
 }

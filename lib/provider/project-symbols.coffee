@@ -9,7 +9,7 @@ path = require 'path'
 # - Since this provider bollowing many function from `symbols-view`.
 
 ProviderBase = require './provider-base'
-{requireFrom} = require '../utils'
+{requireFrom, compareByPoint} = require '../utils'
 globalSubscriptions = require '../global-subscriptions'
 
 TagReader = requireFrom('symbols-view', 'tag-reader')
@@ -108,7 +108,7 @@ class ProjectSymbols extends ProviderBase
           .filter (tag) -> tag.kind in kindOfInterests
           .map(itemForTag)
           .filter (item) -> item.point?
-          .sort (a, b) -> a.point.compare(b.point)
+          .sort(compareByPoint)
         items = _.uniq items, (item) -> item.filePath + item.text
         setCachedItems(items)
         items
