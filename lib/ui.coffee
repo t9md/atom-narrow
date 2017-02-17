@@ -264,10 +264,6 @@ class Ui
       if @query and @autoPreviewOnQueryChange
         @preview() unless previewd
 
-  moveToBeginningOfSelectedItem: ->
-    point = @items.getFirstPositionForSelectedItem()
-    @editor.setCursorBufferPosition(point)
-
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
       if item isnt @editor
@@ -425,12 +421,12 @@ class Ui
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
     promiseForItems.then (items) =>
-      items = @provider.filterItems(items, filterSpec)
       if @excludedFiles.length
         items = items.filter ({filePath}) => filePath not in @excludedFiles
+      items = @provider.filterItems(items, filterSpec)
 
       oldSelectedItem = @items.getSelectedItem()
-      wasCursorSyncWithSelectedItem = not @isCursorOutOfSyncWithSelectedItem()
+      wasAtSelectedItem = @isAtSelectedItem()
       oldColumn = @editor.getCursorBufferPosition().column
 
       @items.setItems([@promptItem, items...])
@@ -439,7 +435,7 @@ class Ui
       if @items.hasNormalItem()
         if (not selectFirstItem) and item = @items.findItem(oldSelectedItem)
           @items.selectItem(item)
-          if wasCursorSyncWithSelectedItem
+          if wasAtSelectedItem
             @moveToSelectedItem(ignoreCursorMove: not @isActive())
             row = @editor.getCursorBufferPosition().row
             @editor.setCursorBufferPosition([row, oldColumn])
@@ -584,17 +580,13 @@ class Ui
         @highlighter.flashItem(editor, item) if flash
         @emitDidConfirm({editor, item})
 
-  moveToNextFileItem: ->
-    @moveToDifferentFileItem('next')
-
-  moveToPreviousFileItem: ->
-    @moveToDifferentFileItem('previous')
-
-  isCursorOutOfSyncWithSelectedItem: ->
-    @editor.getCursorBufferPosition().row isnt @items.getRowForSelectedItem()
+  # Cursor move and position status
+  # ------------------------------
+  isAtSelectedItem: ->
+    @editor.getCursorBufferPosition().row is @items.getRowForSelectedItem()
 
   moveToDifferentFileItem: (direction) ->
-    if @isCursorOutOfSyncWithSelectedItem()
+    unless @isAtSelectedItem()
       @moveToSelectedItem(ignoreCursorMove: false)
       return
 
@@ -604,19 +596,27 @@ class Ui
       @items.selectItem(item)
       @moveToSelectedItem(ignoreCursorMove: false)
 
+  moveToNextFileItem: ->
+    @moveToDifferentFileItem('next')
+
+  moveToPreviousFileItem: ->
+    @moveToDifferentFileItem('previous')
+
   moveToPromptOrSelectedItem: ->
-    row = @items.getRowForSelectedItem()
-    if (row is @editor.getCursorBufferPosition().row) or not (row >= 0)
+    if @isAtSelectedItem()
       @moveToPrompt()
     else
-      # move to current item
-      @editor.setCursorBufferPosition([row, 0])
+      @moveToBeginningOfSelectedItem()
+
+  moveToBeginningOfSelectedItem: ->
+    @editor.setCursorBufferPosition(@items.getFirstPositionForSelectedItem())
 
   moveToPrompt: ->
     @withIgnoreCursorMove =>
       @editor.setCursorBufferPosition(@getPromptRange().end)
       @setReadOnly(false)
       @emitDidMoveToPrompt()
+  # -------------------------
 
   isPromptRow: (row) ->
     row is 0
