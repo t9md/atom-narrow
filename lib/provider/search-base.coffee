@@ -12,22 +12,23 @@ class SearchBase extends ProviderBase
   itemHaveRange: true
   showSearchOption: true
   supportCacheItems: true
+  querySelectedText: false
+  searchTerm: null
 
   checkReady: ->
     editor = atom.workspace.getActiveTextEditor()
-    if @options.currentWord
-      @options.search = getCurrentWord(editor)
-
-      if editor.getSelectedBufferRange().isEmpty()
-        @searchWholeWord = true
+    @searchTerm = @options.search or editor.getSelectedText()
+    if not @searchTerm and @options.searchCurrentWord
+      @searchTerm = getCurrentWord(editor)
+      @searchWholeWord = true
 
     @searchWholeWord ?= @getConfig('searchWholeWord')
 
-    if @options.search
+    if @searchTerm
       Promise.resolve(true)
     else
-      @readInput().then (input) =>
-        @options.search = input
+      @readInput().then (@searchTerm) =>
+        @searchTerm.length > 0
 
   toggleSearchWholeWord: ->
     super
@@ -38,7 +39,7 @@ class SearchBase extends ProviderBase
     @resetRegExpForSearchTerm()
 
   resetRegExpForSearchTerm: ->
-    @searchRegExp = @getRegExpForSearchTerm(@options.search, {@searchWholeWord, @searchIgnoreCase})
+    @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
     @searchIgnoreCase ?= @searchRegExp.ignoreCase
     @ui.highlighter.setRegExp(@searchRegExp)
     @ui.grammar.setSearchTerm(@searchRegExp)

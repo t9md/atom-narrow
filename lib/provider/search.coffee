@@ -41,9 +41,7 @@ module.exports =
 class Search extends SearchBase
   checkReady: ->
     if @options.currentProject
-
       filePath = @editor.getPath()
-      console.log filePath
       if filePath?
         for dir in atom.project.getDirectories() when dir.contains(filePath)
           @options.projects = [dir.getPath()]
@@ -61,7 +59,7 @@ class Search extends SearchBase
     for project in @options.projects ? atom.project.getPaths()
       searchPromises.push(@search(@searchRegExp, {project}))
 
-    searchTermLength = @options.search.length
+    searchTermLength = @searchTerm.length
     Promise.all(searchPromises).then (values) =>
       items = _.flatten(values)
 

@@ -3,7 +3,7 @@ settings = require './settings'
 Ui = require './ui'
 globalSubscriptions = require './global-subscriptions'
 
-{isNarrowEditor, getCurrentWord, getVisibleEditors} = require './utils'
+{isNarrowEditor, getVisibleEditors} = require './utils'
 
 module.exports =
   config: settings.config
@@ -27,12 +27,12 @@ module.exports =
       'narrow:previous-item': => @getUi()?.previousItem()
 
       # Providers
-      'narrow:fold': => @narrow('fold')
-
+      # -------------------------
       'narrow:symbols': => @narrow('symbols')
-      'narrow:symbols-by-current-word': => @narrow('symbols', query: @getCurrentWord())
+      'narrow:symbols-by-current-word': => @narrow('symbols', queryCurrentWord: true)
+
       'narrow:project-symbols': => @narrow('project-symbols')
-      'narrow:project-symbols-by-current-word': => @narrow('project-symbols', query: @getCurrentWord())
+      'narrow:project-symbols-by-current-word': => @narrow('project-symbols', queryCurrentWord: true)
 
       'narrow:git-diff': => @narrow('git-diff')
       'narrow:git-diff-all': => @narrow('git-diff-all')
@@ -40,20 +40,21 @@ module.exports =
       'narrow:bookmarks': => @narrow('bookmarks')
       'narrow:linter': => @narrow('linter')
 
-      'narrow:fold-by-current-word': => @narrow('fold', query: @getCurrentWord())
+      'narrow:fold': => @narrow('fold')
+      'narrow:fold-by-current-word': => @narrow('fold', queryCurrentWord: true)
 
       'narrow:scan': => @narrow('scan')
-      'narrow:scan-by-current-word': => @narrow('scan', query: @getCurrentWord())
+      'narrow:scan-by-current-word': => @narrow('scan', queryCurrentWord: true)
 
       # search family
       'narrow:search': => @narrow('search')
-      'narrow:search-by-current-word': => @narrow('search', currentWord: true)
+      'narrow:search-by-current-word': => @narrow('search', searchCurrentWord: true)
 
       'narrow:search-current-project': => @narrow('search', currentProject: true)
-      'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, currentWord: true)
+      'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, searchCurrentWord: true)
 
       'narrow:atom-scan': => @narrow('atom-scan')
-      'narrow:atom-scan-by-current-word': => @narrow('atom-scan', currentWord: true)
+      'narrow:atom-scan-by-current-word': => @narrow('atom-scan', searchCurrentWord: true)
 
       'narrow:toggle-search-start-by-double-click': -> settings.toggle('Search.startByDoubleClick')
 
@@ -80,10 +81,6 @@ module.exports =
       else
         invisibleNarrowEditor ?= editor
     Ui.get(invisibleNarrowEditor) if invisibleNarrowEditor?
-
-  # Return currently selected text or word under cursor.
-  getCurrentWord: ->
-    getCurrentWord(atom.workspace.getActiveTextEditor())
 
   narrow: (providerName, options) ->
     klass = require("./provider/#{providerName}")
@@ -114,7 +111,7 @@ module.exports =
       return text
 
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
-      'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', query: confirmSearch(), fromVmp: true)
-      'vim-mode-plus-user:narrow:search': => @narrow('search', search: confirmSearch(), fromVmp: true)
-      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', search: confirmSearch(), fromVmp: true)
-      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', search: confirmSearch(), currentProject: true, fromVmp: true)
+      'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', query: confirmSearch())
+      'vim-mode-plus-user:narrow:search': => @narrow('search', search: confirmSearch())
+      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', search: confirmSearch())
+      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', search: confirmSearch(), currentProject: true)

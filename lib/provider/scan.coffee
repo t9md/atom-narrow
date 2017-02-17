@@ -15,8 +15,7 @@ class Scan extends ProviderBase
 
   initialize: ->
     editor = atom.workspace.getActiveTextEditor()
-    if not @options.fromVmp and @options.query? and editor.getSelectedBufferRange().isEmpty()
-      # scan by word-boundry if scan-by-current-word is invoked with empty selection.
+    if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
       @searchWholeWord = true
     else
       @searchWholeWord = @getConfig('searchWholeWord')

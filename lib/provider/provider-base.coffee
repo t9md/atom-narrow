@@ -11,6 +11,7 @@ _ = require 'underscore-plus'
   getFirstCharacterPositionForBufferRow
   isNarrowEditor
   isNormalItem
+  getCurrentWord
 } = require '../utils'
 Ui = require '../ui'
 settings = require '../settings'
@@ -34,6 +35,7 @@ class ProviderBase
   searchWholeWord: null
   searchIgnoreCase: null
   showSearchOption: false
+  querySelectedText: true
 
   getConfig: (name) ->
     value = settings.get("#{@name}.#{name}")
@@ -97,14 +99,23 @@ class ProviderBase
       editorToBind = Ui.get(editor).provider.editor
     else
       editorToBind = editor
+
     @bindEditor(editorToBind)
     @restoreEditorState = saveEditorState(@editor)
 
     @checkReady().then (ready) =>
       if ready
-        @ui = new Ui(this, query: @options.query)
+        @ui = new Ui(this, query: @getInitialQuery(editor))
         @initialize()
         @ui.open(pending: @options.pending)
+
+  getInitialQuery: (editor) ->
+    query = @options.query
+    if (not query) and @querySelectedText
+      query = editor.getSelectedText()
+    if (not query) and @options.queryCurrentWord
+      query = getCurrentWord(editor)
+    query
 
   subscribeEditor: (args...) ->
     @editorSubscriptions.add(args...)
