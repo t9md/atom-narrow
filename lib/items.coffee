@@ -24,9 +24,6 @@ class Items
   setItems: (@items) ->
     @reset()
 
-  isPromptRow: (row) ->
-    row is 0
-
   reset: ->
     @selectedItem = null
     @previouslySelectedItem = null
@@ -117,7 +114,7 @@ class Items
   # Never fail since prompt is row 0 and always exists
   findRowForNormalOrPromptItem: (row, direction) ->
     @findRowBy row, direction, (row) =>
-      @isNormalItemRow(row) or @isPromptRow(row)
+      @isNormalItemRow(row) or @ui.isPromptRow(row)
 
   findRowForNormalItem: (row, direction) ->
     return null unless @hasNormalItem()

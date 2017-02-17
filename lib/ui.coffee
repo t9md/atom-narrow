@@ -14,6 +14,7 @@ _ = require 'underscore-plus'
   ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
   isNormalItem
+  debouncedSetTimeout
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -49,9 +50,8 @@ class Ui
 
   # Ui.prototype
   # -------------------------
-  stopRefreshingDelay: 100
-  stopRefreshingTimeout: null
-  debouncedPreviewDelay: 100
+  emitDidStopRefreshingOptions: null
+  debouncedPreviewOptions: null
 
   autoPreview: null
   autoPreviewOnQueryChange: null
@@ -86,12 +86,8 @@ class Ui
   # 'did-stop-refreshing' event is debounced, fired after stopRefreshingDelay
   onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
   emitDidStopRefreshing: ->
-    clearTimeout(@stopRefreshingTimeout) if @stopRefreshingTimeout?
-    stopRefreshingCallback = =>
-      @stopRefreshingTimeout = null
-      @emitter.emit('did-stop-refreshing')
-
-    @stopRefreshingTimeout = setTimeout(stopRefreshingCallback, @stopRefreshingDelay)
+    @emitDidStopRefreshingOptions ?= {timeout: 100}
+    debouncedSetTimeout @emitDidStopRefreshingOptions, => @emitter.emit('did-stop-refreshing')
 
   onDidPreview: (fn) -> @emitter.on('did-preview', fn)
   emitDidPreview: (event) -> @emitter.emit('did-preview', event)
@@ -461,11 +457,8 @@ class Ui
       @editorLastRow = range.end.row
 
   debouncedPreview: ->
-    clearTimeout(@debouncedPreviewTimeout) if @debouncedPreviewTimeout?
-    preview = =>
-      @debouncedPreviewTimeout = null
-      @preview()
-    @debouncedPreviewTimeout = setTimeout(preview, @debouncedPreviewDelay)
+    @debouncedPreviewOptions ?= {timeout: 100}
+    debouncedSetTimeout @debouncedPreviewOptions, => @preview()
 
   observeChange: ->
     @editor.buffer.onDidChange ({newRange, oldRange}) =>
