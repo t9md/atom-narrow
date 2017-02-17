@@ -41,12 +41,16 @@ module.exports =
 class Search extends SearchBase
   checkReady: ->
     if @options.currentProject
-      for dir in atom.project.getDirectories() when dir.contains(@editor.getPath())
-        @options.projects = [dir.getPath()]
-        break
+
+      filePath = @editor.getPath()
+      console.log filePath
+      if filePath?
+        for dir in atom.project.getDirectories() when dir.contains(filePath)
+          @options.projects = [dir.getPath()]
+          break
 
       unless @options.projects?
-        message = "#{@editor.getPath()} not belonging to any project"
+        message = "This file is not belonging to any project"
         atom.notifications.addInfo(message, dismissable: true)
         return Promise.resolve(false)
 

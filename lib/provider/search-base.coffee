@@ -14,10 +14,11 @@ class SearchBase extends ProviderBase
   supportCacheItems: true
 
   checkReady: ->
+    editor = atom.workspace.getActiveTextEditor()
     if @options.currentWord
-      @options.search = getCurrentWord(@editor)
+      @options.search = getCurrentWord(editor)
 
-      if @editor.getSelectedBufferRange().isEmpty()
+      if editor.getSelectedBufferRange().isEmpty()
         @searchWholeWord = true
 
     @searchWholeWord ?= @getConfig('searchWholeWord')

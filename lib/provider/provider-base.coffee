@@ -59,7 +59,7 @@ class ProviderBase
     # to override
 
   checkReady: ->
-    Promise.resolve()
+    Promise.resolve(true)
 
   bindEditor: (editor) ->
     return if editor is @editor
@@ -91,20 +91,20 @@ class ProviderBase
     @dashName = _.dasherize(@name)
     @subscriptions = new CompositeDisposable
 
-    @bindEditor(editor)
-    @checkReady().then =>
-      @ui = new Ui(this, query: @options.query)
-      @initialize()
+    if isNarrowEditor(editor)
+      # Invoked from another Ui( narrow-editor ).
+      # Bind to original Ui.provider.editor to behaves like it invoked from normal-editor.
+      editorToBind = Ui.get(editor).provider.editor
+    else
+      editorToBind = editor
+    @bindEditor(editorToBind)
+    @restoreEditorState = saveEditorState(@editor)
 
-      if isNarrowEditor(@editor)
-        # Invoked from another narrow-editor(= ex-narrow-editor).
-        # Rebind provider's editor to behaves like it invoked from normal-editor.
-        # Since checkReady, initialize take cursor word on narrow-editor,
-        #  re-bind must come AFTER checkReady() and initialize()
-        @bindEditor(Ui.get(@editor).provider.editor)
-
-      @restoreEditorState = saveEditorState(@editor)
-      @ui.open(pending: @options.pending)
+    @checkReady().then (ready) =>
+      if ready
+        @ui = new Ui(this, query: @options.query)
+        @initialize()
+        @ui.open(pending: @options.pending)
 
   subscribeEditor: (args...) ->
     @editorSubscriptions.add(args...)
