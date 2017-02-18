@@ -1,6 +1,6 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{Point, Disposable} = require 'atom'
+{Point, Disposable, Range} = require 'atom'
 ProviderBase = require './provider-base'
 
 module.exports =
@@ -57,6 +57,7 @@ class Scan extends ProviderBase
 
       @editor.buffer.getLines().map (text, row) ->
         point: new Point(row, 0)
+        range: new Range([row, 0], [row, 0])
         text: text
 
   filterItems: (items, {include}) ->
