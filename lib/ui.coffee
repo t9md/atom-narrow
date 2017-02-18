@@ -316,6 +316,7 @@ class Ui
     @controlBar.destroy()
     @provider?.destroy?()
     @items.destroy()
+    @itemIndicator.destroy()
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
