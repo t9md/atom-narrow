@@ -17,7 +17,7 @@ class Items
   constructor: (@ui) ->
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @emitter = new Emitter
-    @indicator = new ItemIndicator(@ui)
+    @indicator = new ItemIndicator(@ui.editor)
 
   destroy: ->
     @indicator.destroy()
@@ -30,15 +30,12 @@ class Items
     @selectedItem = null
     @previouslySelectedItem = null
 
-  redrawIndicator: ->
-    @indicator.redraw()
-
   selectItem: (item) ->
     @selectItemForRow(@getRowForItem(item))
 
   selectItemForRow: (row) ->
     if isNormalItem(item = @getItemForRow(row))
-      @indicator.setToRow(row)
+      @indicator.update(row: row)
       @previouslySelectedItem = @selectedItem
       @selectedItem = item
       event = {

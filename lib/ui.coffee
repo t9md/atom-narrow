@@ -79,9 +79,9 @@ class Ui
 
   onDidChangeSelectedItem: (fn) -> @items.onDidChangeSelectedItem(fn)
 
-  # 'did-stop-refreshing' event is debounced, fired after stopRefreshingDelay
   onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
   emitDidStopRefreshing: ->
+    # Debounced, fired after 100ms delay
     @_emitDidStopRefreshing ?= _.debounce((=> @emitter.emit('did-stop-refreshing')), 100)
     @_emitDidStopRefreshing()
 
@@ -134,7 +134,7 @@ class Ui
     return if state is @modifiedState
 
     # HACK: overwrite TextBuffer:isModified to return static state.
-    # This state is used for tabs package to show modified icon on tab.
+    # This state is used by tabs package to show modified icon on tab.
     @modifiedState = state
     @editor.buffer.isModified = -> state
     @editor.buffer.emitModifiedStatusChanged(state)
@@ -151,7 +151,7 @@ class Ui
 
   toggleProtected: ->
     @protected = not @protected
-    @items.redrawIndicator()
+    @items.indicator.update({@protected})
     @updateControlBar({@protected})
 
   toggleAutoPreview: ->
@@ -169,7 +169,7 @@ class Ui
       @editorElement.classList.add('read-only')
       @vmpActivateNormalMode() if @vmpIsInsertMode()
     else
-      @editorElement.component.setInputEnabled(true)
+      @editorElement.component?.setInputEnabled(true)
       @editorElement.classList.remove('read-only')
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
@@ -296,9 +296,8 @@ class Ui
   activateProviderPane: ->
     if pane = @provider.getPane()
       pane.activate()
-      activeItem = pane.getActiveItem()
-      if isTextEditor(activeItem)
-        activeItem.scrollToCursorPosition()
+      if editor = pane.getActiveEditor()
+        editor.scrollToCursorPosition()
 
   destroy: ->
     return if @destroyed
