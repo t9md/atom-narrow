@@ -183,7 +183,6 @@ class Ui
     @highlighter = new Highlighter(this)
 
     # Special place holder item used to translate narrow-editor row to item row without mess.
-    @promptItem = Object.freeze({_prompt: true, skip: true})
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
     # Setup narrow-editor
@@ -252,13 +251,11 @@ class Ui
 
     @refresh().then =>
       if @provider.needAutoReveal()
-        if @syncToEditor(@provider.editor)
-          @moveToBeginningOfSelectedItem()
-          @preview()
-          previewd = true
-
-      if @query and @autoPreviewOnQueryChange
-        @preview() unless previewd
+        @syncToEditor(@provider.editor)
+        @moveToBeginningOfSelectedItem()
+        @preview()
+      else if @query and @autoPreviewOnQueryChange
+        @preview()
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
@@ -416,18 +413,19 @@ class Ui
 
     promiseForItems.then (items) =>
       if @excludedFiles.length
-        items = items.filter ({filePath}) => filePath not in @excludedFiles
+        items = items.filter (item) => item.filePath not in @excludedFiles
       items = @provider.filterItems(items, filterSpec)
 
-      oldSelectedItem = @items.getSelectedItem()
-      wasAtSelectedItem = @isAtSelectedItem()
-      oldColumn = @getCursorColumn()
+      if (not selectFirstItem) and @items.hasSelectedItem()
+        oldSelectedItem = @items.getSelectedItem()
+        wasAtSelectedItem = @isAtSelectedItem()
+        oldColumn = @getCursorColumn()
 
-      @items.setItems([@promptItem, items...])
+      @items.setItems(items)
       @renderItems(items)
 
       if @items.hasNormalItem()
-        if (not selectFirstItem) and item = @items.findItem(oldSelectedItem)
+        if oldSelectedItem? and item = @items.findItem(oldSelectedItem)
           @items.selectItem(item)
           if wasAtSelectedItem
             @moveToSelectedItem(ignoreCursorMove: not @isActive())
@@ -594,7 +592,8 @@ class Ui
       @moveToBeginningOfSelectedItem()
 
   moveToBeginningOfSelectedItem: ->
-    @editor.setCursorBufferPosition(@items.getFirstPositionForSelectedItem())
+    if @items.hasSelectedItem()
+      @editor.setCursorBufferPosition(@items.getFirstPositionForSelectedItem())
 
   moveToPrompt: ->
     @withIgnoreCursorMove =>

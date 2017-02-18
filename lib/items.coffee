@@ -15,13 +15,15 @@ class Items
   emitDidChangeSelectedItem: (event) -> @emitter.emit('did-change-selected-item', event)
 
   constructor: (@ui) ->
+    @promptItem = Object.freeze({_prompt: true, skip: true})
     @emitter = new Emitter
     @indicator = new ItemIndicator(@ui)
 
   destroy: ->
     @indicator.destroy()
 
-  setItems: (@items) ->
+  setItems: (items) ->
+    @items = [@promptItem, items...]
     @reset()
 
   reset: ->
