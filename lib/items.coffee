@@ -1,5 +1,4 @@
 {Emitter, Point} = require 'atom'
-ItemIndicator = require './item-indicator'
 {
   isNormalItem
   getValidIndexForList
@@ -17,10 +16,8 @@ class Items
   constructor: (@ui) ->
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @emitter = new Emitter
-    @indicator = new ItemIndicator(@ui.editor)
 
   destroy: ->
-    @indicator.destroy()
 
   setItems: (items) ->
     @items = [@promptItem, items...]
@@ -35,12 +32,12 @@ class Items
 
   selectItemForRow: (row) ->
     if isNormalItem(item = @getItemForRow(row))
-      @indicator.update(row: row)
       @previouslySelectedItem = @selectedItem
       @selectedItem = item
       event = {
         oldItem: @previouslySelectedItem
         newItem: @selectedItem
+        row: row
       }
       @emitDidChangeSelectedItem(event)
 

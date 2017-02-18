@@ -21,6 +21,7 @@ getFilterSpecForQuery = require './get-filter-spec-for-query'
 Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
+ItemIndicator = require './item-indicator'
 
 module.exports =
 class Ui
@@ -76,8 +77,6 @@ class Ui
 
   onWillRefreshManually: (fn) -> @emitter.on('will-refresh-manually', fn)
   emitWillRefreshManually: -> @emitter.emit('will-refresh-manually')
-
-  onDidChangeSelectedItem: (fn) -> @items.onDidChangeSelectedItem(fn)
 
   onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
   emitDidStopRefreshing: ->
@@ -151,7 +150,7 @@ class Ui
 
   toggleProtected: ->
     @protected = not @protected
-    @items.indicator.update({@protected})
+    @itemIndicator.update({@protected})
     @updateControlBar({@protected})
 
   toggleAutoPreview: ->
@@ -197,6 +196,10 @@ class Ui
 
     @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
     @items = new Items(this)
+    @itemIndicator = new ItemIndicator(@editor)
+
+    @items.onDidChangeSelectedItem ({row}) =>
+      @itemIndicator.update(row: row)
 
     if settings.get('autoShiftReadOnlyOnMoveToItemArea')
       @disposables.add @onDidMoveToItemArea =>
