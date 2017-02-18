@@ -94,7 +94,11 @@ class Ui
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
+      'core:move-up': (event) => @moveUpOrDown(event, 'previous')
+      'core:move-down': (event) => @moveUpOrDown(event, 'next')
+
       'narrow:close': (event) => @narrowClose(event)
+
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:protect': => @toggleProtected()
       'narrow-ui:preview-item': => @preview()
@@ -105,8 +109,6 @@ class Ui
       'narrow-ui:move-to-prompt': => @moveToPrompt()
       'narrow-ui:start-insert': => @setReadOnly(false)
       'narrow-ui:stop-insert': => @setReadOnly(true)
-      'core:move-up': (event) => @moveUpOrDown(event, 'previous')
-      'core:move-down': (event) => @moveUpOrDown(event, 'next')
       'narrow-ui:update-real-file': => @updateRealFile()
       'narrow-ui:exclude-file': => @excludeFile()
       'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
@@ -419,7 +421,7 @@ class Ui
 
       oldSelectedItem = @items.getSelectedItem()
       wasAtSelectedItem = @isAtSelectedItem()
-      oldColumn = @editor.getCursorBufferPosition().column
+      oldColumn = @getCursorColumn()
 
       @items.setItems([@promptItem, items...])
       @renderItems(items)
@@ -429,8 +431,7 @@ class Ui
           @items.selectItem(item)
           if wasAtSelectedItem
             @moveToSelectedItem(ignoreCursorMove: not @isActive())
-            row = @editor.getCursorBufferPosition().row
-            @editor.setCursorBufferPosition([row, oldColumn])
+            @editor.setCursorBufferPosition([@getCursorRow(), oldColumn])
         else
           @items.selectFirstNormalItem()
       else
@@ -530,8 +531,7 @@ class Ui
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove}={}) ->
     return if (row = @items.getRowForSelectedItem()) is -1
 
-    {column} = @editor.getCursorBufferPosition()
-    point = scrollPoint = [row, column]
+    point = scrollPoint = [row, @getCursorColumn()]
     scrollPoint = [row, 0] if scrollToColumnZero
 
     moveAndScroll = =>
@@ -568,7 +568,7 @@ class Ui
   # Cursor move and position status
   # ------------------------------
   isAtSelectedItem: ->
-    @editor.getCursorBufferPosition().row is @items.getRowForSelectedItem()
+    @getCursorRow() is @items.getRowForSelectedItem()
 
   moveToDifferentFileItem: (direction) ->
     unless @isAtSelectedItem()
@@ -601,13 +601,19 @@ class Ui
       @editor.setCursorBufferPosition(@getPromptRange().end)
       @setReadOnly(false)
       @emitDidMoveToPrompt()
+
+  getCursorRow: ->
+    @editor.getCursorBufferPosition().row
+
+  getCursorColumn: ->
+    @editor.getCursorBufferPosition().column
   # -------------------------
 
   isPromptRow: (row) ->
     row is 0
 
   isAtPrompt: ->
-    @isPromptRow(@editor.getCursorBufferPosition().row)
+    @isPromptRow(@getCursorRow())
 
   getNormalItemsForEditor: (editor) ->
     if @provider.boundToSingleFile
