@@ -1,7 +1,14 @@
-# 0.28.0: WIP
+# 0.28.0:
 - Breaking: #146 Remove `narrow:lines` in favor of `narrow:scan`
-  - Use `narrow:scan`, it's better than old `narrow:lines`
-  - Removed to stop user continue to use `narrow:lines`.
+  - Asking you to use `narrow:scan`, it's better than old `narrow:lines`
+- Improve: #151 `narrow:symbols` indent `text.md` syntax-ed markdown header. PR by @thancock20
+- New: #129 Use selected text as initialQuery or initialSearchTerm generally.
+  - For `search` and `atom-scan`, when invoked with selected text, use it as search term.
+  - For other providers, use selected text as initial query.
+  - What was changed?
+    - Old behavior: `narrow:scan` can not use selected text. User have to use `narrow:scan-by-current-word`.
+    - New behavior: `narrow:scan` can use selected text.
+- Internal: Lots of cleanup.
 
 # 0.27.0:
 - New: `project-symbols` provider, following commands are available
