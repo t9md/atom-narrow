@@ -19,7 +19,7 @@ settings = require './settings'
 Grammar = require './grammar'
 getFilterSpecForQuery = require './get-filter-spec-for-query'
 Highlighter = require './highlighter'
-ProviderPanel = require './provider-panel'
+ControlBar = require './control-bar'
 Items = require './items'
 
 module.exports =
@@ -142,21 +142,21 @@ class Ui
   toggleSearchWholeWord: ->
     @provider.toggleSearchWholeWord()
     @refresh(force: true)
-    @updateProviderPanel(wholeWordButton: @provider.searchWholeWord)
+    @updateControlBar(wholeWordButton: @provider.searchWholeWord)
 
   toggleSearchIgnoreCase: ->
     @provider.toggleSearchIgnoreCase()
     @refresh(force: true)
-    @updateProviderPanel(ignoreCaseButton: @provider.searchIgnoreCase)
+    @updateControlBar(ignoreCaseButton: @provider.searchIgnoreCase)
 
   toggleProtected: ->
     @protected = not @protected
     @items.redrawIndicator()
-    @updateProviderPanel({@protected})
+    @updateControlBar({@protected})
 
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
-    @updateProviderPanel({@autoPreview})
+    @updateControlBar({@autoPreview})
     if @autoPreview
       @preview()
     else
@@ -203,7 +203,7 @@ class Ui
         @setReadOnly(true)
 
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
-    @providerPanel = new ProviderPanel(this, showSearchOption: @provider.showSearchOption)
+    @controlBar = new ControlBar(this, showSearchOption: @provider.showSearchOption)
     @constructor.register(this)
 
   getPaneToOpen: ->
@@ -239,7 +239,7 @@ class Ui
 
     @grammar.activate()
     @insertQuery(@query)
-    @providerPanel.show()
+    @controlBar.show()
     @moveToPrompt()
 
     @disposables.add(
@@ -311,7 +311,7 @@ class Ui
     @editor.destroy()
     @activateProviderPane()
 
-    @providerPanel.destroy()
+    @controlBar.destroy()
     @provider?.destroy?()
     @items.destroy()
 
@@ -445,7 +445,7 @@ class Ui
         # Need to recover query prompt
         @insertQuery()
         @moveToPrompt()
-        @providerPanel.show() # redraw providerPanel block decoration.
+        @controlBar.show()
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @setModifiedState(false)
@@ -620,8 +620,8 @@ class Ui
     else
       @items.getNormalItems(editor.getPath())
 
-  updateProviderPanel: (states) ->
-    @providerPanel.updateStateElements(states)
+  updateControlBar: (states) ->
+    @controlBar.updateStateElements(states)
 
   getPromptRange: ->
     @editor.bufferRangeForBufferRow(0)

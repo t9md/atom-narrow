@@ -6,7 +6,7 @@ suppressEvent = (event) ->
 
 # This is NOT Panel in Atom's terminology, Just naming.
 module.exports =
-class ProviderPanel
+class ControlBar
   constructor: (@ui, {@showSearchOption}={}) ->
     {@editor, @provider} = @ui
     @stateElements = {}
