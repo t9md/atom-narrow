@@ -1,5 +1,7 @@
 # narrow
 
+[![Join the chat at https://gitter.im/t9md/atom-narrow](https://badges.gitter.im/t9md/atom-narrow.svg)](https://gitter.im/t9md/atom-narrow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 narrow something.  
 Code navigation tool inspired by unite.vim, emacs-helm.  
 
