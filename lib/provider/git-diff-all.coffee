@@ -28,9 +28,5 @@ class GitDiffAll extends ProviderBase
     eachModifiedFilePaths (repo, filePath) ->
       promises.push(getItemsForFilePath(repo, filePath))
 
-    Promise.all(promises).then (items) =>
-      items = _.compact(_.flatten(items))
-      @getItemsWithHeaders(items)
-
-  filterItems: (items, filterSpec) ->
-    @getItemsWithoutUnusedHeader(super)
+    Promise.all(promises).then (items) ->
+      _.compact(_.flatten(items))

@@ -34,8 +34,43 @@ getOutputterForProject = (project, items) ->
 getOutputterForFile = (items) ->
   (data) ->
     for line in data.split("\n") when parsed = parseLine(line)
-      {relativePath, point, text} = parsed
-      items.push({point, text, filePath: relativePath})
+      items.push({
+        point: new Point(parsed.row, parsed.column)
+        filePath: parsed.relativePath
+        text: parsed.text
+      })
+
+search = (regexp, {project, args, filePath}) ->
+  items = []
+  args ?= []
+
+  if regexp.ignoreCase
+    args.push('--ignore-case')
+  else
+    args.push('--case-sensitive')
+
+  options =
+    stdio: ['ignore', 'pipe', 'pipe']
+    env: process.env
+
+  args.push(regexp.source)
+
+  if filePath?
+    stdout = stderr = getOutputterForFile(items)
+    args.push(filePath)
+  else
+    stdout = stderr = getOutputterForProject(project, items)
+    options.cwd = project
+
+  new Promise (resolve) ->
+    runCommand(
+      command: 'ag'
+      args: args
+      stdout: stdout
+      stderr: stderr
+      exit: -> resolve(items)
+      options: options
+    )
 
 module.exports =
 class Search extends SearchBase
@@ -54,49 +89,31 @@ class Search extends SearchBase
 
     super
 
-  getItems: ->
-    searchPromises = []
-    for project in @options.projects ? atom.project.getPaths()
-      searchPromises.push(@search(@searchRegExp, {project}))
+  getArgs: ->
+    @getConfig('agCommandArgs').split(/\s+/)
 
+  searchFilePath: (filePath) ->
+    search(@searchRegExp, {args: @getArgs(), filePath}).then (items) =>
+      @injectRangeForItems(_.flatten(items))
+
+  searchProjects: (projects) ->
+    args = @getArgs()
+    searchProject = (project) => search(@searchRegExp, {project, args})
+    Promise.all(projects.map(searchProject)).then (items) =>
+      @injectRangeForItems(_.flatten(items))
+
+  injectRangeForItems: (items) ->
     searchTermLength = @searchTerm.length
-    Promise.all(searchPromises).then (values) =>
-      items = _.flatten(values)
+    for item in items
+      item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
+    items
 
-      # Inject range
-      for item in items
-        item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
-
-      @getItemsWithHeaders(items)
-
-  search: (regexp, {project, filePath}) ->
-    items = []
-    args = @getConfig('agCommandArgs').split(/\s+/)
-
-    if regexp.ignoreCase
-      args.push('--ignore-case')
-    else
-      args.push('--case-sensitive')
-
-    options =
-      stdio: ['ignore', 'pipe', 'pipe']
-      env: process.env
-
-    args.push(regexp.source)
-
+  getItems: (filePath) ->
     if filePath?
-      stdout = stderr = getOutputterForFile(items)
-      args.push(filePath)
-    else
-      stdout = stderr = getOutputterForProject(project, items)
-      options.cwd = project
+      return @items unless atom.project.contains(filePath)
 
-    new Promise (resolve) ->
-      runCommand(
-        command: 'ag'
-        args: args
-        stdout: stdout
-        stderr: stderr
-        exit: -> resolve(items)
-        options: options
-      )
+      @searchFilePath(filePath).then (newItems) =>
+        @items = @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
+    else
+      @searchProjects(@options.projects ? atom.project.getPaths()).then (items) =>
+        @items = items

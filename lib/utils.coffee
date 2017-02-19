@@ -1,3 +1,4 @@
+path = require 'path'
 {Point} = require 'atom'
 _ = require 'underscore-plus'
 
@@ -228,6 +229,51 @@ isNormalItem = (item) ->
 compareByPoint = (a, b) ->
   a.point.compare(b.point)
 
+# Since underscore-plus not support _.findIndex
+findIndexBy = (items, fn) ->
+  for item, i in items when fn(item)
+    return i
+
+findLastIndexBy = (items, fn) ->
+  for item, i in items by -1 when fn(item)
+    return i
+
+findFirstAndLastIndexBy = (items, fn) ->
+  [findIndexBy(items, fn), findLastIndexBy(items, fn)]
+
+getItemsWithoutUnusedHeader = (items) ->
+  normalItems = items.filter(isNormalItem)
+  filePaths = _.uniq(_.pluck(normalItems, "filePath"))
+  projectNames = _.uniq(_.pluck(normalItems, "projectName"))
+
+  items.filter (item) ->
+    if item.header?
+      if item.projectHeader?
+        item.projectName in projectNames
+      else if item.filePath?
+        item.filePath in filePaths
+      else
+        true
+    else
+      true
+
+getItemsWithHeaders = (_items) ->
+  items = []
+
+  # Inject projectName from filePath
+  for item in _items
+    item.projectName = path.basename(atom.project.relativizePath(item.filePath)[0])
+
+  for projectName, itemsInProject of _.groupBy(_items, (item) -> item.projectName)
+    header = "# #{projectName}"
+    items.push({header, projectName, projectHeader: true, skip: true})
+
+    for filePath, itemsInFile of _.groupBy(itemsInProject, (item) -> item.filePath)
+      header = "## " + atom.project.relativize(filePath)
+      items.push({header, projectName, filePath, skip: true})
+      items.push(itemsInFile...)
+  items
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -254,4 +300,7 @@ module.exports = {
   ensureNoModifiedFileForChanges
   isNormalItem
   compareByPoint
+  findFirstAndLastIndexBy
+  getItemsWithHeaders
+  getItemsWithoutUnusedHeader
 }

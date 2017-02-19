@@ -14,6 +14,8 @@ _ = require 'underscore-plus'
   ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
   isNormalItem
+  getItemsWithHeaders
+  getItemsWithoutUnusedHeader
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -396,17 +398,19 @@ class Ui
     @emitWillRefreshManually()
     @refresh(options)
 
-  refresh: ({force, selectFirstItem}={}) ->
+  refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
 
-    if @cachedItems? and not force
-      promiseForItems = Promise.resolve(@cachedItems)
-    else
-      promiseForItems = Promise.resolve(@provider.getItems()).then (items) =>
-        if @provider.showLineHeader
-          injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
-        @cachedItems = items if @provider.supportCacheItems
-        items
+    getItems = =>
+      if @cachedItems? and not force
+        Promise.resolve(@cachedItems)
+      else
+        Promise.resolve(@provider.getItems(filePath)).then (items) =>
+          if @provider.showLineHeader
+            injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
+          items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
+          @cachedItems = items if @provider.supportCacheItems
+          items
 
     @lastQuery = @getQuery()
     sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
@@ -414,10 +418,11 @@ class Ui
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
-    promiseForItems.then (items) =>
+    getItems().then (items) =>
       if @excludedFiles.length
         items = items.filter (item) => item.filePath not in @excludedFiles
       items = @provider.filterItems(items, filterSpec)
+      items = getItemsWithoutUnusedHeader(items) unless @provider.boundToSingleFile
 
       if (not selectFirstItem) and @items.hasSelectedItem()
         oldSelectedItem = @items.getSelectedItem()
@@ -654,15 +659,16 @@ class Ui
 
     # Suppress refresh while ui is active.
     # Important to update-real-file don't cause auto-refresh.
-    refresh = => @refresh(force: true) unless @isActive()
 
     if @provider.boundToSingleFile
       # Refresh only when newFilePath is undefined or different from oldFilePath
       unless isDefinedAndEqual(oldFilePath, newFilePath)
         @refresh(force: true)
-      @syncSubcriptions.add editor.onDidStopChanging(refresh)
+      @syncSubcriptions.add editor.onDidStopChanging =>
+        @refresh(force: true) unless @isActive()
     else
-      @syncSubcriptions.add editor.onDidSave(refresh)
+      @syncSubcriptions.add editor.onDidSave (event) =>
+        @refresh(force: true, filePath: event.path) unless @isActive()
 
   # vim-mode-plus integration
   # -------------------------

@@ -97,24 +97,17 @@ class ProjectSymbols extends ProviderBase
     # Refresh watching target tagFile on each execution to catch-up change in outer-world.
     watchTagsFiles()
 
-    if cache = getCachedItems()
-      itemsPromise = Promise.resolve(cache)
-    else
-      itemsPromise = @readTags().then (tags) ->
-        # Better interests suggestion? I want this less noisy.
-        kindOfInterests = 'cfm'
+    return cache if cache = getCachedItems()
 
-        items = tags
-          .filter (tag) -> tag.kind in kindOfInterests
-          .map(itemForTag)
-          .filter (item) -> item.point?
-          .sort(compareByPoint)
-        items = _.uniq items, (item) -> item.filePath + item.text
-        setCachedItems(items)
-        items
+    @readTags().then (tags) ->
+      # Better interests suggestion? I want this less noisy.
+      kindOfInterests = 'cfm'
 
-    itemsPromise.then (items) =>
-      @getItemsWithHeaders(items)
-
-  filterItems: (items, filterSpec) ->
-    @getItemsWithoutUnusedHeader(super)
+      items = tags
+        .filter (tag) -> tag.kind in kindOfInterests
+        .map(itemForTag)
+        .filter (item) -> item.point?
+        .sort(compareByPoint)
+      items = _.uniq items, (item) -> item.filePath + item.text
+      setCachedItems(items)
+      items
