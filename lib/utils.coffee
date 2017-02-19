@@ -228,6 +228,18 @@ isNormalItem = (item) ->
 compareByPoint = (a, b) ->
   a.point.compare(b.point)
 
+# Since underscore-plus not support _.findIndex
+findIndexBy = (items, fn) ->
+  for item, i in items when fn(item)
+    return i
+
+findLastIndexBy = (items, fn) ->
+  for item, i in items by -1 when fn(item)
+    return i
+
+findFirstAndLastIndexBy = (items, fn) ->
+  [findIndexBy(items, fn), findLastIndexBy(items, fn)]
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -254,4 +266,5 @@ module.exports = {
   ensureNoModifiedFileForChanges
   isNormalItem
   compareByPoint
+  findFirstAndLastIndexBy
 }
