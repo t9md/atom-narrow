@@ -34,8 +34,11 @@ getOutputterForProject = (project, items) ->
 getOutputterForFile = (items) ->
   (data) ->
     for line in data.split("\n") when parsed = parseLine(line)
-      {relativePath, point, text} = parsed
-      items.push({point, text, filePath: relativePath})
+      items.push({
+        point: new Point(parsed.row, parsed.column)
+        filePath: parsed.relativePath
+        text: parsed.text
+      })
 
 search = (regexp, {project, args, filePath}) ->
   items = []
@@ -86,19 +89,31 @@ class Search extends SearchBase
 
     super
 
+  getArgs: ->
+    @getConfig('agCommandArgs').split(/\s+/)
+
+  searchFile: (filePath) ->
+    search(@searchRegExp, {args: @getArgs(), filePath})
+
+  searchProjects: (projects) ->
+    args = @getArgs()
+    searchProject = (project) => search(@searchRegExp, {project, args})
+    Promise.all(projects.map(searchProject))
+
   getItems: (filePath) ->
-    searchPromises = []
-    args = @getConfig('agCommandArgs').split(/\s+/)
+    if filePath?
+      itemsPromise = @searchFile(filePath)
+    else
+      itemsPromise = @searchProjects(@options.projects ? atom.project.getPaths())
 
-    for project in @options.projects ? atom.project.getPaths()
-      searchPromises.push(search(@searchRegExp, {project, args, filePath}))
-
-    searchTermLength = @searchTerm.length
-    Promise.all(searchPromises).then (values) =>
-      items = _.flatten(values)
-
-      # Inject range
+    itemsPromise.then (items) =>
+      searchTermLength = @searchTerm.length
+      items = _.flatten(items)
       for item in items
         item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
 
-      @getItemsWithHeaders(items)
+      if filePath?
+        @replaceOrAppendItemsForFilePath(@items, filePath, items)
+      else
+        @items = items
+      @getItemsWithHeaders(@items)
