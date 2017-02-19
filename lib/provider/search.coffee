@@ -37,6 +37,38 @@ getOutputterForFile = (items) ->
       {relativePath, point, text} = parsed
       items.push({point, text, filePath: relativePath})
 
+search = (regexp, {project, args, filePath}) ->
+  items = []
+  args ?= []
+
+  if regexp.ignoreCase
+    args.push('--ignore-case')
+  else
+    args.push('--case-sensitive')
+
+  options =
+    stdio: ['ignore', 'pipe', 'pipe']
+    env: process.env
+
+  args.push(regexp.source)
+
+  if filePath?
+    stdout = stderr = getOutputterForFile(items)
+    args.push(filePath)
+  else
+    stdout = stderr = getOutputterForProject(project, items)
+    options.cwd = project
+
+  new Promise (resolve) ->
+    runCommand(
+      command: 'ag'
+      args: args
+      stdout: stdout
+      stderr: stderr
+      exit: -> resolve(items)
+      options: options
+    )
+
 module.exports =
 class Search extends SearchBase
   checkReady: ->
@@ -56,8 +88,10 @@ class Search extends SearchBase
 
   getItems: (filePath) ->
     searchPromises = []
+    args = @getConfig('agCommandArgs').split(/\s+/)
+
     for project in @options.projects ? atom.project.getPaths()
-      searchPromises.push(@search(@searchRegExp, {project, filePath}))
+      searchPromises.push(search(@searchRegExp, {project, args, filePath}))
 
     searchTermLength = @searchTerm.length
     Promise.all(searchPromises).then (values) =>
@@ -68,35 +102,3 @@ class Search extends SearchBase
         item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
 
       @getItemsWithHeaders(items)
-
-  search: (regexp, {project, filePath}) ->
-    items = []
-    args = @getConfig('agCommandArgs').split(/\s+/)
-
-    if regexp.ignoreCase
-      args.push('--ignore-case')
-    else
-      args.push('--case-sensitive')
-
-    options =
-      stdio: ['ignore', 'pipe', 'pipe']
-      env: process.env
-
-    args.push(regexp.source)
-
-    if filePath?
-      stdout = stderr = getOutputterForFile(items)
-      args.push(filePath)
-    else
-      stdout = stderr = getOutputterForProject(project, items)
-      options.cwd = project
-
-    new Promise (resolve) ->
-      runCommand(
-        command: 'ag'
-        args: args
-        stdout: stdout
-        stderr: stderr
-        exit: -> resolve(items)
-        options: options
-      )
