@@ -39,8 +39,11 @@ class AtomScan extends SearchBase
 
   getItems: (filePath) ->
     if filePath?
-      itemsPromise = @scanFilePath(@searchRegExp, filePath).then (newItems) =>
-        @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
+      if atom.project.contains(filePath) # ignore non-project file for consistency
+        itemsPromise = @scanFilePath(@searchRegExp, filePath).then (newItems) =>
+          @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
+      else
+        itemsPromise = Promise.resolve(@items)
     else
       itemsPromise = @scanWorkspace(@searchRegExp)
 
