@@ -92,28 +92,28 @@ class Search extends SearchBase
   getArgs: ->
     @getConfig('agCommandArgs').split(/\s+/)
 
-  searchFile: (filePath) ->
-    search(@searchRegExp, {args: @getArgs(), filePath})
+  searchFilePath: (filePath) ->
+    search(@searchRegExp, {args: @getArgs(), filePath}).then (items) =>
+      @injectRangeForItems(_.flatten(items))
 
   searchProjects: (projects) ->
     args = @getArgs()
     searchProject = (project) => search(@searchRegExp, {project, args})
-    Promise.all(projects.map(searchProject))
+    Promise.all(projects.map(searchProject)).then (items) =>
+      @injectRangeForItems(_.flatten(items))
+
+  injectRangeForItems: (items) ->
+    searchTermLength = @searchTerm.length
+    for item in items
+      item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
+    items
 
   getItems: (filePath) ->
     if filePath?
-      itemsPromise = @searchFile(filePath)
+      return @items unless atom.project.contains(filePath)
+
+      @searchFilePath(filePath).then (newItems) =>
+        @items = @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
     else
-      itemsPromise = @searchProjects(@options.projects ? atom.project.getPaths())
-
-    itemsPromise.then (items) =>
-      searchTermLength = @searchTerm.length
-      items = _.flatten(items)
-      for item in items
-        item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
-
-      if filePath?
-        @replaceOrAppendItemsForFilePath(@items, filePath, items)
-      else
+      @searchProjects(@options.projects ? atom.project.getPaths()).then (items) =>
         @items = items
-      @getItemsWithHeaders(@items)

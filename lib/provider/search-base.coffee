@@ -47,9 +47,6 @@ class SearchBase extends ProviderBase
   initialize: ->
     @resetRegExpForSearchTerm()
 
-  filterItems: (items, filterSpec) ->
-    @getItemsWithoutUnusedHeader(super)
-
   # If passed items have filePath's item, replace old items with new items.
   # If passed items have no filePath's item, append to end.
   replaceOrAppendItemsForFilePath: (items, filePath, newItems) ->

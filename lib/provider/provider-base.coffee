@@ -1,4 +1,3 @@
-path = require 'path'
 _ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
 {
@@ -254,34 +253,3 @@ class ProviderBase
     flags = 'g'
     flags += 'i' if searchIgnoreCase
     new RegExp(source, flags)
-
-  getItemsWithoutUnusedHeader: (items) ->
-    normalItems = items.filter(isNormalItem)
-    filePaths = _.uniq(_.pluck(normalItems, "filePath"))
-    projectNames = _.uniq(_.pluck(normalItems, "projectName"))
-
-    items.filter (item) ->
-      if item.header?
-        if item.projectHeader?
-          item.projectName in projectNames
-        else
-          item.filePath in filePaths
-      else
-        true
-
-  getItemsWithHeaders: (_items) ->
-    items = []
-
-    # Inject projectName from filePath
-    for item in _items
-      item.projectName = path.basename(atom.project.relativizePath(item.filePath)[0])
-
-    for projectName, itemsInProject of _.groupBy(_items, (item) -> item.projectName)
-      header = "# #{projectName}"
-      items.push({header, projectName, projectHeader: true, skip: true})
-
-      for filePath, itemsInFile of _.groupBy(itemsInProject, (item) -> item.filePath)
-        header = "## " + atom.project.relativize(filePath)
-        items.push({header, projectName, filePath, skip: true})
-        items.push(itemsInFile...)
-    items

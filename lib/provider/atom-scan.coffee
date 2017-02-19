@@ -6,10 +6,10 @@ SearchBase = require './search-base'
 module.exports =
 class AtomScan extends SearchBase
   # Not used but keep it since I'm planning to introduce per file refresh on modification
-  scanFilePath: (regexp, filePath) ->
+  scanFilePath: (filePath) ->
     items = []
-    atom.workspace.open(filePath, activateItem: false).then (editor) ->
-      editor.scan regexp, ({range}) ->
+    atom.workspace.open(filePath, activateItem: false).then (editor) =>
+      editor.scan @searchRegExp, ({range}) ->
         items.push({
           filePath: filePath
           text: editor.lineTextForBufferRow(range.start.row)
@@ -18,9 +18,9 @@ class AtomScan extends SearchBase
         })
       items
 
-  scanWorkspace: (regexp) ->
+  scanWorkspace: ->
     matchesByFilePath = {}
-    scanPromise = atom.workspace.scan regexp, (result) ->
+    scanPromise = atom.workspace.scan @searchRegExp, (result) ->
       if result?.matches?.length
         matchesByFilePath[result.filePath] ?= []
         matchesByFilePath[result.filePath].push(result.matches...)
@@ -39,15 +39,10 @@ class AtomScan extends SearchBase
 
   getItems: (filePath) ->
     if filePath?
-      if atom.project.contains(filePath) # ignore non-project file for consistency
-        itemsPromise = @scanFilePath(@searchRegExp, filePath).then (newItems) =>
-          @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
-      else
-        itemsPromise = Promise.resolve(@items)
-    else
-      itemsPromise = @scanWorkspace(@searchRegExp)
+      return @items unless atom.project.contains(filePath)
 
-    itemsPromise.then (items) =>
-      # hold last generated item to support per-file-refresh.
-      @items = items
-      @getItemsWithHeaders(@items)
+      @scanFilePath(filePath).then (newItems) =>
+        @items = @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
+    else
+      @scanWorkspace().then (items) =>
+        @items = items

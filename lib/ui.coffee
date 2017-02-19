@@ -14,6 +14,8 @@ _ = require 'underscore-plus'
   ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
   isNormalItem
+  getItemsWithHeaders
+  getItemsWithoutUnusedHeader
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -406,6 +408,7 @@ class Ui
         Promise.resolve(@provider.getItems(filePath)).then (items) =>
           if @provider.showLineHeader
             injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
+          items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
           @cachedItems = items if @provider.supportCacheItems
           items
 
@@ -419,6 +422,7 @@ class Ui
       if @excludedFiles.length
         items = items.filter (item) => item.filePath not in @excludedFiles
       items = @provider.filterItems(items, filterSpec)
+      items = getItemsWithoutUnusedHeader(items) unless @provider.boundToSingleFile
 
       if (not selectFirstItem) and @items.hasSelectedItem()
         oldSelectedItem = @items.getSelectedItem()

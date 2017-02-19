@@ -3,21 +3,18 @@ ProviderBase = require './provider-base'
 
 {isNormalItem} = require '../utils'
 
+# Inject real lineText
+injectLineText = (filePath, _items) ->
+  items = []
+  atom.workspace.open(filePath, activateItem: false).then (editor) ->
+    for item in _items
+      item.text = editor.lineTextForBufferRow(item.point.row)
+      items.push(item)
+    return items
+
 module.exports =
 class Linter extends ProviderBase
   supportDirectEdit: true
-
-  injectLineText: (filePath, items) ->
-    # Inject real lineText
-    result = []
-    result.push(header: "# #{filePath}", skip: true, fileHeader: true, filePath: filePath)
-    atom.workspace.open(filePath, activateItem: false).then (editor) ->
-      for item in items
-        text = editor.lineTextForBufferRow(item.point.row)
-        item.text = text
-        result.push(header: "## #{item.info}", filePath: filePath, skip: true, item: item)
-        result.push(item)
-      return result
 
   getItems: ->
     linter = atom.packages.getActivePackage('linter')?.mainModule.provideLinter()
@@ -27,21 +24,21 @@ class Linter extends ProviderBase
 
     promises = []
     for filePath, items of _.groupBy(items, ({filePath}) -> filePath)
-      promises.push(@injectLineText(filePath, items))
+      promises.push(injectLineText(filePath, items))
 
     Promise.all(promises).then (values) ->
-      _.flatten(values)
+      items = []
+      for item in _.flatten(values)
+        items.push(header: "### #{item.info}", filePath: item.filePath, skip: true, item: item)
+        items.push(item)
+      items
 
   filterItems: (items, filterSpec) ->
     items = super
     normalItems = items.filter(isNormalItem)
-    filePaths = _.uniq(_.pluck(normalItems, "filePath"))
 
     _.filter items, (item) ->
-      if item.header?
-        if item.fileHeader
-          item.filePath in filePaths
-        else
-          item.item in normalItems
+      if item.item
+        item.item in normalItems
       else
         true
