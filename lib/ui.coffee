@@ -28,8 +28,6 @@ ItemIndicator = require './item-indicator'
 
 module.exports =
 class Ui
-  # Ui static
-  # -------------------------
   @uiByEditor: new Map()
   @unregister: (ui) ->
     @uiByEditor.delete(ui.editor)
@@ -51,8 +49,6 @@ class Ui
       numbers.push(ui.titleNumber)
     Math.max(numbers...) + 1
 
-  # Ui.prototype
-  # -------------------------
   autoPreview: null
   autoPreviewOnQueryChange: null
 
@@ -60,7 +56,7 @@ class Ui
   ignoreChange: false
   ignoreCursorMove: false
   destroyed: false
-  cachedItems: null # Used to cache result
+  cachedItems: null
   lastQuery: ''
   modifiedState: null
   readOnly: false
@@ -142,23 +138,21 @@ class Ui
     @editor.buffer.emitModifiedStatusChanged(state)
 
   toggleSearchWholeWord: ->
-    @provider.toggleSearchWholeWord()
+    @controlBar.updateStateElements(wholeWordButton: @provider.toggleSearchWholeWord())
     @refresh(force: true)
-    @updateControlBar(wholeWordButton: @provider.searchWholeWord)
 
   toggleSearchIgnoreCase: ->
-    @provider.toggleSearchIgnoreCase()
+    @controlBar.updateStateElements(ignoreCaseButton: @provider.toggleSearchIgnoreCase())
     @refresh(force: true)
-    @updateControlBar(ignoreCaseButton: @provider.searchIgnoreCase)
 
   toggleProtected: ->
     @protected = not @protected
     @itemIndicator.update({@protected})
-    @updateControlBar({@protected})
+    @controlBar.updateStateElements({@protected})
 
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
-    @updateControlBar({@autoPreview})
+    @controlBar.updateStateElements({@autoPreview})
     if @autoPreview
       @preview()
     else
@@ -183,8 +177,6 @@ class Ui
     @autoPreview = @provider.getConfig('autoPreview')
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
     @highlighter = new Highlighter(this)
-
-    # Special place holder item used to translate narrow-editor row to item row without mess.
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
     # Setup narrow-editor
@@ -196,6 +188,7 @@ class Ui
     @editor.onDidDestroy(@destroy.bind(this))
     @editorElement = @editor.element
     @editorElement.classList.add('narrow', 'narrow-editor', @provider.dashName)
+    @setModifiedState(false)
 
     @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
     @items = new Items(this)
@@ -229,12 +222,6 @@ class Ui
 
   open: ({pending}={}) ->
     pending ?= false
-
-    # When initial getItems() take very long time, it means refresh get delayed.
-    # In this case, user see modified icon(mark) on tab.
-    # Explicitly setting modified start here prevent this
-    @setModifiedState(false)
-
     # [NOTE] When new item is activated, existing PENDING item is destroyed.
     # So existing PENDING narrow-editor is destroyed at this timing.
     # And PENDING narrow-editor's provider's editor have foucsed.
@@ -432,7 +419,7 @@ class Ui
       items = @filterItems(items)
       if (not selectFirstItem) and @items.hasSelectedItem()
         selectedItem = findEqualLocationItem(items, @items.getSelectedItem())
-        oldColumn = @getCursorColumn()
+        oldColumn = @editor.getCursorBufferPosition().column
 
       @items.setItems(items)
       @renderItems(items)
@@ -539,7 +526,7 @@ class Ui
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove, column}={}) ->
     return if (row = @items.getRowForSelectedItem()) is -1
 
-    point = scrollPoint = [row, column ? @getCursorColumn()]
+    point = scrollPoint = [row, column ? @editor.getCursorBufferPosition().column]
     scrollPoint = [row, 0] if scrollToColumnZero
 
     moveAndScroll = =>
@@ -576,7 +563,7 @@ class Ui
   # Cursor move and position status
   # ------------------------------
   isAtSelectedItem: ->
-    @getCursorRow() is @items.getRowForSelectedItem()
+    @editor.getCursorBufferPosition().row is @items.getRowForSelectedItem()
 
   moveToDifferentFileItem: (direction) ->
     unless @isAtSelectedItem()
@@ -611,27 +598,17 @@ class Ui
       @setReadOnly(false)
       @emitDidMoveToPrompt()
 
-  getCursorRow: ->
-    @editor.getCursorBufferPosition().row
-
-  getCursorColumn: ->
-    @editor.getCursorBufferPosition().column
-  # -------------------------
-
   isPromptRow: (row) ->
     row is 0
 
   isAtPrompt: ->
-    @isPromptRow(@getCursorRow())
+    @isPromptRow(@editor.getCursorBufferPosition().row)
 
   getNormalItemsForEditor: (editor) ->
     if @provider.boundToSingleFile
       @items.getNormalItems()
     else
       @items.getNormalItems(editor.getPath())
-
-  updateControlBar: (states) ->
-    @controlBar.updateStateElements(states)
 
   getPromptRange: ->
     @editor.bufferRangeForBufferRow(0)
@@ -659,11 +636,7 @@ class Ui
     @syncSubcriptions.add @onDidRefresh =>
       @syncToEditor(editor) if isActiveEditor(editor)
 
-    # Suppress refresh while ui is active.
-    # Important to update-real-file don't cause auto-refresh.
-
     if @provider.boundToSingleFile
-      # Refresh only when newFilePath is undefined or different from oldFilePath
       unless isDefinedAndEqual(oldFilePath, newFilePath)
         @refresh(force: true)
       @syncSubcriptions.add editor.onDidStopChanging =>
