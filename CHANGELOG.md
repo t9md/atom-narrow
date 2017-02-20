@@ -1,3 +1,12 @@
+# 0.29.0:
+- Improve: #153 Per file refresh support for `search` and `atom-scan`
+  - Old behavior: whole project was re-searched `onDidSave`.
+  - New behavior: search only saved file is re-searched `onDidSave`.
+    - When saved file have no existing items, items are appended to end of `narrow-editor`.
+- Improve: Avoid re-search `onDidSave` for file which is not belonging to any project.
+- Internal: Inserting/removing project/file header is done by UI( previously done by provider )
+- Doc: #154 Add gitter link on README.
+
 # 0.28.0:
 - Breaking: #146 Remove `narrow:lines` in favor of `narrow:scan`
   - Asking you to use `narrow:scan`, it's better than old `narrow:lines`
