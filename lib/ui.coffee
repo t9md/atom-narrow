@@ -409,7 +409,13 @@ class Ui
         items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
         items
 
-  filterItems: (items, filterSpec) ->
+  filterItems: (items) ->
+    @lastQuery = @getQuery()
+    sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
+    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity})
+    if @provider.updateGrammarOnQueryChange
+      @grammar.update(filterSpec.include) # No need to highlight excluded items
+
     if @excludedFiles.length
       items = items.filter (item) => item.filePath not in @excludedFiles
     items = @provider.filterItems(items, filterSpec)
@@ -419,16 +425,11 @@ class Ui
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
 
-    @lastQuery = @getQuery()
-    sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
-    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity})
-    if @provider.updateGrammarOnQueryChange
-      @grammar.update(filterSpec.include) # No need to highlight excluded items
-
     @getItems({force, filePath}).then (items) =>
-      @cachedItems = items if @provider.supportCacheItems
-      items = @filterItems(items, filterSpec)
+      if @provider.supportCacheItems
+        @cachedItems = items
 
+      items = @filterItems(items)
       if (not selectFirstItem) and @items.hasSelectedItem()
         selectedItem = findEqualLocationItem(items, @items.getSelectedItem())
         oldColumn = @getCursorColumn()
