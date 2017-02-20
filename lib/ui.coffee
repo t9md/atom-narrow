@@ -14,6 +14,7 @@ _ = require 'underscore-plus'
   ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
   isNormalItem
+  findEqualLocationItem
   getItemsWithHeaders
   getItemsWithoutUnusedHeader
 } = require './utils'
@@ -398,19 +399,25 @@ class Ui
     @emitWillRefreshManually()
     @refresh(options)
 
+  getItems: ({force, filePath}) ->
+    if @cachedItems? and not force
+      Promise.resolve(@cachedItems)
+    else
+      Promise.resolve(@provider.getItems(filePath)).then (items) =>
+        if @provider.showLineHeader
+          injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
+        items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
+        items
+
+  filterItems: (items, filterSpec) ->
+    if @excludedFiles.length
+      items = items.filter (item) => item.filePath not in @excludedFiles
+    items = @provider.filterItems(items, filterSpec)
+    items = getItemsWithoutUnusedHeader(items) unless @provider.boundToSingleFile
+    items
+
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
-
-    getItems = =>
-      if @cachedItems? and not force
-        Promise.resolve(@cachedItems)
-      else
-        Promise.resolve(@provider.getItems(filePath)).then (items) =>
-          if @provider.showLineHeader
-            injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
-          items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
-          @cachedItems = items if @provider.supportCacheItems
-          items
 
     @lastQuery = @getQuery()
     sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
@@ -418,30 +425,24 @@ class Ui
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
-    getItems().then (items) =>
-      if @excludedFiles.length
-        items = items.filter (item) => item.filePath not in @excludedFiles
-      items = @provider.filterItems(items, filterSpec)
-      items = getItemsWithoutUnusedHeader(items) unless @provider.boundToSingleFile
+    @getItems({force, filePath}).then (items) =>
+      @cachedItems = items if @provider.supportCacheItems
+      items = @filterItems(items, filterSpec)
 
       if (not selectFirstItem) and @items.hasSelectedItem()
-        oldSelectedItem = @items.getSelectedItem()
-        wasAtSelectedItem = @isAtSelectedItem()
+        selectedItem = findEqualLocationItem(items, @items.getSelectedItem())
         oldColumn = @getCursorColumn()
 
       @items.setItems(items)
       @renderItems(items)
+      @highlighter.clearLineMarker()
 
-      if @items.hasNormalItem()
-        if oldSelectedItem? and item = @items.findItem(oldSelectedItem)
-          @items.selectItem(item)
-          if wasAtSelectedItem
-            @moveToSelectedItem(ignoreCursorMove: not @isActive())
-            @editor.setCursorBufferPosition([@getCursorRow(), oldColumn])
-        else
-          @items.selectFirstNormalItem()
+      if (not selectFirstItem) and selectedItem?
+        @items.selectItem(selectedItem)
+        unless @isAtPrompt()
+          @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
       else
-        @highlighter.clearLineMarker()
+        @items.selectFirstNormalItem()
 
       @emitDidRefresh()
       @emitDidStopRefreshing()
@@ -534,10 +535,10 @@ class Ui
     else
       false
 
-  moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove}={}) ->
+  moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove, column}={}) ->
     return if (row = @items.getRowForSelectedItem()) is -1
 
-    point = scrollPoint = [row, @getCursorColumn()]
+    point = scrollPoint = [row, column ? @getCursorColumn()]
     scrollPoint = [row, 0] if scrollToColumnZero
 
     moveAndScroll = =>

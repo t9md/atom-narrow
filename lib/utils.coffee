@@ -229,6 +229,11 @@ isNormalItem = (item) ->
 compareByPoint = (a, b) ->
   a.point.compare(b.point)
 
+findEqualLocationItem = (items, itemToFind) ->
+  normalItems = items.filter(isNormalItem)
+  _.detect normalItems, ({point, filePath}) ->
+    point.isEqual(itemToFind.point) and (filePath is itemToFind.filePath)
+
 # Since underscore-plus not support _.findIndex
 findIndexBy = (items, fn) ->
   for item, i in items when fn(item)
@@ -300,6 +305,7 @@ module.exports = {
   ensureNoModifiedFileForChanges
   isNormalItem
   compareByPoint
+  findEqualLocationItem
   findFirstAndLastIndexBy
   getItemsWithHeaders
   getItemsWithoutUnusedHeader
