@@ -267,7 +267,11 @@ getItemsWithHeaders = (_items) ->
 
   # Inject projectName from filePath
   for item in _items
-    item.projectName = path.basename(atom.project.relativizePath(item.filePath)[0])
+    projectPath = atom.project.relativizePath(item.filePath)[0]
+    if projectPath?
+      item.projectName = path.basename(projectPath)
+    else
+      item.projectName = "( No project )"
 
   for projectName, itemsInProject of _.groupBy(_items, (item) -> item.projectName)
     header = "# #{projectName}"
