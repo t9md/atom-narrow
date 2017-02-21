@@ -42,7 +42,6 @@ getOutputterForFile = (items) ->
 
 search = (regexp, {project, args, filePath}) ->
   items = []
-  args ?= []
 
   if regexp.ignoreCase
     args.push('--ignore-case')
@@ -97,8 +96,7 @@ class Search extends SearchBase
       @injectRangeForItems(_.flatten(items))
 
   searchProjects: (projects) ->
-    args = @getArgs()
-    searchProject = (project) => search(@searchRegExp, {project, args})
+    searchProject = (project) => search(@searchRegExp, {project, args: @getArgs()})
     Promise.all(projects.map(searchProject)).then (items) =>
       @injectRangeForItems(_.flatten(items))
 

@@ -1,3 +1,7 @@
+# 0.29.1:
+- Bug: Fix `search` searches first project only even in multi-project search.
+  - This is degradation introduced in v0.29.0.
+
 # 0.29.0:
 - Improve: #153 Per file refresh support for `search` and `atom-scan`
   - Old behavior: whole project was re-searched `onDidSave`.
