@@ -92,15 +92,14 @@ class Search extends SearchBase
     @getConfig('agCommandArgs').split(/\s+/)
 
   searchFilePath: (filePath) ->
-    search(@searchRegExp, {args: @getArgs(), filePath}).then (items) =>
-      @injectRangeForItems(_.flatten(items))
+    search(@searchRegExp, {args: @getArgs(), filePath})
 
   searchProjects: (projects) ->
     searchProject = (project) => search(@searchRegExp, {project, args: @getArgs()})
-    Promise.all(projects.map(searchProject)).then (items) =>
-      @injectRangeForItems(_.flatten(items))
+    Promise.all(projects.map(searchProject))
 
-  injectRangeForItems: (items) ->
+  flattenAndInjectRange: (items) ->
+    items = _.flatten(items)
     searchTermLength = @searchTerm.length
     for item in items
       item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
@@ -110,8 +109,9 @@ class Search extends SearchBase
     if filePath?
       return @items unless atom.project.contains(filePath)
 
-      @searchFilePath(filePath).then (newItems) =>
-        @items = @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
+      @searchFilePath(filePath).then (items) =>
+        items = @flattenAndInjectRange(items)
+        @items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
     else
       @searchProjects(@options.projects ? atom.project.getPaths()).then (items) =>
-        @items = items
+        @items = @flattenAndInjectRange(items)
