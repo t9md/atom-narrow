@@ -5,10 +5,6 @@
 narrow something.  
 Code navigation tool inspired by unite.vim, emacs-helm.  
 
-# Development status
-
-alpha
-
 ![narrow](https://raw.githubusercontent.com/t9md/t9md/4df5df86884a25bf8b62dc3b605df050a06c8232/img/atom-narrow/narrow.gif)
 
 # What's this
