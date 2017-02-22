@@ -231,7 +231,7 @@ class Ui
     pane.activate()
 
     @grammar.activate()
-    @insertQuery(@query)
+    @setQuery(@query)
     @controlBar.show()
     @moveToPrompt()
 
@@ -317,7 +317,7 @@ class Ui
   narrowClose: (event) ->
     if @protected
       event.stopImmediatePropagation()
-      @insertQuery() # clear query
+      @setQuery() # clear query
       @activateProviderPane()
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
@@ -440,7 +440,7 @@ class Ui
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         # Need to recover query prompt
-        @insertQuery()
+        @setQuery()
         @moveToPrompt()
         @controlBar.show()
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
@@ -467,7 +467,7 @@ class Ui
           # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
           for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
-          @withIgnoreChange => @insertQuery(@lastQuery) # Recover query
+          @withIgnoreChange => @setQuery(@lastQuery) # Recover query
         else
           @refresh(selectFirstItem: true).then =>
             if @autoPreviewOnQueryChange and @isActive()
@@ -614,7 +614,7 @@ class Ui
     @editor.bufferRangeForBufferRow(0)
 
   # Return range
-  insertQuery: (text='') ->
+  setQuery: (text='') ->
     @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
 
   startSyncToEditor: (editor) ->
