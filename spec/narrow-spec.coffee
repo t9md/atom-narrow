@@ -1,9 +1,7 @@
 Ui = require '../lib/ui'
-
-narrow = (providerName, options) ->
-  klass = require("../lib/provider/#{providerName}")
-  editor = atom.workspace.getActiveTextEditor()
-  new klass(editor, options)
+{
+  startNarrow
+} = require "./spec-helper"
 
 # Main
 # -------------------------
@@ -20,69 +18,29 @@ describe "narrow", ->
         editorElement = editor.element
 
   describe "from internal", ->
-    [provider, ui, narrowEditor, narrowEditorElement] = []
+    [provider, ui, ensure] = []
 
     describe "scan", ->
-      [waitsForRefresh, ensureNarrowEditor, refreshHandler] = []
-
-      waitsForRefresh = (fn) ->
-        refreshHandler.reset()
-        fn()
-        waitsFor ->
-          refreshHandler.callCount > 0
-
-      ensureNarrowEditor = (args...) ->
-        runs ->
-          switch args.length
-            when 1 then [options] = args
-            when 2 then [query, options] = args
-
-          if query?
-            waitsForRefresh ->
-              ui.setQuery(query)
-
-          runs ->
-            if options.itemsCount?
-              expect(ui.items.getCount()).toBe(options.itemsCount)
-
-            if options.selectedItemRow?
-              expect(ui.items.getRowForSelectedItem()).toBe(options.selectedItemRow)
-
-            if options.text?
-              expect(narrowEditor.getText()).toBe(options.text)
-
-            if options.cursor?
-              expect(narrowEditor.getCursorBufferPosition()).toEqual(options.cursor)
-
       describe "start with empty qury", ->
         beforeEach ->
-          refreshHandler = jasmine.createSpy("refreshHandler")
-
           editor.setText """
             apple
             grape
             lemmon
             """
 
-          runs ->
-            provider = narrow('scan')
-
           waitsForPromise ->
-            provider.start()
+            startNarrow('scan').then (narrow) ->
+              {provider, ui, ensure} = narrow
 
-          runs ->
-            ui = provider.ui
-            narrowEditor = ui.editor
-            narrowEditorElement = ui.editorElement
-            ui.onDidRefresh(refreshHandler)
 
         it "add css class to narrowEditorElement", ->
-          expect(narrowEditorElement.classList.contains('narrow')).toBe(true)
-          expect(narrowEditorElement.classList.contains('narrow-editor')).toBe(true)
-          expect(narrowEditorElement.classList.contains('scan')).toBe(true)
+          expect(ui.editorElement.classList.contains('narrow')).toBe(true)
+          expect(ui.editorElement.classList.contains('narrow-editor')).toBe(true)
+          expect(ui.editorElement.classList.contains('scan')).toBe(true)
 
         it "narrowEditor", ->
-          ensureNarrowEditor
+          ensure
             text: """
 
             1: 1: apple
@@ -91,15 +49,15 @@ describe "narrow", ->
             """
 
         it "filter by query", ->
-          ensureNarrowEditor "app",
+          ensure "app",
             text: """
               app
               1: 1: apple
               """
-            itemsCount:1
             selectedItemRow: 1
+            itemsCount: 1
 
-          ensureNarrowEditor "r",
+          ensure "r",
             text: """
               r
               2: 2: grape
@@ -107,7 +65,7 @@ describe "narrow", ->
             selectedItemRow: 1
             itemsCount: 1
 
-          ensureNarrowEditor "l",
+          ensure "l",
             text: """
               l
               1: 4: apple

@@ -7,7 +7,7 @@ Code navigation tool inspired by unite.vim, emacs-helm.
 
 ![narrow](https://raw.githubusercontent.com/t9md/t9md/4df5df86884a25bf8b62dc3b605df050a06c8232/img/atom-narrow/narrow.gif)
 
-# What's this
+# What's this?
 
 - Provide narrowing UI like unite/denite.vim or emacs-helm.
 - But **not** aiming to become "can open anything from narrow-able UI" package.
