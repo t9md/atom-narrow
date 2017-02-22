@@ -72,7 +72,7 @@ class Ensureer
     if query?
       runs =>
         @waitsForRefresh => @ui.setQuery(query)
-      runs =>
+      runs ->
         ensureOptions()
     else
       ensureOptions()
@@ -89,9 +89,29 @@ class Ensureer
   ensureCursor: (cursor) ->
     expect(@editor.getCursorBufferPosition()).toEqual(cursor)
 
+# example-usage
+# ensurePaneLayout
+#   horizontal: [
+#     [e1]
+#     vertical: [[e4], [e2, e3]]
+#   ]
+ensurePaneLayout = (layout) ->
+  root = atom.workspace.getActivePane().getContainer().getRoot()
+  expect(paneLayoutFor(root)).toEqual(layout)
+
+paneLayoutFor = (root) ->
+  switch root.constructor.name
+    when "Pane"
+      root.getItems()
+    when "PaneAxis"
+      layout = {}
+      layout[root.getOrientation()] = root.getChildren().map(paneLayoutFor)
+      layout
+
 module.exports = {
   startNarrow
   dispatchCommand
   ensureCursorPosition
   ensureEditor
+  ensurePaneLayout
 }

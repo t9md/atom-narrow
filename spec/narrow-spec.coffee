@@ -5,6 +5,7 @@ settings = require '../lib/settings'
   dispatchCommand
   ensureCursorPosition
   ensureEditor
+  ensurePaneLayout
 } = require "./spec-helper"
 
 paneForItem = (item) ->
@@ -13,12 +14,12 @@ paneForItem = (item) ->
 # Main
 # -------------------------
 describe "narrow", ->
-  [editor, editorElement, main] = []
+  [editor, editorElement] = []
   [provider, ui, ensure, narrow] = []
+
   beforeEach ->
     waitsForPromise ->
-      atom.packages.activatePackage('narrow').then (pack) ->
-        main = pack.mainModule
+      atom.packages.activatePackage('narrow')
 
     waitsForPromise ->
       atom.workspace.open().then (_editor) ->
@@ -35,78 +36,66 @@ describe "narrow", ->
       editor.setCursorBufferPosition([0, 0])
 
     describe "directionToOpen settings", ->
-      describe "right", ->
-        describe "from one pane", ->
-          beforeEach ->
-            expect(atom.workspace.getPanes()).toHaveLength(1)
-            settings.set('narrow.directionToOpen', 'right')
+      describe "from one pane", ->
+        beforeEach ->
+          ensurePaneLayout [editor]
 
+        describe "right", ->
           it 'open on right pane', ->
+            settings.set('directionToOpen', 'right')
             waitsForPromise ->
-              startNarrow('scan').then ({ui}) ->
-                expect(atom.workspace.getPanes()).toHaveLength(2)
-                paneAxis = ui.getPane().getParent()
-                expect(paneAxis.getOrientation()).toBe('horizontal')
-                children = paneAxis.getChildren()
-                expect(children).toHaveLength(2)
-                expect(children[0]).toBe(ui.provider.getPane())
-                expect(children[1]).toBe(ui.getPane())
+              startNarrow('scan').then ({ui}) -> ensurePaneLayout horizontal: [[editor], [ui.editor]]
 
-        describe "from two pane", ->
-          [editor2, paneAxis] = []
+        describe "down", ->
+          it 'open on down pane', ->
+            settings.set('directionToOpen', 'down')
+            waitsForPromise ->
+              startNarrow('scan').then ({ui}) -> ensurePaneLayout vertical: [[editor], [ui.editor]]
 
-          describe "horizontal split", ->
-            beforeEach ->
+      describe "from two pane", ->
+        [editor2] = []
+        beforeEach ->
+          settings.set('directionToOpen', 'right')
+
+        describe "horizontal split", ->
+          beforeEach ->
+            waitsForPromise ->
+              atom.workspace.open(null, split: 'right').then (_editor) ->
+                editor2 = _editor
+                ensurePaneLayout(horizontal: [[editor], [editor2]])
+
+          describe "left pane active", ->
+            it "open on existing right pane", ->
+              paneForItem(editor).activate()
+              ensureEditor editor, active: true
               waitsForPromise ->
-                atom.workspace.open(null, split: 'right', activate: true, activateItem: true).then (_editor) ->
-                  editor2 = _editor
-                  editor2.setText("abc\ndef\n")
+                startNarrow('scan').then ({ui}) -> ensurePaneLayout horizontal: [[editor], [editor2, ui.editor]]
 
-              runs ->
-                expect(atom.workspace.getPanes()).toHaveLength(2)
-                pane = paneForItem(editor2)
-                paneAxis = pane.getParent()
-                expect(paneAxis.getOrientation()).toBe('horizontal')
+          describe "right pane active", ->
+            it "open on previous adjacent pane", ->
+              ensureEditor editor2, active: true
+              waitsForPromise ->
+                startNarrow('scan').then ({ui}) -> ensurePaneLayout horizontal: [[editor, ui.editor], [editor2]]
 
-                children = paneAxis.getChildren()
-                expect(children).toHaveLength(2)
-                [p1, p2] = children
-                expect(p1.getActiveItem()).toBe(editor)
-                expect(p2.getActiveItem()).toBe(editor2)
+        describe "vertical split", ->
+          beforeEach ->
+            waitsForPromise ->
+              atom.workspace.open(null, split: 'down').then (_editor) ->
+                editor2 = _editor
+                ensurePaneLayout(vertical: [[editor], [editor2]])
 
-            describe "left pane active", ->
-              beforeEach ->
-                paneForItem(editor).activate()
-                ensureEditor editor, active: true
+          describe "up-pane active", ->
+            it "open on existing down pane", ->
+              paneForItem(editor).activate()
+              ensureEditor editor, active: true
+              waitsForPromise ->
+                startNarrow('scan').then ({ui}) -> ensurePaneLayout vertical: [[editor], [editor2, ui.editor]]
 
-              it "open on existing right pane", ->
-                waitsForPromise ->
-                  startNarrow('scan').then ({ui}) ->
-                    expect(ui.getPane().getParent()).toBe(paneAxis)
-                    expect(paneAxis.getOrientation()).toBe('horizontal')
-
-                    children = paneAxis.getChildren()
-                    expect(children).toHaveLength(2)
-                    [p1, p2] = children
-                    expect(p1.getActiveItem()).toBe(editor)
-                    expect(p2.getActiveItem()).toBe(ui.editor)
-
-            describe "right pane active", ->
-              beforeEach ->
-                ensureEditor editor, active: false
-                ensureEditor editor2, active: true
-
-              it "open on previous adjacent pane", ->
-                waitsForPromise ->
-                  startNarrow('scan').then ({ui}) ->
-                    expect(ui.getPane().getParent()).toBe(paneAxis)
-                    expect(paneAxis.getOrientation()).toBe('horizontal')
-
-                    children = paneAxis.getChildren()
-                    expect(children).toHaveLength(2)
-                    [p1, p2] = children
-                    expect(p1.getActiveItem()).toBe(ui.editor)
-                    expect(p2.getActiveItem()).toBe(editor2)
+          describe "down pane active", ->
+            it "open on previous adjacent pane", ->
+              ensureEditor editor2, active: true
+              waitsForPromise ->
+                startNarrow('scan').then ({ui}) -> ensurePaneLayout vertical: [[editor, ui.editor], [editor2]]
 
   describe "scan", ->
     describe "with empty qury", ->
