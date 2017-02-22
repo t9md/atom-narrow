@@ -10,12 +10,8 @@ startNarrow = (providerName, options) ->
   # console.log provider
   provider.start().then ->
     ui = provider.ui
-
-    {
-      provider: provider
-      ui: ui
-      ensure: new Ensureer(ui, provider).ensure
-    }
+    {ensure, waitsForRefresh, waitsForConfirm} = new Ensureer(ui, provider)
+    {provider, ui, ensure, waitsForRefresh, waitsForConfirm }
 
 dispatchCommand = (target, commandName) ->
   atom.commands.dispatch(target, commandName)
@@ -51,6 +47,16 @@ class Ensureer
     'text', 'cursor',
   ]
 
+  waitsForRefresh: (fn) =>
+    disposable = @ui.onDidRefresh -> disposable.dispose()
+    fn()
+    waitsFor -> disposable.disposed
+
+  waitsForConfirm: (fn) =>
+    disposable = @ui.onDidConfirm -> disposable.dispose()
+    fn()
+    waitsFor -> disposable.disposed
+
   ensure: (args...) =>
     switch args.length
       when 1 then [options] = args
@@ -60,10 +66,7 @@ class Ensureer
 
     runs =>
       if query?
-        refreshed = false
-        @ui.onDidRefresh -> refreshed = true
-        @ui.setQuery(query)
-        waitsFor -> refreshed
+        @waitsForRefresh => @ui.setQuery(query)
 
       runs =>
         for name in ensureOptionsOrdered when options[name]?

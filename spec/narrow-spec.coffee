@@ -10,7 +10,7 @@ Ui = require '../lib/ui'
 # -------------------------
 describe "narrow", ->
   [editor, editorElement, main] = []
-  [provider, ui, ensure] = []
+  [provider, ui, ensure, narrow] = []
   beforeEach ->
     waitsForPromise ->
       atom.packages.activatePackage('narrow').then (pack) ->
@@ -211,3 +211,67 @@ describe "narrow", ->
           expect(Ui.getSize()).toBe(0)
           dispatchCommand(editor.element, 'narrow:close')
           expect(Ui.getSize()).toBe(0)
+
+    describe "narrow:refresh", ->
+      beforeEach ->
+        editor.setText """
+          apple
+          grape
+          lemmon
+          """
+        editor.setCursorBufferPosition([0, 0])
+
+        waitsForPromise ->
+          startNarrow('scan').then (_narrow) ->
+            {provider, ui, ensure} = narrow = _narrow
+
+      it "redraw items when item area was mutated", ->
+        originalText = ui.editor.getText()
+
+        narrow.waitsForRefresh ->
+          range = [[1, 0], ui.editor.getEofBufferPosition()]
+          ui.editor.setTextInBufferRange(range, 'abc\ndef\n')
+          ensure text: "\nabc\ndef\n"
+
+        narrow.waitsForRefresh ->
+          dispatchCommand(editorElement, 'narrow:refresh')
+
+        runs ->
+          ensure text: originalText
+
+    describe "narrow:next-item, narrow:previous-item", ->
+      beforeEach ->
+        editor.setText """
+          apple
+          grape
+          lemmon
+          """
+        editor.setCursorBufferPosition([0, 0])
+
+        waitsForPromise ->
+          startNarrow('scan').then (_narrow) ->
+            {provider, ui, ensure} = narrow = _narrow
+
+        runs ->
+          ensure "p",
+            text: """
+              p
+              1: 2: apple
+              1: 3: apple
+              2: 4: grape
+              """
+
+      it "move to next/previous item with wrap", ->
+        ui.activateProviderPane()
+        ensureEditor editor, active: true, cursor: [0, 0]
+        nextItem = -> narrow.waitsForConfirm -> dispatchCommand(editorElement, 'narrow:next-item')
+        previousItem = -> narrow.waitsForConfirm -> dispatchCommand(editorElement, 'narrow:previous-item')
+
+        runs -> nextItem(); runs -> ensureEditor editor, cursor: [0, 1]
+        runs -> nextItem(); runs -> ensureEditor editor, cursor: [0, 2]
+        runs -> nextItem(); runs -> ensureEditor editor, cursor: [1, 3]
+        runs -> nextItem(); runs -> ensureEditor editor, cursor: [0, 1]
+
+        runs -> previousItem(); runs -> ensureEditor editor, cursor: [1, 3]
+        runs -> previousItem(); runs -> ensureEditor editor, cursor: [0, 2]
+        runs -> previousItem(); runs -> ensureEditor editor, cursor: [0, 1]
