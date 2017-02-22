@@ -103,6 +103,7 @@ class ProviderBase
     @restoreEditorState = saveEditorState(@editor)
     @query = @getInitialQuery(editor)
 
+  start: ->
     @checkReady().then (ready) =>
       if ready
         @ui = new Ui(this, {@query})
