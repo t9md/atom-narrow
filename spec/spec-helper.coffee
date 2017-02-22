@@ -11,7 +11,7 @@ startNarrow = (providerName, options) ->
   provider.start().then ->
     ui = provider.ui
     {ensure, waitsForRefresh, waitsForConfirm} = new Ensureer(ui, provider)
-    {provider, ui, ensure, waitsForRefresh, waitsForConfirm }
+    {provider, ui, ensure, waitsForRefresh, waitsForConfirm}
 
 dispatchCommand = (target, commandName) ->
   atom.commands.dispatch(target, commandName)
@@ -64,14 +64,18 @@ class Ensureer
 
     validateOptions(options, ensureOptionsOrdered, 'Invalid ensure option')
 
-    runs =>
-      if query?
-        @waitsForRefresh => @ui.setQuery(query)
+    ensureOptions = =>
+      for name in ensureOptionsOrdered when options[name]?
+        method = 'ensure' + _.capitalize(_.camelize(name))
+        this[method](options[name])
 
+    if query?
       runs =>
-        for name in ensureOptionsOrdered when options[name]?
-          method = 'ensure' + _.capitalize(_.camelize(name))
-          this[method](options[name])
+        @waitsForRefresh => @ui.setQuery(query)
+      runs =>
+        ensureOptions()
+    else
+      ensureOptions()
 
   ensureItemsCount: (count) ->
     expect(@items.getCount()).toBe(count)

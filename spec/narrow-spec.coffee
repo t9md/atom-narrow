@@ -1,10 +1,14 @@
 Ui = require '../lib/ui'
+settings = require '../lib/settings'
 {
   startNarrow
   dispatchCommand
   ensureCursorPosition
   ensureEditor
 } = require "./spec-helper"
+
+paneForItem = (item) ->
+  atom.workspace.paneForItem(item)
 
 # Main
 # -------------------------
@@ -21,6 +25,89 @@ describe "narrow", ->
         editor = _editor
         editorElement = editor.element
 
+  describe "narrow-editor open/close", ->
+    beforeEach ->
+      editor.setText """
+        apple
+        grape
+        lemmon
+        """
+      editor.setCursorBufferPosition([0, 0])
+
+    describe "directionToOpen settings", ->
+      describe "right", ->
+        describe "from one pane", ->
+          beforeEach ->
+            expect(atom.workspace.getPanes()).toHaveLength(1)
+            settings.set('narrow.directionToOpen', 'right')
+
+          it 'open on right pane', ->
+            waitsForPromise ->
+              startNarrow('scan').then ({ui}) ->
+                expect(atom.workspace.getPanes()).toHaveLength(2)
+                paneAxis = ui.getPane().getParent()
+                expect(paneAxis.getOrientation()).toBe('horizontal')
+                children = paneAxis.getChildren()
+                expect(children).toHaveLength(2)
+                expect(children[0]).toBe(ui.provider.getPane())
+                expect(children[1]).toBe(ui.getPane())
+
+        describe "from two pane", ->
+          [editor2, paneAxis] = []
+
+          describe "horizontal split", ->
+            beforeEach ->
+              waitsForPromise ->
+                atom.workspace.open(null, split: 'right', activate: true, activateItem: true).then (_editor) ->
+                  editor2 = _editor
+                  editor2.setText("abc\ndef\n")
+
+              runs ->
+                expect(atom.workspace.getPanes()).toHaveLength(2)
+                pane = paneForItem(editor2)
+                paneAxis = pane.getParent()
+                expect(paneAxis.getOrientation()).toBe('horizontal')
+
+                children = paneAxis.getChildren()
+                expect(children).toHaveLength(2)
+                [p1, p2] = children
+                expect(p1.getActiveItem()).toBe(editor)
+                expect(p2.getActiveItem()).toBe(editor2)
+
+            describe "left pane active", ->
+              beforeEach ->
+                paneForItem(editor).activate()
+                ensureEditor editor, active: true
+
+              it "open on existing right pane", ->
+                waitsForPromise ->
+                  startNarrow('scan').then ({ui}) ->
+                    expect(ui.getPane().getParent()).toBe(paneAxis)
+                    expect(paneAxis.getOrientation()).toBe('horizontal')
+
+                    children = paneAxis.getChildren()
+                    expect(children).toHaveLength(2)
+                    [p1, p2] = children
+                    expect(p1.getActiveItem()).toBe(editor)
+                    expect(p2.getActiveItem()).toBe(ui.editor)
+
+            describe "right pane active", ->
+              beforeEach ->
+                ensureEditor editor, active: false
+                ensureEditor editor2, active: true
+
+              it "open on previous adjacent pane", ->
+                waitsForPromise ->
+                  startNarrow('scan').then ({ui}) ->
+                    expect(ui.getPane().getParent()).toBe(paneAxis)
+                    expect(paneAxis.getOrientation()).toBe('horizontal')
+
+                    children = paneAxis.getChildren()
+                    expect(children).toHaveLength(2)
+                    [p1, p2] = children
+                    expect(p1.getActiveItem()).toBe(ui.editor)
+                    expect(p2.getActiveItem()).toBe(editor2)
+
   describe "scan", ->
     describe "with empty qury", ->
       beforeEach ->
@@ -32,8 +119,8 @@ describe "narrow", ->
         editor.setCursorBufferPosition([0, 0])
 
         waitsForPromise ->
-          startNarrow('scan').then (narrow) ->
-            {provider, ui, ensure} = narrow
+          startNarrow('scan').then (_narrow) ->
+            {provider, ui, ensure} = narrow = _narrow
 
       it "add css class to narrowEditorElement", ->
         expect(ui.editorElement.classList.contains('narrow')).toBe(true)
@@ -76,6 +163,8 @@ describe "narrow", ->
           itemsCount: 2
 
       it "land to confirmed item", ->
+        disposable = null
+
         runs ->
           ensure "l",
             text: """
@@ -85,11 +174,15 @@ describe "narrow", ->
               """
             selectedItemRow: 1
 
-        waitsForPromise ->
-          ui.confirm().then ->
-            ensureEditor editor, cursor: [0, 3]
+        runs ->
+          dispatchCommand(ui.editorElement, 'core:confirm')
+          disposable = ui.editor.onDidDestroy -> disposable.dispose()
+        waitsFor -> disposable.disposed
+        runs -> ensureEditor editor, cursor: [0, 3]
 
       it "land to confirmed item", ->
+        disposable = null
+
         runs ->
           ensure "mm",
             text: """
@@ -97,9 +190,12 @@ describe "narrow", ->
               3: 3: lemmon
               """
             selectedItemRow: 1
-        waitsForPromise ->
-          ui.confirm().then ->
-            ensureEditor editor, cursor: [2, 2]
+        runs ->
+          dispatchCommand(ui.editorElement, 'core:confirm')
+          disposable = ui.editor.onDidDestroy -> disposable.dispose()
+        waitsFor -> disposable.disposed
+        runs ->
+          ensureEditor editor, cursor: [2, 2]
 
     describe "with queryCurrentWord", ->
       beforeEach ->
@@ -169,6 +265,45 @@ describe "narrow", ->
         ensureEditor editor, active: false
         ensureEditor ui.editor, active: true
 
+    describe "narrow:focus-prompt", ->
+      focusPrompt = ->
+        dispatchCommand(atom.workspace.getActiveTextEditor().element, 'narrow:focus-prompt')
+
+      beforeEach ->
+        editor.setText """
+          apple
+          grape
+          lemmon
+          """
+        editor.setCursorBufferPosition([0, 0])
+
+        waitsForPromise ->
+          startNarrow('scan').then (narrow) ->
+            {provider, ui, ensure} = narrow
+
+      it "toggle focus between provider.editor and ui.editor", ->
+        ui.editor.setCursorBufferPosition([1, 0])
+
+        ensureEditor editor, active: false
+        ensureEditor ui.editor, active: true
+        ensure cursor: [1, 0], selectedItemRow: 1
+
+
+        focusPrompt() # focus from item-area to prompt
+        ensureEditor editor, active: false
+        ensureEditor ui.editor, active: true
+        ensure cursor: [0, 0], selectedItemRow: 1
+
+        focusPrompt() # focus provider.editor
+        ensureEditor editor, active: true
+        ensureEditor ui.editor, active: false
+        ensure cursor: [0, 0], selectedItemRow: 1
+
+        focusPrompt() # focus narrow-editor
+        ensureEditor editor, active: false
+        ensureEditor ui.editor, active: true
+        ensure cursor: [0, 0], selectedItemRow: 1
+
     describe "narrow:close", ->
       beforeEach ->
         editor.setText """
@@ -184,7 +319,7 @@ describe "narrow", ->
 
       it "close narrow-editor from outside of narrow-editor", ->
         expect(atom.workspace.getTextEditors()).toHaveLength(2)
-        atom.workspace.paneForItem(editor).activate()
+        paneForItem(editor).activate()
         ensureEditor editor, active: true, alive: true
         ensureEditor ui.editor, active: false, alive: true
         dispatchCommand(editor.element, 'narrow:close')
@@ -199,7 +334,7 @@ describe "narrow", ->
 
         runs ->
           expect(Ui.getSize()).toBe(4)
-          atom.workspace.paneForItem(editor).activate()
+          paneForItem(editor).activate()
           ensureEditor editor, active: true
           dispatchCommand(editor.element, 'narrow:close')
           expect(Ui.getSize()).toBe(3)
