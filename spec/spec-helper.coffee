@@ -17,6 +17,31 @@ startNarrow = (providerName, options) ->
       ensure: new Ensureer(ui, provider).ensure
     }
 
+dispatchCommand = (target, commandName) ->
+  atom.commands.dispatch(target, commandName)
+
+ensureCursorPosition = (editor, position) ->
+  expect(editor.getCursorBufferPosition()).toEqual(position)
+
+validateOptions = (options, validOptions, message) ->
+  invalidOptions = _.without(_.keys(options), validOptions...)
+  if invalidOptions.length
+    throw new Error("#{message}: #{inspect(invalidOptions)}")
+
+ensureEditor = (editor, options) ->
+  ensureOptionsOrdered = [
+    'cursor', 'text', 'active', 'alive'
+  ]
+  validateOptions(options, ensureOptionsOrdered, "invalid options ensureEditor")
+  for name in ensureOptionsOrdered when (value = options[name])?
+    switch name
+      when 'cursor'
+        expect(editor.getCursorBufferPosition()).toEqual(value)
+      when 'active'
+        expect(atom.workspace.getActiveTextEditor() is editor).toBe(value)
+      when 'alive'
+        expect(editor.isAlive()).toBe(value)
+
 class Ensureer
   constructor: (@ui, @provider) ->
     {@editor, @items, @editorElement} = @ui
@@ -26,17 +51,12 @@ class Ensureer
     'text', 'cursor',
   ]
 
-  validateOptions: (options, validOptions, message) ->
-    invalidOptions = _.without(_.keys(options), validOptions...)
-    if invalidOptions.length
-      throw new Error("#{message}: #{inspect(invalidOptions)}")
-
   ensure: (args...) =>
     switch args.length
       when 1 then [options] = args
       when 2 then [query, options] = args
 
-    @validateOptions(options, ensureOptionsOrdered, 'Invalid ensure option')
+    validateOptions(options, ensureOptionsOrdered, 'Invalid ensure option')
 
     runs =>
       if query?
@@ -64,4 +84,7 @@ class Ensureer
 
 module.exports = {
   startNarrow
+  dispatchCommand
+  ensureCursorPosition
+  ensureEditor
 }

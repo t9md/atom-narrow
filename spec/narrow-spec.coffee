@@ -1,12 +1,16 @@
 Ui = require '../lib/ui'
 {
   startNarrow
+  dispatchCommand
+  ensureCursorPosition
+  ensureEditor
 } = require "./spec-helper"
 
 # Main
 # -------------------------
 describe "narrow", ->
   [editor, editorElement, main] = []
+  [provider, ui, ensure] = []
   beforeEach ->
     waitsForPromise ->
       atom.packages.activatePackage('narrow').then (pack) ->
@@ -17,54 +21,62 @@ describe "narrow", ->
         editor = _editor
         editorElement = editor.element
 
-  describe "from internal", ->
-    [provider, ui, ensure] = []
+  describe "scan", ->
+    describe "with empty qury", ->
+      beforeEach ->
+        editor.setText """
+          apple
+          grape
+          lemmon
+          """
+        editor.setCursorBufferPosition([0, 0])
 
-    describe "scan", ->
-      describe "start with empty qury", ->
-        beforeEach ->
-          editor.setText """
-            apple
-            grape
-            lemmon
-            """
+        waitsForPromise ->
+          startNarrow('scan').then (narrow) ->
+            {provider, ui, ensure} = narrow
 
-          waitsForPromise ->
-            startNarrow('scan').then (narrow) ->
-              {provider, ui, ensure} = narrow
+      it "add css class to narrowEditorElement", ->
+        expect(ui.editorElement.classList.contains('narrow')).toBe(true)
+        expect(ui.editorElement.classList.contains('narrow-editor')).toBe(true)
+        expect(ui.editorElement.classList.contains('scan')).toBe(true)
 
+      it "initial state is whole buffer lines", ->
+        ensure
+          text: """
 
-        it "add css class to narrowEditorElement", ->
-          expect(ui.editorElement.classList.contains('narrow')).toBe(true)
-          expect(ui.editorElement.classList.contains('narrow-editor')).toBe(true)
-          expect(ui.editorElement.classList.contains('scan')).toBe(true)
+          1: 1: apple
+          2: 1: grape
+          3: 1: lemmon
+          """
 
-        it "narrowEditor", ->
-          ensure
-            text: """
-
+      it "can filter by query", ->
+        ensure "app",
+          text: """
+            app
             1: 1: apple
-            2: 1: grape
+            """
+          selectedItemRow: 1
+          itemsCount: 1
+
+        ensure "r",
+          text: """
+            r
+            2: 2: grape
+            """
+          selectedItemRow: 1
+          itemsCount: 1
+
+        ensure "l",
+          text: """
+            l
+            1: 4: apple
             3: 1: lemmon
             """
+          selectedItemRow: 1
+          itemsCount: 2
 
-        it "filter by query", ->
-          ensure "app",
-            text: """
-              app
-              1: 1: apple
-              """
-            selectedItemRow: 1
-            itemsCount: 1
-
-          ensure "r",
-            text: """
-              r
-              2: 2: grape
-              """
-            selectedItemRow: 1
-            itemsCount: 1
-
+      it "land to confirmed item", ->
+        runs ->
           ensure "l",
             text: """
               l
@@ -72,82 +84,130 @@ describe "narrow", ->
               3: 1: lemmon
               """
             selectedItemRow: 1
-            itemsCount: 2
 
-  xdescribe "integrated narrow:scan", ->
-    [refreshHandler, narrowEditor] = []
+        waitsForPromise ->
+          ui.confirm().then ->
+            ensureEditor editor, cursor: [0, 3]
 
-    beforeEach ->
-      refreshHandler = jasmine.createSpy("refreshHandler")
-      editor.setText """
-        apple
-        grape
-        lemmon
-        """
+      it "land to confirmed item", ->
+        runs ->
+          ensure "mm",
+            text: """
+              mm
+              3: 3: lemmon
+              """
+            selectedItemRow: 1
+        waitsForPromise ->
+          ui.confirm().then ->
+            ensureEditor editor, cursor: [2, 2]
 
-    it "open narrow-editor", ->
-      runs ->
-        expect(atom.workspace.getTextEditors()).toHaveLength(1)
-        atom.commands.dispatch(editorElement, "narrow:scan")
+    describe "with queryCurrentWord", ->
+      beforeEach ->
+        editor.setText """
+          apple
+          grape
+          lemmon
+          """
 
-      waitsFor ->
-        Ui.uiByEditor.size > 0
+      it "set current-word as initial query", ->
+        waitsForPromise ->
+          editor.setCursorBufferPosition([0, 0])
+          startNarrow('scan', queryCurrentWord: true).then (narrow) ->
+            narrow.ensure
+              text: """
+                apple
+                1: 1: apple
+                """
+              selectedItemRow: 1
+              itemsCount: 1
+            runs -> narrow.ui.destroy()
 
-      runs ->
+        waitsForPromise ->
+          editor.setCursorBufferPosition([1, 0])
+          startNarrow('scan', queryCurrentWord: true).then (narrow) ->
+            narrow.ensure
+              text: """
+                grape
+                2: 1: grape
+                """
+              selectedItemRow: 1
+              itemsCount: 1
+            runs -> narrow.ui.destroy()
+
+        waitsForPromise ->
+          editor.setCursorBufferPosition([2, 0])
+          startNarrow('scan', queryCurrentWord: true).then (narrow) ->
+            narrow.ensure
+              text: """
+                lemmon
+                3: 1: lemmon
+                """
+              selectedItemRow: 1
+              itemsCount: 1
+            runs -> narrow.ui.destroy()
+
+    describe "narrow:focus", ->
+      beforeEach ->
+        editor.setText """
+          apple
+          grape
+          lemmon
+          """
+        editor.setCursorBufferPosition([0, 0])
+
+        waitsForPromise ->
+          startNarrow('scan').then (narrow) ->
+            {provider, ui, ensure} = narrow
+
+      it "toggle focus between provider.editor and ui.editor", ->
+        ensureEditor editor, active: false
+        ensureEditor ui.editor, active: true
+        dispatchCommand(atom.workspace.getActiveTextEditor().element, 'narrow:focus')
+        ensureEditor editor, active: true
+        ensureEditor ui.editor, active: false
+        dispatchCommand(atom.workspace.getActiveTextEditor().element, 'narrow:focus')
+        ensureEditor editor, active: false
+        ensureEditor ui.editor, active: true
+
+    describe "narrow:close", ->
+      beforeEach ->
+        editor.setText """
+          apple
+          grape
+          lemmon
+          """
+        editor.setCursorBufferPosition([0, 0])
+
+        waitsForPromise ->
+          startNarrow('scan').then (narrow) ->
+            {provider, ui, ensure} = narrow
+
+      it "close narrow-editor from outside of narrow-editor", ->
         expect(atom.workspace.getTextEditors()).toHaveLength(2)
-        narrowEditor = atom.workspace.getActiveTextEditor()
-        ui = Ui.get(atom.workspace.getActiveTextEditor())
-        narrowEditorElement = ui.editorElement
-        ui.onDidRefresh(refreshHandler)
+        atom.workspace.paneForItem(editor).activate()
+        ensureEditor editor, active: true, alive: true
+        ensureEditor ui.editor, active: false, alive: true
+        dispatchCommand(editor.element, 'narrow:close')
+        ensureEditor editor, active: true, alive: true
+        ensureEditor ui.editor, active: false, alive: false
+        expect(atom.workspace.getTextEditors()).toHaveLength(1)
 
-        expect(narrowEditorElement.classList.contains('narrow')).toBe(true)
-        expect(narrowEditorElement.classList.contains('narrow-editor')).toBe(true)
-        expect(narrowEditorElement.classList.contains('scan')).toBe(true)
-        expect(narrowEditor.getText()).toBe """
+      it "continue close until no narrow-editor is exists", ->
+        waitsForPromise -> startNarrow('scan')
+        waitsForPromise -> startNarrow('scan')
+        waitsForPromise -> startNarrow('scan')
 
-          1: 1: apple
-          2: 1: grape
-          3: 1: lemmon
-          """
-        expect(narrowEditor.getCursorBufferPosition()).toEqual([0, 0])
-
-      runs ->
-        narrowEditor.insertText("a")
-
-      waitsFor ->
-        refreshHandler.callCount > 0
-
-      runs ->
-        expect(narrowEditor.getText()).toBe """
-          a
-          1: 1: apple
-          2: 3: grape
-          """
-
-      runs ->
-        refreshHandler.reset()
-        narrowEditor.insertText("pp")
-
-      waitsFor ->
-        refreshHandler.callCount > 0
-
-      runs ->
-        expect(narrowEditor.getText()).toBe """
-          app
-          1: 1: apple
-          """
-
-      runs ->
-        refreshHandler.reset()
-        narrowEditor.deleteToBeginningOfLine()
-
-      waitsFor ->
-        refreshHandler.callCount > 0
-
-      runs ->
-        expect(narrowEditor.getText()).toBe """
-
-          1: 1: apple
-          2: 1: grape
-          3: 1: lemmon
-          """
+        runs ->
+          expect(Ui.getSize()).toBe(4)
+          atom.workspace.paneForItem(editor).activate()
+          ensureEditor editor, active: true
+          dispatchCommand(editor.element, 'narrow:close')
+          expect(Ui.getSize()).toBe(3)
+          dispatchCommand(editor.element, 'narrow:close')
+          expect(Ui.getSize()).toBe(2)
+          dispatchCommand(editor.element, 'narrow:close')
+          expect(Ui.getSize()).toBe(1)
+          dispatchCommand(editor.element, 'narrow:close')
+          expect(Ui.getSize()).toBe(0)
+          dispatchCommand(editor.element, 'narrow:close')
+          expect(Ui.getSize()).toBe(0)

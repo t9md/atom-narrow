@@ -40,6 +40,9 @@ class Ui
   @get: (editor) ->
     @uiByEditor.get(editor)
 
+  @getSize: ->
+    @uiByEditor.size
+
   @updateWorkspaceClassList: ->
     atom.views.getView(atom.workspace).classList.toggle('has-narrow', @uiByEditor.size)
 
