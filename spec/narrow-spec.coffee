@@ -288,7 +288,7 @@ describe "narrow", ->
               4: 3:   line 4
               """
 
-      fit "move to next/previous", ->
+      it "move to next/previous", ->
         setCursor = (point) -> runs -> editor.setCursorBufferPosition(point)
 
         jasmine.useRealClock()
