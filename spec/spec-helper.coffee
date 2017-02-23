@@ -10,11 +10,15 @@ startNarrow = (providerName, options) ->
   # console.log provider
   provider.start().then ->
     ui = provider.ui
-    {ensure, waitsForRefresh, waitsForConfirm} = new Ensureer(ui, provider)
-    {provider, ui, ensure, waitsForRefresh, waitsForConfirm}
+    {ensure, waitsForRefresh, waitsForConfirm, waitsForDestroy} = new Ensureer(ui, provider)
+    {provider, ui, ensure, waitsForRefresh, waitsForConfirm, waitsForDestroy}
 
 dispatchCommand = (target, commandName) ->
   atom.commands.dispatch(target, commandName)
+
+dispatchEditorCommand = (commandName, editor=null) ->
+  editor ?= atom.workspace.getActiveTextEditor()
+  atom.commands.dispatch(editor.element, commandName)
 
 ensureCursorPosition = (editor, position) ->
   expect(editor.getCursorBufferPosition()).toEqual(position)
@@ -47,8 +51,13 @@ class Ensureer
 
   ensureOptionsOrdered = [
     'itemsCount', 'selectedItemRow',
-    'text', 'cursor',
+    'text', 'cursor', 'classListContains'
   ]
+
+  waitsForDestroy: (fn) =>
+    disposable = @ui.onDidDestroy -> disposable.dispose()
+    fn()
+    waitsFor -> disposable.disposed
 
   waitsForRefresh: (fn) =>
     disposable = @ui.onDidRefresh -> disposable.dispose()
@@ -92,6 +101,10 @@ class Ensureer
   ensureCursor: (cursor) ->
     expect(@editor.getCursorBufferPosition()).toEqual(cursor)
 
+  ensureClassListContains: (classList) ->
+    for className in classList
+      expect(@editorElement.classList.contains(className)).toBe(true)
+
 # example-usage
 # ensurePaneLayout
 #   horizontal: [
@@ -111,6 +124,9 @@ paneLayoutFor = (root) ->
       layout[root.getOrientation()] = root.getChildren().map(paneLayoutFor)
       layout
 
+paneForItem = (item) ->
+  atom.workspace.paneForItem(item)
+
 module.exports = {
   startNarrow
   dispatchCommand
@@ -118,4 +134,6 @@ module.exports = {
   ensureEditor
   ensurePaneLayout
   ensureEditorIsActive
+  dispatchEditorCommand
+  paneForItem
 }

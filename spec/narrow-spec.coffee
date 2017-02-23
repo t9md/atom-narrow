@@ -2,15 +2,13 @@ Ui = require '../lib/ui'
 settings = require '../lib/settings'
 {
   startNarrow
-  dispatchCommand
   ensureCursorPosition
   ensureEditor
   ensurePaneLayout
   ensureEditorIsActive
+  dispatchEditorCommand
+  paneForItem
 } = require "./spec-helper"
-
-paneForItem = (item) ->
-  atom.workspace.paneForItem(item)
 
 # Main
 # -------------------------
@@ -49,8 +47,7 @@ describe "narrow", ->
         describe "right", ->
           it 'open on right pane', ->
             settings.set('directionToOpen', 'right')
-            waitsForPromise ->
-              startNarrow('scan').then ({ui}) -> ensurePaneLayout horizontal: [[editor], [ui.editor]]
+            ensurePaneLayoutAfterStart((ui) -> horizontal: [[editor], [ui.editor]])
 
         describe "down", ->
           it 'open on down pane', ->
@@ -100,6 +97,7 @@ describe "narrow", ->
 
   describe "scan", ->
     describe "with empty qury", ->
+      confirm = -> narrow.waitsForDestroy -> dispatchEditorCommand('core:confirm')
       beforeEach ->
         editor.setText """
           apple
@@ -113,9 +111,7 @@ describe "narrow", ->
             {provider, ui, ensure} = narrow = _narrow
 
       it "add css class to narrowEditorElement", ->
-        expect(ui.editorElement.classList.contains('narrow')).toBe(true)
-        expect(ui.editorElement.classList.contains('narrow-editor')).toBe(true)
-        expect(ui.editorElement.classList.contains('scan')).toBe(true)
+        ensure classListContains: ['narrow', 'narrow-editor', 'scan']
 
       it "initial state is whole buffer lines", ->
         ensure
@@ -153,8 +149,6 @@ describe "narrow", ->
           itemsCount: 2
 
       it "land to confirmed item", ->
-        disposable = null
-
         runs ->
           ensure "l",
             text: """
@@ -164,15 +158,9 @@ describe "narrow", ->
               """
             selectedItemRow: 1
 
-        runs ->
-          dispatchCommand(ui.editorElement, 'core:confirm')
-          disposable = ui.editor.onDidDestroy -> disposable.dispose()
-        waitsFor -> disposable.disposed
-        runs -> ensureEditor editor, cursor: [0, 3]
+        runs -> confirm(); runs -> ensureEditor editor, cursor: [0, 3]
 
       it "land to confirmed item", ->
-        disposable = null
-
         runs ->
           ensure "mm",
             text: """
@@ -180,12 +168,7 @@ describe "narrow", ->
               3: 3: lemmon
               """
             selectedItemRow: 1
-        runs ->
-          dispatchCommand(ui.editorElement, 'core:confirm')
-          disposable = ui.editor.onDidDestroy -> disposable.dispose()
-        waitsFor -> disposable.disposed
-        runs ->
-          ensureEditor editor, cursor: [2, 2]
+        runs -> confirm(); runs -> ensureEditor editor, cursor: [2, 2]
 
     describe "with queryCurrentWord", ->
       beforeEach ->
@@ -247,15 +230,12 @@ describe "narrow", ->
 
       it "toggle focus between provider.editor and ui.editor", ->
         ensureEditorIsActive(ui.editor)
-        dispatchCommand(atom.workspace.getActiveTextEditor().element, 'narrow:focus')
+        dispatchEditorCommand('narrow:focus')
         ensureEditorIsActive(editor)
-        dispatchCommand(atom.workspace.getActiveTextEditor().element, 'narrow:focus')
+        dispatchEditorCommand('narrow:focus')
         ensureEditorIsActive(ui.editor)
 
     describe "narrow:focus-prompt", ->
-      focusPrompt = ->
-        dispatchCommand(atom.workspace.getActiveTextEditor().element, 'narrow:focus-prompt')
-
       beforeEach ->
         editor.setText """
           apple
@@ -274,15 +254,15 @@ describe "narrow", ->
         ensureEditorIsActive(ui.editor)
         ensure cursor: [1, 0], selectedItemRow: 1
 
-        focusPrompt() # focus from item-area to prompt
+        dispatchEditorCommand('narrow:focus-prompt') # focus from item-area to prompt
         ensureEditorIsActive(ui.editor)
         ensure cursor: [0, 0], selectedItemRow: 1
 
-        focusPrompt() # focus provider.editor
+        dispatchEditorCommand('narrow:focus-prompt') # focus provider.editor
         ensureEditorIsActive(editor)
         ensure cursor: [0, 0], selectedItemRow: 1
 
-        focusPrompt() # focus narrow-editor
+        dispatchEditorCommand('narrow:focus-prompt') # focus narrow-editor
         ensureEditorIsActive(ui.editor)
         ensure cursor: [0, 0], selectedItemRow: 1
 
@@ -303,7 +283,7 @@ describe "narrow", ->
         expect(atom.workspace.getTextEditors()).toHaveLength(2)
         paneForItem(editor).activate()
         ensureEditorIsActive(editor)
-        dispatchCommand(editor.element, 'narrow:close')
+        dispatchEditorCommand('narrow:close')
         ensureEditorIsActive(editor)
         expect(atom.workspace.getTextEditors()).toHaveLength(1)
 
@@ -316,15 +296,15 @@ describe "narrow", ->
           expect(Ui.getSize()).toBe(4)
           paneForItem(editor).activate()
           ensureEditorIsActive(editor)
-          dispatchCommand(editor.element, 'narrow:close')
+          dispatchEditorCommand('narrow:close')
           expect(Ui.getSize()).toBe(3)
-          dispatchCommand(editor.element, 'narrow:close')
+          dispatchEditorCommand('narrow:close')
           expect(Ui.getSize()).toBe(2)
-          dispatchCommand(editor.element, 'narrow:close')
+          dispatchEditorCommand('narrow:close')
           expect(Ui.getSize()).toBe(1)
-          dispatchCommand(editor.element, 'narrow:close')
+          dispatchEditorCommand('narrow:close')
           expect(Ui.getSize()).toBe(0)
-          dispatchCommand(editor.element, 'narrow:close')
+          dispatchEditorCommand('narrow:close')
           expect(Ui.getSize()).toBe(0)
 
     describe "narrow:refresh", ->
@@ -343,13 +323,14 @@ describe "narrow", ->
       it "redraw items when item area was mutated", ->
         originalText = ui.editor.getText()
 
-        narrow.waitsForRefresh ->
-          range = [[1, 0], ui.editor.getEofBufferPosition()]
-          ui.editor.setTextInBufferRange(range, 'abc\ndef\n')
-          ensure text: "\nabc\ndef\n"
+        runs ->
+          narrow.waitsForRefresh ->
+            range = [[1, 0], ui.editor.getEofBufferPosition()]
+            ui.editor.setTextInBufferRange(range, 'abc\ndef\n')
+            ensure text: "\nabc\ndef\n"
 
-        narrow.waitsForRefresh ->
-          dispatchCommand(editorElement, 'narrow:refresh')
+        runs ->
+          narrow.waitsForRefresh -> dispatchEditorCommand('narrow:refresh')
 
         runs ->
           ensure text: originalText
@@ -377,10 +358,11 @@ describe "narrow", ->
               """
 
       it "move to next/previous item with wrap", ->
-        ui.activateProviderPane()
-        ensureEditor editor, active: true, cursor: [0, 0]
-        nextItem = -> narrow.waitsForConfirm -> dispatchCommand(editorElement, 'narrow:next-item')
-        previousItem = -> narrow.waitsForConfirm -> dispatchCommand(editorElement, 'narrow:previous-item')
+        paneForItem(editor).activate()
+        ensureEditorIsActive(editor)
+        ensureEditor editor, cursor: [0, 0]
+        nextItem = -> narrow.waitsForConfirm -> dispatchEditorCommand('narrow:next-item')
+        previousItem = -> narrow.waitsForConfirm -> dispatchEditorCommand('narrow:previous-item')
 
         runs -> nextItem(); runs -> ensureEditor editor, cursor: [0, 1]
         runs -> nextItem(); runs -> ensureEditor editor, cursor: [0, 2]

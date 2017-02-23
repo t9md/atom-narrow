@@ -72,6 +72,9 @@ class Ui
   onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
   emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
 
+  onDidDestroy: (fn) -> @emitter.on('did-destroy', fn)
+  emitDidDestroy: -> @emitter.emit('did-destroy')
+
   onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
   emitDidRefresh: -> @emitter.emit('did-refresh')
   onWillRefresh: (fn) -> @emitter.on('will-refresh', fn)
@@ -316,6 +319,7 @@ class Ui
     @provider?.destroy?()
     @items.destroy()
     @itemIndicator.destroy()
+    @emitDidDestroy()
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
