@@ -7,11 +7,13 @@ narrow = (providerName, options) ->
 
 startNarrow = (providerName, options) ->
   provider = narrow(providerName, options)
-  # console.log provider
   provider.start().then ->
     ui = provider.ui
-    {ensure, waitsForRefresh, waitsForConfirm, waitsForDestroy} = new Ensureer(ui, provider)
-    {provider, ui, ensure, waitsForRefresh, waitsForConfirm, waitsForDestroy}
+    props = {provider, ui}
+    ensureer = new Ensureer(ui, provider)
+    for propName in ['ensure', 'waitsForRefresh', 'waitsForConfirm', 'waitsForDestroy']
+      props[propName] = ensureer[propName]
+    props
 
 dispatchCommand = (target, commandName) ->
   atom.commands.dispatch(target, commandName)
