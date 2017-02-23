@@ -1,5 +1,4 @@
 Ui = require '../lib/ui'
-{Range} = require 'atom'
 settings = require '../lib/settings'
 {
   startNarrow
@@ -12,6 +11,7 @@ settings = require '../lib/settings'
   setActiveTextEditor
   setActiveTextEditorWithWaits
 } = require "./spec-helper"
+runCommand = dispatchEditorCommand
 
 appleGrapeLemmonText = """
   apple
@@ -55,27 +55,24 @@ describe "narrow", ->
     describe "closeOnConfirm settings", ->
       it "land to confirmed item and close narrow-editor", ->
         settings.set('Scan.closeOnConfirm', true)
-        narrow.waitsForDestroy -> dispatchEditorCommand('core:confirm')
+        narrow.waitsForDestroy -> runCommand('core:confirm')
         runs ->
           ensureEditor editor, cursor: [0, 3]
-          ensureEditor ui.editor, alive: false
           expect(Ui.getSize()).toBe(0)
 
       it "land to confirmed item and keep open narrow-editor", ->
         settings.set('Scan.closeOnConfirm', false)
-        narrow.waitsForConfirm -> dispatchEditorCommand('core:confirm')
+        narrow.waitsForConfirm -> runCommand('core:confirm')
         runs ->
           ensureEditor editor, cursor: [0, 3]
-          ensureEditor ui.editor, alive: true
           expect(Ui.getSize()).toBe(1)
 
     describe "confirm-keep-open command", ->
       it "land to confirmed item and keep open narrow-editor even if closeOnConfirm was true", ->
         settings.set('Scan.closeOnConfirm', true)
-        narrow.waitsForConfirm -> dispatchEditorCommand('narrow-ui:confirm-keep-open')
+        narrow.waitsForConfirm -> runCommand('narrow-ui:confirm-keep-open')
         runs ->
           ensureEditor editor, cursor: [0, 3]
-          ensureEditor ui.editor, alive: true
           expect(Ui.getSize()).toBe(1)
 
   describe "narrow-editor open/close", ->
@@ -150,10 +147,9 @@ describe "narrow", ->
 
     it "toggle focus between provider.editor and ui.editor", ->
       ensureEditorIsActive(ui.editor)
-      dispatchEditorCommand('narrow:focus')
-      ensureEditorIsActive(editor)
-      dispatchEditorCommand('narrow:focus')
-      ensureEditorIsActive(ui.editor)
+      runCommand('narrow:focus'); ensureEditorIsActive(editor)
+      runCommand('narrow:focus'); ensureEditorIsActive(ui.editor)
+      runCommand('narrow:focus'); ensureEditorIsActive(editor)
 
   describe "narrow:focus-prompt", ->
     beforeEach ->
@@ -167,16 +163,15 @@ describe "narrow", ->
       ensureEditorIsActive(ui.editor)
       ensure cursor: [1, 0], selectedItemRow: 1
 
-      dispatchEditorCommand('narrow:focus-prompt') # focus from item-area to prompt
-      ensureEditorIsActive(ui.editor)
+      runCommand('narrow:focus-prompt'); ensureEditorIsActive(ui.editor)
       ensure cursor: [0, 0], selectedItemRow: 1
 
-      dispatchEditorCommand('narrow:focus-prompt') # focus provider.editor
-      ensureEditorIsActive(editor)
+      # focus provider.editor
+      runCommand('narrow:focus-prompt'); ensureEditorIsActive(editor)
       ensure cursor: [0, 0], selectedItemRow: 1
 
-      dispatchEditorCommand('narrow:focus-prompt') # focus narrow-editor
-      ensureEditorIsActive(ui.editor)
+      # focus narrow-editor
+      runCommand('narrow:focus-prompt'); ensureEditorIsActive(ui.editor)
       ensure cursor: [0, 0], selectedItemRow: 1
 
   describe "narrow:close", ->
@@ -187,9 +182,9 @@ describe "narrow", ->
 
     it "close narrow-editor from outside of narrow-editor", ->
       expect(atom.workspace.getTextEditors()).toHaveLength(2)
-      paneForItem(editor).activate()
+      setActiveTextEditor(editor)
       ensureEditorIsActive(editor)
-      dispatchEditorCommand('narrow:close')
+      runCommand('narrow:close')
       ensureEditorIsActive(editor)
       expect(atom.workspace.getTextEditors()).toHaveLength(1)
 
@@ -200,18 +195,12 @@ describe "narrow", ->
 
       runs ->
         expect(Ui.getSize()).toBe(4)
-        paneForItem(editor).activate()
-        ensureEditorIsActive(editor)
-        dispatchEditorCommand('narrow:close')
-        expect(Ui.getSize()).toBe(3)
-        dispatchEditorCommand('narrow:close')
-        expect(Ui.getSize()).toBe(2)
-        dispatchEditorCommand('narrow:close')
-        expect(Ui.getSize()).toBe(1)
-        dispatchEditorCommand('narrow:close')
-        expect(Ui.getSize()).toBe(0)
-        dispatchEditorCommand('narrow:close')
-        expect(Ui.getSize()).toBe(0)
+        setActiveTextEditor(editor); ensureEditorIsActive(editor)
+        runCommand('narrow:close'); expect(Ui.getSize()).toBe(3)
+        runCommand('narrow:close'); expect(Ui.getSize()).toBe(2)
+        runCommand('narrow:close'); expect(Ui.getSize()).toBe(1)
+        runCommand('narrow:close'); expect(Ui.getSize()).toBe(0)
+        runCommand('narrow:close'); expect(Ui.getSize()).toBe(0)
 
   describe "narrow:refresh", ->
     beforeEach ->
@@ -228,14 +217,14 @@ describe "narrow", ->
         ensure text: "\nabc\ndef\n"
 
       narrow.waitsForRefresh ->
-        dispatchEditorCommand('narrow:refresh')
+        runCommand('narrow:refresh')
 
       runs ->
         ensure text: originalText
 
   describe "narrow:next-item, narrow:previous-item", ->
-    nextItem = -> runs -> narrow.waitsForConfirm -> dispatchEditorCommand('narrow:next-item')
-    previousItem = -> runs -> narrow.waitsForConfirm -> dispatchEditorCommand('narrow:previous-item')
+    nextItem = -> runs -> narrow.waitsForConfirm -> runCommand('narrow:next-item')
+    previousItem = -> runs -> narrow.waitsForConfirm -> runCommand('narrow:previous-item')
 
     describe "basic behavior", ->
       beforeEach ->
@@ -253,18 +242,19 @@ describe "narrow", ->
               """
 
       it "move to next/previous item with wrap", ->
-        paneForItem(editor).activate()
-        ensureEditorIsActive(editor)
+        setActiveTextEditor(editor); ensureEditorIsActive(editor)
         ensureEditor editor, cursor: [0, 0]
 
-        nextItem(); runs -> ensureEditor editor, cursor: [0, 1]
-        nextItem(); runs -> ensureEditor editor, cursor: [0, 2]
-        nextItem(); runs -> ensureEditor editor, cursor: [1, 3]
-        nextItem(); runs -> ensureEditor editor, cursor: [0, 1]
+        _ensureEditor = (options) -> runs -> ensureEditor(editor, options)
 
-        previousItem(); runs -> ensureEditor editor, cursor: [1, 3]
-        previousItem(); runs -> ensureEditor editor, cursor: [0, 2]
-        previousItem(); runs -> ensureEditor editor, cursor: [0, 1]
+        nextItem(); _ensureEditor cursor: [0, 1]
+        nextItem(); _ensureEditor cursor: [0, 2]
+        nextItem(); _ensureEditor cursor: [1, 3]
+        nextItem(); _ensureEditor cursor: [0, 1]
+
+        previousItem(); _ensureEditor cursor: [1, 3]
+        previousItem(); _ensureEditor cursor: [0, 2]
+        previousItem(); _ensureEditor cursor: [0, 1]
 
     describe "when cursor position is contained in item.range", ->
       beforeEach ->
@@ -289,36 +279,37 @@ describe "narrow", ->
               """
 
       it "move to next/previous", ->
-        setCursor = (point) -> runs -> editor.setCursorBufferPosition(point)
-
         jasmine.useRealClock()
 
         setActiveTextEditorWithWaits(editor)
 
-        r1 = new Range([0, 0], [0, 3])
-        r2 = new Range([1, 2], [1, 6])
-        r3 = new Range([2, 0], [2, 3])
-        r4 = new Range([3, 2], [3, 6])
+        r1 = [[0, 0], [0, 3]] # `line` range of "line 1"
+        r2 = [[1, 2], [1, 6]] # `line` range of "  line 2"
+        r3 = [[2, 0], [2, 3]] # `line` range of "line 3"
+        r4 = [[3, 2], [3, 6]] # `line` range of "  line 4"
 
-        setCursor(r1.start); nextItem(); runs -> ensureEditor editor, cursor: [1, 2]
-        setCursor(r1.end); nextItem(); runs -> ensureEditor editor, cursor: [1, 2]
-        setCursor(r1.start); previousItem(); runs -> ensureEditor editor, cursor: [3, 2]
-        setCursor(r1.end); previousItem(); runs -> ensureEditor editor, cursor: [3, 2]
+        setCursor = (point) -> runs -> editor.setCursorBufferPosition(point)
+        ensureCursor = (point) -> runs -> ensureEditor(editor, cursor: point)
 
-        setCursor(r2.start); nextItem(); runs -> ensureEditor editor, cursor: [2, 0]
-        setCursor(r2.end); nextItem(); runs -> ensureEditor editor, cursor: [2, 0]
-        setCursor(r2.start); previousItem(); runs -> ensureEditor editor, cursor: [0, 0]
-        setCursor(r2.end); previousItem(); runs -> ensureEditor editor, cursor: [0, 0]
+        setCursor(r1[0]); nextItem(); ensureCursor([1, 2])
+        setCursor(r1[1]); nextItem(); ensureCursor([1, 2])
+        setCursor(r1[0]); previousItem(); ensureCursor([3, 2])
+        setCursor(r1[1]); previousItem(); ensureCursor([3, 2])
 
-        setCursor(r3.start); nextItem(); runs -> ensureEditor editor, cursor: [3, 2]
-        setCursor(r3.end); nextItem(); runs -> ensureEditor editor, cursor: [3, 2]
-        setCursor(r3.start); previousItem(); runs -> ensureEditor editor, cursor: [1, 2]
-        setCursor(r3.end); previousItem(); runs -> ensureEditor editor, cursor: [1, 2]
+        setCursor(r2[0]); nextItem(); ensureCursor([2, 0])
+        setCursor(r2[1]); nextItem(); ensureCursor([2, 0])
+        setCursor(r2[0]); previousItem(); ensureCursor([0, 0])
+        setCursor(r2[1]); previousItem(); ensureCursor([0, 0])
 
-        setCursor(r4.start); nextItem(); runs -> ensureEditor editor, cursor: [0, 0]
-        setCursor(r4.end); nextItem(); runs -> ensureEditor editor, cursor: [0, 0]
-        setCursor(r4.start); previousItem(); runs -> ensureEditor editor, cursor: [2, 0]
-        setCursor(r4.end); previousItem(); runs -> ensureEditor editor, cursor: [2, 0]
+        setCursor(r3[0]); nextItem(); ensureCursor([3, 2])
+        setCursor(r3[1]); nextItem(); ensureCursor([3, 2])
+        setCursor(r3[0]); previousItem(); ensureCursor([1, 2])
+        setCursor(r3[1]); previousItem(); ensureCursor([1, 2])
+
+        setCursor(r4[0]); nextItem(); ensureCursor([0, 0])
+        setCursor(r4[1]); nextItem(); ensureCursor([0, 0])
+        setCursor(r4[0]); previousItem(); ensureCursor([2, 0])
+        setCursor(r4[1]); previousItem(); ensureCursor([2, 0])
 
   describe "narrow-editor auto-sync selected-item to active editor", ->
     [editor2] = []
@@ -413,12 +404,15 @@ describe "narrow", ->
         runs ->
           ensureEditorIsActive(editor)
           expect(provider.editor).toBe(editor)
-          editor.setCursorBufferPosition([0, 0])
+
+          setCursor = (point) -> editor.setCursorBufferPosition(point)
+
+          setCursor([0, 0])
           ensure selectedItemText: "line 1"
-          editor.setCursorBufferPosition([1, 0]); ensure selectedItemText: "line 1"
-          editor.setCursorBufferPosition([2, 0]); ensure selectedItemText: "line 3"
-          editor.setCursorBufferPosition([3, 0]); ensure selectedItemText: "line 3"
-          editor.setCursorBufferPosition([4, 0]); ensure selectedItemText: "line 5"
+          setCursor([1, 0]); ensure selectedItemText: "line 1"
+          setCursor([2, 0]); ensure selectedItemText: "line 3"
+          setCursor([3, 0]); ensure selectedItemText: "line 3"
+          setCursor([4, 0]); ensure selectedItemText: "line 5"
           editor.moveToBottom()
           ensureEditor editor, cursor: [9, 0]
           ensure selectedItemText: "line 9"
@@ -426,12 +420,14 @@ describe "narrow", ->
         setActiveTextEditorWithWaits(editor2)
 
         runs ->
+          setCursor = (point) -> editor2.setCursorBufferPosition(point)
+
           expect(provider.editor).toBe(editor2)
           ensure selectedItemText: "line 2"
-          editor2.setCursorBufferPosition([1, 0]); ensure selectedItemText: "line 2"
-          editor2.setCursorBufferPosition([3, 0]); ensure selectedItemText: "line 4"
-          editor2.setCursorBufferPosition([5, 0]); ensure selectedItemText: "line 6"
-          editor2.setCursorBufferPosition([7, 0]); ensure selectedItemText: "line 8"
+          setCursor([1, 0]); ensure selectedItemText: "line 2"
+          setCursor([3, 0]); ensure selectedItemText: "line 4"
+          setCursor([5, 0]); ensure selectedItemText: "line 6"
+          setCursor([7, 0]); ensure selectedItemText: "line 8"
 
           editor2.moveToTop()
           ensureEditor editor2, cursor: [0, 0]
@@ -439,7 +435,7 @@ describe "narrow", ->
 
   describe "scan", ->
     describe "with empty qury", ->
-      confirm = -> narrow.waitsForDestroy -> dispatchEditorCommand('core:confirm')
+      confirm = -> narrow.waitsForDestroy -> runCommand('core:confirm')
       beforeEach ->
         editor.setText(appleGrapeLemmonText)
         editor.setCursorBufferPosition([0, 0])
