@@ -13,4 +13,3 @@ git:
 branches:
   only:
     - master
-    - write-spec

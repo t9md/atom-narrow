@@ -12,9 +12,12 @@ Code navigation tool inspired by unite.vim, emacs-helm.
 - Provide narrowing UI like unite/denite.vim or emacs-helm.
 - But **not** aiming to become "can open anything from narrow-able UI" package.
 - Primal focus is on **code-navigation**.
-- Most of bundled providers are **bound to specific editor**.
-- And sync current-item on narrow-UI as you move cursor on bound editor.
-- This **auto sync current-item to cursor of bound editor** gives you valuable context to keep focus on X.  
+- Provider provide items, which you can narrow.
+- Narrow-UI is bound to active text-editor ans syched. So as you move cursor on active-editor, selected item on narrow-ui is synched.
+- This **auto sync current-item to active editor's cursor** gives you valuable context to keep focus on X.  
+- You no longer lost like "What am I doing? Where am I?" while finding/editing `identifier` which are scattered across multiple files.
+- Let narrow navigate next/previous item to aid your concentration.
+- Edit with confidence for no-overlook by direct-edit( edit on `ag search result` on narrow-editor then apply changes to real-file ).
 
 # Roles in play.
 
