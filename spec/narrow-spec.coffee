@@ -6,6 +6,7 @@ settings = require '../lib/settings'
   ensureCursorPosition
   ensureEditor
   ensurePaneLayout
+  ensureEditorIsActive
 } = require "./spec-helper"
 
 paneForItem = (item) ->
@@ -36,6 +37,11 @@ describe "narrow", ->
       editor.setCursorBufferPosition([0, 0])
 
     describe "directionToOpen settings", ->
+      ensurePaneLayoutAfterStart = (fn) ->
+        waitsForPromise ->
+          startNarrow('scan').then ({ui}) ->
+            ensurePaneLayout(fn(ui))
+
       describe "from one pane", ->
         beforeEach ->
           ensurePaneLayout [editor]
@@ -49,8 +55,7 @@ describe "narrow", ->
         describe "down", ->
           it 'open on down pane', ->
             settings.set('directionToOpen', 'down')
-            waitsForPromise ->
-              startNarrow('scan').then ({ui}) -> ensurePaneLayout vertical: [[editor], [ui.editor]]
+            ensurePaneLayoutAfterStart((ui) -> vertical: [[editor], [ui.editor]])
 
       describe "from two pane", ->
         [editor2] = []
@@ -67,15 +72,13 @@ describe "narrow", ->
           describe "left pane active", ->
             it "open on existing right pane", ->
               paneForItem(editor).activate()
-              ensureEditor editor, active: true
-              waitsForPromise ->
-                startNarrow('scan').then ({ui}) -> ensurePaneLayout horizontal: [[editor], [editor2, ui.editor]]
+              ensureEditorIsActive(editor)
+              ensurePaneLayoutAfterStart((ui) -> horizontal: [[editor], [editor2, ui.editor]])
 
           describe "right pane active", ->
             it "open on previous adjacent pane", ->
-              ensureEditor editor2, active: true
-              waitsForPromise ->
-                startNarrow('scan').then ({ui}) -> ensurePaneLayout horizontal: [[editor, ui.editor], [editor2]]
+              ensureEditorIsActive(editor2)
+              ensurePaneLayoutAfterStart((ui) -> horizontal: [[editor, ui.editor], [editor2]])
 
         describe "vertical split", ->
           beforeEach ->
@@ -87,15 +90,13 @@ describe "narrow", ->
           describe "up-pane active", ->
             it "open on existing down pane", ->
               paneForItem(editor).activate()
-              ensureEditor editor, active: true
-              waitsForPromise ->
-                startNarrow('scan').then ({ui}) -> ensurePaneLayout vertical: [[editor], [editor2, ui.editor]]
+              ensureEditorIsActive(editor)
+              ensurePaneLayoutAfterStart((ui) -> vertical: [[editor], [editor2, ui.editor]])
 
           describe "down pane active", ->
             it "open on previous adjacent pane", ->
-              ensureEditor editor2, active: true
-              waitsForPromise ->
-                startNarrow('scan').then ({ui}) -> ensurePaneLayout vertical: [[editor, ui.editor], [editor2]]
+              ensureEditorIsActive(editor2)
+              ensurePaneLayoutAfterStart((ui) -> vertical: [[editor, ui.editor], [editor2]])
 
   describe "scan", ->
     describe "with empty qury", ->
@@ -245,14 +246,11 @@ describe "narrow", ->
             {provider, ui, ensure} = narrow
 
       it "toggle focus between provider.editor and ui.editor", ->
-        ensureEditor editor, active: false
-        ensureEditor ui.editor, active: true
+        ensureEditorIsActive(ui.editor)
         dispatchCommand(atom.workspace.getActiveTextEditor().element, 'narrow:focus')
-        ensureEditor editor, active: true
-        ensureEditor ui.editor, active: false
+        ensureEditorIsActive(editor)
         dispatchCommand(atom.workspace.getActiveTextEditor().element, 'narrow:focus')
-        ensureEditor editor, active: false
-        ensureEditor ui.editor, active: true
+        ensureEditorIsActive(ui.editor)
 
     describe "narrow:focus-prompt", ->
       focusPrompt = ->
@@ -273,24 +271,19 @@ describe "narrow", ->
       it "toggle focus between provider.editor and ui.editor", ->
         ui.editor.setCursorBufferPosition([1, 0])
 
-        ensureEditor editor, active: false
-        ensureEditor ui.editor, active: true
+        ensureEditorIsActive(ui.editor)
         ensure cursor: [1, 0], selectedItemRow: 1
 
-
         focusPrompt() # focus from item-area to prompt
-        ensureEditor editor, active: false
-        ensureEditor ui.editor, active: true
+        ensureEditorIsActive(ui.editor)
         ensure cursor: [0, 0], selectedItemRow: 1
 
         focusPrompt() # focus provider.editor
-        ensureEditor editor, active: true
-        ensureEditor ui.editor, active: false
+        ensureEditorIsActive(editor)
         ensure cursor: [0, 0], selectedItemRow: 1
 
         focusPrompt() # focus narrow-editor
-        ensureEditor editor, active: false
-        ensureEditor ui.editor, active: true
+        ensureEditorIsActive(ui.editor)
         ensure cursor: [0, 0], selectedItemRow: 1
 
     describe "narrow:close", ->
@@ -309,11 +302,9 @@ describe "narrow", ->
       it "close narrow-editor from outside of narrow-editor", ->
         expect(atom.workspace.getTextEditors()).toHaveLength(2)
         paneForItem(editor).activate()
-        ensureEditor editor, active: true, alive: true
-        ensureEditor ui.editor, active: false, alive: true
+        ensureEditorIsActive(editor)
         dispatchCommand(editor.element, 'narrow:close')
-        ensureEditor editor, active: true, alive: true
-        ensureEditor ui.editor, active: false, alive: false
+        ensureEditorIsActive(editor)
         expect(atom.workspace.getTextEditors()).toHaveLength(1)
 
       it "continue close until no narrow-editor is exists", ->
@@ -324,7 +315,7 @@ describe "narrow", ->
         runs ->
           expect(Ui.getSize()).toBe(4)
           paneForItem(editor).activate()
-          ensureEditor editor, active: true
+          ensureEditorIsActive(editor)
           dispatchCommand(editor.element, 'narrow:close')
           expect(Ui.getSize()).toBe(3)
           dispatchCommand(editor.element, 'narrow:close')

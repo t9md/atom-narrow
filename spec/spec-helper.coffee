@@ -38,6 +38,9 @@ ensureEditor = (editor, options) ->
       when 'alive'
         expect(editor.isAlive()).toBe(value)
 
+ensureEditorIsActive = (editor) ->
+  expect(atom.workspace.getActiveTextEditor()).toBe(editor)
+
 class Ensureer
   constructor: (@ui, @provider) ->
     {@editor, @items, @editorElement} = @ui
@@ -114,4 +117,5 @@ module.exports = {
   ensureCursorPosition
   ensureEditor
   ensurePaneLayout
+  ensureEditorIsActive
 }
