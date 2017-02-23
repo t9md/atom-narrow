@@ -1,4 +1,5 @@
 Ui = require '../lib/ui'
+{Range} = require 'atom'
 settings = require '../lib/settings'
 {
   startNarrow
@@ -265,7 +266,7 @@ describe "narrow", ->
         previousItem(); runs -> ensureEditor editor, cursor: [0, 2]
         previousItem(); runs -> ensureEditor editor, cursor: [0, 1]
 
-    describe "cursor position checked if contained in range", ->
+    describe "when cursor position is contained in item.range", ->
       beforeEach ->
         editor.setText """
           line 1
@@ -287,38 +288,37 @@ describe "narrow", ->
               4: 3:   line 4
               """
 
-      fit "move to next/previous item with wrap", ->
+      fit "move to next/previous", ->
         setCursor = (point) -> runs -> editor.setCursorBufferPosition(point)
 
         jasmine.useRealClock()
 
         setActiveTextEditorWithWaits(editor)
 
-        # `line` range
-        # - "line 1" line: [0, 0] to [0, 3]
-        # - "line 2" line: [1, 2] to [1, 6]
-        # - "line 3" line: [2, 0] to [2, 3]
-        # - "line 4" line: [3, 2] to [3, 6]
+        r1 = new Range([0, 0], [0, 3])
+        r2 = new Range([1, 2], [1, 6])
+        r3 = new Range([2, 0], [2, 3])
+        r4 = new Range([3, 2], [3, 6])
 
-        setCursor([0, 0]); nextItem(); runs -> ensureEditor editor, cursor: [1, 2]
-        setCursor([0, 3]); nextItem(); runs -> ensureEditor editor, cursor: [1, 2]
-        setCursor([0, 0]); previousItem(); runs -> ensureEditor editor, cursor: [3, 2]
-        setCursor([0, 3]); previousItem(); runs -> ensureEditor editor, cursor: [3, 2]
+        setCursor(r1.start); nextItem(); runs -> ensureEditor editor, cursor: [1, 2]
+        setCursor(r1.end); nextItem(); runs -> ensureEditor editor, cursor: [1, 2]
+        setCursor(r1.start); previousItem(); runs -> ensureEditor editor, cursor: [3, 2]
+        setCursor(r1.end); previousItem(); runs -> ensureEditor editor, cursor: [3, 2]
 
-        setCursor([1, 2]); nextItem(); runs -> ensureEditor editor, cursor: [2, 0]
-        setCursor([1, 6]); nextItem(); runs -> ensureEditor editor, cursor: [2, 0]
-        setCursor([1, 2]); previousItem(); runs -> ensureEditor editor, cursor: [0, 0]
-        setCursor([1, 6]); previousItem(); runs -> ensureEditor editor, cursor: [0, 0]
+        setCursor(r2.start); nextItem(); runs -> ensureEditor editor, cursor: [2, 0]
+        setCursor(r2.end); nextItem(); runs -> ensureEditor editor, cursor: [2, 0]
+        setCursor(r2.start); previousItem(); runs -> ensureEditor editor, cursor: [0, 0]
+        setCursor(r2.end); previousItem(); runs -> ensureEditor editor, cursor: [0, 0]
 
-        setCursor([2, 0]); nextItem(); runs -> ensureEditor editor, cursor: [3, 2]
-        setCursor([2, 3]); nextItem(); runs -> ensureEditor editor, cursor: [3, 2]
-        setCursor([2, 0]); previousItem(); runs -> ensureEditor editor, cursor: [1, 2]
-        setCursor([2, 3]); previousItem(); runs -> ensureEditor editor, cursor: [1, 2]
+        setCursor(r3.start); nextItem(); runs -> ensureEditor editor, cursor: [3, 2]
+        setCursor(r3.end); nextItem(); runs -> ensureEditor editor, cursor: [3, 2]
+        setCursor(r3.start); previousItem(); runs -> ensureEditor editor, cursor: [1, 2]
+        setCursor(r3.end); previousItem(); runs -> ensureEditor editor, cursor: [1, 2]
 
-        setCursor([3, 2]); nextItem(); runs -> ensureEditor editor, cursor: [0, 0]
-        setCursor([3, 6]); nextItem(); runs -> ensureEditor editor, cursor: [0, 0]
-        setCursor([3, 2]); previousItem(); runs -> ensureEditor editor, cursor: [2, 0]
-        setCursor([3, 6]); previousItem(); runs -> ensureEditor editor, cursor: [2, 0]
+        setCursor(r4.start); nextItem(); runs -> ensureEditor editor, cursor: [0, 0]
+        setCursor(r4.end); nextItem(); runs -> ensureEditor editor, cursor: [0, 0]
+        setCursor(r4.start); previousItem(); runs -> ensureEditor editor, cursor: [2, 0]
+        setCursor(r4.end); previousItem(); runs -> ensureEditor editor, cursor: [2, 0]
 
   describe "narrow-editor auto-sync selected-item to active editor", ->
     [editor2] = []
