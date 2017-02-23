@@ -1,17 +1,13 @@
 # narrow
 
-[![Join the chat at https://gitter.im/t9md/atom-narrow](https://badges.gitter.im/t9md/atom-narrow.svg)](https://gitter.im/t9md/atom-narrow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/t9md/atom-narrow.svg?branch=master)](https://travis-ci.org/t9md/atom-narrow) [![Join the chat at https://gitter.im/t9md/atom-narrow](https://badges.gitter.im/t9md/atom-narrow.svg)](https://gitter.im/t9md/atom-narrow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 narrow something.  
 Code navigation tool inspired by unite.vim, emacs-helm.  
 
-# Development status
-
-alpha
-
 ![narrow](https://raw.githubusercontent.com/t9md/t9md/4df5df86884a25bf8b62dc3b605df050a06c8232/img/atom-narrow/narrow.gif)
 
-# What's this
+# What's this?
 
 - Provide narrowing UI like unite/denite.vim or emacs-helm.
 - But **not** aiming to become "can open anything from narrow-able UI" package.

@@ -40,6 +40,9 @@ class Ui
   @get: (editor) ->
     @uiByEditor.get(editor)
 
+  @getSize: ->
+    @uiByEditor.size
+
   @updateWorkspaceClassList: ->
     atom.views.getView(atom.workspace).classList.toggle('has-narrow', @uiByEditor.size)
 
@@ -68,6 +71,9 @@ class Ui
 
   onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
   emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
+
+  onDidDestroy: (fn) -> @emitter.on('did-destroy', fn)
+  emitDidDestroy: -> @emitter.emit('did-destroy')
 
   onDidRefresh: (fn) -> @emitter.on('did-refresh', fn)
   emitDidRefresh: -> @emitter.emit('did-refresh')
@@ -231,7 +237,7 @@ class Ui
     pane.activate()
 
     @grammar.activate()
-    @insertQuery(@query)
+    @setQuery(@query)
     @controlBar.show()
     @moveToPrompt()
 
@@ -288,9 +294,15 @@ class Ui
 
   activateProviderPane: ->
     if pane = @provider.getPane()
-      pane.activate()
-      if editor = pane.getActiveEditor()
-        editor.scrollToCursorPosition()
+      # [BUG?] maybe upstream Atom-core bug?
+      # In rare situation( I observed only in test-spec ), there is the situation
+      # whre pane.isAlive but paneContainer.getPanes() in pane return `false`
+      # Without folowing guard "Setting active pane that is not present in pane container"
+      # exception thrown.
+      if pane in pane.getContainer().getPanes()
+        pane.activate()
+        if editor = pane.getActiveEditor()
+          editor.scrollToCursorPosition()
 
   destroy: ->
     return if @destroyed
@@ -307,6 +319,7 @@ class Ui
     @provider?.destroy?()
     @items.destroy()
     @itemIndicator.destroy()
+    @emitDidDestroy()
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
@@ -317,7 +330,7 @@ class Ui
   narrowClose: (event) ->
     if @protected
       event.stopImmediatePropagation()
-      @insertQuery() # clear query
+      @setQuery() # clear query
       @activateProviderPane()
 
   # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
@@ -440,7 +453,7 @@ class Ui
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         # Need to recover query prompt
-        @insertQuery()
+        @setQuery()
         @moveToPrompt()
         @controlBar.show()
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
@@ -467,7 +480,7 @@ class Ui
           # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
           for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
             selection.destroy()
-          @withIgnoreChange => @insertQuery(@lastQuery) # Recover query
+          @withIgnoreChange => @setQuery(@lastQuery) # Recover query
         else
           @refresh(selectFirstItem: true).then =>
             if @autoPreviewOnQueryChange and @isActive()
@@ -614,7 +627,7 @@ class Ui
     @editor.bufferRangeForBufferRow(0)
 
   # Return range
-  insertQuery: (text='') ->
+  setQuery: (text='') ->
     @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
 
   startSyncToEditor: (editor) ->
