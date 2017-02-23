@@ -15,6 +15,9 @@ settings = require '../lib/settings'
 describe "narrow", ->
   [editor, editorElement] = []
   [provider, ui, ensure, narrow] = []
+  waitsForStartScan = ->
+    waitsForPromise ->
+      startNarrow('scan').then (_narrow) -> {provider, ui, ensure} = narrow = _narrow
 
   beforeEach ->
     waitsForPromise ->
@@ -34,11 +37,13 @@ describe "narrow", ->
         """
       editor.setCursorBufferPosition([0, 0])
 
+    describe "closeOnConfirm settings", ->
+      beforeEach ->
+        waitsForStartScan()
+
     describe "directionToOpen settings", ->
       ensurePaneLayoutAfterStart = (fn) ->
-        waitsForPromise ->
-          startNarrow('scan').then ({ui}) ->
-            ensurePaneLayout(fn(ui))
+        waitsForPromise -> startNarrow('scan').then ({ui}) -> ensurePaneLayout(fn(ui))
 
       describe "from one pane", ->
         beforeEach ->
@@ -106,9 +111,7 @@ describe "narrow", ->
           """
         editor.setCursorBufferPosition([0, 0])
 
-        waitsForPromise ->
-          startNarrow('scan').then (_narrow) ->
-            {provider, ui, ensure} = narrow = _narrow
+        waitsForStartScan()
 
       it "add css class to narrowEditorElement", ->
         ensure classListContains: ['narrow', 'narrow-editor', 'scan']
@@ -224,9 +227,7 @@ describe "narrow", ->
           """
         editor.setCursorBufferPosition([0, 0])
 
-        waitsForPromise ->
-          startNarrow('scan').then (narrow) ->
-            {provider, ui, ensure} = narrow
+        waitsForStartScan()
 
       it "toggle focus between provider.editor and ui.editor", ->
         ensureEditorIsActive(ui.editor)
@@ -244,9 +245,7 @@ describe "narrow", ->
           """
         editor.setCursorBufferPosition([0, 0])
 
-        waitsForPromise ->
-          startNarrow('scan').then (narrow) ->
-            {provider, ui, ensure} = narrow
+        waitsForStartScan()
 
       it "toggle focus between provider.editor and ui.editor", ->
         ui.editor.setCursorBufferPosition([1, 0])
@@ -275,9 +274,7 @@ describe "narrow", ->
           """
         editor.setCursorBufferPosition([0, 0])
 
-        waitsForPromise ->
-          startNarrow('scan').then (narrow) ->
-            {provider, ui, ensure} = narrow
+        waitsForStartScan()
 
       it "close narrow-editor from outside of narrow-editor", ->
         expect(atom.workspace.getTextEditors()).toHaveLength(2)
@@ -288,9 +285,9 @@ describe "narrow", ->
         expect(atom.workspace.getTextEditors()).toHaveLength(1)
 
       it "continue close until no narrow-editor is exists", ->
-        waitsForPromise -> startNarrow('scan')
-        waitsForPromise -> startNarrow('scan')
-        waitsForPromise -> startNarrow('scan')
+        waitsForStartScan()
+        waitsForStartScan()
+        waitsForStartScan()
 
         runs ->
           expect(Ui.getSize()).toBe(4)
@@ -316,21 +313,18 @@ describe "narrow", ->
           """
         editor.setCursorBufferPosition([0, 0])
 
-        waitsForPromise ->
-          startNarrow('scan').then (_narrow) ->
-            {provider, ui, ensure} = narrow = _narrow
+        waitsForStartScan()
 
       it "redraw items when item area was mutated", ->
         originalText = ui.editor.getText()
 
-        runs ->
-          narrow.waitsForRefresh ->
-            range = [[1, 0], ui.editor.getEofBufferPosition()]
-            ui.editor.setTextInBufferRange(range, 'abc\ndef\n')
-            ensure text: "\nabc\ndef\n"
+        narrow.waitsForRefresh ->
+          range = [[1, 0], ui.editor.getEofBufferPosition()]
+          ui.editor.setTextInBufferRange(range, 'abc\ndef\n')
+          ensure text: "\nabc\ndef\n"
 
-        runs ->
-          narrow.waitsForRefresh -> dispatchEditorCommand('narrow:refresh')
+        narrow.waitsForRefresh ->
+          dispatchEditorCommand('narrow:refresh')
 
         runs ->
           ensure text: originalText
@@ -344,9 +338,7 @@ describe "narrow", ->
           """
         editor.setCursorBufferPosition([0, 0])
 
-        waitsForPromise ->
-          startNarrow('scan').then (_narrow) ->
-            {provider, ui, ensure} = narrow = _narrow
+        waitsForStartScan()
 
         runs ->
           ensure "p",
