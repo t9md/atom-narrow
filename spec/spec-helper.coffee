@@ -1,4 +1,5 @@
 _ = require 'underscore-plus'
+{inspect} = require 'util'
 
 narrow = (providerName, options) ->
   klass = require("../lib/provider/#{providerName}")
@@ -52,7 +53,7 @@ class Ensureer
     {@editor, @items, @editorElement} = @ui
 
   ensureOptionsOrdered = [
-    'itemsCount', 'selectedItemRow',
+    'itemsCount', 'selectedItemRow', 'selectedItemText'
     'text', 'cursor', 'classListContains'
   ]
 
@@ -97,6 +98,9 @@ class Ensureer
   ensureSelectedItemRow: (row) ->
     expect(@items.getRowForSelectedItem()).toBe(row)
 
+  ensureSelectedItemText: (text) ->
+    expect(@items.getSelectedItem().text).toBe(text)
+
   ensureText: (text) ->
     expect(@editor.getText()).toBe(text)
 
@@ -129,6 +133,20 @@ paneLayoutFor = (root) ->
 paneForItem = (item) ->
   atom.workspace.paneForItem(item)
 
+setActiveTextEditor = (editor) ->
+  pane = paneForItem(editor)
+  pane.activate()
+  pane.activateItem(editor)
+
+setActiveTextEditorWithWaits = (editor) ->
+  runs ->
+    disposable = atom.workspace.onDidStopChangingActivePaneItem (item) ->
+      # This guard is necessary(only in spec), to ignore `undefined` item are passed.
+      if item is editor
+        disposable.dispose()
+    setActiveTextEditor(editor)
+    waitsFor -> disposable.disposed
+
 module.exports = {
   startNarrow
   dispatchCommand
@@ -138,4 +156,6 @@ module.exports = {
   ensureEditorIsActive
   dispatchEditorCommand
   paneForItem
+  setActiveTextEditor
+  setActiveTextEditorWithWaits
 }
