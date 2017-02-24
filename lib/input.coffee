@@ -1,59 +1,43 @@
-{Disposable, CompositeDisposable} = require 'atom'
-{registerElement} = require './utils'
+{CompositeDisposable, Disposable} = require 'atom'
 
-# InputBase, InputElementBase
-# -------------------------
-class Input extends HTMLElement
-  createdCallback: ->
-    @innerHTML = """
-    <div class='narrow-search-container'>
-      <atom-text-editor mini id="narrow-search-input"></atom-text-editor>
-    </div>
-    """
-    @panel = atom.workspace.addBottomPanel(item: this, visible: false)
-    this
+module.exports =
+class Input
+  constructor: ->
+    @disposables = new CompositeDisposable()
 
-  destroy: ->
+    @container = document.createElement('div')
+    @container.className = 'narrow-input-container'
+    @editor = atom.workspace.buildTextEditor(mini: true)
+    @editorElement = @editor.element
+    @editorElement.classList.add('narrow-input')
+    @container.appendChild(@editorElement)
+
+  destroy: =>
+    return if @destroyed
+    @destroyed = true
     @editor.destroy()
-    @panel?.destroy()
-    {@editor, @panel, @editorElement} = {}
-    @remove()
-
-  handleEvents: ->
-    atom.commands.add @editorElement,
-      'core:confirm': => @confirm()
-      'core:cancel': => @cancel()
-      'blur': => @cancel() unless @finished
+    @panel.destroy()
+    @disposables.dispose()
+    atom.workspace.getActivePane().activate()
 
   readInput: ->
-    unless @editorElement
-      @editorElement = document.getElementById("narrow-search-input")
-      @editor = @editorElement.getModel()
+    @panel = atom.workspace.addBottomPanel(item: @container, visible: true)
+    @disposables.add atom.commands.add @editorElement,
+      'core:confirm': => @confirm()
+      'core:cancel': => @destroy()
 
-    @finished = false
-    @panel.show()
+    @disposables.add atom.workspace.onDidChangeActivePaneItem(@destroy)
+
+    # Cancel on mouse click
+    @clientEditorElement = atom.workspace.getActiveTextEditor().element
+    @clientEditorElement.addEventListener('click', @destroy)
+    @disposables.add new Disposable => @clientEditorElement.removeEventListener('click', @destroy)
+    @focus()
+
+  focus: ->
     @editorElement.focus()
-    @commandSubscriptions = @handleEvents()
-
-    # Cancel on tab switch
-    disposable = atom.workspace.onDidChangeActivePaneItem =>
-      disposable?.dispose()
-      @cancel() unless @finished
-
-    new Promise (resolve) =>
-      @resolve = resolve
+    new Promise (@resolve) =>
 
   confirm: ->
     @resolve(@editor.getText())
-    @cancel()
-
-  cancel: ->
-    @commandSubscriptions?.dispose()
-    @resolve = null
-    @finished = true
-    atom.workspace.getActivePane().activate()
-    @editor.setText ''
-    @panel?.hide()
-
-module.exports = registerElement 'narrow-search-input',
-  prototype: Input.prototype
+    @destroy()

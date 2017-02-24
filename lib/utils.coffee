@@ -32,17 +32,6 @@ splitPane = (basePane, {split}) ->
     basePane.activate()
   pane
 
-# Reloadable registerElement
-registerElement = (name, options) ->
-  element = document.createElement(name)
-  # if constructor is HTMLElement, we haven't registerd yet
-  if element.constructor is HTMLElement
-    Element = document.registerElement(name, options)
-  else
-    Element = element.constructor
-    Element.prototype = options.prototype if options.prototype?
-  Element
-
 saveEditorState = (editor) ->
   editorElement = editor.element
   scrollTop = editorElement.getScrollTop()
@@ -287,7 +276,6 @@ module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
   splitPane
-  registerElement
   saveEditorState
   requireFrom
   limitNumber
