@@ -106,8 +106,6 @@ class ProviderBase
     isActiveEditor(@editor)
 
   saveState: ->
-    name = @dashName
-    options = {query: @ui.lastQuery}
     properties = {
       @searchWholeWord
       @searchWholeWordChangedManually
@@ -118,7 +116,11 @@ class ProviderBase
     for property in  @saveProperties ? []
       properties[property] = this[property]
 
-    {name, options, properties}
+    {
+      name: @dashName
+      options: {query: @ui.lastQuery}
+      properties: properties
+    }
 
   constructor: (editor, @options={}, properties) ->
     _.extend(this, properties) if properties?
