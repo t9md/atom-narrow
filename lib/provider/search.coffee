@@ -73,26 +73,26 @@ search = (regexp, {project, args, filePath}) ->
       options: options
     )
 
+getProjectDirectoryForFilePath = (filePath) ->
+  return null unless filePath?
+  for dir in atom.project.getDirectories() when dir.contains(filePath)
+    return dir
+  null
+
 module.exports =
 class Search extends SearchBase
   propertiesToRestoreOnReopen: ['projects']
 
   checkReady: ->
-    projects = null
     if @options.currentProject
-      filePath = @editor.getPath()
-      if filePath?
-        for dir in atom.project.getDirectories() when dir.contains(filePath)
-          projects = [dir.getPath()]
-          break
-
-      unless projects?
+      if dir = getProjectDirectoryForFilePath(@editor.getPath())
+        @projects = [dir.getPath()]
+      else
         message = "This file is not belonging to any project"
         atom.notifications.addInfo(message, dismissable: true)
         return Promise.resolve(false)
 
-    @projects ?= projects ? atom.project.getPaths()
-
+    @projects ?= atom.project.getPaths()
     super
 
   getArgs: ->
