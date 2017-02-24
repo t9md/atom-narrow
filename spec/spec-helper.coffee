@@ -85,10 +85,8 @@ class Ensureer
         this[method](options[name])
 
     if query?
-      runs =>
-        @waitsForRefresh => @ui.setQuery(query)
-      runs ->
-        ensureOptions()
+      runs => @waitsForRefresh => @ui.setQuery(query)
+      runs -> ensureOptions()
     else
       ensureOptions()
 

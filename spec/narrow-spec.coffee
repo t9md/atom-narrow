@@ -1,3 +1,4 @@
+_ = require 'underscore-plus'
 Ui = require '../lib/ui'
 settings = require '../lib/settings'
 {
@@ -24,10 +25,12 @@ describe "narrow", ->
   [editor, editorElement] = []
   [provider, ui, ensure, narrow] = []
 
-  waitsForStartScan = ->
+  waitsForStartNarrow = (providerName, options) ->
     waitsForPromise ->
-      startNarrow('scan').then (_narrow) ->
+      startNarrow(providerName, options).then (_narrow) ->
         {provider, ui, ensure} = narrow = _narrow
+
+  waitsForStartScan = (options) -> waitsForStartNarrow('scan', options)
 
   beforeEach ->
     waitsForPromise ->
@@ -310,6 +313,128 @@ describe "narrow", ->
         setCursor(r4[1]); nextItem(); ensureCursor([0, 0])
         setCursor(r4[0]); previousItem(); ensureCursor([2, 0])
         setCursor(r4[1]); previousItem(); ensureCursor([2, 0])
+
+  describe "auto reveal on start behavior( revealOnStartCondition )", ->
+    [r1, r2, r3, r4, getEnsureStartState] = []
+    beforeEach ->
+      getEnsureStartState = (startOptions) ->
+        (point, options) ->
+          runs -> editor.setCursorBufferPosition(point)
+          waitsForStartScan(startOptions)
+          runs -> ensure(options)
+          runs -> ui.destroy()
+
+      r1 = [[0, 0], [0, 3]] # `line` range of "line 1"
+      r2 = [[1, 2], [1, 6]] # `line` range of "  line 2"
+      r3 = [[2, 0], [2, 3]] # `line` range of "line 3"
+      r4 = [[3, 2], [3, 6]] # `line` range of "  line 4"
+
+      editor.setText """
+        line 1
+          line 2
+        line 3
+          line 4
+        """
+      editor.setCursorBufferPosition([0, 0])
+
+    describe "revealOnStartCondition = on-input( default )", ->
+      beforeEach ->
+        settings.set('Scan.revealOnStartCondition', 'on-input')
+
+      it "auto reveal when initial query was provided", ->
+        text = """
+          line
+          1: 1: line 1
+          2: 3:   line 2
+          3: 1: line 3
+          4: 3:   line 4
+          """
+        ensureStartState = getEnsureStartState(queryCurrentWord: true)
+        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 5], text: text)
+        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 5], text: text)
+        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 5], text: text)
+        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 5], text: text)
+
+      it "NOT auto reveal when no query was provided", ->
+        text = """
+
+          1: 1: line 1
+          2: 1:   line 2
+          3: 1: line 3
+          4: 1:   line 4
+          """
+        ensureStartState = getEnsureStartState()
+        options = {selectedItemText: "line 1", cursor: [0, 0], text: text}
+        ensureStartState(r1[0], options)
+        ensureStartState(r2[0], options)
+        ensureStartState(r3[0], options)
+        ensureStartState(r4[0], options)
+
+    describe "revealOnStartCondition = never", ->
+      beforeEach ->
+        settings.set('Scan.revealOnStartCondition', 'never')
+
+      it "NOT auto reveal when initial query was provided", ->
+        text = """
+          line
+          1: 1: line 1
+          2: 3:   line 2
+          3: 1: line 3
+          4: 3:   line 4
+          """
+        ensureStartState = getEnsureStartState(queryCurrentWord: true)
+        options = {selectedItemText: "line 1", cursor: [0, 4], text: text}
+        ensureStartState(r1[0], options)
+        ensureStartState(r2[0], options)
+        ensureStartState(r3[0], options)
+        ensureStartState(r4[0], options)
+
+      it "NOT auto reveal when no query was provided", ->
+        text = """
+
+          1: 1: line 1
+          2: 1:   line 2
+          3: 1: line 3
+          4: 1:   line 4
+          """
+        ensureStartState = getEnsureStartState()
+        options = {selectedItemText: "line 1", cursor: [0, 0], text: text}
+        ensureStartState(r1[0], options)
+        ensureStartState(r2[0], options)
+        ensureStartState(r3[0], options)
+        ensureStartState(r4[0], options)
+
+    describe "revealOnStartCondition = always", ->
+      beforeEach ->
+        settings.set('Scan.revealOnStartCondition', 'always')
+
+      it "auto reveal when initial query was provided", ->
+        text = """
+          line
+          1: 1: line 1
+          2: 3:   line 2
+          3: 1: line 3
+          4: 3:   line 4
+          """
+        ensureStartState = getEnsureStartState(queryCurrentWord: true)
+        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 5], text: text)
+        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 5], text: text)
+        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 5], text: text)
+        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 5], text: text)
+
+      it "NOT auto reveal when no query was provided", ->
+        text = """
+
+          1: 1: line 1
+          2: 1:   line 2
+          3: 1: line 3
+          4: 1:   line 4
+          """
+        ensureStartState = getEnsureStartState()
+        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 5], text: text)
+        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 5], text: text)
+        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 5], text: text)
+        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 5], text: text)
 
   describe "narrow-editor auto-sync selected-item to active editor", ->
     [editor2] = []
