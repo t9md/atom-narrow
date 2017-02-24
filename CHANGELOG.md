@@ -1,3 +1,12 @@
+# 0.30.0:
+- Improve: Add basic test spec.
+  - Add `Ui::onDidDestroy` to test easily.
+- New: Support search input history in mini-input-editor.
+  - Used for `search` and `atom-scan`
+  - Keep max 100 recent search history.
+  - `search-by-current-word`, `atom-scan-by-current-word` also saved to history.
+  - Simplify `Input` class( used to read input ), no longer use custom element.
+
 # 0.29.1:
 - Bug: Fix `search` searches first project only even in multi-project search.
   - This is degradation introduced in v0.29.0.

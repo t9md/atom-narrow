@@ -296,7 +296,7 @@ class Ui
     if pane = @provider.getPane()
       # [BUG?] maybe upstream Atom-core bug?
       # In rare situation( I observed only in test-spec ), there is the situation
-      # whre pane.isAlive but paneContainer.getPanes() in pane return `false`
+      # where pane.isAlive but paneContainer.getPanes() in pane return `false`
       # Without folowing guard "Setting active pane that is not present in pane container"
       # exception thrown.
       if pane in pane.getContainer().getPanes()
