@@ -3,6 +3,8 @@ _ = require 'underscore-plus'
 {Point, Range, BufferedProcess} = require 'atom'
 SearchBase = require './search-base'
 
+LineEndingRegExp = /\n|\r\n/
+
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
     if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
@@ -23,7 +25,7 @@ parseLine = (line) ->
 
 getOutputterForProject = (project, items) ->
   (data) ->
-    for line in data.split("\n") when parsed = parseLine(line)
+    for line in data.split(LineEndingRegExp) when parsed = parseLine(line)
       items.push({
         point: new Point(parsed.row, parsed.column)
         filePath: path.join(project, parsed.relativePath)
@@ -33,7 +35,7 @@ getOutputterForProject = (project, items) ->
 # Not used but keep it since I'm planning to introduce per file refresh on modification
 getOutputterForFile = (items) ->
   (data) ->
-    for line in data.split("\n") when parsed = parseLine(line)
+    for line in data.split(LineEndingRegExp) when parsed = parseLine(line)
       items.push({
         point: new Point(parsed.row, parsed.column)
         filePath: parsed.relativePath
