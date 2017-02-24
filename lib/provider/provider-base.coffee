@@ -16,23 +16,17 @@ Ui = require '../ui'
 settings = require '../settings'
 Input = null
 
-startNarrow = (providerName, options, properties) ->
-  klass = require("./#{providerName}")
-  editor = atom.workspace.getActiveTextEditor()
-  new klass(editor, options, properties).start()
-
 module.exports =
 class ProviderBase
-  @lastClosedState: []
-  @reopenableMaximum: 10
-  @reopen: ->
-    if @lastClosedState.length
-      {name, options, properties} = @lastClosedState.shift()
-      startNarrow(name, options, properties)
-      @lastClosedState.splice(@reopenableMaximum) if @lastClosedState.length > @reopenableMaximum
+  @destroyedProviderStates: []
+  @reopenableMax: 10
+
+  @getNextDestroyedProvderState: ->
+    @destroyedProviderStates.shift()
 
   @saveState: (provider) ->
-    @lastClosedState.unshift(provider.saveState())
+    @destroyedProviderStates.unshift(provider.saveState())
+    @destroyedProviderStates.splice(@reopenableMax)
 
   needRestoreEditorState: true
   boundToSingleFile: false
@@ -113,7 +107,7 @@ class ProviderBase
       @searchIgnoreCaseChangedManually
       @searchTerm
     }
-    for property in  @saveProperties ? []
+    for property in  @propertiesToRestoreOnReopen ? []
       properties[property] = this[property]
 
     {

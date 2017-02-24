@@ -86,12 +86,14 @@ module.exports =
 
   reopen: ->
     ProviderBase ?= require "./provider/provider-base"
-    ProviderBase.reopen()
+    if state = ProviderBase.getNextDestroyedProvderState()
+      {name, options, properties} = state
+      @narrow(name, options, properties)
 
-  narrow: (providerName, options) ->
+  narrow: (providerName, options, properties) ->
     klass = require("./provider/#{providerName}")
     editor = atom.workspace.getActiveTextEditor()
-    new klass(editor, options).start()
+    new klass(editor, options, properties).start()
 
   deactivate: ->
     globalSubscriptions.dispose()

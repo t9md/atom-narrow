@@ -75,7 +75,7 @@ search = (regexp, {project, args, filePath}) ->
 
 module.exports =
 class Search extends SearchBase
-  saveProperties: ['projects']
+  propertiesToRestoreOnReopen: ['projects']
 
   checkReady: ->
     projects = null
