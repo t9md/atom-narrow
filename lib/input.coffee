@@ -12,7 +12,7 @@ class Input
     @editorElement.classList.add('narrow-input')
     @container.appendChild(@editorElement)
 
-  destroy: =>
+  destroy: ->
     return if @destroyed
     @destroyed = true
     @editor.destroy()
@@ -29,12 +29,12 @@ class Input
     @disposables.add atom.workspace.onDidChangeActivePaneItem(@destroy)
 
     # Cancel on mouse click
-    @clientEditorElement = atom.workspace.getActiveTextEditor().element
-    @clientEditorElement.addEventListener('click', @destroy)
-    @disposables.add new Disposable => @clientEditorElement.removeEventListener('click', @destroy)
-    @focus()
+    destroy = @destroy.bind(this)
+    clientEditorElement = atom.workspace.getActiveTextEditor().element
+    clientEditorElement.addEventListener('click', destroy)
+    @disposables.add new Disposable ->
+      clientEditorElement.removeEventListener('click', destroy)
 
-  focus: ->
     @editorElement.focus()
     new Promise (@resolve) =>
 
