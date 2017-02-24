@@ -6,6 +6,7 @@
   - Keep max 100 recent search history.
   - `search-by-current-word`, `atom-scan-by-current-word` also saved to history.
   - Simplify `Input` class( used to read input ), no longer use custom element.
+  - When focus changed to different app, keep mini-editor open( was closed in previous version ).
 
 # 0.29.1:
 - Bug: Fix `search` searches first project only even in multi-project search.
