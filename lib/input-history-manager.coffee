@@ -2,19 +2,17 @@ _ = require 'underscore-plus'
 {getValidIndexForList} = require './utils'
 
 module.exports =
-class InputHistoryManager
+new class InputHistoryManager
   maxSize: 100
   constructor: ->
     @index = -1
     @entries = []
 
   get: (direction) ->
-    switch direction
-      when 'next'
-        @index = getValidIndexForList(@entries, @index + 1)
-      when 'previous'
-        @index = getValidIndexForList(@entries, @index - 1)
-
+    delta = switch direction
+      when 'previous' then +1
+      when 'next' then -1
+    @index = getValidIndexForList(@entries, @index + delta)
     @entries[@index] ? ''
 
   save: (entry) ->

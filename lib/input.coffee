@@ -1,6 +1,6 @@
 {CompositeDisposable, Disposable} = require 'atom'
 
-history = new (require './input-history-manager')
+history = require './input-history-manager'
 
 module.exports =
 class Input
@@ -50,7 +50,5 @@ class Input
     new Promise (@resolve) =>
 
   confirm: ->
-    text = @editor.getText()
-    history.save(text)
-    @resolve(text)
+    @resolve(@editor.getText())
     @destroy()

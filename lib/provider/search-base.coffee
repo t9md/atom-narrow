@@ -3,6 +3,7 @@ _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 {Disposable} = require 'atom'
 {getCurrentWord, findFirstAndLastIndexBy} = require '../utils'
+history = require '../input-history-manager'
 
 module.exports =
 class SearchBase extends ProviderBase
@@ -25,9 +26,11 @@ class SearchBase extends ProviderBase
     @searchWholeWord ?= @getConfig('searchWholeWord')
 
     if @searchTerm
+      history.save(@searchTerm)
       Promise.resolve(true)
     else
       @readInput().then (@searchTerm) =>
+        history.save(@searchTerm)
         @searchTerm.length > 0
 
   toggleSearchWholeWord: ->
