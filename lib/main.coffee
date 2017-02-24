@@ -25,6 +25,7 @@ module.exports =
       'narrow:close': => @getUi(skipProtected: true)?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()
+      'narrow:reopen': -> # TODO
 
       # Providers
       # -------------------------
