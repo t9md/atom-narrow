@@ -16,8 +16,24 @@ Ui = require '../ui'
 settings = require '../settings'
 Input = null
 
+startNarrow = (providerName, options) ->
+  klass = require("./#{providerName}")
+  editor = atom.workspace.getActiveTextEditor()
+  new klass(editor, options).start()
+
 module.exports =
 class ProviderBase
+  @lastClosedState: null
+  @reopen: ->
+    if @lastClosedState?
+      {name, options} = @lastClosedState
+      console.log options
+      startNarrow(name, options)
+      @lastClosedState = null
+
+  @saveState: (provider) ->
+    @lastClosedState = provider.saveState()
+
   needRestoreEditorState: true
   boundToSingleFile: false
 
@@ -87,6 +103,11 @@ class ProviderBase
   isActive: ->
     isActiveEditor(@editor)
 
+  saveState: ->
+    name: @dashName
+    options:
+      query: @ui.lastQuery
+
   constructor: (editor, @options={}) ->
     @name = @constructor.name
     @dashName = _.dasherize(@name)
@@ -129,6 +150,7 @@ class ProviderBase
     items
 
   destroy: ->
+    ProviderBase.saveState(this)
     @subscriptions.dispose()
     @editorSubscriptions.dispose()
     @restoreEditorState() if @needRestoreEditorState
