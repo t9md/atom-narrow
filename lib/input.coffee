@@ -1,8 +1,11 @@
 {CompositeDisposable, Disposable} = require 'atom'
 
+history = new (require './input-history-manager')
+
 module.exports =
 class Input
   constructor: ->
+    history.reset()
     @disposables = new CompositeDisposable()
 
     @container = document.createElement('div')
@@ -20,11 +23,19 @@ class Input
     @disposables.dispose()
     atom.workspace.getActivePane().activate()
 
+  setPrevious: ->
+    @editor.setText(history.get('previous'))
+
+  setNext: ->
+    @editor.setText(history.get('next'))
+
   readInput: ->
     @panel = atom.workspace.addBottomPanel(item: @container, visible: true)
     @disposables.add atom.commands.add @editorElement,
       'core:confirm': => @confirm()
       'core:cancel': => @destroy()
+      'core:move-up': => @setPrevious()
+      'core:move-down': => @setNext()
 
     @disposables.add atom.workspace.onDidChangeActivePaneItem(@destroy)
 
@@ -39,5 +50,7 @@ class Input
     new Promise (@resolve) =>
 
   confirm: ->
-    @resolve(@editor.getText())
+    text = @editor.getText()
+    history.save(text)
+    @resolve(text)
     @destroy()
