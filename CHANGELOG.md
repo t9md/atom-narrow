@@ -1,3 +1,8 @@
+# 0.31.0: WIP
+- New: commands `narrow:reopen` ( no default keymap )
+  - Reopen closed narrow editor up to 10 recent closed.
+  - Items are re-collected( so just re-starting narrow with same `query` and other properties ).
+
 # 0.30.0:
 - Improve: Add basic test spec.
   - Add `Ui::onDidDestroy` to test easily.

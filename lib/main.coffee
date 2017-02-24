@@ -2,6 +2,7 @@
 settings = require './settings'
 Ui = require './ui'
 globalSubscriptions = require './global-subscriptions'
+ProviderBase = null
 
 {isNarrowEditor, getVisibleEditors} = require './utils'
 
@@ -25,6 +26,7 @@ module.exports =
       'narrow:close': => @getUi(skipProtected: true)?.destroy()
       'narrow:next-item': => @getUi()?.nextItem()
       'narrow:previous-item': => @getUi()?.previousItem()
+      'narrow:reopen': => @reopen()
 
       # Providers
       # -------------------------
@@ -81,6 +83,10 @@ module.exports =
       else
         invisibleNarrowEditor ?= editor
     Ui.get(invisibleNarrowEditor) if invisibleNarrowEditor?
+
+  reopen: ->
+    ProviderBase ?= require "./provider/provider-base"
+    ProviderBase.reopen()
 
   narrow: (providerName, options) ->
     klass = require("./provider/#{providerName}")

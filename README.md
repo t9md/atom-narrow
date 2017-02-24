@@ -125,6 +125,7 @@ Available for these three providers `scan`, `search` and `atom-scan`.
 - `narrow:close`: ( `ctrl-g` ) Close currently opened `narrow-editor` one at a time.
 - `narrow:next-item`: ( `ctrl-cmd-n` ) Move cursor to position of next-item.
 - `narrow:previous-item`: ( `ctrl-cmd-p` ) Move cursor to position of previous-item.
+- `narrow:reopen`: ( no default keymap ) Reopen closed narrow editor up to 10 recent closed.
 
 ##### Invoke narrow provide
 
@@ -208,6 +209,8 @@ Frequently using keymap with my keymap.
 # -------------------------
 'atom-text-editor.vim-mode-plus.normal-mode':
   # For frequent uses, assign shorter keymap(non-2-step keymap).
+  'ctrl-z': 'narrow:reopen'
+  
   'cmd-o': 'narrow:symbols-by-current-word' # quick preview function
   'cmd-l': 'narrow:scan-by-current-word'
   'enter': 'narrow:search-by-current-word'

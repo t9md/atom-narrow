@@ -75,18 +75,23 @@ search = (regexp, {project, args, filePath}) ->
 
 module.exports =
 class Search extends SearchBase
+  saveProperties: ['projects']
+
   checkReady: ->
+    projects = null
     if @options.currentProject
       filePath = @editor.getPath()
       if filePath?
         for dir in atom.project.getDirectories() when dir.contains(filePath)
-          @options.projects = [dir.getPath()]
+          projects = [dir.getPath()]
           break
 
-      unless @options.projects?
+      unless projects?
         message = "This file is not belonging to any project"
         atom.notifications.addInfo(message, dismissable: true)
         return Promise.resolve(false)
+
+    @projects ?= projects ? atom.project.getPaths()
 
     super
 
@@ -115,5 +120,5 @@ class Search extends SearchBase
         items = @flattenAndInjectRange(items)
         @items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
     else
-      @searchProjects(@options.projects ? atom.project.getPaths()).then (items) =>
+      @searchProjects(@projects).then (items) =>
         @items = @flattenAndInjectRange(items)
