@@ -11,14 +11,15 @@ class Scan extends ProviderBase
   updateGrammarOnQueryChange: false # for manual update
   itemHaveRange: true
   showSearchOption: true
-  searchIgnoreCaseChangedManually: false
 
   initialize: ->
     editor = atom.workspace.getActiveTextEditor()
+    # Why conditional assiginment for @searchWholeWord ?
+    # It's because respect previous @searchWholeWord state on re-opened
     if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
-      @searchWholeWord = true
+      @searchWholeWord ?= true
     else
-      @searchWholeWord = @getConfig('searchWholeWord')
+      @searchWholeWord ?= @getConfig('searchWholeWord')
 
   scanEditor: (regexp) ->
     items = []
@@ -29,10 +30,6 @@ class Scan extends ProviderBase
         range: range
       })
     items
-
-  toggleSearchIgnoreCase: ->
-    @searchIgnoreCaseChangedManually = true
-    super
 
   getItems: ->
     firstQuery = @ui.getQuery().split(/\s+/)[0]

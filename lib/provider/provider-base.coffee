@@ -16,23 +16,23 @@ Ui = require '../ui'
 settings = require '../settings'
 Input = null
 
-startNarrow = (providerName, options) ->
+startNarrow = (providerName, options, properties) ->
   klass = require("./#{providerName}")
   editor = atom.workspace.getActiveTextEditor()
-  new klass(editor, options).start()
+  new klass(editor, options, properties).start()
 
 module.exports =
 class ProviderBase
-  @lastClosedState: null
+  @lastClosedState: []
+  @reopenableMaximum: 10
   @reopen: ->
-    if @lastClosedState?
-      {name, options} = @lastClosedState
-      console.log options
-      startNarrow(name, options)
-      @lastClosedState = null
+    if @lastClosedState.length
+      {name, options, properties} = @lastClosedState.shift()
+      startNarrow(name, options, properties)
+      @lastClosedState.splice(@reopenableMaximum) if @lastClosedState.length > @reopenableMaximum
 
   @saveState: (provider) ->
-    @lastClosedState = provider.saveState()
+    @lastClosedState.unshift(provider.saveState())
 
   needRestoreEditorState: true
   boundToSingleFile: false
@@ -46,9 +46,11 @@ class ProviderBase
   supportCacheItems: false
   editor: null
 
-  # used by search, atom-scan, scan
+  # used by scan, search, atom-scan
   searchWholeWord: null
+  searchWholeWordChangedManually: false
   searchIgnoreCase: null
+  searchIgnoreCaseChangedManually: false
   showSearchOption: false
   querySelectedText: true
 
@@ -104,11 +106,23 @@ class ProviderBase
     isActiveEditor(@editor)
 
   saveState: ->
-    name: @dashName
-    options:
-      query: @ui.lastQuery
+    name = @dashName
+    options = {query: @ui.lastQuery}
+    properties = {
+      @searchWholeWord
+      @searchWholeWordChangedManually
+      @searchIgnoreCase
+      @searchIgnoreCaseChangedManually
+      @searchTerm
+    }
+    for property in  @saveProperties ? []
+      properties[property] = this[property]
 
-  constructor: (editor, @options={}) ->
+    {name, options, properties}
+
+  constructor: (editor, @options={}, properties) ->
+    _.extend(this, properties) if properties?
+
     @name = @constructor.name
     @dashName = _.dasherize(@name)
     @subscriptions = new CompositeDisposable
@@ -241,9 +255,11 @@ class ProviderBase
       editor.save()
 
   toggleSearchWholeWord: ->
+    @searchWholeWordChangedManually = true
     @searchWholeWord = not @searchWholeWord
 
   toggleSearchIgnoreCase: ->
+    @searchIgnoreCaseChangedManually = true
     @searchIgnoreCase = not @searchIgnoreCase
 
   # Helpers

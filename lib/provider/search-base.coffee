@@ -18,7 +18,7 @@ class SearchBase extends ProviderBase
 
   checkReady: ->
     editor = atom.workspace.getActiveTextEditor()
-    @searchTerm = @options.search or editor.getSelectedText()
+    @searchTerm ?= @options.search or editor.getSelectedText()
     if not @searchTerm and @options.searchCurrentWord
       @searchTerm = getCurrentWord(editor)
       @searchWholeWord = true
