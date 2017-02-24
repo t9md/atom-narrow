@@ -113,13 +113,13 @@ describe "narrow", ->
                 editor2 = _editor
                 ensurePaneLayout(horizontal: [[editor], [editor2]])
 
-          describe "left pane active", ->
+          describe "initially left-pane active", ->
             it "open on existing right pane", ->
               paneForItem(editor).activate()
               ensureEditorIsActive(editor)
               ensurePaneLayoutAfterStart((ui) -> horizontal: [[editor], [editor2, ui.editor]])
 
-          describe "right pane active", ->
+          describe "initially right-pane active", ->
             it "open on previous adjacent pane", ->
               ensureEditorIsActive(editor2)
               ensurePaneLayoutAfterStart((ui) -> horizontal: [[editor, ui.editor], [editor2]])
@@ -131,13 +131,13 @@ describe "narrow", ->
                 editor2 = _editor
                 ensurePaneLayout(vertical: [[editor], [editor2]])
 
-          describe "up-pane active", ->
+          describe "initially ip-pane active", ->
             it "open on existing down pane", ->
               paneForItem(editor).activate()
               ensureEditorIsActive(editor)
               ensurePaneLayoutAfterStart((ui) -> vertical: [[editor], [editor2, ui.editor]])
 
-          describe "down pane active", ->
+          describe "initially iown pane active", ->
             it "open on previous adjacent pane", ->
               ensureEditorIsActive(editor2)
               ensurePaneLayoutAfterStart((ui) -> vertical: [[editor, ui.editor], [editor2]])
