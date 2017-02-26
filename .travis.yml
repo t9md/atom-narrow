@@ -13,3 +13,7 @@ git:
 branches:
   only:
     - master
+
+before_install:
+  - brew update
+  - brew install ag
