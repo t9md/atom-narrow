@@ -37,14 +37,13 @@ class Input
       'core:move-up': => @setPrevious()
       'core:move-down': => @setNext()
 
-    @disposables.add atom.workspace.onDidChangeActivePaneItem(@destroy)
-
-    # Cancel on mouse click
     destroy = @destroy.bind(this)
-    clientEditorElement = atom.workspace.getActiveTextEditor().element
-    clientEditorElement.addEventListener('click', destroy)
+    @disposables.add atom.workspace.onDidChangeActivePaneItem(destroy)
+    # Cancel on mouse click
+    workspaceElement = atom.views.getView(atom.workspace)
+    workspaceElement.addEventListener('click', destroy)
     @disposables.add new Disposable ->
-      clientEditorElement.removeEventListener('click', destroy)
+      workspaceElement.removeEventListener('click', destroy)
 
     @editorElement.focus()
     new Promise (@resolve) =>
