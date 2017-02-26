@@ -107,6 +107,7 @@ class Search extends SearchBase
 
   flattenAndInjectRange: (items) ->
     items = _.flatten(items)
+    items = _.sortBy items, (item) -> item.filePath
     searchTermLength = @searchTerm.length
     for item in items
       item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)

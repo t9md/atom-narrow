@@ -736,14 +736,21 @@ describe "narrow", ->
       ensure
         text: """
 
-        # project1
-        ## p1-f1
-        1: 8: p1-f1: apple
-        ## p1-f2
-        1: 8: p1-f2: apple
-        # project2
-        ## p2-f1
-        1: 8: p2-f1: apple
-        ## p2-f2
-        1: 8: p2-f2: apple
-        """
+          # project1
+          ## p1-f1
+          1: 8: p1-f1: apple
+          ## p1-f2
+          1: 8: p1-f2: apple
+          # project2
+          ## p2-f1
+          1: 8: p2-f1: apple
+          ## p2-f2
+          1: 8: p2-f2: apple
+          """
+        cursor: [3, 5]
+        selectedItemRow: 3
+
+      runCommand('core:move-up')
+      ensure selectedItemRow: 3, cursor: [0, 0]
+      runCommand('core:move-down')
+      ensure selectedItemRow: 3, cursor: [3, 5]
