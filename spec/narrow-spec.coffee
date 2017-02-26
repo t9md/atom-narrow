@@ -720,19 +720,30 @@ describe "narrow", ->
             runs -> narrow.ui.destroy()
 
   describe "search", ->
+    [p1, p1f1, p1f2] = []
+    [p2, p2f1, p2f2] = []
     beforeEach ->
       runs ->
-        project1 = atom.project.resolvePath("project1")
-        project2 = atom.project.resolvePath("project2")
+        p1 = atom.project.resolvePath("project1")
+        p1f1 = path.join(p1, "p1-f1")
+        p1f2 = path.join(p1, "p1-f2")
+        p2 = atom.project.resolvePath("project2")
+        p2f1 = path.join(p2, "p2-f1")
+        p2f2 = path.join(p2, "p2-f2")
 
         fixturesDir = atom.project.getPaths()[0]
         atom.project.removePath(fixturesDir)
-        atom.project.addPath(project1)
-        atom.project.addPath(project2)
+        atom.project.addPath(p1)
+        atom.project.addPath(p2)
 
       waitsForStartNarrow('search', search: 'apple')
 
-    it "land to confirmed item", ->
+    it "preview on cursor move with skipping header", ->
+      moveUpWithPreview = ->
+        narrow.waitsForPreview -> runCommand('core:move-up')
+      moveDownWithPreview = ->
+        narrow.waitsForPreview -> runCommand('core:move-down')
+
       ensure
         text: """
 
@@ -748,9 +759,75 @@ describe "narrow", ->
           1: 8: p2-f2: apple
           """
         cursor: [3, 5]
-        selectedItemRow: 3
+        selectedItemText: "p1-f1: apple"
 
-      runCommand('core:move-up')
-      ensure selectedItemRow: 3, cursor: [0, 0]
-      runCommand('core:move-down')
-      ensure selectedItemRow: 3, cursor: [3, 5]
+      runs ->
+        runCommand('core:move-up')
+        ensure selectedItemText: "p1-f1: apple", cursor: [0, 0]
+
+      runs ->
+        runCommand('core:move-down')
+        ensure
+          selectedItemText: "p1-f1: apple"
+          cursor: [3, 5]
+          filePathForProviderPane: p1f1
+
+      runs -> moveDownWithPreview()
+
+      runs ->
+        ensure
+          selectedItemText: "p1-f2: apple"
+          cursor: [5, 5]
+          filePathForProviderPane: p1f2
+        ensureEditorIsActive(ui.editor)
+
+      runs -> moveDownWithPreview()
+
+      runs ->
+        ensure
+          selectedItemText: "p2-f1: apple"
+          cursor: [8, 5]
+          filePathForProviderPane: p2f1
+
+      runs -> moveDownWithPreview()
+
+      runs ->
+        ensure
+          selectedItemText: "p2-f2: apple"
+          cursor: [10, 5]
+          filePathForProviderPane: p2f2
+
+    it "preview on query change by default( autoPreviewOnQueryChange )", ->
+      jasmine.useRealClock()
+
+      runs ->
+        narrow.waitsForPreview ->
+          ui.moveToPrompt()
+          ui.editor.insertText("f2")
+      runs ->
+        ensure
+          text: """
+            f2
+            # project1
+            ## p1-f2
+            1: 8: p1-f2: apple
+            # project2
+            ## p2-f2
+            1: 8: p2-f2: apple
+            """
+          selectedItemText: "p1-f2: apple"
+          filePathForProviderPane: p1f2
+
+      runs ->
+        narrow.waitsForPreview ->
+          ui.editor.insertText(" p2")
+      runs ->
+        ensure
+          text: """
+            f2 p2
+            # project2
+            ## p2-f2
+            1: 8: p2-f2: apple
+            """
+          selectedItemText: "p2-f2: apple"
+          filePathForProviderPane: p2f2

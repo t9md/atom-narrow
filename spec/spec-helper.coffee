@@ -12,7 +12,7 @@ startNarrow = (providerName, options) ->
     ui = provider.ui
     props = {provider, ui}
     ensureer = new Ensureer(ui, provider)
-    for propName in ['ensure', 'waitsForRefresh', 'waitsForConfirm', 'waitsForDestroy']
+    for propName in ['ensure', 'waitsForRefresh', 'waitsForConfirm', 'waitsForDestroy', 'waitsForPreview']
       props[propName] = ensureer[propName]
     props
 
@@ -55,6 +55,7 @@ class Ensureer
   ensureOptionsOrdered = [
     'itemsCount', 'selectedItemRow', 'selectedItemText'
     'text', 'cursor', 'classListContains'
+    'filePathForProviderPane'
   ]
 
   waitsForDestroy: (fn) =>
@@ -72,6 +73,11 @@ class Ensureer
     fn()
     waitsFor -> disposable.disposed
 
+  waitsForPreview: (fn) =>
+    disposable = @ui.onDidPreview -> disposable.dispose()
+    fn()
+    waitsFor -> disposable.disposed
+
   ensure: (args...) =>
     switch args.length
       when 1 then [options] = args
@@ -85,7 +91,10 @@ class Ensureer
         this[method](options[name])
 
     if query?
-      runs => @waitsForRefresh => @ui.setQuery(query)
+      runs =>
+        @waitsForRefresh =>
+          @ui.setQuery(query)
+          @ui.moveToPrompt()
       runs -> ensureOptions()
     else
       ensureOptions()
@@ -108,6 +117,10 @@ class Ensureer
   ensureClassListContains: (classList) ->
     for className in classList
       expect(@editorElement.classList.contains(className)).toBe(true)
+
+  ensureFilePathForProviderPane: (filePath) ->
+    result = @provider.getPane().getActiveItem().getPath()
+    expect(result).toBe(filePath)
 
 # example-usage
 # ensurePaneLayout
