@@ -1,3 +1,6 @@
+# 0.31.1:
+- Fix: No longer throw exception on change active pane item while reading search input.
+
 # 0.31.0:
 - New: commands `narrow:reopen` ( no default keymap )
   - Reopen closed narrow editor up to 10 recent closed.
