@@ -765,8 +765,9 @@ describe "narrow", ->
         runCommand('core:move-up')
         ensure selectedItemText: "p1-f1: apple", cursor: [0, 0]
 
+      runs -> moveDownWithPreview()
+
       runs ->
-        runCommand('core:move-down')
         ensure
           selectedItemText: "p1-f1: apple"
           cursor: [3, 5]
