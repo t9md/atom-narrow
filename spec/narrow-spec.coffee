@@ -1,5 +1,7 @@
 _ = require 'underscore-plus'
 Ui = require '../lib/ui'
+fs = require 'fs-plus'
+path = require 'path'
 settings = require '../lib/settings'
 {
   startNarrow
@@ -716,3 +718,32 @@ describe "narrow", ->
               selectedItemRow: 1
               itemsCount: 1
             runs -> narrow.ui.destroy()
+
+  describe "search", ->
+    beforeEach ->
+      runs ->
+        project1 = atom.project.resolvePath("project1")
+        project2 = atom.project.resolvePath("project2")
+
+        fixturesDir = atom.project.getPaths()[0]
+        atom.project.removePath(fixturesDir)
+        atom.project.addPath(project1)
+        atom.project.addPath(project2)
+
+      waitsForStartNarrow('search', search: 'apple')
+
+    it "land to confirmed item", ->
+      ensure
+        text: """
+
+        # project1
+        ## p1-f1
+        1: 8: p1-f1: apple
+        ## p1-f2
+        1: 8: p1-f2: apple
+        # project2
+        ## p2-f1
+        1: 8: p2-f1: apple
+        ## p2-f2
+        1: 8: p2-f2: apple
+        """

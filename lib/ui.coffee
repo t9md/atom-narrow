@@ -159,10 +159,8 @@ class Ui
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
     @controlBar.updateStateElements({@autoPreview})
-    if @autoPreview
-      @preview()
-    else
-      @highlighter.clearLineMarker()
+    @highlighter.clearLineMarker()
+    @preview() if @autoPreview
 
   setReadOnly: (readOnly) ->
     @readOnly = readOnly
