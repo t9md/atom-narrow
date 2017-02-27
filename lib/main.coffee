@@ -4,7 +4,7 @@ Ui = require './ui'
 globalSubscriptions = require './global-subscriptions'
 ProviderBase = null
 
-{isNarrowEditor, getVisibleEditors} = require './utils'
+{isNarrowEditor, getVisibleEditors, isTextEditor} = require './utils'
 
 module.exports =
   config: settings.config
@@ -15,10 +15,19 @@ module.exports =
     @subscriptions = new CompositeDisposable
     settings.removeDeprecated()
 
-    @subscriptions.add atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      @lastFocusedNarrowEditor = item if isNarrowEditor(item)
+    @subscriptions.add(@observeStopChangingActivePaneItem())
+    @subscriptions.add(@registerCommands())
+    @subscriptions.add atom.commands.add 'atom-text-editor', 'dblclick', =>
+      if settings.get('Search.startByDoubleClick')
+        @narrow('search', currentWord: true, pending: true)
 
-    @subscriptions.add atom.commands.add 'atom-text-editor',
+  deactivate: ->
+    globalSubscriptions.dispose()
+    @subscriptions?.dispose()
+    {@subscriptions} = {}
+
+  registerCommands: ->
+    atom.commands.add 'atom-text-editor',
       # Shared commands
       'narrow:focus': => @getUi()?.toggleFocus()
       'narrow:focus-prompt': => @getUi()?.focusPrompt()
@@ -60,9 +69,27 @@ module.exports =
 
       'narrow:toggle-search-start-by-double-click': -> settings.toggle('Search.startByDoubleClick')
 
-    @subscriptions.add atom.commands.add 'atom-text-editor', 'dblclick', =>
-      if settings.get('Search.startByDoubleClick')
-        @narrow('search', currentWord: true, pending: true)
+  observeStopChangingActivePaneItem: ->
+    atom.workspace.onDidStopChangingActivePaneItem (item) =>
+      return unless isTextEditor(item)
+
+      if isNarrowEditor(item)
+        @lastFocusedNarrowEditor = item
+        return
+
+      unless isTextEditor(item)
+        return
+
+      Ui.forEach (ui, editor) ->
+        # When non-narrow-editor editor was activated
+        # no longer restore editor's state at cancel.
+        ui.provider.needRestoreEditorState = false
+
+        ui.startSyncToEditor(item) unless ui.isSamePaneItem(item)
+
+        ui.highlighter.clearLineMarker()
+        ui.highlighter.clearCurrent()
+        ui.highlighter.highlight(item)
 
   getUi: ({skipProtected}={}) ->
     if ui = Ui.get(@lastFocusedNarrowEditor)
@@ -94,11 +121,6 @@ module.exports =
     klass = require("./provider/#{providerName}")
     editor = atom.workspace.getActiveTextEditor()
     new klass(editor, options, properties).start()
-
-  deactivate: ->
-    globalSubscriptions.dispose()
-    @subscriptions?.dispose()
-    {@subscriptions} = {}
 
   consumeVim: ({getEditorState, observeVimStates}) ->
     @subscriptions.add observeVimStates (vimState) ->

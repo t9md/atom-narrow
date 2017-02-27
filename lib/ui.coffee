@@ -43,6 +43,9 @@ class Ui
   @getSize: ->
     @uiByEditor.size
 
+  @forEach: (fn) ->
+    @uiByEditor.forEach(fn)
+
   @updateWorkspaceClassList: ->
     atom.views.getView(atom.workspace).classList.toggle('has-narrow', @uiByEditor.size)
 
@@ -243,7 +246,6 @@ class Ui
       @registerCommands()
       @observeChange()
       @observeCursorMove()
-      @observeStopChangingActivePaneItem()
     )
 
     @refresh().then =>
@@ -254,19 +256,11 @@ class Ui
       else if @query and @autoPreviewOnQueryChange
         @preview()
 
-  observeStopChangingActivePaneItem: ->
-    atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      if item isnt @editor
-        # When item other than narrow-editor was activated,
-        # No longer restore editor's state.
-        # This guard is necessary since initial narrow-editor open fire this event.
-        @provider.needRestoreEditorState = false
-      return if not isTextEditor(item) or isNarrowEditor(item)
-      return if paneForItem(item) is @getPane()
-      @startSyncToEditor(item)
-
   getPane: ->
     paneForItem(@editor)
+
+  isSamePaneItem: (item) ->
+    paneForItem(item) is @getPane()
 
   isActive: ->
     isActiveEditor(@editor)

@@ -167,7 +167,7 @@ module.exports = new Settings 'narrow',
     agCommandArgs:
       default: "--nocolor --column --vimgrep"
       description: """
-      [Experimental: Must be removed in future]<br>
+      [Experimental: Will be removed in future]<br>
       <br>
       By default args, full command became..<br>
       `ag --nocolor --column PATTERN`<br>

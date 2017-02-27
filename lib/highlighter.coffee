@@ -25,7 +25,6 @@ class Highlighter
     @subscriptions.add(
       @observeUiPreview()
       @observeUiConfirm()
-      @observeStopChangingActivePaneItem()
     )
 
   setRegExp: (@regexp) ->
@@ -126,12 +125,3 @@ class Highlighter
     @ui.onDidConfirm ({editor, item}) =>
       @clearLineMarker()
       @clearCurrent()
-
-  observeStopChangingActivePaneItem: ->
-    atom.workspace.onDidStopChangingActivePaneItem (item) =>
-      return unless isTextEditor(item)
-      if item isnt @ui.editor
-        @clearLineMarker()
-        @clearCurrent()
-
-      @highlight(item)
