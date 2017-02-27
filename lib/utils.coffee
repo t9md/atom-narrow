@@ -268,7 +268,7 @@ getItemsWithHeaders = (_items) ->
 
     for filePath, itemsInFile of _.groupBy(itemsInProject, (item) -> item.filePath)
       header = "## " + atom.project.relativize(filePath)
-      items.push({header, projectName, filePath, skip: true})
+      items.push({header, projectName, filePath, fileHeader: true, skip: true})
       items.push(itemsInFile...)
   items
 

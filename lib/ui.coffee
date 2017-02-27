@@ -392,6 +392,7 @@ class Ui
       @refresh()
 
   selectFiles: ->
+    return if @provider.boundToSingleFile
     SelectFiles ?= require("./provider/select-files")
     options =
       query: @queryForSeSelectedFiles
@@ -400,16 +401,12 @@ class Ui
 
   setQueryForSelectFiles: (@queryForSeSelectedFiles) ->
 
-  setSelectedFiles: (selectedFiles) ->
-    @excludedFiles = @getBeforeFilteredFileHeaderItems()
-      .map (item) -> item.filePath
-      .filter (filePath) -> filePath not in selectedFiles
+  setExcludedFiles: (@excludedFiles) ->
     @refresh()
 
   clearExcludedFiles: ->
     if @excludedFiles.length
-      @excludedFiles = []
-      @refresh()
+      @setExcludedFiles([])
 
   refreshManually: (options) ->
     @emitWillRefreshManually()
@@ -440,8 +437,10 @@ class Ui
     items
 
   getBeforeFilteredFileHeaderItems: ->
-    (@itemsBeforeFiltered ? []).filter (item) ->
-      item.header? and item.filePath?
+    (@itemsBeforeFiltered ? []).filter (item) -> item.fileHeader
+
+  getAfterFilteredFileHeaderItems: ->
+    @items.getFileHeaderItems()
 
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
