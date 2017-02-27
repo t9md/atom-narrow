@@ -118,6 +118,7 @@ class Ui
       'narrow-ui:stop-insert': => @setReadOnly(true)
       'narrow-ui:update-real-file': => @updateRealFile()
       'narrow-ui:exclude-file': => @excludeFile()
+      'narrow-ui:exclude-files': => @excludeFiles()
       'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
       'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
       'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
@@ -375,6 +376,9 @@ class Ui
   getQuery: ->
     @editor.lineTextForBufferRow(0)
 
+  excludeFiles: ->
+    # TODO
+    
   excludeFile: ->
     filePath = @items.getSelectedItem()?.filePath
     if filePath? and (filePath not in @excludedFiles)
