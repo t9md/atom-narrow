@@ -43,6 +43,11 @@ class Highlighter
 
   # Highlight items
   # -------------------------
+  refreshAll: ->
+    @clear()
+    @highlight(editor) for editor in getVisibleEditors()
+    @highlightCurrent() if @ui.isActive()
+    
   clear: ->
     @markerLayerByEditor.forEach (markerLayer) ->
       markerLayer.clear()
@@ -110,8 +115,3 @@ class Highlighter
     @flashMarker = editor.markBufferRange(item.range)
     editor.decorateMarker(@flashMarker, type: 'highlight', class: 'narrow-match flash')
     @clearFlashTimeoutID = setTimeout(@clearFlashMarker.bind(this), 1000)
-
-  refreshAll: ->
-    @clear()
-    @highlight(editor) for editor in getVisibleEditors()
-    @highlightCurrent() if @ui.isActive()
