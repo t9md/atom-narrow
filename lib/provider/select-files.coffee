@@ -5,14 +5,9 @@ path = require 'path'
 _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 
-itemForHeaderItem = (hasMultipleProjects, {filePath, projectName}) ->
-  text = atom.project.relativize(filePath)
-  # In multi-projects, add projectName to distinguish and narrow by projectName
-  if hasMultipleProjects
-    text = path.join(projectName, text)
-
+itemForHeaderItem = ({filePath, projectName}) ->
   {
-    text: "# " + text
+    text: "# " + path.join(projectName, atom.project.relativize(filePath))
     filePath: filePath
     point: new Point(0, 0)
   }
@@ -32,10 +27,7 @@ class SelectFiles extends ProviderBase
       @clientUi.focus(autoPreview: false) if @clientUi.isAlive()
 
   getItems: ->
-    headerItems = @clientUi.getBeforeFilteredFileHeaderItems()
-    projectNames = _.uniq(_.pluck(headerItems, "projectName"))
-    itemize = itemForHeaderItem.bind(null, projectNames.length > 1)
-    headerItems.map(itemize)
+    @clientUi.getBeforeFilteredFileHeaderItems().map(itemForHeaderItem)
 
   confirmed: ->
     if @clientUi.isAlive()
