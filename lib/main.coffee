@@ -77,9 +77,6 @@ module.exports =
         @lastFocusedNarrowEditor = item
         return
 
-      unless isTextEditor(item)
-        return
-
       Ui.forEach (ui, editor) ->
         # When non-narrow-editor editor was activated
         # no longer restore editor's state at cancel.
