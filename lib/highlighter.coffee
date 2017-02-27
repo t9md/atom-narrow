@@ -25,10 +25,14 @@ class Highlighter
       else
         @subscriptions.add @ui.onDidStopRefreshing(@refreshAll.bind(this))
 
-    @subscriptions.add(
-      @observeUiPreview()
-      @observeUiConfirm()
-    )
+    @subscriptions.add @ui.onDidConfirm(@clearCurrentAndLineMarker.bind(this))
+
+    @subscriptions.add @ui.onDidPreview ({editor, item}) =>
+      @clearCurrentAndLineMarker()
+      @drawLineMarker(editor, item)
+      if @needHighlight
+        @highlight(editor)
+        @highlightCurrent() if @ui.isActive()
 
   setRegExp: (@regexp) ->
 
@@ -48,7 +52,6 @@ class Highlighter
   decorationOptions = {type: 'highlight', class: 'narrow-match'}
   highlight: (editor) ->
     return unless @regexp
-    return unless @needHighlight
     return if isNarrowEditor(editor)
     return if @provider.boundToSingleFile and editor isnt @provider.editor
     return if @markerLayerByEditor.has(editor)
@@ -62,12 +65,13 @@ class Highlighter
       # FIXME: BUG decorationByItem should managed by per editor.
       @decorationByItem.set(item, editor.decorateMarker(marker, decorationOptions))
 
+  clearCurrentAndLineMarker: ->
+    @clearLineMarker()
+    @clearCurrent()
+
   # modify current item decoration
   # -------------------------
   highlightCurrent: ->
-    return unless @needHighlight
-    return unless @ui.isActive()
-
     if decoration = @decorationByItem.get(@ui.items.getSelectedItem())
       updateDecoration(decoration, (cssClass) -> cssClass + ' current')
 
@@ -79,7 +83,7 @@ class Highlighter
       if decoration = @decorationByItem.get(item)
         updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
 
-  # lineMarker
+  # line marker
   # -------------------------
   hasLineMarker: ->
     @lineMarker?
@@ -88,45 +92,26 @@ class Highlighter
     @lineMarker = editor.markBufferPosition(item.point)
     editor.decorateMarker(@lineMarker, type: 'line', class: 'narrow-line-marker')
 
-  clearCurrentAndLineMarker: ->
-    @clearCurrent()
-    @clearLineMarker()
-
   clearLineMarker: ->
     @lineMarker?.destroy()
     @lineMarker = null
 
   # flash
   # -------------------------
+  clearFlashMarker: ->
+    clearTimeout(@clearFlashTimeoutID) if @clearFlashTimeoutID?
+    @clearFlashTimeoutID = null
+    @flashMarker?.destroy()
+    @flashMarker = null
+
   flashItem: (editor, item) ->
     return unless @needHighlight
-
-    @flashMarker?.destroy()
-    clearTimeout(@clearFlashTimeout) if @clearFlashTimeout?
-
-    clearFlashMarker = =>
-      @clearFlashTimeout = null
-      @flashMarker?.destroy()
-      @flashMarker = null
-
+    @clearFlashMarker()
     @flashMarker = editor.markBufferRange(item.range)
     editor.decorateMarker(@flashMarker, type: 'highlight', class: 'narrow-match flash')
-    @clearFlashTimeout = setTimeout(clearFlashMarker, 1000)
+    @clearFlashTimeoutID = setTimeout(@clearFlashMarker.bind(this), 1000)
 
   refreshAll: ->
     @clear()
     @highlight(editor) for editor in getVisibleEditors()
-    @highlightCurrent()
-
-  # Event observation
-  # -------------------------
-  observeUiPreview: ->
-    @ui.onDidPreview ({editor, item}) =>
-      @clearCurrentAndLineMarker()
-      @highlight(editor)
-      @drawLineMarker(editor, item)
-      @highlightCurrent()
-
-  observeUiConfirm: ->
-    @ui.onDidConfirm ({editor, item}) =>
-      @clearCurrentAndLineMarker()
+    @highlightCurrent() if @ui.isActive()
