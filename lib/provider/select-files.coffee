@@ -28,6 +28,8 @@ class SelectFiles extends ProviderBase
 
   initialize: ->
     @clientUi = @options.clientUi
+    @ui.onDidDestroy =>
+      @clientUi.focus(autoPreview: false) if @clientUi.isAlive()
 
   getItems: ->
     items = []
