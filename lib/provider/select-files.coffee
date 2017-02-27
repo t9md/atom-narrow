@@ -33,9 +33,10 @@ class SelectFiles extends ProviderBase
 
   getItems: ->
     items = []
-    projectNames = _.uniq(_.pluck(@headerItems, "projectName"))
+    headerItems = @clientUi.getAfterFilteredFileHeaderItems()
+    projectNames = _.uniq(_.pluck(headerItems, "projectName"))
     itemize = itemForHeaderItem.bind(null, projectNames.length > 1)
-    @clientUi.getAfterFilteredFileHeaderItems().map(itemize)
+    headerItems.map(itemize)
 
   confirmed: ->
     if @clientUi.isAlive()
