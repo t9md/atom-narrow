@@ -32,8 +32,7 @@ class SelectFiles extends ProviderBase
       @clientUi.focus(autoPreview: false) if @clientUi.isAlive()
 
   getItems: ->
-    items = []
-    headerItems = @clientUi.getAfterFilteredFileHeaderItems()
+    headerItems = @clientUi.getBeforeFilteredFileHeaderItems()
     projectNames = _.uniq(_.pluck(headerItems, "projectName"))
     itemize = itemForHeaderItem.bind(null, projectNames.length > 1)
     headerItems.map(itemize)
