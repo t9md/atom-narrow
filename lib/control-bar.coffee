@@ -1,5 +1,5 @@
 {CompositeDisposable} = require 'atom'
-_ = require 'underscore-plus'
+{humanizeEventName} = require 'underscore-plus'
 
 suppressEvent = (event) ->
   event.preventDefault()
@@ -89,8 +89,14 @@ class ControlBar
     @marker?.destroy()
     @marker = @editor.markBufferPosition([0, 0])
     @editor.decorateMarker(@marker, type: 'block', item: @container, position: 'before')
-
-    @activateToolTips()
+    @toolTipDisposables ?= @addToolTips({
+      autoPreview: "narrow-ui:toggle-auto-preview"
+      protected: "narrow-ui:protect"
+      refresh: "narrow:refresh"
+      selectFiles: "narrow-ui:select-files"
+      wholeWordButton: "narrow-ui:toggle-search-whole-word"
+      ignoreCaseButton: "narrow-ui:toggle-search-ignore-case"
+    })
     @syncStateElements()
 
   syncStateElements: ->
@@ -131,23 +137,11 @@ class ControlBar
     suppressEvent(event)
     @ui.toggleSearchWholeWord()
 
-  activateToolTips: ->
-    @toolTipDisposables?.dispose()
-    @toolTipDisposables = disposables = new CompositeDisposable
-
-    addToolTips = (element, command) =>
-      @toolTipDisposables.add atom.tooltips.add element,
-        title: _.humanizeEventName(command.split(':')[1])
-        keyBindingCommand: command
+  addToolTips: (tooltips) ->
+    disposables = new CompositeDisposable
+    for elementName, commandName of tooltips when element = @stateElements[elementName]
+      disposables.add atom.tooltips.add element,
+        title: humanizeEventName(commandName.split(':')[1])
+        keyBindingCommand: commandName
         keyBindingTarget: @editorElement
-
-    addToolTips(@stateElements.autoPreview, 'narrow-ui:toggle-auto-preview')
-    addToolTips(@stateElements.protected, 'narrow-ui:protect')
-    addToolTips(@stateElements.refresh, 'narrow-ui:refresh')
-
-    if @stateElements.selectFiles?
-      addToolTips(@stateElements.selectFiles, 'narrow-ui:select-files')
-
-    if @showSearchOption
-      addToolTips(@stateElements.wholeWordButton, 'narrow-ui:toggle-search-whole-word')
-      addToolTips(@stateElements.ignoreCaseButton, 'narrow-ui:toggle-search-ignore-case')
+    disposables
