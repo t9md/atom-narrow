@@ -25,6 +25,7 @@ Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
 ItemIndicator = require './item-indicator'
+SelectFiles = null
 
 module.exports =
 class Ui
@@ -68,6 +69,7 @@ class Ui
   readOnly: false
   protected: false
   excludedFiles: null
+  queryForSeSelectedFiles: null
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -267,11 +269,12 @@ class Ui
   isActive: ->
     isActiveEditor(@editor)
 
-  focus: ->
+  focus: ({autoPreview}={}) ->
     pane = @getPane()
     pane.activate()
     pane.activateItem(@editor)
-    @preview() if @autoPreview
+    if autoPreview ? @autoPreview
+      @preview()
 
   focusPrompt: ->
     if @isActive() and @isAtPrompt()
@@ -310,7 +313,8 @@ class Ui
     @syncSubcriptions?.dispose()
     @disposables.dispose()
     @editor.destroy()
-    @activateProviderPane()
+    unless @provider.name is 'SelectFiles'
+      @activateProviderPane()
 
     @controlBar.destroy()
     @provider?.destroy?()
@@ -388,15 +392,16 @@ class Ui
       @refresh()
 
   selectFiles: ->
-    klass = require("./provider/select-files")
-    provider = new klass(@editor, {clientUi: this})
-    provider.start().then =>
-      disposable = provider.ui.onDidDestroy =>
-        disposable.dispose()
-        @focusPrompt()
+    SelectFiles ?= require("./provider/select-files")
+    options =
+      query: @queryForSeSelectedFiles
+      clientUi: this
+    new SelectFiles(@editor, options).start()
+
+  setQueryForSelectFiles: (@queryForSeSelectedFiles) ->
 
   setSelectedFiles: (selectedFiles) ->
-    @excludedFiles = @items.getHeaderItemsHavingFilePathField()
+    @excludedFiles = @getBeforeFilteredFileHeaderItems()
       .map (item) -> item.filePath
       .filter (filePath) -> filePath not in selectedFiles
     @refresh()
@@ -418,6 +423,7 @@ class Ui
         if @provider.showLineHeader
           injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
         items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
+        @itemsBeforeFiltered = items
         items
 
   filterItems: (items) ->
@@ -432,6 +438,10 @@ class Ui
     items = @provider.filterItems(items, filterSpec)
     items = getItemsWithoutUnusedHeader(items) unless @provider.boundToSingleFile
     items
+
+  getBeforeFilteredFileHeaderItems: ->
+    (@itemsBeforeFiltered ? []).filter (item) ->
+      item.header? and item.filePath?
 
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
@@ -455,6 +465,9 @@ class Ui
           @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
       else
         @items.selectFirstNormalItem()
+        unless @isAtPrompt()
+          # when originally selected item cannot be selected because of excluded.
+          @moveToPrompt()
 
       @emitDidRefresh()
       @emitDidStopRefreshing()

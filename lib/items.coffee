@@ -76,9 +76,6 @@ class Items
   getItemForRow: (row) ->
     @items[row]
 
-  getHeaderItemsHavingFilePathField: ->
-    @items.filter (item) -> item.header? and item.filePath?
-
   getNormalItems: (filePath=null) ->
     if filePath?
       @items.filter (item) -> isNormalItem(item) and (item.filePath is filePath)
