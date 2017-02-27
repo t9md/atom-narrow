@@ -31,25 +31,18 @@ class SelectFiles extends ProviderBase
     @ui.onDidDestroy =>
       @clientUi.focus(autoPreview: false) if @clientUi.isAlive()
 
-  getFileHeaderItems: ->
-    switch @getConfig('filesToSelect')
-      when 'all'
-        @clientUi.getBeforeFilteredFileHeaderItems()
-      when 'narrowed'
-        @clientUi.getAfterFilteredFileHeaderItems()
-
   getItems: ->
     items = []
     projectNames = _.uniq(_.pluck(@headerItems, "projectName"))
     itemize = itemForHeaderItem.bind(null, projectNames.length > 1)
-    @getFileHeaderItems().map(itemize)
+    @clientUi.getAfterFilteredFileHeaderItems().map(itemize)
 
   confirmed: ->
     if @clientUi.isAlive()
       @clientUi.focus(autoPreview: false)
       @clientUi.setQueryForSelectFiles(@ui.lastQuery)
       selectedFiles = _.pluck(@ui.items.getNormalItems(), 'filePath')
-      excludedFiles = @getFileHeaderItems()
+      excludedFiles = @clientUi.getBeforeFilteredFileHeaderItems()
         .map (item) -> item.filePath
         .filter (filePath) -> filePath not in selectedFiles
       @clientUi.setExcludedFiles(excludedFiles)

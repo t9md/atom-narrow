@@ -192,12 +192,4 @@ module.exports = new Settings 'narrow',
     closeOnConfirm: true
     revealOnStartCondition:
       default: 'never'
-    filesToSelect:
-      default: 'all'
-      enum: ['all', 'narrowed']
-      description: """
-        TODO: FIND BETTER WAY TO REMOVE THIS CONFIG OPTIONS
-        `all`: Select file from before-filtered filePaths<br>
-        `narrowed`: Select files from after-filterd filePaths<br>
-        """
   )
