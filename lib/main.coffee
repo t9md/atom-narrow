@@ -84,8 +84,7 @@ module.exports =
 
         ui.startSyncToEditor(item) unless ui.isSamePaneItem(item)
 
-        ui.highlighter.clearLineMarker()
-        ui.highlighter.clearCurrent()
+        ui.highlighter.clearCurrentAndLineMarker()
         ui.highlighter.highlight(item)
 
   getUi: ({skipProtected}={}) ->

@@ -162,7 +162,7 @@ class Ui
   toggleAutoPreview: ->
     @autoPreview = not @autoPreview
     @controlBar.updateStateElements({@autoPreview})
-    @highlighter.clearLineMarker()
+    @highlighter.clearCurrentAndLineMarker()
     @preview() if @autoPreview
 
   setReadOnly: (readOnly) ->
@@ -428,7 +428,7 @@ class Ui
 
       @items.setItems(items)
       @renderItems(items)
-      @highlighter.clearLineMarker()
+      @highlighter.clearCurrentAndLineMarker()
 
       if (not selectFirstItem) and selectedItem?
         @items.selectItem(selectedItem)

@@ -20,7 +20,10 @@ class Highlighter
     @subscriptions = new CompositeDisposable
 
     if @needHighlight
-      @subscriptions.add @observeUiStopRefreshing()
+      if @provider.boundToSingleFile
+        @subscriptions.add @ui.onDidRefresh(@refreshAll.bind(this))
+      else
+        @subscriptions.add @ui.onDidStopRefreshing(@refreshAll.bind(this))
 
     @subscriptions.add(
       @observeUiPreview()
@@ -31,7 +34,7 @@ class Highlighter
 
   destroy: ->
     @clear()
-    @clearLineMarker()
+    @clearCurrentAndLineMarker()
     @subscriptions.dispose()
 
   # Highlight items
@@ -61,9 +64,8 @@ class Highlighter
 
   # modify current item decoration
   # -------------------------
-  resetCurrent: ->
+  highlightCurrent: ->
     return unless @needHighlight
-    @clearCurrent()
     return unless @ui.isActive()
 
     if decoration = @decorationByItem.get(@ui.items.getSelectedItem())
@@ -71,6 +73,7 @@ class Highlighter
 
   clearCurrent: ->
     return unless @needHighlight
+    return unless @decorationByItem.size
     items = [@ui.items.getPreviouslySelectedItem(), @ui.items.getSelectedItem()]
     for item in items when item?
       if decoration = @decorationByItem.get(item)
@@ -82,9 +85,12 @@ class Highlighter
     @lineMarker?
 
   drawLineMarker: (editor, item) ->
-    @clearLineMarker()
     @lineMarker = editor.markBufferPosition(item.point)
     editor.decorateMarker(@lineMarker, type: 'line', class: 'narrow-line-marker')
+
+  clearCurrentAndLineMarker: ->
+    @clearCurrent()
+    @clearLineMarker()
 
   clearLineMarker: ->
     @lineMarker?.destroy()
@@ -107,21 +113,20 @@ class Highlighter
     editor.decorateMarker(@flashMarker, type: 'highlight', class: 'narrow-match flash')
     @clearFlashTimeout = setTimeout(clearFlashMarker, 1000)
 
+  refreshAll: ->
+    @clear()
+    @highlight(editor) for editor in getVisibleEditors()
+    @highlightCurrent()
+
   # Event observation
   # -------------------------
-  observeUiStopRefreshing: ->
-    @ui.onDidStopRefreshing =>
-      @clear()
-      @highlight(editor) for editor in getVisibleEditors()
-      @resetCurrent()
-
   observeUiPreview: ->
     @ui.onDidPreview ({editor, item}) =>
-      @drawLineMarker(editor, item)
+      @clearCurrentAndLineMarker()
       @highlight(editor)
-      @resetCurrent()
+      @drawLineMarker(editor, item)
+      @highlightCurrent()
 
   observeUiConfirm: ->
     @ui.onDidConfirm ({editor, item}) =>
-      @clearLineMarker()
-      @clearCurrent()
+      @clearCurrentAndLineMarker()
