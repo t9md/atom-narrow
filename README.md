@@ -29,7 +29,7 @@ Code navigation tool inspired by unite.vim, emacs-helm.
 
 ![overview](https://raw.githubusercontent.com/t9md/t9md/45e8b52a2fbe8a9d47a2f2d30e8f755f5d5cba25/img/atom-narrow/narrow-overview.png)
 
-### provider panel
+### control bar
 
 ![provider-panel](https://raw.githubusercontent.com/t9md/t9md/9d2b606d56f7aa88565821b60df45adc9207b245/img/atom-narrow/provider-panel.png)
 
@@ -210,7 +210,7 @@ Frequently using keymap with my keymap.
 'atom-text-editor.vim-mode-plus.normal-mode':
   # For frequent uses, assign shorter keymap(non-2-step keymap).
   'ctrl-z': 'narrow:reopen'
-  
+
   'cmd-o': 'narrow:symbols-by-current-word' # quick preview function
   'cmd-l': 'narrow:scan-by-current-word'
   'enter': 'narrow:search-by-current-word'

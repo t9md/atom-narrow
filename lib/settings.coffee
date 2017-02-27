@@ -186,3 +186,10 @@ module.exports = new Settings 'narrow',
     searchWholeWord: false
   )
   GitDiff: newProviderConfig()
+  ExcludeFiles: newProviderConfig(
+    autoPreview: false
+    autoPreviewOnQueryChange: false
+    closeOnConfirm: true
+    revealOnStartCondition:
+      default: 'never'
+  )

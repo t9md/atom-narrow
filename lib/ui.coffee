@@ -118,7 +118,7 @@ class Ui
       'narrow-ui:stop-insert': => @setReadOnly(true)
       'narrow-ui:update-real-file': => @updateRealFile()
       'narrow-ui:exclude-file': => @excludeFile()
-      'narrow-ui:exclude-files': => @excludeFiles()
+      'narrow-ui:select-files': => @selectFiles()
       'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
       'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
       'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
@@ -198,7 +198,8 @@ class Ui
     @editorElement.classList.add('narrow', 'narrow-editor', @provider.dashName)
     @setModifiedState(false)
 
-    @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
+    @includeHeaderRules = @provider.needIncludeHeaderRules()
+    @grammar = new Grammar(@editor, {@includeHeaderRules})
     @items = new Items(this)
     @itemIndicator = new ItemIndicator(@editor)
 
@@ -297,6 +298,9 @@ class Ui
         if editor = pane.getActiveEditor()
           editor.scrollToCursorPosition()
 
+  isAlive: ->
+    not @destroyed
+
   destroy: ->
     return if @destroyed
 
@@ -376,15 +380,26 @@ class Ui
   getQuery: ->
     @editor.lineTextForBufferRow(0)
 
-  excludeFiles: ->
-    # TODO
-    
   excludeFile: ->
     filePath = @items.getSelectedItem()?.filePath
     if filePath? and (filePath not in @excludedFiles)
       @excludedFiles.push(filePath)
       @moveToDifferentFileItem('next')
       @refresh()
+
+  selectFiles: ->
+    klass = require("./provider/select-files")
+    provider = new klass(@editor, {clientUi: this})
+    provider.start().then =>
+      disposable = provider.ui.onDidDestroy =>
+        disposable.dispose()
+        @focusPrompt()
+
+  setSelectedFiles: (selectedFiles) ->
+    @excludedFiles = @items.getHeaderItemsHavingFilePathField()
+      .map (item) -> item.filePath
+      .filter (filePath) -> filePath not in selectedFiles
+    @refresh()
 
   clearExcludedFiles: ->
     if @excludedFiles.length
@@ -563,7 +578,7 @@ class Ui
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
 
     @provider.confirmed(item).then (editor) =>
-      if needDestroy
+      if needDestroy or not editor?
         @editor.destroy()
       else
         @highlighter.flashItem(editor, item) if flash

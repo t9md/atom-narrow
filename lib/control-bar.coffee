@@ -1,4 +1,5 @@
 {CompositeDisposable} = require 'atom'
+_ = require 'underscore-plus'
 
 suppressEvent = (event) ->
   event.preventDefault()
@@ -8,10 +9,10 @@ suppressEvent = (event) ->
 module.exports =
 class ControlBar
   constructor: (@ui, {@showSearchOption}={}) ->
-    {@editor, @provider} = @ui
+    {@editor, @editorElement, @provider} = @ui
     @stateElements = {}
     @container = document.createElement('div')
-    @container.className = 'narrow-provider-panel'
+    @container.className = 'narrow-control-bar'
     @container.innerHTML = """
       <div class='base inline-block'>
         <a class='auto-preview'></a>
@@ -40,11 +41,16 @@ class ControlBar
     # loading
     refreshElement = @container.getElementsByClassName('refresh')[0]
     refreshElement.addEventListener('click', @refresh)
+    @stateElements.refresh = refreshElement
 
-    @ui.onWillRefresh ->
-      refreshElement.classList.add('running')
-    @ui.onDidRefresh ->
-      refreshElement.classList.remove('running')
+    @ui.onWillRefresh -> refreshElement.classList.add('running')
+    @ui.onDidRefresh -> refreshElement.classList.remove('running')
+
+    unless @provider.boundToSingleFile
+      @stateElements.selectFiles = document.createElement('a')
+      @stateElements.selectFiles.className = 'select-files'
+      @container.firstChild.appendChild(@stateElements.selectFiles)
+      @stateElements.selectFiles.addEventListener('click', @selectFiles)
 
     if @showSearchOption
       @setupSearchOption()
@@ -84,8 +90,7 @@ class ControlBar
     @marker = @editor.markBufferPosition([0, 0])
     @editor.decorateMarker(@marker, type: 'block', item: @container, position: 'before')
 
-    if @showSearchOption
-      @activateSearchOptionButtonToolTips()
+    @activateToolTips()
     @syncStateElements()
 
   syncStateElements: ->
@@ -114,6 +119,10 @@ class ControlBar
     suppressEvent(event)
     @ui.toggleAutoPreview()
 
+  selectFiles: (event) =>
+    suppressEvent(event)
+    @ui.selectFiles()
+
   toggleSearchIgnoreCase: (event) =>
     suppressEvent(event)
     @ui.toggleSearchIgnoreCase()
@@ -122,16 +131,23 @@ class ControlBar
     suppressEvent(event)
     @ui.toggleSearchWholeWord()
 
-  activateSearchOptionButtonToolTips: ->
+  activateToolTips: ->
     @toolTipDisposables?.dispose()
     @toolTipDisposables = disposables = new CompositeDisposable
 
-    disposables.add atom.tooltips.add @stateElements.wholeWordButton,
-      title: "wholeWord"
-      keyBindingCommand: 'narrow-ui:toggle-search-whole-word'
-      keyBindingTarget: @ui.editorElement
+    addToolTips = (element, command) =>
+      @toolTipDisposables.add atom.tooltips.add element,
+        title: _.humanizeEventName(command.split(':')[1])
+        keyBindingCommand: command
+        keyBindingTarget: @editorElement
 
-    disposables.add atom.tooltips.add @stateElements.ignoreCaseButton,
-      title: "ignoreCase"
-      keyBindingCommand: 'narrow-ui:toggle-search-ignore-case'
-      keyBindingTarget: @ui.editorElement
+    addToolTips(@stateElements.autoPreview, 'narrow-ui:toggle-auto-preview')
+    addToolTips(@stateElements.protected, 'narrow-ui:protect')
+    addToolTips(@stateElements.refresh, 'narrow-ui:refresh')
+
+    if @stateElements.selectFiles?
+      addToolTips(@stateElements.selectFiles, 'narrow-ui:select-files')
+
+    if @showSearchOption
+      addToolTips(@stateElements.wholeWordButton, 'narrow-ui:toggle-search-whole-word')
+      addToolTips(@stateElements.ignoreCaseButton, 'narrow-ui:toggle-search-ignore-case')
