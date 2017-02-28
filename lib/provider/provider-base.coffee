@@ -38,6 +38,7 @@ class ProviderBase
 
   supportDirectEdit: false
   supportCacheItems: false
+  supportReopen: true
   editor: null
 
   # used by scan, search, atom-scan
@@ -160,7 +161,8 @@ class ProviderBase
     items
 
   destroy: ->
-    ProviderBase.saveState(this)
+    if @supportReopen
+      ProviderBase.saveState(this)
     @subscriptions.dispose()
     @editorSubscriptions.dispose()
     @restoreEditorState() if @needRestoreEditorState

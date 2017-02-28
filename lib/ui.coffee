@@ -25,6 +25,7 @@ Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
 ItemIndicator = require './item-indicator'
+SelectFiles = null
 
 module.exports =
 class Ui
@@ -68,6 +69,7 @@ class Ui
   readOnly: false
   protected: false
   excludedFiles: null
+  queryForSeSelectedFiles: null
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -118,6 +120,7 @@ class Ui
       'narrow-ui:stop-insert': => @setReadOnly(true)
       'narrow-ui:update-real-file': => @updateRealFile()
       'narrow-ui:exclude-file': => @excludeFile()
+      'narrow-ui:select-files': => @selectFiles()
       'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
       'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
       'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
@@ -265,11 +268,12 @@ class Ui
   isActive: ->
     isActiveEditor(@editor)
 
-  focus: ->
+  focus: ({autoPreview}={}) ->
     pane = @getPane()
     pane.activate()
     pane.activateItem(@editor)
-    @preview() if @autoPreview
+    if autoPreview ? @autoPreview
+      @preview()
 
   focusPrompt: ->
     if @isActive() and @isAtPrompt()
@@ -296,6 +300,9 @@ class Ui
         if editor = pane.getActiveEditor()
           editor.scrollToCursorPosition()
 
+  isAlive: ->
+    not @destroyed
+
   destroy: ->
     return if @destroyed
 
@@ -305,7 +312,8 @@ class Ui
     @syncSubcriptions?.dispose()
     @disposables.dispose()
     @editor.destroy()
-    @activateProviderPane()
+    unless @provider.name is 'SelectFiles'
+      @activateProviderPane()
 
     @controlBar.destroy()
     @provider?.destroy?()
@@ -382,10 +390,22 @@ class Ui
       @moveToDifferentFileItem('next')
       @refresh()
 
+  selectFiles: ->
+    return if @provider.boundToSingleFile
+    SelectFiles ?= require("./provider/select-files")
+    options =
+      query: @queryForSeSelectedFiles
+      clientUi: this
+    new SelectFiles(@editor, options).start()
+
+  setQueryForSelectFiles: (@queryForSeSelectedFiles) ->
+
+  setExcludedFiles: (@excludedFiles) ->
+    @refresh()
+
   clearExcludedFiles: ->
     if @excludedFiles.length
-      @excludedFiles = []
-      @refresh()
+      @setExcludedFiles([])
 
   refreshManually: (options) ->
     @emitWillRefreshManually()
@@ -399,12 +419,14 @@ class Ui
         if @provider.showLineHeader
           injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
         items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
+        @itemsBeforeFiltered = items
         items
 
   filterItems: (items) ->
     @lastQuery = @getQuery()
     sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
-    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity})
+    negateByEndingExclamation = @provider.getConfig('negateNarrowQueryByEndingExclamation')
+    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity, negateByEndingExclamation})
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
@@ -413,6 +435,12 @@ class Ui
     items = @provider.filterItems(items, filterSpec)
     items = getItemsWithoutUnusedHeader(items) unless @provider.boundToSingleFile
     items
+
+  getBeforeFilteredFileHeaderItems: ->
+    (@itemsBeforeFiltered ? []).filter (item) -> item.fileHeader
+
+  getAfterFilteredFileHeaderItems: ->
+    @items.getFileHeaderItems()
 
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
@@ -436,6 +464,9 @@ class Ui
           @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
       else
         @items.selectFirstNormalItem()
+        unless @isAtPrompt()
+          # when originally selected item cannot be selected because of excluded.
+          @moveToPrompt()
 
       @emitDidRefresh()
       @emitDidStopRefreshing()
@@ -559,7 +590,7 @@ class Ui
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
 
     @provider.confirmed(item).then (editor) =>
-      if needDestroy
+      if needDestroy or not editor?
         @editor.destroy()
       else
         @highlighter.flashItem(editor, item) if flash

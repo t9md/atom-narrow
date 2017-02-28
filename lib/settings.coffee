@@ -82,6 +82,7 @@ newProviderConfig = (otherProperties) ->
     caseSensitivityForNarrowQuery:
       default: 'inherit'
       enum: ['inherit', 'smartcase', 'sensitive', 'insensitive']
+    negateNarrowQueryByEndingExclamation: false
     autoPreview: true
     autoPreviewOnQueryChange: true
     closeOnConfirm: true
@@ -186,3 +187,11 @@ module.exports = new Settings 'narrow',
     searchWholeWord: false
   )
   GitDiff: newProviderConfig()
+  SelectFiles: newProviderConfig(
+    autoPreview: false
+    autoPreviewOnQueryChange: false
+    negateNarrowQueryByEndingExclamation: true
+    closeOnConfirm: true
+    revealOnStartCondition:
+      default: 'never'
+  )

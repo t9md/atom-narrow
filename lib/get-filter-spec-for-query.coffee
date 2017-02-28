@@ -30,12 +30,16 @@ module.exports = (query, options={}) ->
   exclude = []
 
   words = _.compact(query.split(/\s+/))
+  {negateByEndingExclamation} = options
+  delete options.negateByEndingExclamation
   for word in words
     if word.length is 1
       options.wildcard = false
       include.push(getRegExpForWord(word, options))
     else if word.startsWith('!')
       exclude.push(getRegExpForWord(word[1...], options))
+    else if negateByEndingExclamation and word.endsWith('!')
+      exclude.push(getRegExpForWord(word[...-1], options))
     else
       include.push(getRegExpForWord(word, options))
 
