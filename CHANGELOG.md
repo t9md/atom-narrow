@@ -1,3 +1,17 @@
+# 0.32.0:
+- Spec: Add basic level test for `search`.
+- Breaking, Improve(?): Now `search` items are sorted by filePath.
+- Internal: Consolidate `onDidStopChangingActiveItem` event observation.
+- Improve: Current match highlight is done without **delay** for boundToSingleFile provider( e.g. `scan` ).
+- New: Interactively select/exclude file to narrow by `select-files` meta provider.
+  - SelectFiles provider is invoked from `narrow-ui`( `narrow-editor` ).
+  - `cmd-backspace` is mapped by default.
+  - Add short tutorial in `README.md`'s "Use `select-files` provider" section.
+- New: `negateNarrowQueryByEndingExclamation` config option.
+  - default `true` for `select-files` provider, `false` for other provider.
+  - Narrow query support `!word`, expression to "exclude `word` matching item"(from older version).
+  - When this option set to `true`, `word!` is also treated to exclude `word` matching item.
+
 # 0.31.1:
 - Fix: No longer throw exception on change active pane item while reading search input.
 

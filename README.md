@@ -163,6 +163,14 @@ No keymaps are provided
 - `narrow-ui:start-insert`: `I`, `a`
 - `narrow-ui:stop-insert`: `escape`
 - `narrow-ui:update-real-file`: Apply changes made in `narrow-editor` to real-file.( edit in `narrow-editor` then save it to real file. )
+- `narrow-ui:protect`: No keymap by default, Protect narrow-editor from being destroyed by `narrow:close`( `ctrl-g` ).
+- `narrow-ui:exclude-file`: `backspace`, Exclude items which matches filePath of currently selected item's.
+- `narrow-ui:clear-excluded-files`: `ctrl-backspace`, Clear excluded files list.
+- `narrow-ui:select-files`: `cmd-backspace`, interactively select which filePath's items to appear on `narrow-editor`.
+- `narrow-ui:move-to-next-file-item`: `n`
+- `narrow-ui:move-to-previous-file-item`: `p`
+- `narrow-ui:toggle-search-whole-word`: `alt-cmd-w`
+- `narrow-ui:toggle-search-ignore-case`: `alt-cmd-c`
 
 # Keymaps
 
@@ -185,8 +193,6 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
     Search:
       closeOnConfirm: false
       startByDoubleClick: true
-    Symbols:
-      directionToOpen: "down:always-new-pane"
     confirmOnUpdateRealFile: false
 ```
 
@@ -250,6 +256,9 @@ Frequently using keymap with my keymap.
   # Danger: I use direct-edit very frequently, so intentionally recover `i` of vim-mode-plus.
   'i': 'vim-mode-plus:activate-insert-mode'
   'backspace': 'narrow:close'
+  '-': 'narrow-ui:exclude-file'
+  '=': 'narrow-ui:clear-excluded-files'
+  's': 'narrow-ui:select-files'
 
 # NOTE: following keymap prevent me to type `;`, `[`, `]` in insert-mode.
 # Which is very problematic in direct-edit mode since I can not insert these chars.
@@ -324,9 +333,26 @@ Why I'm not using others? reason is here.
 
 ### How can I exclude particular file from `narrow:search`
 
+##### Use `backspace` on item
+
 - Use `backspace` to exclude particular file from result.
 - `ctrl-backspace` clear excluded file list and refresh
 - These keymaps are available in `narrow-editor` and you are in `read-only-mode`
+
+##### Use `select-files` provider
+
+- You can launch `select-files` by `cmd-backspace` or clicking `folder-icon` on **control-bar**.
+
+1. search `editor` by `narrow:search`, you see lots of `editor` mached items
+2. But you want exclude items in markdown file?
+  - launch `select-files`, all file paths are listed as item.
+  - Then type `md` on query, you see markdown filepath that macheed `md`.
+  - Then add `!`, now your query is `md!`, this is treated as all files **not** matching `md`.
+  - `enter` to confirm.
+3. You see items with items in markdown files are excluded.
+4. You can re-fine files to exclude by re-launching `select-files`.
+  - e.g. To exclude `spec` folder, you can add `spec/!` as query.
+  - e.g. To include `.js` file only, you can set query to `.js`.
 
 ### Want to skip to `next-file`, `previous-file`
 
