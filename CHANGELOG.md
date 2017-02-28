@@ -211,7 +211,7 @@
   - Critical and wanted to fix, I could finally found the cause and fixed!!
   - Was happened tying to open item for filePath-A when `narrow-editor`'s pane have editor for filePath-A as item.
   - This situation result in trying to one editor(pane-item) activate on multiple-pane, but no-longer!!
-- Fix: `Point` is not imported on `utils.coffee`. rarely evaluated code pass, I can't describe what situation cause error by this bug.
+- Fix: `Point` is not imported on `utils.coffee`. rarely evaluated code path, I can't describe what situation cause error by this bug.
 
 # 0.20.0:
 - New, Improve: Show multiple matches on same line for `search` and `atom-scan`
