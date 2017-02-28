@@ -425,7 +425,8 @@ class Ui
   filterItems: (items) ->
     @lastQuery = @getQuery()
     sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
-    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity})
+    negateByEndingExclamation = @provider.getConfig('negateNarrowQueryByEndingExclamation')
+    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity, negateByEndingExclamation})
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
