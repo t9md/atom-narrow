@@ -65,9 +65,6 @@ class ProviderBase
       when 'on-input'
         @query?.length
 
-  needIncludeHeaderRules: ->
-    @includeHeaderRules ?= not @boundToSingleFile
-
   initialize: ->
     # to override
 
