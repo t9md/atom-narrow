@@ -7,6 +7,8 @@ Code navigation tool inspired by unite.vim, emacs-helm.
 
 ![narrow](https://raw.githubusercontent.com/t9md/t9md/4df5df86884a25bf8b62dc3b605df050a06c8232/img/atom-narrow/narrow.gif)
 
+More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
+
 # What's this?
 
 - Provide narrowing UI like unite/denite.vim or emacs-helm.
@@ -24,14 +26,13 @@ Code navigation tool inspired by unite.vim, emacs-helm.
 - `narrow-editor` or `narrow-ui`: handles user input and update narrowed item list.
 - `narrow-provider`: Provide items to narrow and action to jump to item selected.
 
-
 ### overview
 
 ![overview](https://raw.githubusercontent.com/t9md/t9md/45e8b52a2fbe8a9d47a2f2d30e8f755f5d5cba25/img/atom-narrow/narrow-overview.png)
 
 ### control bar
 
-![provider-panel](https://raw.githubusercontent.com/t9md/t9md/9d2b606d56f7aa88565821b60df45adc9207b245/img/atom-narrow/provider-panel.png)
+![control-bar](https://raw.githubusercontent.com/t9md/t9md/9d2b606d56f7aa88565821b60df45adc9207b245/img/atom-narrow/provider-panel.png)
 
 # Features
 
@@ -87,7 +88,7 @@ The read-only mode is enabled by default.
   - Both commands are available from outside/inside of narrow-editor.
 7. These navigation keymaps are available for all provider(e.g. `search`, `fold` etc).
 
-### Step3. [DANGER] direct-edit
+### Step3. direct-edit
 
 Direct-edit is "edit on narrow-editor then save to real-file" feature.  
 Available for these three providers `scan`, `search` and `atom-scan`.  
