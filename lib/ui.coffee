@@ -200,7 +200,7 @@ class Ui
     @editorElement.classList.add('narrow', 'narrow-editor', @provider.dashName)
     @setModifiedState(false)
 
-    @grammar = new Grammar(@editor, @includeHeaderRules: not @provider.boundToSingleFile)
+    @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
     @items = new Items(this)
     @itemIndicator = new ItemIndicator(@editor)
 
