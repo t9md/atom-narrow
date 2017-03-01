@@ -15,7 +15,7 @@ expandWildCard = (word) ->
   segments.join('')
 
 getRegExpForWord = (word, {wildcard, sensitivity}={}) ->
-  if wildcard ? true
+  if word.length > 1 # don't expand wildcard for sole `*`.
     pattern = expandWildCard(word)
   else
     pattern = _.escapeRegExp(word)
@@ -28,15 +28,11 @@ getRegExpForWord = (word, {wildcard, sensitivity}={}) ->
 module.exports = (query, options={}) ->
   include = []
   exclude = []
-
-  words = _.compact(query.split(/\s+/))
   {negateByEndingExclamation} = options
   delete options.negateByEndingExclamation
+  words = _.compact(query.split(/\s+/))
   for word in words
-    if word.length is 1
-      options.wildcard = false
-      include.push(getRegExpForWord(word, options))
-    else if word.startsWith('!')
+    if word.startsWith('!')
       exclude.push(getRegExpForWord(word[1...], options))
     else if negateByEndingExclamation and word.endsWith('!')
       exclude.push(getRegExpForWord(word[...-1], options))
