@@ -1,5 +1,6 @@
 _ = require 'underscore-plus'
 {inspect} = require 'util'
+Ui = require '../lib/ui'
 
 narrow = (providerName, options) ->
   klass = require("../lib/provider/#{providerName}")
@@ -8,13 +9,15 @@ narrow = (providerName, options) ->
 
 startNarrow = (providerName, options) ->
   provider = narrow(providerName, options)
-  provider.start().then ->
-    ui = provider.ui
-    props = {provider, ui}
-    ensureer = new Ensureer(ui, provider)
-    for propName in ['ensure', 'waitsForRefresh', 'waitsForConfirm', 'waitsForDestroy', 'waitsForPreview']
-      props[propName] = ensureer[propName]
-    props
+  provider.start().then(getNarrowForUi)
+
+getNarrowForUi = (ui) ->
+  provider = ui.provider
+  props = {provider, ui}
+  ensureer = new Ensureer(ui, provider)
+  for propName in ['ensure', 'waitsForRefresh', 'waitsForConfirm', 'waitsForDestroy', 'waitsForPreview']
+    props[propName] = ensureer[propName]
+  props
 
 dispatchCommand = (target, commandName) ->
   atom.commands.dispatch(target, commandName)
@@ -169,4 +172,5 @@ module.exports = {
   paneForItem
   setActiveTextEditor
   setActiveTextEditorWithWaits
+  getNarrowForUi
 }

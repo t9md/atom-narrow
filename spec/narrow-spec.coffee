@@ -5,6 +5,7 @@ path = require 'path'
 settings = require '../lib/settings'
 {
   startNarrow
+  getNarrowForUi
   ensureCursorPosition
   ensureEditor
   ensurePaneLayout
@@ -832,3 +833,133 @@ describe "narrow", ->
             """
           selectedItemText: "p2-f2: apple"
           filePathForProviderPane: p2f2
+
+    it "can filter files by selet-files provider", ->
+      selectFiles = null
+
+      runs ->
+        ensure
+          text: """
+
+            # project1
+            ## p1-f1
+            1: 8: p1-f1: apple
+            ## p1-f2
+            1: 8: p1-f2: apple
+            # project2
+            ## p2-f1
+            1: 8: p2-f1: apple
+            ## p2-f2
+            1: 8: p2-f2: apple
+            """
+          cursor: [3, 5]
+          selectedItemText: "p1-f1: apple"
+
+      waitsForPromise ->
+        ui.selectFiles().then (_ui) ->
+          selectFiles = getNarrowForUi(_ui)
+
+      runs ->
+        # Start select-files provider from search result ui.
+        selectFiles.ensure
+          text: """
+
+            project1/p1-f1
+            project1/p1-f2
+            project2/p2-f1
+            project2/p2-f2
+            """
+
+      runs ->
+        # select f1
+        selectFiles.ensure "f1",
+          text: """
+            f1
+            project1/p1-f1
+            project2/p2-f1
+            """
+
+      runs ->
+        # then negate by ending `!`
+        selectFiles.ensure "f1!",
+          text: """
+            f1!
+            project1/p1-f2
+            project2/p2-f2
+            """
+
+      runs ->
+        selectFiles.waitsForDestroy -> runCommand('core:confirm')
+
+      runs ->
+        # Ensure f1 matching files are excluded and not listed in narrow-editor.
+        ensureEditorIsActive(ui.editor)
+        expect(ui.excludedFiles).toEqual([
+          p1f1
+          p2f1
+        ])
+        ensure
+          text: """
+
+            # project1
+            ## p1-f2
+            1: 8: p1-f2: apple
+            # project2
+            ## p2-f2
+            1: 8: p2-f2: apple
+            """
+          cursor: [0, 0]
+          selectedItemText: "p1-f2: apple"
+
+      waitsForPromise ->
+        ui.selectFiles().then (_ui) ->
+          selectFiles = getNarrowForUi(_ui)
+
+      runs ->
+        # selectFiles query are remembered until closing narrow-editor.
+        selectFiles.ensure
+          text: """
+            f1!
+            project1/p1-f2
+            project2/p2-f2
+            """
+
+      runs ->
+        # clear the file filter query
+        selectFiles.waitsForRefresh ->
+          selectFiles.ui.editor.deleteToBeginningOfLine()
+
+      runs ->
+        # now all files are listable.
+        selectFiles.ensure
+          text: """
+
+            project1/p1-f1
+            project1/p1-f2
+            project2/p2-f1
+            project2/p2-f2
+            """
+
+      runs ->
+        selectFiles.waitsForDestroy -> runCommand('core:confirm')
+
+      runs ->
+        # ensure items for all files are listed and previously selected items are preserveed.
+        ensureEditorIsActive(ui.editor)
+        expect(ui.excludedFiles).toEqual([])
+        ensure
+          text: """
+
+            # project1
+            ## p1-f1
+            1: 8: p1-f1: apple
+            ## p1-f2
+            1: 8: p1-f2: apple
+            # project2
+            ## p2-f1
+            1: 8: p2-f1: apple
+            ## p2-f2
+            1: 8: p2-f2: apple
+            """
+          cursor: [0, 0]
+          selectedItemText: "p1-f2: apple"
