@@ -136,11 +136,15 @@ class ProviderBase
     @query = @getInitialQuery(editor)
 
   start: ->
-    @checkReady().then (ready) =>
-      if ready
-        @ui = new Ui(this, {@query})
-        @initialize()
-        @ui.open(pending: @options.pending)
+    new Promise (resolve, reject) =>
+      @checkReady().then (ready) =>
+        if ready
+          @ui = new Ui(this, {@query})
+          @initialize()
+          @ui.open(pending: @options.pending).then =>
+            resolve(@ui)
+        else
+          reject(null)
 
   getInitialQuery: (editor) ->
     query = @options.query
