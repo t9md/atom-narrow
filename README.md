@@ -32,7 +32,7 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 
 ### control bar
 
-![control-bar](https://raw.githubusercontent.com/t9md/t9md/9d2b606d56f7aa88565821b60df45adc9207b245/img/atom-narrow/provider-panel.png)
+![control-bar](https://raw.githubusercontent.com/t9md/t9md/37f70896cb383f455f7a18a04d559e8adb05502c/img/atom-narrow/control-bar.png)
 
 # Features
 
