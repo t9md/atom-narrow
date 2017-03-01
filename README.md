@@ -11,12 +11,12 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 
 # What's this?
 
-- Provide narrowing UI like unite/denite.vim or emacs-helm.
+- Provide narrowing UI like emacs-helm and unite/denite.vim.
 - But **not** aiming to become "can open anything from narrow-able UI" package.
 - Primal focus is on **code-navigation**.
 - Provider provide items, which you can narrow.
-- Narrow-UI is bound to active text-editor ans syched. So as you move cursor on active-editor, selected item on narrow-ui is synched.
-- This **auto sync current-item to active editor's cursor** gives you valuable context to keep focus on X.  
+- Narrow-Ui is bound to active text-editor and synced. As you move cursor on active-editor, selected item on narrow-ui is synced.
+- This **auto sync current-item to active editor's cursor** gives you invaluable context to keep focus on X.  
 - You no longer lost like "What am I doing? Where am I?" while finding/editing `identifier` which are scattered across multiple files.
 - Let narrow navigate next/previous item to aid your concentration.
 - Edit with confidence for no-overlook by direct-edit( edit on `ag search result` on narrow-editor then apply changes to real-file ).
@@ -37,11 +37,11 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 # Features
 
 - Auto preview items under cursor(default `true` for all providers).
-- Auto update items on narrow-editor when item changed(e.g. `narrow:scan` refresh items when text changed).
-- Auto refresh items on active text-editor change(e.g. `narrow:symbols` always shows current-editor's symbol list).
-- Auto sync editor's cursor position to selected item on narrow-editor(narrowing UI).
-- Navigate between narrowed items without focusing narrow-editor.
-- Direct edit in narrow-editor which update realFile on disk by `narrow:update-real-file` commands.
+- Auto refresh items on `narrow-editor` on underlying buffer text change(e.g. `narrow:scan` refresh items when text changed).
+- Auto refresh items on active text-editor change(e.g. `narrow:symbols` shows symbols in active-text-editor)
+- Currently selected items on `narrow-editor` auto follow( sync ) to active-editor's cursor position.
+- Navigate between narrowed items without focusing `narrow-editor`.
+- Direct edit in `narrow-editor` which update realFile on disk by `narrow:update-real-file` commands.
 - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration( I'm also maintainer of vim-mode-plus ).
 - For what can I use this?, See [Use case and flow of keystrokes](https://github.com/t9md/atom-narrow/issues/75).
 - Also see [Q&A](#qa) section at bottom of this README.
@@ -65,36 +65,39 @@ To follow this quick-tour, you don't need custom keymap.
 
 ### Step1. basic by using `narrow:scan`
 
-Initial items are each lines on editor.
-
 1. Open some text-editor, then via command-palette, invoke `Narrow Scan`.
-2. narrow-editor opened, as you type, you can narrow items.
+2. `narrow-editor` opened, Initial items are each lines on editor. As you type, you can narrow items.
 3. When you type `apple` as query. all `apple` matching items are listed.
 4. You can move normal `up`, `down`(or `j`, `k` in read-only mode) key to quick-preview items.
-5. `enter` to confirm. When confirmed, narrow-editor closed.
+5. `enter` to confirm. When confirmed, `narrow-editor` closed.
 
 The read-only mode is enabled by default.
 
 ### Step2. navigate from outside of `narrow-editor`.
 
 1. Open some text-editor, then via command-palette, invoke `Narrow Scan`.
-2. narrow-editor opened, as you type, you can narrow items.
-3. Click invoking editor. And see your clicked position is auto reflected narrow-editor.
+2. `narrow-editor` opened. As you type, you can narrow items.
+3. Click invoking editor. And see your clicked position is automatically reflected `narrow-editor`.
 4. `ctrl-cmd-n` to move to `next-item`, `ctrl-cmd-p` to move to `previous-item`.
-5. If you want to close narrow-editor you can close by `ctrl-g`(no need to focus narrow-editor).
-6. If you want to change narrow-query, you have to focus to narrow-editor
-  - Use `ctrl-cmd-f`(`narrow:focus`) to focus narrow-editor's item indicator row.
-  - Use `ctrl-cmd-i`(`narrow:focus-prompt`) to focus narrow-editor's query prompt row
+  - If you are vim-mode-plus user, You can use `tab` and `shift-tab`.
+5. You can close `narrow-editor` by `ctrl-g`( no need to focus `narrow-editor` ).
+6. If you want to change narrow-query, you have to focus to `narrow-editor`
+  - Use `ctrl-cmd-f`( `narrow:focus` ) to focus `narrow-editor`.
+  - Use `ctrl-cmd-i`( `narrow:focus-prompt` ) to directly focus narrow-editor's query prompt row.
   - Both commands are available from outside/inside of narrow-editor.
 7. These navigation keymaps are available for all provider(e.g. `search`, `fold` etc).
 
 ### Step3. direct-edit
 
-Direct-edit is "edit on narrow-editor then save to real-file" feature.  
-Available for these three providers `scan`, `search` and `atom-scan`.  
+Direct-edit is "edit on `narrow-editor` then save to real-file" feature.  
+Available for following providers.
 
-⚠️ This feature is really new and still experimental state.  
-⚠️ Don't try code-base which is not managed by SCM.  
+- `scan`
+- `search`
+- `atom-scan`
+
+⚠️ This operation is dangerous, since you can update multiple files at once.
+⚠️ You have to be careful enough to use this feature, don't use this without understanding what you are doing.
 ⚠️ I can say sorry, but I can not recover file for you.  
 
 1. Open file from project, place cursor for variable name `hello`
@@ -111,7 +114,7 @@ Available for these three providers `scan`, `search` and `atom-scan`.
 
 1. Set `Search.startByDoubleClick` to `true` from settings-view.
 2. Double click keyword in editor.
-3. Each time you duble click keyword, new narrow-editor open and old one is replaced.
+3. Each time you double click keyword, new narrow-editor open and old one is replaced.
 4. You can continue double click which ever narrow-editor or normal-editor.
 
 # Commands
