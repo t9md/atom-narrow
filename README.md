@@ -28,7 +28,7 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 
 ### overview
 
-![overview](https://raw.githubusercontent.com/t9md/t9md/45e8b52a2fbe8a9d47a2f2d30e8f755f5d5cba25/img/atom-narrow/narrow-overview.png)
+![overview](https://raw.githubusercontent.com/t9md/t9md/1654820b1f064aa11e087c7b3c1d6ce14ab03449/img/atom-narrow/overview.png)
 
 ### control bar
 
