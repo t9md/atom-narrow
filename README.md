@@ -39,7 +39,7 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 
 # Bundled providers
 
-You can check GIFs of all bundled provider at [here](https://github.com/t9md/atom-narrow/wiki/Provider).  
+You can check GIFs for all bundled provider [here](https://github.com/t9md/atom-narrow/wiki/Provider).  
 I use `scan`, `search`, `git-diff-all`, `symbols` in daily-basis, for other providers I don't use much.  
 
 - `scan`: Scan current editor.
