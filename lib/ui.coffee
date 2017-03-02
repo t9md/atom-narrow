@@ -68,8 +68,8 @@ class Ui
   modifiedState: null
   readOnly: false
   protected: false
-  excludedFiles: null
-  queryForSeSelectedFiles: null
+  excludedFiles: []
+  queryForSelectedFiles: null
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -179,11 +179,11 @@ class Ui
       @editorElement.classList.remove('read-only')
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
-  constructor: (@provider, {@query}={}) ->
+  constructor: (@provider, {@query}={}, properties) ->
+    _.extend(this, properties) if properties?
     @query ?= ''
     @disposables = new CompositeDisposable
     @emitter = new Emitter
-    @excludedFiles = []
     @autoPreview = @provider.getConfig('autoPreview')
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
     @highlighter = new Highlighter(this)
@@ -394,11 +394,11 @@ class Ui
     return if @provider.boundToSingleFile
     SelectFiles ?= require("./provider/select-files")
     options =
-      query: @queryForSeSelectedFiles
+      query: @queryForSelectedFiles
       clientUi: this
     new SelectFiles(@editor, options).start()
 
-  setQueryForSelectFiles: (@queryForSeSelectedFiles) ->
+  setQueryForSelectFiles: (@queryForSelectedFiles) ->
 
   setExcludedFiles: (@excludedFiles) ->
     @refresh()

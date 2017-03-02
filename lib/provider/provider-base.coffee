@@ -115,9 +115,13 @@ class ProviderBase
       name: @dashName
       options: {query: @ui.lastQuery}
       properties: properties
+      uiProperties: {
+        excludedFiles: @ui.excludedFiles
+        queryForSelectedFiles: @ui.queryForSelectedFiles
+      }
     }
 
-  constructor: (editor, @options={}, properties) ->
+  constructor: (editor, @options={}, properties, @uiProperties) ->
     _.extend(this, properties) if properties?
 
     @name = @constructor.name
@@ -139,7 +143,7 @@ class ProviderBase
     new Promise (resolve, reject) =>
       @checkReady().then (ready) =>
         if ready
-          @ui = new Ui(this, {@query})
+          @ui = new Ui(this, {@query}, @uiProperties)
           @initialize()
           @ui.open(pending: @options.pending).then =>
             resolve(@ui)
