@@ -68,7 +68,7 @@ class Ui
   modifiedState: null
   readOnly: false
   protected: false
-  excludedFiles: []
+  excludedFiles: null
   queryForSelectedFiles: null
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
@@ -181,6 +181,7 @@ class Ui
 
   constructor: (@provider, {@query}={}, properties) ->
     _.extend(this, properties) if properties?
+    @excludedFiles ?= []
     @query ?= ''
     @disposables = new CompositeDisposable
     @emitter = new Emitter
@@ -387,6 +388,7 @@ class Ui
     filePath = @items.getSelectedItem()?.filePath
     if filePath? and (filePath not in @excludedFiles)
       @excludedFiles.push(filePath)
+      @updateControlBarExcludedFilesState()
       @moveToDifferentFileItem('next')
       @refresh()
 
@@ -400,7 +402,11 @@ class Ui
 
   setQueryForSelectFiles: (@queryForSelectedFiles) ->
 
+  updateControlBarExcludedFilesState: ->
+    @controlBar.updateStateElements(selectFiles: @excludedFiles.length)
+
   setExcludedFiles: (@excludedFiles) ->
+    @updateControlBarExcludedFilesState()
     @refresh()
 
   clearExcludedFiles: ->
