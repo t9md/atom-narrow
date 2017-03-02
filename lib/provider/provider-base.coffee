@@ -117,7 +117,7 @@ class ProviderBase
       properties: properties
       uiProperties: {
         excludedFiles: @ui.excludedFiles
-        queryForSelectedFiles: @ui.queryForSelectedFiles
+        queryForSelectFiles: @ui.queryForSelectFiles
       }
     }
 

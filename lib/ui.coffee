@@ -69,7 +69,7 @@ class Ui
   readOnly: false
   protected: false
   excludedFiles: null
-  queryForSelectedFiles: null
+  queryForSelectFiles: null
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -396,11 +396,11 @@ class Ui
     return if @provider.boundToSingleFile
     SelectFiles ?= require("./provider/select-files")
     options =
-      query: @queryForSelectedFiles
+      query: @queryForSelectFiles
       clientUi: this
     new SelectFiles(@editor, options).start()
 
-  setQueryForSelectFiles: (@queryForSelectedFiles) ->
+  setQueryForSelectFiles: (@queryForSelectFiles) ->
 
   updateControlBarExcludedFilesState: ->
     @controlBar.updateStateElements(selectFiles: @excludedFiles.length)
