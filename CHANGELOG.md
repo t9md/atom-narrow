@@ -1,3 +1,7 @@
+# 0.33.0: WIP
+- Improve: Restore following ui properties on `narrow:reopen`.
+  - `excludeFiles`: State of excluded files
+  - `queryForSelectFiles` : Query for `select-files`
 # 0.32.1:
 - Fix: wildcard was not expanded correctly when query words include single char query.
 - Doc: Add link to wiki on README.md.
