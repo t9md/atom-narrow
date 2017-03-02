@@ -13,17 +13,21 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 - Provide narrowing UI like emacs-helm and unite/denite.vim.
 - But **not** aiming to become "can open anything from narrow-able UI" package.
 - Primal focus is on **code-navigation**.
-- Provider provide items, which you can narrow.
-- Narrow-Ui is bound to active text-editor and synced. As you move cursor on active-editor, selected item on narrow-ui is synced.
-- This **auto sync current-item to active editor's cursor** gives you invaluable context to keep focus on X.  
-- You no longer lost like "What am I doing? Where am I?" while finding/editing `identifier` which are scattered across multiple files.
-- Let narrow navigate next/previous item to aid your concentration.
+- Provider provide items( e.g. by `search` files in project ), you can filter items by query to narrow down further.
+- As you move cursor on active-editor, **current** item on narrow-ui is automatically synced.
+- You no longer lost like "Where am I?" when you are working on multiple files.
+- Let narrow navigate to next/previous item to aid your concentration.
 - Edit with confidence for no-overlook by direct-edit( edit on `ag search result` on narrow-editor then apply changes to real-file ).
+- In mind
+  - keyboard navigation.
+  - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration( I'm also maintainer of vim-mode-plus ).
+- For what can I use this?, See [Use case and flow of keystrokes](https://github.com/t9md/atom-narrow/issues/75).
+- Also see [Q&A](#qa) section at bottom of this README.
 
 # Roles in play.
 
-- `narrow-editor` or `narrow-ui`: handles user input and update narrowed item list.
-- `narrow-provider`: Provide items to narrow and action to jump to item selected.
+- `narrow-editor` or `narrow-ui`: filter items by query and render items.
+- `narrow-provider`: Provide items to narrow.
 
 ### overview
 
@@ -33,19 +37,10 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 
 ![control-bar](https://raw.githubusercontent.com/t9md/t9md/37f70896cb383f455f7a18a04d559e8adb05502c/img/atom-narrow/control-bar.png)
 
-# Features
-
-- Auto preview items under cursor(default `true` for all providers).
-- Auto refresh items on `narrow-editor` on underlying buffer text change(e.g. `narrow:scan` refresh items when text changed).
-- Auto refresh items on active text-editor change(e.g. `narrow:symbols` shows symbols in active-text-editor)
-- Currently selected items on `narrow-editor` auto follow( sync ) to active-editor's cursor position.
-- Navigate between narrowed items without focusing `narrow-editor`.
-- Direct edit in `narrow-editor` which update realFile on disk by `narrow:update-real-file` commands.
-- [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration( I'm also maintainer of vim-mode-plus ).
-- For what can I use this?, See [Use case and flow of keystrokes](https://github.com/t9md/atom-narrow/issues/75).
-- Also see [Q&A](#qa) section at bottom of this README.
-
 # Bundled providers
+
+You can check GIFs of all bundled provider at [here](https://github.com/t9md/atom-narrow/wiki/Provider).  
+I use `scan`, `search`, `git-diff-all`, `symbols` in daily-basis, for other providers I don't use much.  
 
 - `scan`: Scan current editor.
 - `search`: Search by `ag`( you need to install `ag` by yourself).
@@ -161,7 +156,6 @@ No keymaps are provided
 - `narrow-ui:preview-next-item`: ( `tab` ) Preview next-item without moving cursor from `narrow-editor`'s query prompt.
 - `narrow-ui:preview-previous-item`: ( `shift-tab` ) Preview next-item without moving cursor from `narrow-editor`'s query prompt.
 - `narrow-ui:toggle-auto-preview`: ( `ctrl-r` for non-vim-mode-plus user) Disable/enable auto-preview for this `narrow-editor`.
-<!-- - `narrow-ui:move-to-prompt-or-selected-item`: ( DEPRECATED ) -->
 - `narrow-ui:move-to-prompt`: `ctrl-cmd-i`
 - `narrow-ui:start-insert`: `I`, `a`
 - `narrow-ui:stop-insert`: `escape`

@@ -1,3 +1,9 @@
+# 0.32.1:
+- Fix: wildcard was not expanded correctly when query words include single char query.
+- Doc: Add link to wiki on README.md.
+- Internal: Now `ProviderBase::start` always return promise.
+- Test: Add test for `select-files` provider.
+
 # 0.32.0:
 - Spec: Add basic level test for `search`.
 - Breaking, Improve(?): Now `search` items are sorted by filePath.
