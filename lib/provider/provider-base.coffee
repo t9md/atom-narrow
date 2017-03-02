@@ -108,7 +108,7 @@ class ProviderBase
       @searchIgnoreCaseChangedManually
       @searchTerm
     }
-    for property in  @propertiesToRestoreOnReopen ? []
+    for property in @propertiesToRestoreOnReopen ? []
       properties[property] = this[property]
 
     {

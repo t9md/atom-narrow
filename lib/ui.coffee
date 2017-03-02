@@ -395,8 +395,11 @@ class Ui
   selectFiles: ->
     return if @provider.boundToSingleFile
     SelectFiles ?= require("./provider/select-files")
+    # NOTE: `queryForSelectFiles` is used when narrow:reopen
+    # This is for restoring last state of closed provider.
+    # So prioritized over more general persist-query by `SelectFiles.getLastQuery`.
     options =
-      query: @queryForSelectFiles
+      query: @queryForSelectFiles ? SelectFiles.getLastQuery(@provider.name)
       clientUi: this
     new SelectFiles(@editor, options).start()
 

@@ -192,7 +192,7 @@ module.exports = new Settings 'narrow',
     autoPreviewOnQueryChange: false
     negateNarrowQueryByEndingExclamation: true
     persistQuery:
-      default: 'same-provider'
+      default: 'never'
       enum: ['never', 'same-provider', 'across-providers']
     closeOnConfirm: true
     revealOnStartCondition:
