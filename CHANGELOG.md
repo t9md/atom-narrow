@@ -1,4 +1,4 @@
-# 0.3X.0: WIP
+# 0.34.0:
 - Improve: When `scan-by-current-word` invoked from on single-length-non-word-char, auto disable boundary( `\b` ) search.
 
 # 0.33.0:
