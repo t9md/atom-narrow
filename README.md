@@ -240,7 +240,6 @@ Frequently using keymap with my keymap.
   'cmd-f': 'narrow:focus' # focus to narrow-editor
   'cmd-i': 'narrow:focus-prompt' # focus to prompt of narrow-editor
   'ctrl-cmd-l': 'narrow:refresh' # manually refresh items
-  'backspace': 'narrow:close'
 
 # narrow-editor regardless of mode of vim
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':

@@ -194,4 +194,7 @@ module.exports = new Settings 'narrow',
     closeOnConfirm: true
     revealOnStartCondition:
       default: 'never'
+    rememberQuery:
+      default: false
+      description: "Remember query per provider basis and apply it at startup"
   )

@@ -1,4 +1,5 @@
 _ = require 'underscore-plus'
+path = require 'path'
 {Point, Range, CompositeDisposable, Emitter} = require 'atom'
 {
   getNextAdjacentPaneForPane
@@ -68,8 +69,8 @@ class Ui
   modifiedState: null
   readOnly: false
   protected: false
-  excludedFiles: []
-  queryForSelectedFiles: null
+  excludedFiles: null
+  queryForSelectFiles: null
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
@@ -180,8 +181,22 @@ class Ui
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
   constructor: (@provider, {@query}={}, properties) ->
-    _.extend(this, properties) if properties?
+    if properties?
+      # This is `narrow:reopen`, to restore STATE properties.
+      _.extend(this, properties)
+
+    SelectFiles ?= require "./provider/select-files"
+
+    # Initial state asignment: start
+    # -------------------------
+    # NOTE: These state is restored when `narrow:reopen`
+    # So assign initial value unless assigned.
+    @needRebuildExcludedFiles ?= true
+    @queryForSelectFiles ?= SelectFiles.getLastQuery(@provider.name)
+    @excludedFiles ?= []
     @query ?= ''
+    # Initial state asignment: end
+
     @disposables = new CompositeDisposable
     @emitter = new Emitter
     @autoPreview = @provider.getConfig('autoPreview')
@@ -384,6 +399,8 @@ class Ui
     @editor.lineTextForBufferRow(0)
 
   excludeFile: ->
+    return if @provider.boundToSingleFile
+
     filePath = @items.getSelectedItem()?.filePath
     if filePath? and (filePath not in @excludedFiles)
       @excludedFiles.push(filePath)
@@ -392,20 +409,20 @@ class Ui
 
   selectFiles: ->
     return if @provider.boundToSingleFile
-    SelectFiles ?= require("./provider/select-files")
     options =
-      query: @queryForSelectedFiles
+      query: @queryForSelectFiles
       clientUi: this
     new SelectFiles(@editor, options).start()
 
-  setQueryForSelectFiles: (@queryForSelectedFiles) ->
-
-  setExcludedFiles: (@excludedFiles) ->
-    @refresh()
+  setQueryForSelectFiles: (@queryForSelectFiles) ->
+    @needRebuildExcludedFiles = true
 
   clearExcludedFiles: ->
+    return if @provider.boundToSingleFile
+
     if @excludedFiles.length
-      @setExcludedFiles([])
+      @excludedFiles = []
+      @refresh()
 
   refreshManually: (options) ->
     @emitWillRefreshManually()
@@ -419,10 +436,10 @@ class Ui
         if @provider.showLineHeader
           injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
         items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
-        @itemsBeforeFiltered = items
         items
 
   filterItems: (items) ->
+    @itemsBeforeFiltered = items
     @lastQuery = @getQuery()
     sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
     negateByEndingExclamation = @provider.getConfig('negateNarrowQueryByEndingExclamation')
@@ -430,11 +447,39 @@ class Ui
     if @provider.updateGrammarOnQueryChange
       @grammar.update(filterSpec.include) # No need to highlight excluded items
 
-    if @excludedFiles.length
-      items = items.filter (item) => item.filePath not in @excludedFiles
+    unless @provider.boundToSingleFile
+      if @needRebuildExcludedFiles
+        @excludedFiles = @buildExcludedFiles()
+        @needRebuildExcludedFiles = false
+      @controlBar.updateStateElements(selectFiles: @excludedFiles.length)
+      if @excludedFiles.length
+        items = items.filter (item) => item.filePath not in @excludedFiles
+
     items = @provider.filterItems(items, filterSpec)
-    items = getItemsWithoutUnusedHeader(items) unless @provider.boundToSingleFile
+
+    unless @provider.boundToSingleFile
+      items = getItemsWithoutUnusedHeader(items)
     items
+
+  getItemsForSelectFiles: ->
+    @getBeforeFilteredFileHeaderItems().map ({filePath, projectName}) ->
+      text: path.join(projectName, atom.project.relativize(filePath))
+      filePath: filePath
+      point: new Point(0, 0)
+
+  buildExcludedFiles: ->
+    return [] unless @queryForSelectFiles
+
+    items = @getItemsForSelectFiles()
+    sensitivity = settings.get('SelectFiles.caseSensitivityForNarrowQuery')
+    negateByEndingExclamation = settings.get('SelectFiles.negateNarrowQueryByEndingExclamation')
+    filterSpec = getFilterSpecForQuery(@queryForSelectFiles, {sensitivity, negateByEndingExclamation})
+    items = SelectFiles::filterItems(items, filterSpec)
+
+    selectedFiles = _.pluck(items, 'filePath')
+    allFiles = _.pluck(@getBeforeFilteredFileHeaderItems(), 'filePath')
+    excludedFiles = _.without(allFiles, selectedFiles...)
+    excludedFiles
 
   getBeforeFilteredFileHeaderItems: ->
     (@itemsBeforeFiltered ? []).filter (item) -> item.fileHeader
@@ -448,7 +493,6 @@ class Ui
     @getItems({force, filePath}).then (items) =>
       if @provider.supportCacheItems
         @cachedItems = items
-
       items = @filterItems(items)
       if (not selectFirstItem) and @items.hasSelectedItem()
         selectedItem = findEqualLocationItem(items, @items.getSelectedItem())

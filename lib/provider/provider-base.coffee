@@ -108,7 +108,7 @@ class ProviderBase
       @searchIgnoreCaseChangedManually
       @searchTerm
     }
-    for property in  @propertiesToRestoreOnReopen ? []
+    for property in @propertiesToRestoreOnReopen ? []
       properties[property] = this[property]
 
     {
@@ -117,7 +117,8 @@ class ProviderBase
       properties: properties
       uiProperties: {
         excludedFiles: @ui.excludedFiles
-        queryForSelectedFiles: @ui.queryForSelectedFiles
+        queryForSelectFiles: @ui.queryForSelectFiles
+        needRebuildExcludedFiles: @ui.needRebuildExcludedFiles
       }
     }
 
