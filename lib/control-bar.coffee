@@ -104,9 +104,6 @@ class ControlBar
       autoPreview: @ui.autoPreview
       protected: @ui.protected
 
-    if @stateElements.selectFiles?
-      states.selectFiles = @ui.excludedFiles.length
-
     if @showSearchOption
       states.ignoreCaseButton = @provider.searchIgnoreCase
       states.wholeWordButton = @provider.searchWholeWord

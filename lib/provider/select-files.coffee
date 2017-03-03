@@ -6,7 +6,7 @@ _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 settings = require '../settings'
 
-lastQueryByProviderName = {}
+queryByProviderName = {}
 
 module.exports =
 class SelectFiles extends ProviderBase
@@ -17,42 +17,29 @@ class SelectFiles extends ProviderBase
   needRestoreEditorState: false
 
   @getLastQuery: (providerName) ->
-    switch settings.get('SelectFiles.persistQuery')
-      when 'never'
-        null
-      when 'same-provider'
-        lastQueryByProviderName[providerName]
-      when 'across-providers'
-        lastQueryByProviderName['_all']
+    if settings.get('SelectFiles.rememberQuery')
+      queryByProviderName[providerName]
+    else
+      null
 
   initialize: ->
     {@clientUi} = @options
-    @headerItems = @clientUi.getBeforeFilteredFileHeaderItems()
     @ui.onDidDestroy =>
       @clientUi.focus(autoPreview: false) if @clientUi.isAlive()
 
   getItems: ->
-    @headerItems.map ({filePath, projectName}) ->
-      text: path.join(projectName, atom.project.relativize(filePath))
-      filePath: filePath
-      point: new Point(0, 0)
+    @clientUi.getItemsForSelectFiles()
 
   confirmed: ->
     if @clientUi.isAlive()
       @clientUi.focus(autoPreview: false)
       @clientUi.setQueryForSelectFiles(@ui.lastQuery)
-
-      selectedFiles = _.pluck(@ui.items.getNormalItems(), 'filePath')
-      allFiles = _.pluck(@headerItems, 'filePath')
-      excludedFiles = _.without(allFiles, selectedFiles...)
-      @clientUi.setExcludedFiles(excludedFiles)
+      @clientUi.refresh()
 
     Promise.resolve(null) # HACK to noop
 
   destroy: ->
     if @clientUi.isAlive()
-      query = @ui.lastQuery
-      lastQueryByProviderName[@clientUi.provider.name] = query
-      lastQueryByProviderName['_all'] = query
+      queryByProviderName[@clientUi.provider.name] = @ui.lastQuery
 
     super
