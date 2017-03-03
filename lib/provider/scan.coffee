@@ -32,12 +32,17 @@ class Scan extends ProviderBase
     items
 
   getItems: ->
-    firstQuery = @ui.getQuery().split(/\s+/)[0]
-    if firstQuery
+    searchTerm = @ui.getQuery().split(/\s+/)[0]
+    if searchTerm
       if @searchIgnoreCaseChangedManually
-        regexp = @getRegExpForSearchTerm(firstQuery, {@searchWholeWord, @searchIgnoreCase})
+        regexp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord, @searchIgnoreCase})
       else
-        regexp = @getRegExpForSearchTerm(firstQuery, {@searchWholeWord})
+        if @searchWholeWord and (searchTerm.length is 1) and (not /\w/.test(searchTerm))
+          @searchWholeWord = false
+          @ui.controlBar.updateStateElements(wholeWordButton: @searchWholeWord)
+
+        regexp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord})
+
         if regexp.ignoreCase isnt @searchIgnoreCase
           @searchIgnoreCase = regexp.ignoreCase
           @ui.controlBar.updateStateElements(ignoreCaseButton: @searchIgnoreCase)
