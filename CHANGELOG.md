@@ -1,3 +1,6 @@
+# 0.3X.0: WIP
+- Improve: When `scan-by-current-word` invoked from on single-length-non-word-char, auto disable boundary( `\b` ) search.
+
 # 0.33.0:
 - New `select-files` provider specific `rememberQuery` config.
   - Default `false`.
