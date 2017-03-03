@@ -1,13 +1,12 @@
-# 0.33.0: WIP
+# 0.33.0:
 - New `select-files` provider specific `rememberQuery` config.
   - Default `false`.
   - When set to `true`, remember query **per provider basis** and apply it at startup.
-  - When `narrow:reopen` initial `select-files` query applying is skipped to respect restored `excludedFiles`.
 - Improve: folder-icon on `control-bar` is green highlighted to indicate some files are excluded.
   - This is indicating files are **actually** excluded( filtered ).
   - **Not** indicating remembered `select-files` query is applied.
     - e.g. Applying remembered `.md!` query to non-markdown-file-items have no effect, no highlight.
-- Improve: `narrow:reopen` restored excluded-files state and query used for `select-files`.
+- Improve: `narrow:reopen` restore excluded-files state and query used for `select-files`.
 
 # 0.32.1:
 - Fix: wildcard was not expanded correctly when query words include single char query.
