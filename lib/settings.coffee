@@ -196,5 +196,5 @@ module.exports = new Settings 'narrow',
       default: 'never'
     rememberQuery:
       default: false
-      description: "Remember query per provider basis and apply at startup"
+      description: "Remember query per provider basis and apply it at startup"
   )
