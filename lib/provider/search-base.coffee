@@ -18,39 +18,56 @@ class SearchBase extends ProviderBase
   querySelectedText: false
   searchTerm: null
 
-  checkReady: ->
+  getSearchTerm: ->
+    if @options.search
+      return @options.search
+
     editor = atom.workspace.getActiveTextEditor()
-    @searchTerm ?= @options.search or editor.getSelectedText()
-    if not @searchTerm and @options.searchCurrentWord
-      @searchTerm = getCurrentWord(editor)
+    if text = editor.getSelectedText()
+      return text
+
+    if @options.searchCurrentWord
       @searchWholeWord = true
+      getCurrentWord(editor)
 
+  checkReady: ->
+    if @reopened
+      return Promise.resolve(true)
+
+    @searchTerm = @getSearchTerm()
     @searchWholeWord ?= @getConfig('searchWholeWord')
-    unless @reopened
-      if @options.searchCurrentWord
-        if @getConfig('rememberIgnoreCaseForByCurrentWordSearch')
-          @searchIgnoreCase = lastIgnoreCaseOption.byCurrentWord
-      else
-        if @getConfig('rememberIgnoreCaseForByHandSearch')
-          @searchIgnoreCase = lastIgnoreCaseOption.byHand
 
-    if @searchTerm
-      history.save(@searchTerm)
-      Promise.resolve(true)
+    if @options.searchCurrentWord
+      if @getConfig('rememberIgnoreCaseForByCurrentWordSearch')
+        @searchIgnoreCase = lastIgnoreCaseOption.byCurrentWord
     else
-      @readInput().then (@searchTerm) =>
-        history.save(@searchTerm)
-        @searchTerm.length > 0
+      if @getConfig('rememberIgnoreCaseForByHandSearch')
+        @searchIgnoreCase = lastIgnoreCaseOption.byHand
+
+    Promise.resolve(@searchTerm ? @readInput()).then (@searchTerm) =>
+      history.save(@searchTerm)
+      @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
+      return @searchTerm
 
   destroy: ->
-    unless @reopened
-      if @options.searchCurrentWord
-        if @getConfig('rememberIgnoreCaseForByCurrentWordSearch')
-          lastIgnoreCaseOption.byCurrentWord = @searchIgnoreCase
-      else
-        if @getConfig('rememberIgnoreCaseForByHandSearch')
-          lastIgnoreCaseOption.byHand = @searchIgnoreCase
+    if @reopened
+      return super
+
+    if @options.searchCurrentWord
+      if @getConfig('rememberIgnoreCaseForByCurrentWordSearch')
+        lastIgnoreCaseOption.byCurrentWord = @searchIgnoreCase
+    else
+      if @getConfig('rememberIgnoreCaseForByHandSearch')
+        lastIgnoreCaseOption.byHand = @searchIgnoreCase
     super
+
+  initialize: ->
+    @resetRegExpForSearchTerm()
+
+  resetRegExpForSearchTerm: ->
+    @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
+    @ui.highlighter.setRegExp(@searchRegExp)
+    @ui.grammar.setSearchTerm(@searchRegExp)
 
   toggleSearchWholeWord: ->
     super
@@ -58,15 +75,6 @@ class SearchBase extends ProviderBase
 
   toggleSearchIgnoreCase: ->
     super
-    @resetRegExpForSearchTerm()
-
-  resetRegExpForSearchTerm: ->
-    @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
-    @searchIgnoreCase ?= @searchRegExp.ignoreCase
-    @ui.highlighter.setRegExp(@searchRegExp)
-    @ui.grammar.setSearchTerm(@searchRegExp)
-
-  initialize: ->
     @resetRegExpForSearchTerm()
 
   # If passed items have filePath's item, replace old items with new items.

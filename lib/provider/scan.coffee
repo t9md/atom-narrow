@@ -13,13 +13,13 @@ class Scan extends ProviderBase
   showSearchOption: true
 
   initialize: ->
+    return if @reopened
+
     editor = atom.workspace.getActiveTextEditor()
-    # Why conditional assiginment for @searchWholeWord ?
-    # It's because respect previous @searchWholeWord state on re-opened
     if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
-      @searchWholeWord ?= true
+      @searchWholeWord = true
     else
-      @searchWholeWord ?= @getConfig('searchWholeWord')
+      @searchWholeWord = @getConfig('searchWholeWord')
 
   scanEditor: (regexp) ->
     items = []
@@ -34,18 +34,18 @@ class Scan extends ProviderBase
   getItems: ->
     searchTerm = @ui.getQuery().split(/\s+/)[0]
     if searchTerm
-      if @searchIgnoreCaseChangedManually
-        regexp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord, @searchIgnoreCase})
-      else
-        if @searchWholeWord and (searchTerm.length is 1) and (not /\w/.test(searchTerm))
-          @searchWholeWord = false
-          @ui.controlBar.updateStateElements(wholeWordButton: @searchWholeWord)
+      unless @searchWholeWordChangedManually
+        # Auto relax \b restriction when there is no word-char in searchTerm.
+        @searchWholeWord = false if @searchWholeWord and (not /\w/.test(searchTerm))
 
-        regexp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord})
+      unless @searchIgnoreCaseChangedManually
+        @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(searchTerm)
 
-        if regexp.ignoreCase isnt @searchIgnoreCase
-          @searchIgnoreCase = regexp.ignoreCase
-          @ui.controlBar.updateStateElements(ignoreCaseButton: @searchIgnoreCase)
+      regexp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord, @searchIgnoreCase})
+
+      @ui.controlBar.updateStateElements
+        wholeWordButton: @searchWholeWord
+        ignoreCaseButton: @searchIgnoreCase
 
       @ui.highlighter.setRegExp(regexp)
       @ui.grammar.setSearchTerm(regexp)
