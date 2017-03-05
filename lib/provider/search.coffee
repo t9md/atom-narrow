@@ -42,20 +42,19 @@ getOutputterForFile = (items) ->
         text: parsed.text
       })
 
-search = (regexp, {project, args, filePath}) ->
-  items = []
-
+search = (regexp, {command, project, filePath}) ->
+  args = ['--vimgrep']
   if regexp.ignoreCase
     args.push('--ignore-case')
   else
     args.push('--case-sensitive')
+  args.push(regexp.source)
 
   options =
     stdio: ['ignore', 'pipe', 'pipe']
     env: process.env
 
-  args.push(regexp.source)
-
+  items = []
   if filePath?
     stdout = stderr = getOutputterForFile(items)
     args.push(filePath)
@@ -65,7 +64,7 @@ search = (regexp, {project, args, filePath}) ->
 
   new Promise (resolve) ->
     runCommand(
-      command: 'ag'
+      command: command
       args: args
       stdout: stdout
       stderr: stderr
@@ -96,13 +95,16 @@ class Search extends SearchBase
     super
 
   getArgs: ->
-    @getConfig('agCommandArgs').split(/\s+/)
+    ['--vimgrep']
+    # @getConfig('agCommandArgs').split(/\s+/)
 
   searchFilePath: (filePath) ->
-    search(@searchRegExp, {args: @getArgs(), filePath})
+    command = @getConfig('searcher')
+    search(@searchRegExp, {command, filePath})
 
   searchProjects: (projects) ->
-    searchProject = (project) => search(@searchRegExp, {project, args: @getArgs()})
+    command = @getConfig('searcher')
+    searchProject = (project) => search(@searchRegExp, {command, project})
     Promise.all(projects.map(searchProject))
 
   flattenAndInjectRange: (items) ->
@@ -121,5 +123,9 @@ class Search extends SearchBase
         items = @flattenAndInjectRange(items)
         @items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
     else
+      # searcher = @getConfig('searcherCommand')
+      # t0 = performance.now()
       @searchProjects(@projects).then (items) =>
+        # t1 = performance.now()
+        # console.log "[#{searcher}: performance.now] took #{t1 - t0} msec"
         @items = @flattenAndInjectRange(items)

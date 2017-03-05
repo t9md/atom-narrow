@@ -159,25 +159,17 @@ module.exports = new Settings 'narrow',
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
     searchWholeWord: false
+    searcher:
+      default: 'ag'
+      enum: ['ag', 'rg']
+      description: """
+        Choose `ag`( The silver searcher) or `rg`( ripgrep )
+        """
     startByDoubleClick:
       default: false
       description: """
       [Experimental]: start by dounble click.
       You can toggle this value by command `narrow:toggle-search-start-by-double-click`
-      """
-    agCommandArgs:
-      default: "--nocolor --column --vimgrep"
-      description: """
-      [Experimental: Will be removed in future]<br>
-      <br>
-      By default args, full command became..<br>
-      `ag --nocolor --column PATTERN`<br>
-      Be careful narrow don't support every possible combination of args.<br>
-      Pick only if it worked.<br>
-      e.g.<br>
-        Case sensitive: `ag --nocolor --column -s PATTERN`<br>
-        Smart case: `ag --nocolor --column -S PATTERN`<br>
-        Case sensitive/word only: `ag --nocolor --column -s -w PATTERN`<br>
       """
   )
   AtomScan: newProviderConfig(
