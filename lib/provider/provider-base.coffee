@@ -20,9 +20,18 @@ module.exports =
 class ProviderBase
   @destroyedProviderStates: []
   @reopenableMax: 10
+  reopened: false
 
-  @getNextDestroyedProvderState: ->
-    @destroyedProviderStates.shift()
+  @reopen: ->
+    if state = @destroyedProviderStates.shift()
+      {name, options, properties, uiProperties} = state
+      @reopened = true
+      @start(name, options, properties, uiProperties)
+
+  @start: (providerName, options, properties, uiProperties) ->
+    klass = require("./#{providerName}")
+    editor = atom.workspace.getActiveTextEditor()
+    new klass(editor, options, properties, uiProperties).start()
 
   @saveState: (provider) ->
     @destroyedProviderStates.unshift(provider.saveState())

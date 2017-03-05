@@ -1,15 +1,13 @@
 _ = require 'underscore-plus'
 {inspect} = require 'util'
 Ui = require '../lib/ui'
-
-narrow = (providerName, options) ->
-  klass = require("../lib/provider/#{providerName}")
-  editor = atom.workspace.getActiveTextEditor()
-  new klass(editor, options)
+ProviderBase = require "../lib/provider/provider-base"
 
 startNarrow = (providerName, options) ->
-  provider = narrow(providerName, options)
-  provider.start().then(getNarrowForUi)
+  ProviderBase.start(providerName, options).then(getNarrowForUi)
+
+reopen = ->
+  ProviderBase.reopen()
 
 getNarrowForUi = (ui) ->
   provider = ui.provider
@@ -173,4 +171,5 @@ module.exports = {
   setActiveTextEditor
   setActiveTextEditorWithWaits
   getNarrowForUi
+  reopen
 }

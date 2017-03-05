@@ -5,6 +5,7 @@ ProviderBase = require './provider-base'
 {getCurrentWord, findFirstAndLastIndexBy} = require '../utils'
 history = require '../input-history-manager'
 
+lastIgnoreCaseOption = null
 module.exports =
 class SearchBase extends ProviderBase
   supportDirectEdit: true
@@ -24,6 +25,8 @@ class SearchBase extends ProviderBase
       @searchWholeWord = true
 
     @searchWholeWord ?= @getConfig('searchWholeWord')
+    if @getConfig('rememberIgnoreCase') # don't restore on reopen
+      @searchIgnoreCase ?= lastIgnoreCaseOption
 
     if @searchTerm
       history.save(@searchTerm)
@@ -32,6 +35,11 @@ class SearchBase extends ProviderBase
       @readInput().then (@searchTerm) =>
         history.save(@searchTerm)
         @searchTerm.length > 0
+
+  destroy: ->
+    if @getConfig('rememberIgnoreCase')
+      lastIgnoreCaseOption = @searchIgnoreCase
+    super
 
   toggleSearchWholeWord: ->
     super
