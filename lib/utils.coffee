@@ -136,13 +136,17 @@ isDefinedAndEqual = (a, b) ->
 # -------------------------
 injectLineHeader = (items, {showColumn}={}) ->
   normalItems = items.filter(isNormalItem)
-  points = _.pluck(normalItems, 'point')
-  maxLine = Math.max(_.pluck(points, 'row')...) + 1
-  maxLineWidth = String(maxLine).length
+  maxRow = 0
+  for item in normalItems when (row = item.point.row) > maxRow
+    maxRow = row
+  maxLineWidth = String(maxRow + 1).length
 
   if showColumn
-    maxColumn = Math.max(_.pluck(points, 'column')...) + 1
-    maxColumnWidth = Math.max(String(maxColumn).length, 2)
+    maxColumn = 0
+    for item in normalItems when (column = item.point.column) > maxColumn
+      maxColumn = column
+
+    maxColumnWidth = Math.max(String(maxColumn + 1).length, 2)
 
   for item in normalItems
     item._lineHeader = getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
