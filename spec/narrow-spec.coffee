@@ -5,6 +5,7 @@ path = require 'path'
 settings = require '../lib/settings'
 {
   startNarrow
+  reopen
   getNarrowForUi
   ensureCursorPosition
   ensureEditor
@@ -25,8 +26,7 @@ appleGrapeLemmonText = """
 # Main
 # -------------------------
 describe "narrow", ->
-  [editor, editorElement, main] = []
-  [provider, ui, ensure, narrow] = []
+  [editor, editorElement, provider, ui, ensure, narrow] = []
 
   waitsForStartNarrow = (providerName, options) ->
     waitsForPromise ->
@@ -37,8 +37,7 @@ describe "narrow", ->
 
   beforeEach ->
     waitsForPromise ->
-      atom.packages.activatePackage('narrow').then (pack) ->
-        main = pack.mainModule
+      atom.packages.activatePackage('narrow')
 
     waitsForPromise ->
       atom.workspace.open().then (_editor) ->
@@ -239,8 +238,8 @@ describe "narrow", ->
         waitsForPromise -> startNarrow('scan').then (n) -> narrows.push(n)
 
     it "reopen closed narrow editor up to 10 recent", ->
-      reopen = ->
-        waitsForPromise -> main.reopen()
+      waitsForReopen = ->
+        waitsForPromise -> reopen()
       ensureUiSize = (size) ->
         runs -> expect(Ui.getSize()).toBe(size)
       ensureText = (text) ->
@@ -265,17 +264,17 @@ describe "narrow", ->
 
       ensureUiSize(0)
 
-      reopen(); ensureText("b\n11: 1: b"); ensureUiSize(1)
-      reopen(); ensureText("a\n10: 1: a"); ensureUiSize(2)
-      reopen(); ensureText("9\n9: 1: 9"); ensureUiSize(3)
-      reopen(); ensureText("8\n8: 1: 8"); ensureUiSize(4)
-      reopen(); ensureText("7\n7: 1: 7"); ensureUiSize(5)
-      reopen(); ensureText("6\n6: 1: 6"); ensureUiSize(6)
-      reopen(); ensureText("5\n5: 1: 5"); ensureUiSize(7)
-      reopen(); ensureText("4\n4: 1: 4"); ensureUiSize(8)
-      reopen(); ensureText("3\n3: 1: 3"); ensureUiSize(9)
-      reopen(); ensureText("2\n2: 1: 2"); ensureUiSize(10)
-      runs -> expect(main.reopen()).toBeFalsy()
+      waitsForReopen(); ensureText("b\n11: 1: b"); ensureUiSize(1)
+      waitsForReopen(); ensureText("a\n10: 1: a"); ensureUiSize(2)
+      waitsForReopen(); ensureText("9\n9: 1: 9"); ensureUiSize(3)
+      waitsForReopen(); ensureText("8\n8: 1: 8"); ensureUiSize(4)
+      waitsForReopen(); ensureText("7\n7: 1: 7"); ensureUiSize(5)
+      waitsForReopen(); ensureText("6\n6: 1: 6"); ensureUiSize(6)
+      waitsForReopen(); ensureText("5\n5: 1: 5"); ensureUiSize(7)
+      waitsForReopen(); ensureText("4\n4: 1: 4"); ensureUiSize(8)
+      waitsForReopen(); ensureText("3\n3: 1: 3"); ensureUiSize(9)
+      waitsForReopen(); ensureText("2\n2: 1: 2"); ensureUiSize(10)
+      runs -> expect(reopen()).toBeFalsy()
       ensureUiSize(10)
 
   describe "narrow:next-item, narrow:previous-item", ->

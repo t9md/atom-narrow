@@ -1,3 +1,11 @@
+# 0.36.0: WIP
+- New: new config option for remember ignoreCase options for `search` and `atom-scan`.
+  - Following two config options are introduced to control `by-current-word` or not respectively.
+    - `rememberIgnoreCaseForByHandSearch`: default `false`
+    - `rememberIgnoreCaseForByCurrentWordSearch`: default `false`
+  - When set to `true`, restore `ignoreCase` option for last execution.
+    - So `caseSensitivityForSearchTerm` is no longer respected except very first execution.
+
 # 0.35.0:
 - Fix: No longer throw error when empty search term was confirmed in `search` or `atmo-scan`.
   - Internally no longer `reject` promise in `ProviderBase::start`.

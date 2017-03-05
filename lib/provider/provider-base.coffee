@@ -20,9 +20,17 @@ module.exports =
 class ProviderBase
   @destroyedProviderStates: []
   @reopenableMax: 10
+  reopened: false
 
-  @getNextDestroyedProvderState: ->
-    @destroyedProviderStates.shift()
+  @reopen: ->
+    if state = @destroyedProviderStates.shift()
+      {name, options, properties, uiProperties} = state
+      @start(name, options, {properties, uiProperties})
+
+  @start: (name, options, restoredState) ->
+    klass = require("./#{name}")
+    editor = atom.workspace.getActiveTextEditor()
+    new klass(editor, options, restoredState).start()
 
   @saveState: (provider) ->
     @destroyedProviderStates.unshift(provider.saveState())
@@ -122,8 +130,10 @@ class ProviderBase
       }
     }
 
-  constructor: (editor, @options={}, properties, @uiProperties) ->
-    _.extend(this, properties) if properties?
+  constructor: (editor, @options={}, @restoredState=null) ->
+    if @restoredState?
+      @reopened = true
+      _.extend(this, @restoredState.properties)
 
     @name = @constructor.name
     @dashName = _.dasherize(@name)
@@ -144,7 +154,7 @@ class ProviderBase
     new Promise (resolve) =>
       @checkReady().then (ready) =>
         if ready
-          @ui = new Ui(this, {@query}, @uiProperties)
+          @ui = new Ui(this, {@query}, @restoredState?.uiProperties)
           @initialize()
           @ui.open(pending: @options.pending).then =>
             resolve(@ui)
@@ -276,6 +286,10 @@ class ProviderBase
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
 
+  getIgnoreCaseValueForSearchTerm: (term) ->
+    sensitivity = @getConfig('caseSensitivityForSearchTerm')
+    (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(term))
+
   getRegExpForSearchTerm: (term, {searchWholeWord, searchIgnoreCase}) ->
     source = _.escapeRegExp(term)
     if searchWholeWord
@@ -289,10 +303,6 @@ class ProviderBase
         startBoundaryString = if startBoundary then "\\b" else ''
         endBoundaryString = if endBoundary then "\\b" else ''
         source = startBoundaryString + source + endBoundaryString
-
-    unless searchIgnoreCase?
-      sensitivity = @getConfig('caseSensitivityForSearchTerm')
-      searchIgnoreCase = (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(term))
 
     flags = 'g'
     flags += 'i' if searchIgnoreCase

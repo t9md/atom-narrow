@@ -109,14 +109,11 @@ module.exports =
 
   reopen: ->
     ProviderBase ?= require "./provider/provider-base"
-    if state = ProviderBase.getNextDestroyedProvderState()
-      {name, options, properties, uiProperties} = state
-      @narrow(name, options, properties, uiProperties)
+    ProviderBase.reopen()
 
-  narrow: (providerName, options, properties, uiProperties) ->
-    klass = require("./provider/#{providerName}")
-    editor = atom.workspace.getActiveTextEditor()
-    new klass(editor, options, properties, uiProperties).start()
+  narrow: (args...) ->
+    ProviderBase ?= require "./provider/provider-base"
+    ProviderBase.start(args...)
 
   consumeVim: ({getEditorState, observeVimStates}) ->
     @subscriptions.add observeVimStates (vimState) ->

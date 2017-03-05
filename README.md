@@ -1,6 +1,7 @@
 # narrow
 
-[![Build Status](https://travis-ci.org/t9md/atom-narrow.svg?branch=master)](https://travis-ci.org/t9md/atom-narrow) [![Join the chat at https://gitter.im/t9md/atom-narrow](https://badges.gitter.im/t9md/atom-narrow.svg)](https://gitter.im/t9md/atom-narrow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/t9md/atom-narrow.svg?branch=master)](https://travis-ci.org/t9md/atom-narrow)
+<!-- [![Join the chat at https://gitter.im/t9md/atom-narrow](https://badges.gitter.im/t9md/atom-narrow.svg)](https://gitter.im/t9md/atom-narrow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) -->
 
 narrow something.  
 Code navigation tool inspired by unite.vim, emacs-helm.  
@@ -21,8 +22,7 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 - In mind
   - keyboard navigation.
   - [vim-mode-plus](https://atom.io/packages/vim-mode-plus) integration( I'm also maintainer of vim-mode-plus ).
-- For what can I use this?, See [Use case and flow of keystrokes](https://github.com/t9md/atom-narrow/issues/75).
-- Also see [Q&A](#qa) section at bottom of this README.
+- Also see [UseCase on wiki](https://github.com/t9md/atom-narrow/wiki/UseCase) and [Q&A on this doc](#qa)
 
 # Roles in play.
 

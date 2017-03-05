@@ -164,6 +164,8 @@ module.exports = new Settings 'narrow',
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
+    rememberIgnoreCaseForByHandSearch: false
+    rememberIgnoreCaseForByCurrentWordSearch: false
     searchWholeWord: false
     searcher:
       default: 'ag'
@@ -182,6 +184,8 @@ module.exports = new Settings 'narrow',
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
+    rememberIgnoreCaseForByHandSearch: false
+    rememberIgnoreCaseForByCurrentWordSearch: false
     searchWholeWord: false
   )
   GitDiff: newProviderConfig()
