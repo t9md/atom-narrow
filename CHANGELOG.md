@@ -1,3 +1,9 @@
+# 0.36.0: WIP
+- New: new config option `rememberIgnoreCase` for `search` and `atom-scan`.
+  - Default `false`
+  - When set to `true`, restore `ignoreCase` option for last execution.
+    - So `caseSensitivityForSearchTerm` is no longer respected except very first execution.
+
 # 0.35.0:
 - Fix: No longer throw error when empty search term was confirmed in `search` or `atmo-scan`.
   - Internally no longer `reject` promise in `ProviderBase::start`.
