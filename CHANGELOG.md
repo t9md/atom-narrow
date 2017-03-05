@@ -1,6 +1,8 @@
 # 0.36.0: WIP
-- New: new config option `rememberIgnoreCase` for `search` and `atom-scan`.
-  - Default `false`
+- New: new config option for remember ignoreCase options for `search` and `atom-scan`.
+  - Following two config options are introduced to control `by-current-word` or not respectively.
+    - `rememberIgnoreCaseForByHandSearch`: default `false`
+    - `rememberIgnoreCaseForByCurrentWordSearch`: default `false`
   - When set to `true`, restore `ignoreCase` option for last execution.
     - So `caseSensitivityForSearchTerm` is no longer respected except very first execution.
 
