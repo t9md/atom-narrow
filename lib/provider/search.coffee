@@ -123,9 +123,5 @@ class Search extends SearchBase
         items = @flattenAndInjectRange(items)
         @items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
     else
-      # searcher = @getConfig('searcherCommand')
-      # t0 = performance.now()
       @searchProjects(@projects).then (items) =>
-        # t1 = performance.now()
-        # console.log "[#{searcher}: performance.now] took #{t1 - t0} msec"
         @items = @flattenAndInjectRange(items)
