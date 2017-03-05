@@ -30,10 +30,10 @@ class Settings
     complimentField(@config)
 
   get: (param) ->
-    atom.config.get "#{@scope}.#{param}"
+    atom.config.get("#{@scope}.#{param}")
 
   set: (param, value) ->
-    atom.config.set "#{@scope}.#{param}", value
+    atom.config.set("#{@scope}.#{param}", value)
 
   toggle: (param) ->
     @set(param, not @get(param))
@@ -49,19 +49,25 @@ class Settings
 
   removeDeprecated: ->
     paramsToDelete = []
-    for param in Object.keys(atom.config.get(@scope)) when param not of @config
-      paramsToDelete.push(param)
-    @notifyAndDelete(paramsToDelete...)
+    loaded = atom.config.get(@scope)
+    for param in Object.keys(loaded)
+      if param not of @config
+        paramsToDelete.push(param)
+      else if @config[param].type is 'object' # Provider config
+        providerName = param
+        loadedForProvider = loaded[providerName]
+        definedForProvider = @config[providerName].properties
+        for _param in Object.keys(loadedForProvider) when _param not of definedForProvider
+          paramsToDelete.push(providerName + '.' + _param)
+    if paramsToDelete.length
+      @notifyAndDelete(paramsToDelete...)
 
   notifyAndDelete: (params...) ->
-    paramsToDelete = (param for param in params when @has(param))
-    return if paramsToDelete.length is 0
-
     content = [
       "#{@scope}: Config options deprecated.  ",
       "Automatically removed from your `config.cson`  "
     ]
-    for param in paramsToDelete
+    for param in params
       @delete(param)
       content.push "- `#{param}`"
     atom.notifications.addWarning content.join("\n"), dismissable: true
