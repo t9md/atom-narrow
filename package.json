@@ -1,7 +1,7 @@
 {
   "name": "narrow",
   "main": "./lib/main",
-  "version": "0.34.0",
+  "version": "0.35.0",
   "description": "narrow something",
   "keywords": [
     "unite.vim",
