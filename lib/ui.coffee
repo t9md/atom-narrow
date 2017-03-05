@@ -7,8 +7,6 @@ path = require 'path'
   splitPane
   isActiveEditor
   setBufferRow
-  isTextEditor
-  isNarrowEditor
   paneForItem
   isDefinedAndEqual
   injectLineHeader
@@ -545,8 +543,11 @@ class Ui
         # is Query changed
         if @editor.hasMultipleCursors()
           # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
+          selectionDestroyed = false
           for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
+            selectionDestroyed = true
             selection.destroy()
+          @controlBar.show() if selectionDestroyed
           @withIgnoreChange => @setQuery(@lastQuery) # Recover query
         else
           @refresh(selectFirstItem: true).then =>
