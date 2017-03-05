@@ -1,3 +1,21 @@
+# 0.35.0:
+- Fix: No longer throw error when empty search term was confirmed in `search` or `atmo-scan`.
+  - Internally no longer `reject` promise in `ProviderBase::start`.
+- Fix: No longer throw `Maximum call stack size exceed` exception when num of items collected by `search` and `atom-scan` was too big.
+- Breaking: Remove experimental `Search.agCommandArgs` config.
+  - Custom command args for `ag` search is no longer supported.
+  - Removal is because this was just experiment while spec of narrow was not fixed yet.
+  - I will consider this to revival if user really report necessity of this.
+- Improve, New: Support `rg`( ripgrep ) for `search` provider
+  - default `searcher` config is `ag`, choose `rg` to use `ripgrep`
+  - Performance improved?
+    - No. Although `rg` is generally faster than `ag`, no significant diff in usage of `narrow`.
+    - Most of time consumed in `narrow` is spent in view-side( rendering in `narrow-editor`, header insertion to each item collected )
+    - So in my opinion both `ag` and `rg` is fast enough for the purpose of `narrow`.
+    - If you feel default `ag` serch is very slow, it must be slow of `narrow` itself(e.g. JavaScript and Atom).
+- Internal: Automatic deprecation warning, removal of obsolete config parameter for provider config.
+  - Warning, removal for obsolete config is provided for global( non-provider-config ) config only in previous release.
+
 # 0.34.0:
 - Improve: When `scan-by-current-word` invoked from on single-length-non-word-char, auto disable boundary( `\b` ) search.
 
