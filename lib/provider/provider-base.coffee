@@ -201,33 +201,24 @@ class ProviderBase
         splitPane(paneForUi, split: @getConfig('directionToOpen').split(':')[0])
 
   openFileForItem: ({filePath}, {activatePane}={}) ->
+    pane = @getPaneToOpenItem()
+    if @boundToSingleFile and @editor.isAlive() and (pane? and pane is paneForItem(@editor))
+      pane.activate() if activatePane
+      pane.activateItem(@editor, pending: true)
+      return Promise.resolve(@editor)
+
     filePath ?= @editor.getPath()
     pane = @getPaneToOpenItem()
-    if item = pane.itemForURI(filePath)
-      pane.activate() if activatePane
-      pane.activateItem(item, pending: true)
-      return Promise.resolve(item)
-
     # NOTE: See #107
-    # Activate target pane to open, before workspace.open is super important to avoid
+    # Explicitly specify which-pane-to-open is super important to avoid
     #  'workspace can only contain one instance of item exception'
-    # There are two approaches to open item at target pane.
-    #  A. Not work: Open item then activate that item on target-pane.
-    #  B. Work: Activate target-pane first then open item at target-pane
-    # Why? if current active pane have item for that path, `workspace.open` return that item.
-    # then trying to activate returned item on target-pane result in, one item activated on multiple-pane.
-    # this situation cause exception.
-    pane.activate() unless pane.isActive()
-    atom.workspace.open(filePath, pending: true).then (editor) =>
-      @ui.getPane().activate() unless activatePane
-      editor
+    options = {activatePane: activatePane, activateItem: true, pending: true}
+    atom.workspace.openURIInPane(filePath, pane, options)
 
   confirmed: (item) ->
     @needRestoreEditorState = false
     {point} = item
     @openFileForItem(item, activatePane: true).then (editor) ->
-      newPoint = @adjustPoint?(point)
-      point = newPoint if newPoint?
       editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
       return editor

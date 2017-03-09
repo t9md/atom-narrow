@@ -625,7 +625,7 @@ class Ui
     return unless item = @items.getSelectedItem()
 
     @inPreview = true
-    @provider.openFileForItem(item).then (editor) =>
+    @provider.openFileForItem(item, activatePane: false).then (editor) =>
       editor.scrollToBufferPosition(item.point, center: true)
       @inPreview = false
       @emitDidPreview({editor, item})
