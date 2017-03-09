@@ -44,11 +44,23 @@ saveEditorState = (editor) ->
     pane.activate()
     pane.activateItem(editor)
 
-    unless editor.getCursorBufferPosition().isEqual(cursorPosition)
-      editor.setCursorBufferPosition(cursorPosition)
-    for row in foldStartRows.reverse() when not editor.isFoldedAtBufferRow(row)
-      editor.foldBufferRow(row)
-    editor.element.setScrollTop(scrollTop)
+    restoreCursorAndScrollTop = ->
+      unless editor.getCursorBufferPosition().isEqual(cursorPosition)
+        editor.setCursorBufferPosition(cursorPosition)
+      for row in foldStartRows.reverse() when not editor.isFoldedAtBufferRow(row)
+        editor.foldBufferRow(row)
+      editor.element.setScrollTop(scrollTop)
+
+    # [BUG?] atom-narrow#95
+    # When editor is not active on narrow:close, immediate scrollTop setting get editor content blank.
+    # See detailed condition this happens in atom-narrow#95 for detail.
+    # In this state, component.getScrollTop() returns `undefined`, so checking this valueand delay if necessary.
+    unless editorElement.component.getScrollTop()?
+      disposable = editorElement.onDidChangeScrollTop ->
+        disposable.dispose()
+        restoreCursorAndScrollTop()
+    else
+      restoreCursorAndScrollTop()
 
 requireFrom = (pack, path) ->
   packPath = atom.packages.resolvePackagePath(pack)
