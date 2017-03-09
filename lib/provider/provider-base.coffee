@@ -56,6 +56,7 @@ class ProviderBase
   searchIgnoreCaseChangedManually: false
   showSearchOption: false
   querySelectedText: true
+  queryWordBoundaryOnByCurrentWordInvocation: false
 
   getConfig: (name) ->
     value = settings.get("#{@name}.#{name}")
@@ -161,8 +162,14 @@ class ProviderBase
 
   getInitialQuery: (editor) ->
     query = @options.query
-    query or= editor.getSelectedText() if @querySelectedText
-    query or= getCurrentWord(editor) if @options.queryCurrentWord
+
+    if not query and @querySelectedText
+      query = editor.getSelectedText()
+
+    if not query and @options.queryCurrentWord
+      query = getCurrentWord(editor)
+      if @queryWordBoundaryOnByCurrentWordInvocation
+        query = ">" + query + "<"
     query
 
   subscribeEditor: (args...) ->

@@ -13,7 +13,7 @@ module.exports =
 class Symbols extends ProviderBase
   boundToSingleFile: true
   showLineHeader: false
-
+  queryWordBoundaryOnByCurrentWordInvocation: true
   items: null
 
   onBindEditor: ({newEditor}) ->

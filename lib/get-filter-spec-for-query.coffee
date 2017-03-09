@@ -20,6 +20,17 @@ getRegExpForWord = (word, {wildcard, sensitivity}={}) ->
   else
     pattern = _.escapeRegExp(word)
 
+  # Translate
+  # - ">word<" to "\bword\b"
+  # - ">word" to "\bword"
+  # - "word<" to "word\b"
+  if /^>./.test(pattern)
+    pattern = pattern[1...]
+    pattern = "\\b" + pattern if /^\w/.test(pattern)
+  if /.<$/.test(pattern)
+    pattern = pattern[...-1]
+    pattern = pattern + "\\b" if /\w$/.test(pattern)
+
   if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and /[A-Z]/.test(word))
     new RegExp(pattern)
   else
