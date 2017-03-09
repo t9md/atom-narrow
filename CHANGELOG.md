@@ -1,3 +1,18 @@
+# 0.37.0:
+- New: #170 New query expression `>` and `<` for word-boundary matching.
+  - Query `>word<` is translated to `\bword\b`.
+  - Handled by each query.
+  - See wiki for detail https://github.com/t9md/atom-narrow/wiki/Query.
+- Improve: `narrow:symbols-by-current-word` and `narrow:project-symbols-by-current-word` auto qualify initial query with word-boundary.
+  - To make quick-previewing function by these command more useful.
+  - When you invoked these command from on `word`, initial query become `>word<`.
+  - This prevent unwanted matching where there are other symbols including `word` as part of symbols string.
+    - Previous release: `refresh` matched also symbols `refreshManually` or `autoRefresh` symbols.
+    - This release: `>refresh<` not match symbols `refreshManually` or `autoRefresh`, ideal when `by-current-word` invocation.
+- Fix: #168 Prevent temporal active pane change on auto-previewing on query-change.
+  - In previous release, keystroke get passed to temporally activated editor which result in unwanted mutation.
+  - This was especially likely to happen on `!` negation blank out narrow-editor items and open preview item on next query char.
+
 # 0.36.0:
 - New: new config option for remember ignoreCase options for `search` and `atom-scan`.
   - Following two config options are introduced to control `by-current-word` or not respectively.
