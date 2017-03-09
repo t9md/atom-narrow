@@ -1,3 +1,6 @@
+# 0.37.1:
+- Fix: Long standing bug, where editor content get blanked on pane-split immediately after `narrow:close`.
+  - See detailed https://github.com/t9md/atom-narrow/issues/95
 # 0.37.0:
 - New: #170 New query expression `>` and `<` for word-boundary matching.
   - Query `>word<` is translated to `\bword\b`.
