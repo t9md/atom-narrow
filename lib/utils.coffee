@@ -49,7 +49,7 @@ saveEditorState = (editor) ->
         editor.setCursorBufferPosition(cursorPosition)
       for row in foldStartRows.reverse() when not editor.isFoldedAtBufferRow(row)
         editor.foldBufferRow(row)
-      editor.element.setScrollTop(scrollTop)
+      editorElement.setScrollTop(scrollTop)
 
     # [BUG?] atom-narrow#95
     # When editor is not active on narrow:close, immediate scrollTop setting get editor content blank.
