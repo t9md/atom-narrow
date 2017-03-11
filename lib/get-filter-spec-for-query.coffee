@@ -42,7 +42,7 @@ getRegExpForWord = (word, {wildcard, sensitivity}={}) ->
     patterns.push(pattern)
 
   options = ''
-  if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and isIncludeUpperCase)
+  if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and not isIncludeUpperCase)
     options += 'i'
 
   new RegExp(patterns.join('|'), options)
