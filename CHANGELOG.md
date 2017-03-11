@@ -1,3 +1,8 @@
+# 0.38.0: WIP
+- Fix: Now `narrow:search` can correctly search `/` including pattern like `/a/b/c` when searcher is set to `rg`.
+  - This is `rg` only issue. `rg` not allowing `/` to be escaped like `\/`.
+  - To fix this, now `search` use `--fixed-strings` option for both `ag` and `rg`(was searched as regex with escape regex-meta-char in previous release).
+
 # 0.37.1:
 - Fix: Long standing bug, where editor content get blanked on pane-split immediately after `narrow:close`.
   - See detailed https://github.com/t9md/atom-narrow/issues/95
