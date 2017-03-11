@@ -42,25 +42,21 @@ getOutputterForFile = (items) ->
         text: parsed.text
       })
 
-search = (regexp, {command, project, filePath}) ->
-  args = ['--vimgrep']
-  if regexp.ignoreCase
-    args.push('--ignore-case')
-  else
-    args.push('--case-sensitive')
-  args.push(regexp.source)
-
+search = ({command, args, project, filePath}) ->
   options =
     stdio: ['ignore', 'pipe', 'pipe']
     env: process.env
 
   items = []
   if filePath?
-    stdout = stderr = getOutputterForFile(items)
+    stdout = getOutputterForFile(items)
     args.push(filePath)
   else
-    stdout = stderr = getOutputterForProject(project, items)
+    stdout = getOutputterForProject(project, items)
     options.cwd = project
+
+  stderrHeader = "[narrow:search stderr of #{command}]:"
+  stderr = (data) -> console.warn(stderrHeader, data)
 
   new Promise (resolve) ->
     runCommand(
@@ -94,17 +90,22 @@ class Search extends SearchBase
     @projects ?= atom.project.getPaths()
     super
 
-  getArgs: ->
-    ['--vimgrep']
-    # @getConfig('agCommandArgs').split(/\s+/)
+  getSearchArgs: ->
+    args = ['--vimgrep', '--fixed-strings']
+    args.push('--ignore-case') if @searchIgnoreCase
+    args.push('--word-regexp') if @searchWholeWord
+    args.push(@searchTerm)
+    args
 
   searchFilePath: (filePath) ->
     command = @getConfig('searcher')
-    search(@searchRegExp, {command, filePath})
+    args = @getSearchArgs()
+    search({command, args, filePath})
 
   searchProjects: (projects) ->
     command = @getConfig('searcher')
-    searchProject = (project) => search(@searchRegExp, {command, project})
+    args = @getSearchArgs()
+    searchProject = (project) -> search({command, args, project})
     Promise.all(projects.map(searchProject))
 
   flattenAndInjectRange: (items) ->
