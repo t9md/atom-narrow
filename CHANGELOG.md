@@ -1,3 +1,6 @@
+# 0.38.1:
+- Fix: `smartcase` handling for query is inverted in v0.38.0, now works properly again.
+
 # 0.38.0:
 - New: #174 New query expression. `|` is treated as `OR`.
   - `aaa|bbb` matches item which include `aaa` OR `bbb`.
