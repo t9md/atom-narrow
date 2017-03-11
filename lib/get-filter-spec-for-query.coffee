@@ -15,26 +15,37 @@ expandWildCard = (word) ->
   segments.join('')
 
 getRegExpForWord = (word, {wildcard, sensitivity}={}) ->
-  if word.length > 1 # don't expand wildcard for sole `*`.
-    pattern = expandWildCard(word)
-  else
-    pattern = _.escapeRegExp(word)
+  isIncludeUpperCase = /[A-Z]/.test(word)
 
-  # Translate
-  # - ">word<" to "\bword\b"
-  # - ">word" to "\bword"
-  # - "word<" to "word\b"
-  if /^>./.test(pattern)
-    pattern = pattern[1...]
-    pattern = "\\b" + pattern if /^\w/.test(pattern)
-  if /.<$/.test(pattern)
-    pattern = pattern[...-1]
-    pattern = pattern + "\\b" if /\w$/.test(pattern)
-
-  if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and /[A-Z]/.test(word))
-    new RegExp(pattern)
+  if not word.startsWith('|') and not word.endsWith('|')
+    words = word.split('|')
   else
-    new RegExp(pattern, 'i')
+    words = [word]
+
+  patterns = []
+  for word in words
+    if word.length > 1 # don't expand wildcard for sole `*`.
+      pattern = expandWildCard(word)
+    else
+      pattern = _.escapeRegExp(word)
+
+    # Translate
+    # - ">word<" to "\bword\b"
+    # - ">word" to "\bword"
+    # - "word<" to "word\b"
+    if /^>./.test(pattern)
+      pattern = pattern[1...]
+      pattern = "\\b" + pattern if /^\w/.test(pattern)
+    if /.<$/.test(pattern)
+      pattern = pattern[...-1]
+      pattern = pattern + "\\b" if /\w$/.test(pattern)
+    patterns.push(pattern)
+
+  options = ''
+  if (sensitivity is 'sensitive') or (sensitivity is 'smartcase' and isIncludeUpperCase)
+    options += 'i'
+
+  new RegExp(patterns.join('|'), options)
 
 module.exports = (query, options={}) ->
   include = []
