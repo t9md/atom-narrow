@@ -1,3 +1,10 @@
+# 0.38.2:
+- Fix: `narrow:search` with searcher `rg`, `smartcase` didn't work correctly.
+  - Because of ignorance of default behavior diff between `ag` and `rg`.
+- Fix: `narrow:search` with searcher `rg` now correctly refresh item list when files are modified.
+  - On manual-refresh and on auto-refresh on save buffer, it cleared all items belonging to that modified file.
+  - This bug is also because of ignorance of default behavior diff between `ag` and `rg`, now fixed.
+
 # 0.38.1:
 - Fix: `smartcase` handling for query is inverted in v0.38.0, now works properly again.
 
