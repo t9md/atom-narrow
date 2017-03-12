@@ -90,21 +90,31 @@ class Search extends SearchBase
     @projects ?= atom.project.getPaths()
     super
 
-  getSearchArgs: ->
+  getSearchArgs: (command) ->
     args = ['--vimgrep', '--fixed-strings']
-    args.push('--ignore-case') if @searchIgnoreCase
+    if @searchIgnoreCase
+      args.push('--ignore-case')
+    else
+      args.push('--case-sensitive')
     args.push('--word-regexp') if @searchWholeWord
+
+    # See #176
+    # rg doesn't show filePath on each line when search file was passed explicitly.
+    # Following option make result-output consistent with `ag`.
+    if command is 'rg'
+      args.push(['-H', '--no-heading']...)
+
     args.push(@searchTerm)
     args
 
   searchFilePath: (filePath) ->
     command = @getConfig('searcher')
-    args = @getSearchArgs()
+    args = @getSearchArgs(command)
     search({command, args, filePath})
 
   searchProjects: (projects) ->
     command = @getConfig('searcher')
-    args = @getSearchArgs()
+    args = @getSearchArgs(command)
     searchProject = (project) -> search({command, args, project})
     Promise.all(projects.map(searchProject))
 
