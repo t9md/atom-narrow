@@ -1,4 +1,5 @@
-# 0.39.0: WIP
+# 0.39.0:
+- Cosmetic, Config: Provider specific configs are default collapsed in `settings-view`.
 - Improve: `search` and `atom-scan` provider config no longer show `on-input` choice for `revealOnStartCondition`.
   - Since it's have no effect( `search` and `atom-scan` have always no-input, never met condition of `on-input` )
 - New, Experimental: #177 New config param `focusOnStartCondition` to control whether initially focus to `narrow-editor` or not.
