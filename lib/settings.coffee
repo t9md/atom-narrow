@@ -88,13 +88,16 @@ newProviderConfig = (otherProperties) ->
     caseSensitivityForNarrowQuery:
       default: 'inherit'
       enum: ['inherit', 'smartcase', 'sensitive', 'insensitive']
+    activateOnStart:
+      default: 'always'
+      enum: ['inherit', 'never', 'always', 'on-input']
     negateNarrowQueryByEndingExclamation: false
     autoPreview: true
     autoPreviewOnQueryChange: true
     closeOnConfirm: true
     revealOnStartCondition:
       default: 'always'
-      enum: ['never', 'always', 'on-input']
+      enum: ['inherit', 'never', 'always', 'on-input']
 
   _.deepExtend(properties, otherProperties) if otherProperties?
 
@@ -124,6 +127,10 @@ module.exports = new Settings 'narrow',
     default: 'smartcase'
     enum: ['smartcase', 'sensitive', 'insensitive']
     description: "Case sensitivity of your query in narrow-editor"
+
+  activateOnStart:
+    default: 'always'
+    enum: ['never', 'always', 'on-input']
 
   confirmOnUpdateRealFile: true
 
