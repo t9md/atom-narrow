@@ -109,7 +109,7 @@ newProviderConfig = (otherProperties) ->
     focusOnStartCondition:
       default: 'always'
       description: "[Experiment] In-eval if this is really useful( I don't use this )"
-      enum: ['never', 'always', 'no-input']
+      enum: ['always', 'never', 'no-input']
     negateNarrowQueryByEndingExclamation: false
     autoPreview: true
     autoPreviewOnQueryChange: true
@@ -122,6 +122,22 @@ newProviderConfig = (otherProperties) ->
     collapsed: true
     properties: complimentField(properties, true)
   }
+
+newProviderConfigForSearchAndAtomScan = (otherProperties={}) ->
+  properties =
+    revealOnStartCondition:
+      default: 'always'
+      enum: ['always', 'never']
+    focusOnStartCondition:
+      default: 'always'
+      enum: ['always', 'never']
+    caseSensitivityForSearchTerm:
+      default: 'smartcase'
+      enum: ['smartcase', 'sensitive', 'insensitive']
+    rememberIgnoreCaseForByHandSearch: false
+    rememberIgnoreCaseForByCurrentWordSearch: false
+    searchWholeWord: false
+  newProviderConfig(_.extend(properties, otherProperties))
 
 providerSettings =
   Scan: newProviderConfig(
@@ -137,13 +153,7 @@ providerSettings =
       enum: ['smartcase', 'sensitive', 'insensitive']
       description: "Search term is first word of query, is used as search term"
   )
-  Search: newProviderConfig(
-    caseSensitivityForSearchTerm:
-      default: 'smartcase'
-      enum: ['smartcase', 'sensitive', 'insensitive']
-    rememberIgnoreCaseForByHandSearch: false
-    rememberIgnoreCaseForByCurrentWordSearch: false
-    searchWholeWord: false
+  Search: newProviderConfigForSearchAndAtomScan(
     searcher:
       default: 'ag'
       enum: ['ag', 'rg']
@@ -157,14 +167,7 @@ providerSettings =
         You can toggle this value by command `narrow:toggle-search-start-by-double-click`
         """
   )
-  AtomScan: newProviderConfig(
-    caseSensitivityForSearchTerm:
-      default: 'smartcase'
-      enum: ['smartcase', 'sensitive', 'insensitive']
-    rememberIgnoreCaseForByHandSearch: false
-    rememberIgnoreCaseForByCurrentWordSearch: false
-    searchWholeWord: false
-  )
+  AtomScan: newProviderConfigForSearchAndAtomScan()
   Symbols: newProviderConfig(revealOnStartCondition: 'on-input')
   GitDiffAll: newProviderConfig()
   Fold: newProviderConfig(revealOnStartCondition: 'on-input')
