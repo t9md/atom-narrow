@@ -1,3 +1,12 @@
+# 0.39.0: WIP
+- Improve: `search` and `atom-scan` provider config no longer show `on-input` choice for `revealOnStartCondition`.
+  - Since it's have no effect( `search` and `atom-scan` have always no-input, never met condition of `on-input` )
+- New, Experimental: #177 New config param `focusOnStartCondition` to control whether initially focus to `narrow-editor` or not.
+  - Possible values are
+    - `always`( default ): always focus to `narrow-editor` on start.
+    - `never`: never focus to `narrow-editor` on start.
+    - `no-input`: focus when initial query was empty( this choice is not available for `search`, `atom-scan` )
+
 # 0.38.2:
 - Fix: `narrow:search` with searcher `rg`, `smartcase` didn't work correctly.
   - Because of ignorance of default behavior diff between `ag` and `rg`.
