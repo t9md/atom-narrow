@@ -251,7 +251,9 @@ class Ui
     # So pane.activate must be called AFTER activateItem
     pane = @getPaneToOpen()
     pane.activateItem(@editor, {pending})
-    pane.activate()
+
+    if @provider.needActivateOnStart()
+      pane.activate()
 
     @grammar.activate()
     @setQuery(@query)
@@ -265,7 +267,7 @@ class Ui
     )
 
     @refresh().then =>
-      if @provider.needAutoReveal()
+      if @provider.needRevealOnStart()
         @syncToEditor(@provider.editor)
         @moveToBeginningOfSelectedItem()
         @preview()
@@ -585,9 +587,8 @@ class Ui
         @emitDidMoveToItemArea() if @isPromptRow(oldRow)
         @preview() if @autoPreview
 
-  # Return success or fail
   syncToEditor: (editor) ->
-    return false if @inPreview
+    return if @inPreview
 
     point = editor.getCursorBufferPosition()
     if @provider.boundToSingleFile
@@ -600,9 +601,6 @@ class Ui
       wasAtPrompt = @isAtPrompt()
       @moveToSelectedItem(scrollToColumnZero: true)
       @emitDidMoveToItemArea() if wasAtPrompt
-      true
-    else
-      false
 
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove, column}={}) ->
     return if (row = @items.getRowForSelectedItem()) is -1
@@ -622,6 +620,7 @@ class Ui
       moveAndScroll()
 
   preview: ->
+    return unless @isActive()
     return unless item = @items.getSelectedItem()
 
     @inPreview = true

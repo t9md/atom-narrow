@@ -92,9 +92,6 @@ globalSettings =
     default: 'smartcase'
     enum: ['smartcase', 'sensitive', 'insensitive']
     description: "Case sensitivity of your query in narrow-editor"
-  activateOnStart:
-    default: 'always'
-    enum: ['never', 'always', 'on-input']
   confirmOnUpdateRealFile: true
 
 inheritGlobalEnum = (name) ->
@@ -106,10 +103,13 @@ newProviderConfig = (otherProperties) ->
   properties =
     directionToOpen: inheritGlobalEnum('directionToOpen')
     caseSensitivityForNarrowQuery: inheritGlobalEnum('caseSensitivityForNarrowQuery')
-    activateOnStart: inheritGlobalEnum('activateOnStart')
     revealOnStartCondition:
       default: 'always'
       enum: ['always', 'never', 'on-input']
+    focusOnStartCondition:
+      default: 'always'
+      description: "[Experiment] In-eval if this is really useful( I don't use this )"
+      enum: ['never', 'always', 'no-input']
     negateNarrowQueryByEndingExclamation: false
     autoPreview: true
     autoPreviewOnQueryChange: true

@@ -65,14 +65,18 @@ class ProviderBase
     else
       value
 
-  needAutoReveal: ->
-    switch @getConfig('revealOnStartCondition')
-      when 'never'
-        false
-      when 'always'
-        true
-      when 'on-input'
-        @query?.length
+  getOnStartConditionValueFor: (name) ->
+    switch @getConfig(name)
+      when 'never' then false
+      when 'always' then true
+      when 'on-input' then @query?.length
+      when 'no-input' then not @query?.length
+
+  needRevealOnStart: ->
+    @getOnStartConditionValueFor('revealOnStartCondition')
+
+  needActivateOnStart: ->
+    @getOnStartConditionValueFor('focusOnStartCondition')
 
   initialize: ->
     # to override
