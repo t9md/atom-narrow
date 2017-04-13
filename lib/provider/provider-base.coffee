@@ -219,12 +219,15 @@ class ProviderBase
       return Promise.resolve(@editor)
 
     filePath ?= @editor.getPath()
-    pane = @getPaneToOpenItem()
-    # NOTE: See #107
-    # Explicitly specify which-pane-to-open is super important to avoid
-    #  'workspace can only contain one instance of item exception'
-    options = {activatePane: activatePane, activateItem: true, pending: true}
-    atom.workspace.openURIInPane(filePath, pane, options)
+    originalActivePane = atom.workspace.getActivePane() unless activatePane
+
+    # NOTE: See #107 activate pane where I want to open first is SUPER important
+    pane.activate()
+
+    atom.workspace.open(filePath, pending: true).then (editor) ->
+      # Refocus to originalActivePane if necessary
+      originalActivePane.activate() unless activatePane
+      return editor
 
   confirmed: (item) ->
     @needRestoreEditorState = false
