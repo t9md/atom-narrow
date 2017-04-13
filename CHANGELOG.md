@@ -1,3 +1,6 @@
+# 0.39.1:
+- Fix: In Atom-beta( v1.17.0-beta-0 ), auto-preview lose focus from `narrow-editor`.
+
 # 0.39.0:
 - Cosmetic, Config: Provider specific configs are default collapsed in `settings-view`.
 - Improve: `search` and `atom-scan` provider config no longer show `on-input` choice for `revealOnStartCondition`.
