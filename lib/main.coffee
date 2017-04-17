@@ -67,8 +67,6 @@ module.exports =
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', searchCurrentWord: true)
 
-      'narrow:toggle-search-start-by-double-click': -> settings.toggle('Search.startByDoubleClick')
-
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
       return unless isTextEditor(item)

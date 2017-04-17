@@ -164,7 +164,6 @@ providerSettings =
       default: false
       description: """
         [Experimental]: start by dounble click.
-        You can toggle this value by command `narrow:toggle-search-start-by-double-click`
         """
   )
   AtomScan: newProviderConfigForSearchAndAtomScan()
