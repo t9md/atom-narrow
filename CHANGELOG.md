@@ -1,4 +1,4 @@
-# 0.40.0: WIP
+# 0.40.0:
 - Improve: Now pkg is activated on-demand, via `activationCommands` to reduce statup time.
 
 # 0.39.1:
