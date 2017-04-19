@@ -37,12 +37,17 @@ describe "narrow", ->
 
   beforeEach ->
     waitsForPromise ->
-      atom.packages.activatePackage('narrow')
-
-    waitsForPromise ->
+      activationPromise = atom.packages.activatePackage('narrow')
       atom.workspace.open().then (_editor) ->
         editor = _editor
         editorElement = editor.element
+
+        # HACK: Activate command by toggle setting command, it's most side-effect-less.
+        originalValue = settings.get('Search.startByDoubleClick')
+        atom.commands.dispatch(editor.element, 'narrow:toggle-search-start-by-double-click')
+        settings.set('Search.startByDoubleClick', originalValue)
+
+      activationPromise
 
   describe "confirm family", ->
     beforeEach ->

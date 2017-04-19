@@ -1,3 +1,6 @@
+# 0.40.0:
+- Improve: Now pkg is activated on-demand, via `activationCommands` to reduce statup time.
+
 # 0.39.1:
 - Fix: In Atom-beta( v1.17.0-beta-0 ), auto-preview lose focus from `narrow-editor`.
 

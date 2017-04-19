@@ -10,6 +10,35 @@
   ],
   "repository": "https://github.com/t9md/atom-narrow",
   "license": "MIT",
+  "activationCommands": {
+    "atom-text-editor": [
+      "narrow:atom-scan",
+      "narrow:atom-scan-by-current-word",
+      "narrow:bookmarks",
+      "narrow:fold",
+      "narrow:fold-by-current-word",
+      "narrow:git-diff",
+      "narrow:git-diff-all",
+      "narrow:linter",
+      "narrow:project-symbols",
+      "narrow:project-symbols-by-current-word",
+      "narrow:scan",
+      "narrow:scan-by-current-word",
+      "narrow:search",
+      "narrow:search-by-current-word",
+      "narrow:search-current-project",
+      "narrow:search-current-project-by-current-word",
+      "narrow:symbols",
+      "narrow:symbols-by-current-word",
+      "narrow:toggle-search-start-by-double-click"
+    ],
+    "atom-text-editor.vim-mode-plus-search": [
+      "vim-mode-plus-user:narrow:scan",
+      "vim-mode-plus-user:narrow:search",
+      "vim-mode-plus-user:narrow:atom-scan",
+      "vim-mode-plus-user:narrow:search-current-project"
+    ]
+  },
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
   },
