@@ -1,1 +1,4 @@
 p1-f1: apple
+path: project1/p1-f1
+path: a/b/c
+path: a\/b\/c

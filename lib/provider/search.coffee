@@ -5,6 +5,23 @@ SearchBase = require './search-base'
 
 LineEndingRegExp = /\n|\r\n/
 
+unescapeRegExpForRg = (string) ->
+  # Why I am unescaping for `rg` specifically?
+  # History:
+  #  - Ripgrep's regex engine doesn't allow unnecessary escape.
+  #    See: https://github.com/BurntSushi/ripgrep/issues/102#issuecomment-249620557
+  #  - To search `a/b/c`, I need to search `a/b/c`, can't search with `a\/b\/c`.
+  #  - Bug fix in t9md/atom-narrow#171 introduced another critical bug.
+  #  - So re-fixed in different way in t9md/atom-narrow#185, 190
+  #
+  # This what-char-should-be-escaped diff between js, ag and rg is soruce of bug and headache.
+  # Important rule I set is treat `@searchRegExp` as truth.
+  # - DO: Build search term for rg, ag from @searchRegExp.
+  # - DONT: build rg version of escapeRegExp and derive search term from @searchTerm.
+  if string
+    string.replace(/\\\//g, '/')
+  else
+    ''
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
     if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
@@ -102,8 +119,10 @@ class Search extends SearchBase
     # Following option make result-output consistent with `ag`.
     if command is 'rg'
       args.push(['-H', '--no-heading']...)
-
-    args.push(@searchRegExp.source)
+      args.push('--regexp')
+      args.push(unescapeRegExpForRg(@searchRegExp.source))
+    else
+      args.push(@searchRegExp.source)
     args
 
   searchFilePath: (filePath) ->

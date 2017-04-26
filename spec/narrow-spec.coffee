@@ -972,7 +972,7 @@ describe "narrow", ->
             cursor: [0, 0]
             selectedItemText: "p1-f2: apple"
 
-    describe "searchCurrentWord with variable-includes-special-char language", ->
+    describe "searchCurrentWord with variable-includes-special-char language, PHP", ->
       ensureFindPHPVar = ->
         ensureEditorIsActive(ui.editor)
         expect(ui.excludedFiles).toEqual([])
@@ -1011,3 +1011,99 @@ describe "narrow", ->
         settings.set('Search.searcher', 'rg')
         waitsForStartNarrow('search', searchCurrentWord: true)
         runs -> ensureFindPHPVar()
+
+    describe "search regex special char include search term", ->
+      [search, ensureOptions] = []
+      resultText =
+        "project1/p1-f": """
+
+            # project1
+            ## p1-f1
+            2: 7: path: project1/p1-f1
+            ## p1-f2
+            2: 7: path: project1/p1-f2
+            """
+        "a/b/c": """
+
+            # project1
+            ## p1-f1
+            3: 7: path: a/b/c
+            ## p1-f2
+            3: 7: path: a/b/c
+            """
+        "a\\/b\\/c": """
+
+            # project1
+            ## p1-f1
+            4: 7: path: a\\/b\\/c
+            ## p1-f2
+            4: 7: path: a\\/b\\/c
+            """
+      beforeEach ->
+        [search, ensureOptions] = [] # null reset
+
+      describe "search project1/p1-f", ->
+        beforeEach ->
+          search = 'project1/p1-f'
+          ensureOptions =
+            text: resultText[search]
+            cursor: [3, 5]
+            selectedItemText: 'path: project1/p1-f1'
+
+        it "[atom-scan]", ->
+          waitsForStartNarrow('atom-scan', {search})
+          runs -> ensure(ensureOptions)
+
+        it "[search:ag]", ->
+          settings.set('Search.searcher', 'ag')
+          waitsForStartNarrow('search', {search})
+          runs -> ensure(ensureOptions)
+
+        it "[search:rg]", ->
+          settings.set('Search.searcher', 'rg')
+          waitsForStartNarrow('search', {search})
+          runs -> ensure(ensureOptions)
+
+      describe "search a/b/c", ->
+        beforeEach ->
+          search = 'a/b/c'
+          ensureOptions =
+            text: resultText[search]
+            cursor: [3, 5]
+            selectedItemText: 'path: a/b/c'
+
+        it "[atom-scan]", ->
+          waitsForStartNarrow('atom-scan', {search})
+          runs -> ensure(ensureOptions)
+
+        it "[search:ag]", ->
+          settings.set('Search.searcher', 'ag')
+          waitsForStartNarrow('search', {search})
+          runs -> ensure(ensureOptions)
+
+        it "[search:rg]", ->
+          settings.set('Search.searcher', 'rg')
+          waitsForStartNarrow('search', {search})
+          runs -> ensure(ensureOptions)
+
+      describe "search a/b/c", ->
+        beforeEach ->
+          search = 'a\\/b\\/c'
+          ensureOptions =
+            text: resultText[search]
+            cursor: [3, 5]
+            selectedItemText: 'path: a\\/b\\/c'
+
+        it "[atom-scan]", ->
+          waitsForStartNarrow('atom-scan', {search})
+          runs -> ensure(ensureOptions)
+
+        it "[search:ag]", ->
+          settings.set('Search.searcher', 'ag')
+          waitsForStartNarrow('search', {search})
+          runs -> ensure(ensureOptions)
+
+        it "[search:rg]", ->
+          settings.set('Search.searcher', 'rg')
+          waitsForStartNarrow('search', {search})
+          runs -> ensure(ensureOptions)
