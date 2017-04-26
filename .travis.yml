@@ -17,3 +17,4 @@ branches:
 before_install:
   - brew update
   - brew install ag
+  - brew install rg
