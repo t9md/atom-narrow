@@ -725,123 +725,34 @@ describe "narrow", ->
             runs -> narrow.ui.destroy()
 
   describe "search", ->
-    [p1, p1f1, p1f2] = []
-    [p2, p2f1, p2f2] = []
+    [p1, p1f1, p1f2, p1f3] = []
+    [p2, p2f1, p2f2, p2f3] = []
     beforeEach ->
       runs ->
         p1 = atom.project.resolvePath("project1")
         p1f1 = path.join(p1, "p1-f1")
         p1f2 = path.join(p1, "p1-f2")
+        p1f3 = path.join(p1, "p1-f3.php")
         p2 = atom.project.resolvePath("project2")
         p2f1 = path.join(p2, "p2-f1")
         p2f2 = path.join(p2, "p2-f2")
+        p2f3 = path.join(p2, "p2-f3.php")
 
         fixturesDir = atom.project.getPaths()[0]
         atom.project.removePath(fixturesDir)
         atom.project.addPath(p1)
         atom.project.addPath(p2)
 
-      waitsForStartNarrow('search', search: 'apple')
+    describe "basic behavior", ->
+      beforeEach ->
+        waitsForStartNarrow('search', search: 'apple')
 
-    it "preview on cursor move with skipping header", ->
-      moveUpWithPreview = ->
-        narrow.waitsForPreview -> runCommand('core:move-up')
-      moveDownWithPreview = ->
-        narrow.waitsForPreview -> runCommand('core:move-down')
+      it "preview on cursor move with skipping header", ->
+        moveUpWithPreview = ->
+          narrow.waitsForPreview -> runCommand('core:move-up')
+        moveDownWithPreview = ->
+          narrow.waitsForPreview -> runCommand('core:move-down')
 
-      ensure
-        text: """
-
-          # project1
-          ## p1-f1
-          1: 8: p1-f1: apple
-          ## p1-f2
-          1: 8: p1-f2: apple
-          # project2
-          ## p2-f1
-          1: 8: p2-f1: apple
-          ## p2-f2
-          1: 8: p2-f2: apple
-          """
-        cursor: [3, 5]
-        selectedItemText: "p1-f1: apple"
-
-      runs ->
-        runCommand('core:move-up')
-        ensure selectedItemText: "p1-f1: apple", cursor: [0, 0]
-
-      runs -> moveDownWithPreview()
-
-      runs ->
-        ensure
-          selectedItemText: "p1-f1: apple"
-          cursor: [3, 5]
-          filePathForProviderPane: p1f1
-
-      runs -> moveDownWithPreview()
-
-      runs ->
-        ensure
-          selectedItemText: "p1-f2: apple"
-          cursor: [5, 5]
-          filePathForProviderPane: p1f2
-        ensureEditorIsActive(ui.editor)
-
-      runs -> moveDownWithPreview()
-
-      runs ->
-        ensure
-          selectedItemText: "p2-f1: apple"
-          cursor: [8, 5]
-          filePathForProviderPane: p2f1
-
-      runs -> moveDownWithPreview()
-
-      runs ->
-        ensure
-          selectedItemText: "p2-f2: apple"
-          cursor: [10, 5]
-          filePathForProviderPane: p2f2
-
-    it "preview on query change by default( autoPreviewOnQueryChange )", ->
-      jasmine.useRealClock()
-
-      runs ->
-        narrow.waitsForPreview ->
-          ui.moveToPrompt()
-          ui.editor.insertText("f2")
-      runs ->
-        ensure
-          text: """
-            f2
-            # project1
-            ## p1-f2
-            1: 8: p1-f2: apple
-            # project2
-            ## p2-f2
-            1: 8: p2-f2: apple
-            """
-          selectedItemText: "p1-f2: apple"
-          filePathForProviderPane: p1f2
-
-      runs ->
-        narrow.waitsForPreview ->
-          ui.editor.insertText(" p2")
-      runs ->
-        ensure
-          text: """
-            f2 p2
-            # project2
-            ## p2-f2
-            1: 8: p2-f2: apple
-            """
-          selectedItemText: "p2-f2: apple"
-          filePathForProviderPane: p2f2
-
-    it "can filter files by selet-files provider", ->
-      selectFiles = null
-
-      runs ->
         ensure
           text: """
 
@@ -859,111 +770,244 @@ describe "narrow", ->
           cursor: [3, 5]
           selectedItemText: "p1-f1: apple"
 
-      waitsForPromise ->
-        ui.selectFiles().then (_ui) ->
-          selectFiles = getNarrowForUi(_ui)
+        runs ->
+          runCommand('core:move-up')
+          ensure selectedItemText: "p1-f1: apple", cursor: [0, 0]
 
-      runs ->
-        # Start select-files provider from search result ui.
-        selectFiles.ensure
-          text: """
+        runs -> moveDownWithPreview()
 
-            project1/p1-f1
-            project1/p1-f2
-            project2/p2-f1
-            project2/p2-f2
-            """
+        runs ->
+          ensure
+            selectedItemText: "p1-f1: apple"
+            cursor: [3, 5]
+            filePathForProviderPane: p1f1
 
-      runs ->
-        # select f1
-        selectFiles.ensure "f1",
-          text: """
-            f1
-            project1/p1-f1
-            project2/p2-f1
-            """
+        runs -> moveDownWithPreview()
 
-      runs ->
-        # then negate by ending `!`
-        selectFiles.ensure "f1!",
-          text: """
-            f1!
-            project1/p1-f2
-            project2/p2-f2
-            """
+        runs ->
+          ensure
+            selectedItemText: "p1-f2: apple"
+            cursor: [5, 5]
+            filePathForProviderPane: p1f2
+          ensureEditorIsActive(ui.editor)
 
-      runs ->
-        selectFiles.waitsForDestroy -> runCommand('core:confirm')
+        runs -> moveDownWithPreview()
 
-      runs ->
-        # Ensure f1 matching files are excluded and not listed in narrow-editor.
-        ensureEditorIsActive(ui.editor)
-        expect(ui.excludedFiles).toEqual([
-          p1f1
-          p2f1
-        ])
-        ensure
-          text: """
+        runs ->
+          ensure
+            selectedItemText: "p2-f1: apple"
+            cursor: [8, 5]
+            filePathForProviderPane: p2f1
 
-            # project1
-            ## p1-f2
-            1: 8: p1-f2: apple
-            # project2
-            ## p2-f2
-            1: 8: p2-f2: apple
-            """
-          cursor: [0, 0]
-          selectedItemText: "p1-f2: apple"
+        runs -> moveDownWithPreview()
 
-      waitsForPromise ->
-        ui.selectFiles().then (_ui) ->
-          selectFiles = getNarrowForUi(_ui)
+        runs ->
+          ensure
+            selectedItemText: "p2-f2: apple"
+            cursor: [10, 5]
+            filePathForProviderPane: p2f2
 
-      runs ->
-        # selectFiles query are remembered until closing narrow-editor.
-        selectFiles.ensure
-          text: """
-            f1!
-            project1/p1-f2
-            project2/p2-f2
-            """
+      it "preview on query change by default( autoPreviewOnQueryChange )", ->
+        jasmine.useRealClock()
 
-      runs ->
-        # clear the file filter query
-        selectFiles.waitsForRefresh ->
-          selectFiles.ui.editor.deleteToBeginningOfLine()
+        runs ->
+          narrow.waitsForPreview ->
+            ui.moveToPrompt()
+            ui.editor.insertText("f2")
+        runs ->
+          ensure
+            text: """
+              f2
+              # project1
+              ## p1-f2
+              1: 8: p1-f2: apple
+              # project2
+              ## p2-f2
+              1: 8: p2-f2: apple
+              """
+            selectedItemText: "p1-f2: apple"
+            filePathForProviderPane: p1f2
 
-      runs ->
-        # now all files are listable.
-        selectFiles.ensure
-          text: """
+        runs ->
+          narrow.waitsForPreview ->
+            ui.editor.insertText(" p2")
+        runs ->
+          ensure
+            text: """
+              f2 p2
+              # project2
+              ## p2-f2
+              1: 8: p2-f2: apple
+              """
+            selectedItemText: "p2-f2: apple"
+            filePathForProviderPane: p2f2
 
-            project1/p1-f1
-            project1/p1-f2
-            project2/p2-f1
-            project2/p2-f2
-            """
+      it "can filter files by selet-files provider", ->
+        selectFiles = null
 
-      runs ->
-        selectFiles.waitsForDestroy -> runCommand('core:confirm')
+        runs ->
+          ensure
+            text: """
 
-      runs ->
-        # ensure items for all files are listed and previously selected items are preserveed.
+              # project1
+              ## p1-f1
+              1: 8: p1-f1: apple
+              ## p1-f2
+              1: 8: p1-f2: apple
+              # project2
+              ## p2-f1
+              1: 8: p2-f1: apple
+              ## p2-f2
+              1: 8: p2-f2: apple
+              """
+            cursor: [3, 5]
+            selectedItemText: "p1-f1: apple"
+
+        waitsForPromise ->
+          ui.selectFiles().then (_ui) ->
+            selectFiles = getNarrowForUi(_ui)
+
+        runs ->
+          # Start select-files provider from search result ui.
+          selectFiles.ensure
+            text: """
+
+              project1/p1-f1
+              project1/p1-f2
+              project2/p2-f1
+              project2/p2-f2
+              """
+
+        runs ->
+          # select f1
+          selectFiles.ensure "f1",
+            text: """
+              f1
+              project1/p1-f1
+              project2/p2-f1
+              """
+
+        runs ->
+          # then negate by ending `!`
+          selectFiles.ensure "f1!",
+            text: """
+              f1!
+              project1/p1-f2
+              project2/p2-f2
+              """
+
+        runs ->
+          selectFiles.waitsForDestroy -> runCommand('core:confirm')
+
+        runs ->
+          # Ensure f1 matching files are excluded and not listed in narrow-editor.
+          ensureEditorIsActive(ui.editor)
+          expect(ui.excludedFiles).toEqual([
+            p1f1
+            p2f1
+          ])
+          ensure
+            text: """
+
+              # project1
+              ## p1-f2
+              1: 8: p1-f2: apple
+              # project2
+              ## p2-f2
+              1: 8: p2-f2: apple
+              """
+            cursor: [0, 0]
+            selectedItemText: "p1-f2: apple"
+
+        waitsForPromise ->
+          ui.selectFiles().then (_ui) ->
+            selectFiles = getNarrowForUi(_ui)
+
+        runs ->
+          # selectFiles query are remembered until closing narrow-editor.
+          selectFiles.ensure
+            text: """
+              f1!
+              project1/p1-f2
+              project2/p2-f2
+              """
+
+        runs ->
+          # clear the file filter query
+          selectFiles.waitsForRefresh ->
+            selectFiles.ui.editor.deleteToBeginningOfLine()
+
+        runs ->
+          # now all files are listable.
+          selectFiles.ensure
+            text: """
+
+              project1/p1-f1
+              project1/p1-f2
+              project2/p2-f1
+              project2/p2-f2
+              """
+
+        runs ->
+          selectFiles.waitsForDestroy -> runCommand('core:confirm')
+
+        runs ->
+          # ensure items for all files are listed and previously selected items are preserveed.
+          ensureEditorIsActive(ui.editor)
+          expect(ui.excludedFiles).toEqual([])
+          ensure
+            text: """
+
+              # project1
+              ## p1-f1
+              1: 8: p1-f1: apple
+              ## p1-f2
+              1: 8: p1-f2: apple
+              # project2
+              ## p2-f1
+              1: 8: p2-f1: apple
+              ## p2-f2
+              1: 8: p2-f2: apple
+              """
+            cursor: [0, 0]
+            selectedItemText: "p1-f2: apple"
+
+    describe "searchCurrentWord with variable-includes-special-char language", ->
+      ensureFindPHPVar = ->
         ensureEditorIsActive(ui.editor)
         expect(ui.excludedFiles).toEqual([])
         ensure
           text: """
 
             # project1
-            ## p1-f1
-            1: 8: p1-f1: apple
-            ## p1-f2
-            1: 8: p1-f2: apple
+            ## p1-f3.php
+            2: 1: $file = "p1-f3.php";
             # project2
-            ## p2-f1
-            1: 8: p2-f1: apple
-            ## p2-f2
-            1: 8: p2-f2: apple
+            ## p2-f3.php
+            2: 1: $file = "p2-f3.php";
             """
-          cursor: [0, 0]
-          selectedItemText: "p1-f2: apple"
+          cursor: [3, 5]
+          selectedItemText: '$file = "p1-f3.php";'
+
+      beforeEach ->
+        waitsForPromise ->
+          atom.packages.activatePackage('language-php')
+
+        waitsForPromise ->
+          atom.workspace.open(p1f3).then (phpEditor) ->
+            # place cursor on `$file`
+            phpEditor.setCursorBufferPosition([1, 0])
+
+      it "[atom-scan]", ->
+        waitsForStartNarrow('atom-scan', searchCurrentWord: true)
+        runs -> ensureFindPHPVar()
+
+      it "search with ag", ->
+        settings.set('Search.searcher', 'ag')
+        waitsForStartNarrow('search', searchCurrentWord: true)
+        runs -> ensureFindPHPVar()
+
+      it "search with rg", ->
+        settings.set('Search.searcher', 'rg')
+        waitsForStartNarrow('search', searchCurrentWord: true)
+        runs -> ensureFindPHPVar()
