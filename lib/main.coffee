@@ -2,7 +2,7 @@
 settings = require './settings'
 Ui = require './ui'
 globalSubscriptions = require './global-subscriptions'
-ProviderBase = null
+ProviderBase = require "./provider/provider-base"
 
 {isNarrowEditor, getVisibleEditors, isTextEditor} = require './utils'
 
@@ -108,11 +108,9 @@ module.exports =
     Ui.get(invisibleNarrowEditor) if invisibleNarrowEditor?
 
   reopen: ->
-    ProviderBase ?= require "./provider/provider-base"
     ProviderBase.reopen()
 
   narrow: (args...) ->
-    ProviderBase ?= require "./provider/provider-base"
     ProviderBase.start(args...)
 
   consumeVim: ({getEditorState, observeVimStates}) ->

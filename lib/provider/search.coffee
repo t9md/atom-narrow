@@ -91,12 +91,11 @@ class Search extends SearchBase
     super
 
   getSearchArgs: (command) ->
-    args = ['--vimgrep', '--fixed-strings']
-    if @searchIgnoreCase
+    args = ['--vimgrep']
+    if @searchRegExp.ignoreCase
       args.push('--ignore-case')
     else
       args.push('--case-sensitive')
-    args.push('--word-regexp') if @searchWholeWord
 
     # See #176
     # rg doesn't show filePath on each line when search file was passed explicitly.
@@ -104,7 +103,7 @@ class Search extends SearchBase
     if command is 'rg'
       args.push(['-H', '--no-heading']...)
 
-    args.push(@searchTerm)
+    args.push(@searchRegExp.source)
     args
 
   searchFilePath: (filePath) ->
