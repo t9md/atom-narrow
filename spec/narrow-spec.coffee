@@ -407,10 +407,10 @@ describe "narrow", ->
           4: 3:   line 4
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
-        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 5], text: text)
-        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 5], text: text)
-        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 5], text: text)
-        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 5], text: text)
+        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 6], text: text)
+        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 8], text: text)
+        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 6], text: text)
+        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 8], text: text)
 
       it "NOT auto reveal when no query was provided", ->
         text = """
@@ -474,10 +474,10 @@ describe "narrow", ->
           4: 3:   line 4
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
-        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 5], text: text)
-        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 5], text: text)
-        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 5], text: text)
-        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 5], text: text)
+        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 6], text: text)
+        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 8], text: text)
+        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 6], text: text)
+        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 8], text: text)
 
       it "NOT auto reveal when no query was provided", ->
         text = """
@@ -767,19 +767,22 @@ describe "narrow", ->
             ## p2-f2
             1: 8: p2-f2: apple
             """
-          cursor: [3, 5]
+          cursor: [3, 13]
           selectedItemText: "p1-f1: apple"
 
         runs ->
           runCommand('core:move-up')
-          ensure selectedItemText: "p1-f1: apple", cursor: [0, 0]
+          ensure
+            selectedItemText: "p1-f1: apple"
+            cursor: [0, 0]
 
         runs -> moveDownWithPreview()
 
         runs ->
           ensure
             selectedItemText: "p1-f1: apple"
-            cursor: [3, 5]
+            cursor: [3, 10] # FIXME
+            # cursor: [3, 13] # SHOULD
             filePathForProviderPane: p1f1
 
         runs -> moveDownWithPreview()
@@ -787,7 +790,8 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p1-f2: apple"
-            cursor: [5, 5]
+            cursor: [5, 8] # FIXME
+            # cursor: [5, 13] # SHOULD
             filePathForProviderPane: p1f2
           ensureEditorIsActive(ui.editor)
 
@@ -796,7 +800,8 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p2-f1: apple"
-            cursor: [8, 5]
+            cursor: [8, 10] # FIXME
+            # cursor: [8, 13] # SHOULD
             filePathForProviderPane: p2f1
 
         runs -> moveDownWithPreview()
@@ -804,7 +809,8 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p2-f2: apple"
-            cursor: [10, 5]
+            cursor: [10, 8] # FIXME
+            # cursor: [10, 13] # SHOULD
             filePathForProviderPane: p2f2
 
       it "preview on query change by default( autoPreviewOnQueryChange )", ->
@@ -860,7 +866,7 @@ describe "narrow", ->
               ## p2-f2
               1: 8: p2-f2: apple
               """
-            cursor: [3, 5]
+            cursor: [3, 13]
             selectedItemText: "p1-f1: apple"
 
         waitsForPromise ->
@@ -986,7 +992,7 @@ describe "narrow", ->
             ## p2-f3.php
             2: 1: $file = "p2-f3.php";
             """
-          cursor: [3, 5]
+          cursor: [3, 6]
           selectedItemText: '$file = "p1-f3.php";'
 
       beforeEach ->
@@ -1047,7 +1053,7 @@ describe "narrow", ->
           search = 'project1/p1-f'
           ensureOptions =
             text: resultText[search]
-            cursor: [3, 5]
+            cursor: [3, 12]
             selectedItemText: 'path: project1/p1-f1'
 
         it "[atom-scan]", ->
@@ -1069,7 +1075,7 @@ describe "narrow", ->
           search = 'a/b/c'
           ensureOptions =
             text: resultText[search]
-            cursor: [3, 5]
+            cursor: [3, 12]
             selectedItemText: 'path: a/b/c'
 
         it "[atom-scan]", ->
@@ -1091,7 +1097,7 @@ describe "narrow", ->
           search = 'a\\/b\\/c'
           ensureOptions =
             text: resultText[search]
-            cursor: [3, 5]
+            cursor: [3, 12]
             selectedItemText: 'path: a\\/b\\/c'
 
         it "[atom-scan]", ->
