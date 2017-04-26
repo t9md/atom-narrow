@@ -1,3 +1,11 @@
+# 0.40.1:
+- Fix, Critical: #185 In `PHP`, `ShellScript` file, `search-by-current-word` on `$var` fail to find `$var`.
+  - More specific explanation: For the language where `selection.selectWord()` select non word char.
+  - When `search-by-current-word` was executed with empty selection
+    - Pick current-word then search by `ag` or `rg`
+      - Before: With `--word-regexp` option and it never matched `$` char.
+      - After: Without `--word-regexp`, always searched with regex build by narrow.
+
 # 0.40.0:
 - Improve: Now pkg is activated on-demand, via `activationCommands` to reduce statup time.
 
