@@ -227,9 +227,9 @@ class ProviderBase
       openOptions.pane = pane
     else
       # NOTE: See #107
-      # Whe Atom is old and workspace.open not accept pane options to open URI.
-      # We need to activate that pane first.
-      # Otherwise, when original pane have item for that URL, it open that item on current pane.
+      # In Atom v1.16.0 or older, `workspace.open` doesn't allow to specify target pane to open file.
+      # So need to activate target pane first.
+      # Otherwise, when original pane have item for same path(URI), it opens on CURRENT pane.
       originalActivePane = atom.workspace.getActivePane() unless activatePane
       pane.activate()
 
