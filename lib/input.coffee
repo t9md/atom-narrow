@@ -2,8 +2,14 @@
 
 history = require './input-history-manager'
 
+suppressEvent = (event) ->
+  event.preventDefault()
+  event.stopPropagation()
+
 module.exports =
 class Input
+  regExp: false
+
   constructor: ->
     history.reset()
     @disposables = new CompositeDisposable()
@@ -13,7 +19,28 @@ class Input
     @editor = atom.workspace.buildTextEditor(mini: true)
     @editorElement = @editor.element
     @editorElement.classList.add('narrow-input')
-    @container.appendChild(@editorElement)
+
+    @container.innerHTML = """
+      <div class='options-container'>
+        <span class='regex-search inline-block-tight btn'>.*</span>
+      </div>
+      <div class='editor-container'>
+      </div>
+      """
+
+    editorContainer = @container.getElementsByClassName('editor-container')[0]
+    editorContainer.appendChild(@editorElement)
+
+    @regexButton = @container.getElementsByClassName('regex-search')[0]
+    @regexButton.classList.toggle('btn-primary', @regExp)
+
+    @regexButton.addEventListener('click', @toggleRegExp)
+    @editorElement.addEventListener('click', suppressEvent)
+
+  toggleRegExp: (event) =>
+    suppressEvent(event)
+    @regExp = not @regExp
+    @regexButton.classList.toggle('btn-primary', @regExp)
 
   destroy: ->
     return if @destroyed
@@ -39,6 +66,7 @@ class Input
 
     destroy = @destroy.bind(this)
     @disposables.add atom.workspace.onDidChangeActivePaneItem(destroy)
+
     # Cancel on mouse click
     workspaceElement = atom.views.getView(atom.workspace)
     workspaceElement.addEventListener('click', destroy)
@@ -49,5 +77,8 @@ class Input
     new Promise (@resolve) =>
 
   confirm: ->
-    @resolve(@editor.getText())
+    result =
+      text: @editor.getText()
+      isRegExp: @regExp
+    @resolve(result)
     @destroy()

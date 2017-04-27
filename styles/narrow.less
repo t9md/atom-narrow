@@ -75,9 +75,12 @@ atom-text-editor {
 // =========================
 .narrow-input-container {
   display: flex;
-  padding: @component-padding/2 @component-padding;
-  border: none;
-  .narrow-input {
+  > div {
+    padding: @component-padding/2 @component-padding;
+    border: none;
+  }
+  // .narrow-input {
+  .editor-container {
     width: 100%;
   }
 }

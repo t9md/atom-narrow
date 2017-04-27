@@ -17,6 +17,7 @@ class SearchBase extends ProviderBase
   supportCacheItems: true
   querySelectedText: false
   searchTerm: null
+  isRegExp: false
 
   getSearchTerm: ->
     if @options.search
@@ -44,10 +45,18 @@ class SearchBase extends ProviderBase
       if @getConfig('rememberIgnoreCaseForByHandSearch')
         @searchIgnoreCase = lastIgnoreCaseOption.byHand
 
-    Promise.resolve(@searchTerm ? @readInput()).then (@searchTerm) =>
-      history.save(@searchTerm)
-      @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
-      return @searchTerm
+    if @searchTerm?
+      Promise.resolve(@searchTerm).then =>
+        history.save(@searchTerm)
+        @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
+        return @searchTerm
+    else
+      @readInput().then ({text, isRegExp}) =>
+        @searchTerm = text
+        @isRegExp = isRegExp
+        history.save(@searchTerm)
+        @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
+        return @searchTerm
 
   destroy: ->
     if @reopened
@@ -65,7 +74,12 @@ class SearchBase extends ProviderBase
     @resetRegExpForSearchTerm()
 
   resetRegExpForSearchTerm: ->
-    @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
+    if @isRegExp
+      flags = 'g'
+      flags += 'i' if @searchIgnoreCase
+      @searchRegExp = new RegExp(@searchTerm, flags)
+    else
+      @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
     @ui.highlighter.setRegExp(@searchRegExp)
     @ui.grammar.setSearchTerm(@searchRegExp)
 
