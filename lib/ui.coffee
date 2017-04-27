@@ -69,6 +69,7 @@ class Ui
   protected: false
   excludedFiles: null
   queryForSelectFiles: null
+  delayedRefreshTimeout: null
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
