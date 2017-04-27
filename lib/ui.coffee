@@ -351,8 +351,13 @@ class Ui
   narrowClose: (event) ->
     if @protected
       event.stopImmediatePropagation()
-      @setQuery() # clear query
+      @resetQuery()
       @activateProviderPane()
+
+  resetQuery: ->
+    @setQuery() # clear query
+    @moveToPrompt()
+    @controlBar.show()
 
   # Line-wrapped version of 'core:move-up' override default behavior
   moveUpOrDown: (event, direction) ->
@@ -537,10 +542,7 @@ class Ui
     texts = items.map (item) => @provider.viewForItem(item)
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
-        # Need to recover query prompt
-        @setQuery()
-        @moveToPrompt()
-        @controlBar.show()
+        @resetQuery()
       itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @setModifiedState(false)
