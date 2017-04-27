@@ -15,7 +15,7 @@ settings = require '../lib/settings'
   paneForItem
   setActiveTextEditor
   setActiveTextEditorWithWaits
-} = require "./spec-helper"
+} = require "./helper"
 runCommand = dispatchEditorCommand
 
 appleGrapeLemmonText = """
@@ -781,8 +781,7 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p1-f1: apple"
-            cursor: [3, 10] # FIXME
-            # cursor: [3, 13] # SHOULD
+            cursor: [3, 13]
             filePathForProviderPane: p1f1
 
         runs -> moveDownWithPreview()
@@ -790,8 +789,7 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p1-f2: apple"
-            cursor: [5, 8] # FIXME
-            # cursor: [5, 13] # SHOULD
+            cursor: [5, 13]
             filePathForProviderPane: p1f2
           ensureEditorIsActive(ui.editor)
 
@@ -800,8 +798,7 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p2-f1: apple"
-            cursor: [8, 10] # FIXME
-            # cursor: [8, 13] # SHOULD
+            cursor: [8, 13]
             filePathForProviderPane: p2f1
 
         runs -> moveDownWithPreview()
@@ -809,8 +806,7 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p2-f2: apple"
-            cursor: [10, 8] # FIXME
-            # cursor: [10, 13] # SHOULD
+            cursor: [10, 13]
             filePathForProviderPane: p2f2
 
       it "preview on query change by default( autoPreviewOnQueryChange )", ->

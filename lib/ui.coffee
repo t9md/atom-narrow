@@ -90,7 +90,7 @@ class Ui
   onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
   emitDidStopRefreshing: ->
     # Debounced, fired after 100ms delay
-    @_emitDidStopRefreshing ?= _.debounce((=> @emitter.emit('did-stop-refreshing')), 100)
+    @_emitDidStopRefreshing ?= _.debounce((=> @emitter.emit('did-stop-refreshing')), 300)
     @_emitDidStopRefreshing()
 
   onDidPreview: (fn) -> @emitter.on('did-preview', fn)
@@ -102,8 +102,8 @@ class Ui
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
-      'core:move-up': (event) => @moveUpOrDown(event, 'previous')
-      'core:move-down': (event) => @moveUpOrDown(event, 'next')
+      'core:move-up': (event) => @moveUpOrDown(event, 'up')
+      'core:move-down': (event) => @moveUpOrDown(event, 'down')
 
       'narrow:close': (event) => @narrowClose(event)
 
@@ -354,20 +354,32 @@ class Ui
       @setQuery() # clear query
       @activateProviderPane()
 
-  # Just setting cursor position works but it lost goalColumn when that row was skip item's row.
+  # Line-wrapped version of 'core:move-up' override default behavior
   moveUpOrDown: (event, direction) ->
+    event.stopImmediatePropagation()
     cursor = @editor.getLastCursor()
-    row = cursor.getBufferRow()
+    {row, column} = cursor.getBufferPosition()
+    # HACK: In narrow-editor, header row is skipped onDidChangeCursorPosition event
+    # But at this point, cursor.goalColumn is explicitly cleared by atom-core
+    # I want use original goalColumn info within onDidChangeCursorPosition event
+    # to keep original column when header item was auto-skipped.
+    @goalColumn = cursor.goalColumn ? column
 
-    if (direction is 'next' and row is @editor.getLastBufferRow()) or
-        (direction is 'previous' and @isPromptRow(row))
-      # This is the command which override `core:move-up`, `core-move-down`
-      # So when this command do work, it stop propagation, unless that case
-      # this command do nothing and default behavior is still executed.
-      ensureCursorIsOneColumnLeftFromEOL = @vmpIsNormalMode()
-      event.stopImmediatePropagation()
-      row = @items.findRowForNormalOrPromptItem(row, direction)
-      setBufferRow(cursor, row, {ensureCursorIsOneColumnLeftFromEOL})
+    switch direction
+      when 'up'
+        if @isPromptRow(row)
+          setBufferRow(cursor, @items.findRowForNormalOrPromptItem(row, 'previous'))
+        else
+          @editor.moveUp()
+      when 'down'
+        if row is @editor.getLastBufferRow()
+          setBufferRow(cursor, @items.findRowForNormalOrPromptItem(row, 'next'))
+        else
+          @editor.moveDown()
+    # HACK: Explicitly clear @goalColumn state, this is very imporatn.
+    # So that other commands such as `core:move-right` DO NOT use old kept @goalColumn
+    # in onDidChangeCursorPosition event.
+    @goalColumn = null
 
   # Even in movemnt not happens, it should confirm current item
   # This ensure next-item/previous-item always move to selected item.
@@ -539,8 +551,11 @@ class Ui
     @_debouncedPreview()
 
   observeChange: ->
-    @editor.buffer.onDidChange ({newRange, oldRange}) =>
+    @editor.buffer.onDidChange (event) =>
+      {newRange, oldRange, newText, oldText} = event
       return if @ignoreChange
+      # Ignore white spaces change
+      return if oldText.trim() is newText.trim()
 
       promptRange = @getPromptRange()
       onPrompt = (range) -> range.intersectsWith(promptRange)
@@ -580,16 +595,19 @@ class Ui
       oldRow = oldBufferPosition.row
 
       if isHeaderRow = not @isPromptRow(newRow) and not @items.isNormalItemRow(newRow)
+        headerWasSkipped = true
         direction = if newRow > oldRow then 'next' else 'previous'
         newRow = @items.findRowForNormalOrPromptItem(newRow, direction)
 
       if @isPromptRow(newRow)
-        @withIgnoreCursorMove =>
-          @editor.setCursorBufferPosition([newRow, newBufferPosition.column])
-          @emitDidMoveToPrompt()
+        if headerWasSkipped
+          @withIgnoreCursorMove =>
+            @editor.setCursorBufferPosition([newRow,  @goalColumn ? newBufferPosition.column])
+        @emitDidMoveToPrompt()
       else
         @items.selectItemForRow(newRow)
-        @moveToSelectedItem() if isHeaderRow
+        if headerWasSkipped
+          @moveToSelectedItem({column: @goalColumn ? newBufferPosition.column})
         @emitDidMoveToItemArea() if @isPromptRow(oldRow)
         @preview() if @autoPreview
 

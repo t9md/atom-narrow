@@ -97,13 +97,9 @@ getValidIndexForList = (list, index) ->
       length + index
 
 # Respect goalColumn when moving cursor.
-setBufferRow = (cursor, row, options={}) ->
+setBufferRow = (cursor, row) ->
   column = cursor.goalColumn ? cursor.getBufferColumn()
-  if options.ensureCursorIsOneColumnLeftFromEOL
-    oneColumLeft = cursor.editor.bufferRangeForBufferRow(row).end.column - 1
-    if oneColumLeft >= 0
-      columnAdjusted = Math.min(column, oneColumLeft)
-  cursor.setBufferPosition([row, columnAdjusted ? column])
+  cursor.setBufferPosition([row, column])
   cursor.goalColumn ?= column
 
 isTextEditor = (item) ->
