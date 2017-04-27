@@ -49,6 +49,7 @@ class Scan extends ProviderBase
 
       @ui.highlighter.setRegExp(regexp)
       @ui.grammar.setSearchTerm(regexp)
+      @initiallySearchedRegexp = regexp
       @scanEditor(regexp)
     else
       # Reset search term and grammar

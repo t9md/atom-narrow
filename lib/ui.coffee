@@ -215,8 +215,6 @@ class Ui
     @setModifiedState(false)
 
     @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
-    disposable = @grammar.onDidChangeSearchTerm (@initiallySearchedRegexp) =>
-      disposable.dispose()
 
     @items = new Items(this)
     @itemIndicator = new ItemIndicator(@editor)
@@ -273,8 +271,8 @@ class Ui
     @refresh().then =>
       if @provider.needRevealOnStart()
         @syncToEditor(@provider.editor)
-        if @initiallySearchedRegexp?
-          @moveToSearchedWordOfSelectedItem()
+        if @provider.initiallySearchedRegexp?
+          @moveToSearchedWordAtSelectedItem()
         else
           @moveToBeginningOfSelectedItem()
         @preview()
@@ -713,11 +711,11 @@ class Ui
     if @items.hasSelectedItem()
       @editor.setCursorBufferPosition(@items.getFirstPositionForSelectedItem())
 
-  moveToSearchedWordOfSelectedItem: ->
+  moveToSearchedWordAtSelectedItem: ->
     if @items.hasSelectedItem()
       row = @items.getRowForSelectedItem()
       scanRange = @editor.bufferRangeForBufferRow(row)
-      pattern = @initiallySearchedRegexp
+      pattern = @provider.initiallySearchedRegexp
       @editor.scanInBufferRange pattern, scanRange, ({range, stop}) =>
         stop()
         @editor.setCursorBufferPosition(range.start)
