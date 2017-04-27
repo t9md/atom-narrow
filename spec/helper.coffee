@@ -95,6 +95,8 @@ class Ensureer
       runs =>
         @waitsForRefresh =>
           @ui.setQuery(query)
+          if @ui.autoPreviewOnQueryChange
+            advanceClock(200)
           @ui.moveToPrompt()
       runs -> ensureOptions()
     else

@@ -576,21 +576,21 @@ class Ui
           @withIgnoreChange => @setQuery(@lastQuery) # Recover query
         else
           autoPreview = @autoPreviewOnQueryChange and @isActive()
-          # To avoid frequent refresh interferinig smooth-query-input, delay refresh.
-          if autoPreview and not @provider.boundToSingleFile
-            refreshDelay = 150
+          if autoPreview
+            # To avoid frequent auto-preview interferinig smooth-query-input, delay refresh.
+            refreshDelay = if @provider.boundToSingleFile then 10 else 150
+            @refreshThenPreviewAfter(refreshDelay)
           else
-            refreshDelay = 10
-          @refreshAfter(refreshDelay, autoPreview)
+            @refresh(selectFirstItem: true)
       else
         @setModifiedState(true)
 
   # Delayed-refresh on query-change event, dont use this for other purpose.
-  refreshAfter: (delay, autoPreview) ->
+  refreshThenPreviewAfter: (delay) ->
     @cancelDelayedRefresh()
     refreshThenPreview = =>
       @refresh(selectFirstItem: true).then =>
-        @preview() if autoPreview
+        @preview()
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 
   cancelDelayedRefresh: ->
