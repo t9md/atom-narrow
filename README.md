@@ -290,6 +290,16 @@ atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="so
 
 # Notes for vim-mode-plus user
 
+## Limitation: for compatibility with vim-mode-plus.
+
+- If you use atom v1.16.0 or older,
+  - Don't enable `vim-mode-plus.automaticallyEscapeInsertModeOnActivePaneItemChange`
+  - If you enabled, each query input on narrow-editor of `search` provider cause mode-change from `insert-mode` to `normal-mode`.
+- If you use atom v1.17.0 or older( currently in beta ).
+  - This limitation is no longer exists.
+
+## Keymap
+
 Learn [keymap](https://github.com/t9md/atom-narrow/blob/master/keymaps/narrow.cson) available as default.  
 e.g. You can move to next or previous item by `tab`, `shift-tab`(for this to work, you need vim-mode-plus v0.81.0 or later).  
 

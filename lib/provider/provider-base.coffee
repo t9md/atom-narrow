@@ -1,3 +1,5 @@
+WorkspaceOpenAcceptPaneOption = atom.workspace.getCenter?
+
 _ = require 'underscore-plus'
 {Point, CompositeDisposable} = require 'atom'
 {
@@ -219,14 +221,20 @@ class ProviderBase
       return Promise.resolve(@editor)
 
     filePath ?= @editor.getPath()
-    originalActivePane = atom.workspace.getActivePane() unless activatePane
 
-    # NOTE: See #107 activate pane where I want to open first is SUPER important
-    pane.activate()
+    openOptions = {pending: true, activatePane: activatePane}
+    if WorkspaceOpenAcceptPaneOption
+      openOptions.pane = pane
+    else
+      # NOTE: See #107
+      # In Atom v1.16.0 or older, `workspace.open` doesn't allow to specify target pane to open file.
+      # So need to activate target pane first.
+      # Otherwise, when original pane have item for same path(URI), it opens on CURRENT pane.
+      originalActivePane = atom.workspace.getActivePane() unless activatePane
+      pane.activate()
 
-    atom.workspace.open(filePath, pending: true).then (editor) ->
-      # Refocus to originalActivePane if necessary
-      originalActivePane.activate() unless activatePane
+    atom.workspace.open(filePath, openOptions).then (editor) ->
+      originalActivePane?.activate()
       return editor
 
   confirmed: (item) ->
