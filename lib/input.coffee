@@ -6,11 +6,13 @@ suppressEvent = (event) ->
   event.preventDefault()
   event.stopPropagation()
 
+RegExpStateByProvider = {}
+
 module.exports =
 class Input
-  regExp: false
+  regExp: null
 
-  constructor: ->
+  constructor: (@provider) ->
     history.reset()
     @disposables = new CompositeDisposable()
 
@@ -19,6 +21,9 @@ class Input
     @editor = atom.workspace.buildTextEditor(mini: true)
     @editorElement = @editor.element
     @editorElement.classList.add('narrow-input')
+
+    atom.commands.add @editorElement,
+      'narrow-input:toggle-regexp': => @toggleRegExp()
 
     @container.innerHTML = """
       <div class='options-container'>
@@ -31,16 +36,19 @@ class Input
     editorContainer = @container.getElementsByClassName('editor-container')[0]
     editorContainer.appendChild(@editorElement)
 
-    @regexButton = @container.getElementsByClassName('regex-search')[0]
-    @regexButton.classList.toggle('btn-primary', @regExp)
-
-    @regexButton.addEventListener('click', @toggleRegExp)
+    @regExpButton = @container.getElementsByClassName('regex-search')[0]
+    @regExpButton.addEventListener('click', @toggleRegExp)
     @editorElement.addEventListener('click', suppressEvent)
+    @regExp = RegExpStateByProvider[@provider.name] ? true
+    @updateRegExpButton()
 
   toggleRegExp: (event) =>
-    suppressEvent(event)
+    suppressEvent(event) if event?
     @regExp = not @regExp
-    @regexButton.classList.toggle('btn-primary', @regExp)
+    @updateRegExpButton()
+
+  updateRegExpButton: ->
+    @regExpButton.classList.toggle('btn-primary', @regExp)
 
   destroy: ->
     return if @destroyed
@@ -80,5 +88,7 @@ class Input
     result =
       text: @editor.getText()
       isRegExp: @regExp
+    RegExpStateByProvider[@provider.name] = @regExp
+    @provider = null
     @resolve(result)
     @destroy()

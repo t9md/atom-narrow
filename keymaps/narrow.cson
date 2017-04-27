@@ -79,3 +79,6 @@
   'ctrl-l': 'vim-mode-plus-user:narrow:scan'
   'cmd-/': 'vim-mode-plus-user:narrow:search'
   'ctrl-cmd-/': 'vim-mode-plus-user:narrow:search-current-project'
+
+'atom-text-editor.narrow-input':
+  'ctrl-/': 'narrow-input:toggle-regexp'

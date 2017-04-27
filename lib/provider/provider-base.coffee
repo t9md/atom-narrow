@@ -59,6 +59,7 @@ class ProviderBase
   showSearchOption: false
   querySelectedText: true
   queryWordBoundaryOnByCurrentWordInvocation: false
+  initiallySearchedRegexp: null
 
   getConfig: (name) ->
     value = settings.get("#{@name}.#{name}")
@@ -294,7 +295,7 @@ class ProviderBase
   # -------------------------
   readInput: ->
     Input ?= require '../input'
-    new Input().readInput()
+    new Input(this).readInput()
 
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
