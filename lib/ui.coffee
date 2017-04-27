@@ -328,6 +328,10 @@ class Ui
     return if @destroyed
 
     @destroyed = true
+
+    # NOTE: Prevent delayed-refresh on destroyed editor.
+    @cancelDelayedRefresh()
+
     @constructor.unregister(this)
     @highlighter.destroy()
     @syncSubcriptions?.dispose()
@@ -447,10 +451,6 @@ class Ui
       @excludedFiles = []
       @refresh()
 
-  refreshManually: (options) ->
-    @emitWillRefreshManually()
-    @refresh(options)
-
   getItems: ({force, filePath}) ->
     if @cachedItems? and not force
       Promise.resolve(@cachedItems)
@@ -538,6 +538,10 @@ class Ui
       @emitDidRefresh()
       @emitDidStopRefreshing()
 
+  refreshManually: (options) ->
+    @emitWillRefreshManually()
+    @refresh(options)
+
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
     @withIgnoreChange =>
@@ -547,10 +551,6 @@ class Ui
       range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
       @setModifiedState(false)
       @editorLastRow = range.end.row
-
-  debouncedPreview: ->
-    @_debouncedPreview ?= _.debounce((=> @preview()), 100)
-    @_debouncedPreview()
 
   observeChange: ->
     @editor.buffer.onDidChange (event) =>
@@ -575,14 +575,28 @@ class Ui
           @controlBar.show() if selectionDestroyed
           @withIgnoreChange => @setQuery(@lastQuery) # Recover query
         else
-          @refresh(selectFirstItem: true).then =>
-            if @autoPreviewOnQueryChange and @isActive()
-              if @provider.boundToSingleFile
-                @preview()
-              else
-                @debouncedPreview()
+          autoPreview = @autoPreviewOnQueryChange and @isActive()
+          # To avoid frequent refresh interferinig smooth-query-input, delay refresh.
+          if autoPreview and not @provider.boundToSingleFile
+            refreshDelay = 150
+          else
+            refreshDelay = 10
+          @refreshAfter(refreshDelay, autoPreview)
       else
         @setModifiedState(true)
+
+  # Delayed-refresh on query-change event, dont use this for other purpose.
+  refreshAfter: (delay, autoPreview) ->
+    @cancelDelayedRefresh()
+    refreshThenPreview = =>
+      @refresh(selectFirstItem: true).then =>
+        @preview() if autoPreview
+    @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
+
+  cancelDelayedRefresh: ->
+    if @delayedRefreshTimeout?
+      clearTimeout(@delayedRefreshTimeout)
+      @delayedRefreshTimeout = null
 
   observeCursorMove: ->
     @editor.onDidChangeCursorPosition (event) =>
