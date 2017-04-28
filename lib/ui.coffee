@@ -717,12 +717,8 @@ class Ui
 
   moveToSearchedWordAtSelectedItem: ->
     if @items.hasSelectedItem()
-      row = @items.getRowForSelectedItem()
-      scanRange = @editor.bufferRangeForBufferRow(row)
-      pattern = @provider.initiallySearchedRegexp
-      @editor.scanInBufferRange pattern, scanRange, ({range, stop}) =>
-        stop()
-        @editor.setCursorBufferPosition(range.start)
+      if point = @items.getStartOfMatchedPosition(@provider.initiallySearchedRegexp)
+        @editor.setCursorBufferPosition(point)
 
   moveToPrompt: ->
     @withIgnoreCursorMove =>

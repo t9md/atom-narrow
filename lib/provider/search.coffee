@@ -28,32 +28,27 @@ runCommand = (options) ->
       console.log "ERROR"
     handle()
 
-parseLine = (line) ->
-  m = line.match(/^(.*?):(\d+):(\d+):(.*)$/)
-  if m?
-    {
-      filePath: m[1]
-      row: parseInt(m[2]) - 1
-      column: parseInt(m[3]) - 1
-      text: m[4]
-    }
-  else
-    null
 
+
+RegExpForOutPutLine = /^(.*?):(\d+):(\d+):(.*)$/
 getOutputterForProject = (project, items) ->
   (data) ->
-    for line in data.split(LineEndingRegExp) when parsed = parseLine(line)
-      items.push(new Item(parsed, project))
+    for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
+      items.push(new Item(match, project))
 
 # Not used but keep it since I'm planning to introduce per file refresh on modification
 getOutputterForFile = (items) ->
   (data) ->
-    for line in data.split(LineEndingRegExp) when parsed = parseLine(line)
-      items.push(new Item(parsed))
+    for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
+      items.push(new Item(match))
 
 class Item
-  constructor: (parsed, project) ->
-    {row, column, @filePath, @text} = parsed
+  constructor: (match, project) ->
+    @filePath = match[1]
+    row = Math.max(0, parseInt(match[2]) - 1)
+    column = Math.max(0, parseInt(match[3]) - 1)
+    @text = match[4]
+
     @point = new Point(row, column)
     @filePath = path.join(project, @filePath) if project
 
@@ -96,17 +91,35 @@ class Search extends SearchBase
   collectRanges: (filePath) ->
     editors = atom.workspace.getTextEditors()
     ranges = []
+
+    # Approach One: Line by line match to avoid across line match by editor.scan
     if editor = _.find(editors, (editor) -> editor.getPath() is filePath)
-      editor.scan(@searchRegExp, ({range}) -> ranges.push(range))
+      regExp = new RegExp(@searchRegExp.source, @searchRegExp.flags) # clone to reset lastIndex
+      for lineText, i in editor.buffer.getLines()
+        regExp.lastIndex = 0
+        while result = regExp.exec(lineText)
+          start = [i, result.index]
+          end = [i, result[0].length]
+          ranges.push(new Range(start, end))
+
+    # Approach TWO: use editor.scan and exclude unwanted match
+    # if editor = _.find(editors, (editor) -> editor.getPath() is filePath)
+    #   spaces = "(?:^[\\t ]*\\r?\\n)|(?:\\r?\\n)"
+    #   newSource = ["(#{spaces})", "(#{@searchRegExp.source})"].join('|')
+    #   regExp = new RegExp(newSource, @searchRegExp.flags)
+    #   editor.scan regExp, ({range, match}) ->
+    #     return if match[1]
+    #     ranges.push(range)
+
     if ranges.length
-      # FIXME: why this guard is necessary is timing issue.l
+      # FIXME: why this guard is necessary is timing issue.
       # Because highlighter kick collectRange is caled very just afterr workspace.open?
       # At that time, scan result is empty, although I know it's actually matching item in editor.
-      
-      # console.log "collected ", filePath, ranges.length
+      console.log "collected ", filePath, ranges.length
+      console.log ranges
       ranges
     else
-      # console.log "collected but empty", filePath,
+      console.log "collected but empty", filePath,
       null
 
   getRange: (point, filePath) =>
@@ -114,7 +127,11 @@ class Search extends SearchBase
     if @isRegExpSearch
       @rangesByFilePath ?= {}
       if ranges = (@rangesByFilePath[filePath] ?= @collectRanges(filePath))
-        _.find(ranges, (range) -> range.start.isEqual(point))
+        found = _.find(ranges, (range) -> range.start.isEqual(point))
+        # unless found?
+        #   console.log '=== not found', point, filePath
+          # console.log ranges.map (r) -> r.toString()
+        found
     else
       Range.fromPointWithDelta(point, 0, @searchTerm.length)
 

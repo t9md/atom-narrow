@@ -49,6 +49,13 @@ class Items
     column = @getFirstColumnForItem(@selectedItem)
     new Point(row, column)
 
+  getStartOfMatchedPosition: (regexp) ->
+    # Intentionally avoid useing editor.getScanInBufferRanges.
+    # which does not match `^` using regex in this usecase.
+    column = regexp.exec(@selectedItem.text)?.index
+    if column?
+      new Point(@getRowForItem(@selectedItem), column)
+
   getFirstColumnForItem: (item) ->
     if item._lineHeader?
       item._lineHeader.length - 1

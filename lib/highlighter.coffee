@@ -47,7 +47,7 @@ class Highlighter
     @clear()
     @highlight(editor) for editor in getVisibleEditors()
     @highlightCurrent() if @ui.isActive()
-    
+
   clear: ->
     @markerLayerByEditor.forEach (markerLayer) ->
       markerLayer.clear()
@@ -58,6 +58,10 @@ class Highlighter
   highlight: (editor) ->
     return unless @regexp
     return if isNarrowEditor(editor)
+
+    # FIXME: highlight called multiple time uselessly
+    # console.log "called for", editor.getPath()
+    
     return if @provider.boundToSingleFile and editor isnt @provider.editor
     return if @markerLayerByEditor.has(editor)
 
