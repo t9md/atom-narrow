@@ -52,20 +52,16 @@ getOutputterForFile = (items) ->
       items.push(new Item(parsed))
 
 class Item
-  # this.range is populated on-need.
-  Object.defineProperty @prototype, 'range',
-    get: ->
-      if @isRegExpSearch
-        null
-      else
-        @_range ?= Range.fromPointWithDelta(@point, 0, @searchTermLength)
-
   constructor: (parsed, project) ->
     {row, column, @filePath, @text} = parsed
     @point = new Point(row, column)
     @filePath = path.join(project, @filePath) if project
 
-  setRangeHint: ({@isRegExpSearch, @searchTermLength}) ->
+  setRangeHint: (@getRange) ->
+  # this.range is populated on-need via @setRange which is externally set by provider.
+  Object.defineProperty @prototype, 'range',
+    get: ->
+      @_range ?= @getRange(@point, @filePath)
 
 search = ({command, args, project, filePath}) ->
   options =
@@ -96,6 +92,12 @@ getProjectDirectoryForFilePath = (filePath) ->
 module.exports =
 class Search extends SearchBase
   propertiesToRestoreOnReopen: ['projects']
+
+  getRange: (point, filePath) =>
+    if @isRegExpSearch
+      null
+    else
+      Range.fromPointWithDelta(point, 0, @searchTerm.length)
 
   checkReady: ->
     if @options.currentProject
@@ -141,9 +143,8 @@ class Search extends SearchBase
   flattenSortAndSetRangeHint: (items) =>
     items = _.flatten(items)
     items = _.sortBy items, (item) -> item.filePath
-    searchTermLength = @searchTerm.length
     for item in items
-      item.setRangeHint({@isRegExpSearch, searchTermLength})
+      item.setRangeHint(@getRange)
     return items
 
   getItems: (filePath) ->
