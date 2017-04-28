@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
-{Disposable} = require 'atom'
 {getCurrentWord, findFirstAndLastIndexBy} = require '../utils'
 history = require '../input-history-manager'
 
@@ -17,7 +16,7 @@ class SearchBase extends ProviderBase
   supportCacheItems: true
   querySelectedText: false
   searchTerm: null
-  isRegExp: false
+  isRegExpSearch: false
 
   getSearchTerm: ->
     if @options.search
@@ -53,7 +52,7 @@ class SearchBase extends ProviderBase
     else
       @readInput().then ({text, isRegExp}) =>
         @searchTerm = text
-        @isRegExp = isRegExp
+        @isRegExpSearch = isRegExp
         history.save(@searchTerm)
         @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
         return @searchTerm
@@ -75,7 +74,7 @@ class SearchBase extends ProviderBase
     @initiallySearchedRegexp = @searchRegExp
 
   resetRegExpForSearchTerm: ->
-    if @isRegExp
+    if @isRegExpSearch
       flags = 'g'
       flags += 'i' if @searchIgnoreCase
       @searchRegExp = new RegExp(@searchTerm, flags)

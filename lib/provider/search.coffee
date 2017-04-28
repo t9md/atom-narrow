@@ -32,7 +32,7 @@ parseLine = (line) ->
   m = line.match(/^(.*?):(\d+):(\d+):(.*)$/)
   if m?
     {
-      relativePath: m[1]
+      filePath: m[1]
       row: parseInt(m[2]) - 1
       column: parseInt(m[3]) - 1
       text: m[4]
@@ -43,21 +43,29 @@ parseLine = (line) ->
 getOutputterForProject = (project, items) ->
   (data) ->
     for line in data.split(LineEndingRegExp) when parsed = parseLine(line)
-      items.push({
-        point: new Point(parsed.row, parsed.column)
-        filePath: path.join(project, parsed.relativePath)
-        text: parsed.text
-      })
+      items.push(new Item(parsed, project))
 
 # Not used but keep it since I'm planning to introduce per file refresh on modification
 getOutputterForFile = (items) ->
   (data) ->
     for line in data.split(LineEndingRegExp) when parsed = parseLine(line)
-      items.push({
-        point: new Point(parsed.row, parsed.column)
-        filePath: parsed.relativePath
-        text: parsed.text
-      })
+      items.push(new Item(parsed))
+
+class Item
+  # this.range is populated on-need.
+  Object.defineProperty @prototype, 'range',
+    get: ->
+      if @isRegExpSearch
+        null
+      else
+        @_range ?= Range.fromPointWithDelta(@point, 0, @searchTermLength)
+
+  constructor: (parsed, project) ->
+    {row, column, @filePath, @text} = parsed
+    @point = new Point(row, column)
+    @filePath = path.join(project, @filePath) if project
+
+  setRangeHint: ({@isRegExpSearch, @searchTermLength}) ->
 
 search = ({command, args, project, filePath}) ->
   options =
@@ -76,14 +84,8 @@ search = ({command, args, project, filePath}) ->
   stderr = (data) -> console.warn(stderrHeader, data)
 
   new Promise (resolve) ->
-    runCommand(
-      command: command
-      args: args
-      stdout: stdout
-      stderr: stderr
-      exit: -> resolve(items)
-      options: options
-    )
+    exit = -> resolve(items)
+    runCommand({command, args, stdout, stderr, exit, options})
 
 getProjectDirectoryForFilePath = (filePath) ->
   return null unless filePath?
@@ -128,29 +130,28 @@ class Search extends SearchBase
   searchFilePath: (filePath) ->
     command = @getConfig('searcher')
     args = @getSearchArgs(command)
-    search({command, args, filePath})
+    search({command, args, filePath}).then(@flattenSortAndSetRangeHint)
 
   searchProjects: (projects) ->
     command = @getConfig('searcher')
     args = @getSearchArgs(command)
     searchProject = (project) -> search({command, args, project})
-    Promise.all(projects.map(searchProject))
+    Promise.all(projects.map(searchProject)).then(@flattenSortAndSetRangeHint)
 
-  flattenAndInjectRange: (items) ->
+  flattenSortAndSetRangeHint: (items) =>
     items = _.flatten(items)
     items = _.sortBy items, (item) -> item.filePath
     searchTermLength = @searchTerm.length
     for item in items
-      item.range = Range.fromPointWithDelta(item.point, 0, searchTermLength)
-    items
+      item.setRangeHint({@isRegExpSearch, searchTermLength})
+    return items
 
   getItems: (filePath) ->
     if filePath?
       return @items unless atom.project.contains(filePath)
 
       @searchFilePath(filePath).then (items) =>
-        items = @flattenAndInjectRange(items)
         @items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
     else
       @searchProjects(@projects).then (items) =>
-        @items = @flattenAndInjectRange(items)
+        @items = items
