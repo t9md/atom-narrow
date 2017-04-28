@@ -659,8 +659,12 @@ class Ui
       moveAndScroll()
 
   preview: ->
+    # console.log 'called preview!'
     return unless @isActive()
     return unless item = @items.getSelectedItem()
+    # FIXME uselessly preview called multiple time on startup.
+    # return if @inPreview
+    # console.log 'and execute preview!'
 
     @inPreview = true
     @provider.openFileForItem(item, activatePane: false).then (editor) =>

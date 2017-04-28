@@ -216,14 +216,20 @@ class ProviderBase
 
   openFileForItem: ({filePath}, {activatePane}={}) ->
     pane = @getPaneToOpenItem()
-    if @boundToSingleFile and @editor.isAlive() and (pane? and pane is paneForItem(@editor))
-      pane.activate() if activatePane
-      pane.activateItem(@editor, pending: true)
-      return Promise.resolve(@editor)
+
+    itemToOpen = null
+    if @boundToSingleFile and @editor.isAlive() and (pane is paneForItem(@editor))
+      itemToOpen = @editor
 
     filePath ?= @editor.getPath()
+    itemToOpen ?= pane.itemForURI(filePath)
+    if itemToOpen?
+      pane.activate() if activatePane
+      pane.activateItem(itemToOpen)
+      # console.log 'early return'
+      return Promise.resolve(itemToOpen)
 
-    openOptions = {pending: true, activatePane: activatePane}
+    openOptions = {pending: true, activatePane: activatePane, activateItem: true}
     if WorkspaceOpenAcceptPaneOption
       openOptions.pane = pane
     else

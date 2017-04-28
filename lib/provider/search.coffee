@@ -93,9 +93,28 @@ module.exports =
 class Search extends SearchBase
   propertiesToRestoreOnReopen: ['projects']
 
-  getRange: (point, filePath) =>
-    if @isRegExpSearch
+  collectRanges: (filePath) ->
+    editors = atom.workspace.getTextEditors()
+    ranges = []
+    if editor = _.find(editors, (editor) -> editor.getPath() is filePath)
+      editor.scan(@searchRegExp, ({range}) -> ranges.push(range))
+    if ranges.length
+      # FIXME: why this guard is necessary is timing issue.l
+      # Because highlighter kick collectRange is caled very just afterr workspace.open?
+      # At that time, scan result is empty, although I know it's actually matching item in editor.
+      
+      # console.log "collected ", filePath, ranges.length
+      ranges
+    else
+      # console.log "collected but empty", filePath,
       null
+
+  getRange: (point, filePath) =>
+    # console.log 'getRange', point, filePath
+    if @isRegExpSearch
+      @rangesByFilePath ?= {}
+      if ranges = (@rangesByFilePath[filePath] ?= @collectRanges(filePath))
+        _.find(ranges, (range) -> range.start.isEqual(point))
     else
       Range.fromPointWithDelta(point, 0, @searchTerm.length)
 
