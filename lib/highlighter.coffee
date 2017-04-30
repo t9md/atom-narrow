@@ -15,7 +15,7 @@ class Highlighter
   regexp: null
   lineMarker: null
 
-  highlightNarrowEditor: ->
+  highlightNarrowEditor: =>
     editor = @ui.editor
 
     if @markerLayerForUi?
@@ -40,20 +40,21 @@ class Highlighter
     @markerLayerByEditor = new Map()
     @decorationByItem = new Map()
     @subscriptions = new CompositeDisposable
+    subscribe = (disposable) => @subscriptions.add(disposable)
 
     if @needHighlight
       if @provider.boundToSingleFile
-        @subscriptions.add @ui.onDidRefresh(@refreshAll.bind(this))
+        subscribe @ui.onDidRefresh(@refreshAll)
       else
         # When search and atom-scan did regexp search, it can't use syntax highlight
         # for narrow-editor, so use normal marker decoration to highlight original searchTerm
         if @provider.useRegex
-          @subscriptions.add @ui.onDidRefresh(@highlightNarrowEditor.bind(this))
-        @subscriptions.add @ui.onDidStopRefreshing(@refreshAll.bind(this))
+          subscribe @ui.onDidRefresh(@highlightNarrowEditor)
+        subscribe @ui.onDidStopRefreshing(@refreshAll)
 
-    @subscriptions.add @ui.onDidConfirm(@clearCurrentAndLineMarker.bind(this))
+    subscribe @ui.onDidConfirm(@clearCurrentAndLineMarker)
 
-    @subscriptions.add @ui.onDidPreview ({editor, item}) =>
+    subscribe @ui.onDidPreview ({editor, item}) =>
       @clearCurrentAndLineMarker()
       @drawLineMarker(editor, item)
       if @needHighlight
@@ -72,7 +73,7 @@ class Highlighter
 
   # Highlight items
   # -------------------------
-  refreshAll: ->
+  refreshAll: =>
     @clear()
     @highlight(editor) for editor in getVisibleEditors()
     @highlightCurrent() if @ui.isActive()
@@ -103,7 +104,7 @@ class Highlighter
       # FIXME: BUG decorationByItem should managed by per editor.
       @decorationByItem.set(item, editor.decorateMarker(marker, decorationOptions))
 
-  clearCurrentAndLineMarker: ->
+  clearCurrentAndLineMarker: =>
     @clearLineMarker()
     @clearCurrent()
 
