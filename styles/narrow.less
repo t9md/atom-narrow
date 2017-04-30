@@ -51,18 +51,22 @@ atom-text-editor {
 @flash-color: fadeout(darken(@syntax-selection-flash-color, 10%), 20%);
 .flash-animation(narrow-match-flash, @flash-color);
 
+@search-match-base: @syntax-result-marker-color;
+@search-match: hsla(hue(@search-match-base), saturation(@search-match-base), lightness(@search-match-base), 0.4);
+@search-match-border-current: hsla(hue(@search-match-base), saturation(@search-match-base), lightness(@search-match-base), 1.0);
+ 
 atom-text-editor {
   .narrow-match {
     .region {
       box-sizing: border-box;
       border-radius: @component-border-radius;
 
-      background-color: @syntax-result-marker-color;
+      background-color: @search-match;
       border: 2px solid transparent;
       transition: border-color .2s;
     }
     &.current .region {
-      border-color: @syntax-result-marker-color-selected;
+      border-color: @search-match-border-current;
       transition-duration: .1s;
     }
     &.flash .region {
