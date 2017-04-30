@@ -1,6 +1,7 @@
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
+Input = null
 {getCurrentWord, findFirstAndLastIndexBy} = require '../utils'
 history = require '../input-history-manager'
 
@@ -17,6 +18,17 @@ class SearchBase extends ProviderBase
   querySelectedText: false
   searchTerm: null
   isRegExpSearch: false
+
+  @useReglarExpressionSearch: null
+  getUseReglarExpressionSearch: ->
+    if @getConfig('rememberUseReglarExpressionSearch')
+      @constructor.useReglarExpressionSearch ? @getConfig('useReglarExpressionSearch')
+    else
+      @getConfig('useReglarExpressionSearch')
+
+  setUseReglarExpressionSearch: (value) ->
+    if @getConfig('rememberUseReglarExpressionSearch')
+      @constructor.useReglarExpressionSearch = value
 
   getSearchTerm: ->
     if @options.search
@@ -46,17 +58,18 @@ class SearchBase extends ProviderBase
 
     if @searchTerm?
       Promise.resolve(@searchTerm).then =>
-        history.save(@searchTerm)
+        history.save(@searchTerm, false)
         @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
         return @searchTerm
     else
-      @readInput().then ({text, isRegExp}) =>
+      Input ?= require '../input'
+      new Input().readInput(@getUseReglarExpressionSearch()).then ({text, isRegExp}) =>
+        @setUseReglarExpressionSearch(isRegExp)
         @searchTerm = text
-
+        history.save(@searchTerm, isRegExp)
         # Automatically switch to static search for faster range calcuration and good syntax highlight
         @isRegExpSearch = isRegExp and _.escapeRegExp(text) isnt text
 
-        history.save(@searchTerm)
         @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
         return @searchTerm
 

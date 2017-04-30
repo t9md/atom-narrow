@@ -27,12 +27,13 @@ class Scan extends ProviderBase
     regExp = cloneRegExp(regexp)
     for lineText, row in @editor.buffer.getLines()
       regExp.lastIndex = 0
-      while result = regExp.exec(lineText)
-        start = new Point(row, result.index)
+      while match = regExp.exec(lineText)
+        start = new Point(row, match.index)
+        end = start.translate([0, match[0].length])
         items.push(
           text: lineText
           point: start
-          range: Range.fromPointWithDelta(start, 0, result[0].length)
+          range: new Range(start, end)
         )
     items
 

@@ -1,6 +1,13 @@
 _ = require 'underscore-plus'
 {getValidIndexForList} = require './utils'
 
+class Entry
+  constructor: (@text, @isRegExp) ->
+
+  # use to eliminate duplicate entries by _.uniq()
+  toString: ->
+    @text + ':' + String(@isRegExp)
+
 module.exports =
 new class InputHistoryManager
   maxSize: 100
@@ -13,12 +20,13 @@ new class InputHistoryManager
       when 'previous' then +1
       when 'next' then -1
     @index = getValidIndexForList(@entries, @index + delta)
-    @entries[@index] ? ''
+    @entries[@index]
 
-  save: (entry) ->
-    return unless entry
+  save: (text, isRegExp) ->
+    return unless text
+    entry = new Entry(text, isRegExp)
     @entries.unshift(entry)
-    @entries = _.uniq(@entries)
+    @entries = _.uniq(@entries, (entry) -> entry.toString())
     @entries.splice(@maxSize) if @entries.length > @maxSize
 
   reset: ->
