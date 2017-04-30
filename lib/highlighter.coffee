@@ -15,21 +15,24 @@ class Highlighter
   regexp: null
   lineMarker: null
 
-  createMarkerLayerForUi: ->
+  highlightNarrowEditor: ->
     editor = @ui.editor
-    @markerLayerForUi = editor.addMarkerLayer()
-    decorationOptions = {type: 'highlight', class: 'narrow-match-ui'}
-    @decorationLayerForUi = editor.decorateMarkerLayer(@markerLayerForUi, decorationOptions)
 
-  scanRangesInNarrowEditor: (regExp, fn) ->
-    lines = @ui.editor.buffer.getLines()
-    regExp = cloneRegExp(regExp)
-    for line, row in lines when isNormalItem(item = @ui.items.getItemForRow(row))
+    if @markerLayerForUi?
+      @markerLayerForUi.clear()
+    else
+      @markerLayerForUi = editor.addMarkerLayer()
+      decorationOptions = {type: 'highlight', class: 'narrow-match-ui'}
+      @decorationLayerForUi = editor.decorateMarkerLayer(@markerLayerForUi, decorationOptions)
+
+    regExp = cloneRegExp(@provider.searchRegExp)
+    for line, row in editor.buffer.getLines() when isNormalItem(item = @ui.items.getItemForRow(row))
       regExp.lastIndex = 0
       while match = regExp.exec(item.text)
-        start = new Point(row, match.index + item._lineHeader.length)
-        end = start.translate([0, match[0].length])
-        fn(new Range(start, end))
+        startColumn = match.index + item._lineHeader.length
+        endColumn = startColumn + match[0].length
+        range = [[row, startColumn], [row, endColumn]]
+        @markerLayerForUi.markBufferRange(range, invalidate: 'inside')
 
   constructor: (@ui) ->
     @provider = @ui.provider
@@ -45,12 +48,7 @@ class Highlighter
         # When search and atom-scan did regexp search, it can't use syntax highlight
         # for narrow-editor, so use normal marker decoration to highlight original searchTerm
         if @provider.useRegex
-          @subscriptions.add @ui.onDidRefresh =>
-            @createMarkerLayerForUi() unless @markerLayerForUi?
-            @markerLayerForUi.clear()
-            @scanRangesInNarrowEditor @provider.searchRegExp, (range) =>
-              @markerLayerForUi.markBufferRange(range, invalidate: 'inside')
-
+          @subscriptions.add @ui.onDidRefresh(@highlightNarrowEditor.bind(this))
         @subscriptions.add @ui.onDidStopRefreshing(@refreshAll.bind(this))
 
     @subscriptions.add @ui.onDidConfirm(@clearCurrentAndLineMarker.bind(this))
