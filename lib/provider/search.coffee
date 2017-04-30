@@ -89,7 +89,7 @@ class Search extends SearchBase
     @mergeState(super, {@projects})
 
   getRangeForItem: (item) =>
-    if @isRegExpSearch
+    if @useRegex
       matchedText = item.text[item.point.column...].match(@searchRegExp)[0]
     else
       matchedText = @searchTerm

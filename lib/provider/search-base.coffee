@@ -1,11 +1,11 @@
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
-Input = null
 {getCurrentWord, findFirstAndLastIndexBy} = require '../utils'
 history = require '../input-history-manager'
 
 lastIgnoreCaseOption = {}
+readInput = require '../read-input'
 
 module.exports =
 class SearchBase extends ProviderBase
@@ -17,21 +17,21 @@ class SearchBase extends ProviderBase
   supportCacheItems: true
   querySelectedText: false
   searchTerm: null
-  isRegExpSearch: false
+  useRegex: false
 
   getState: ->
-    @mergeState(super, {@isRegExpSearch})
+    @mergeState(super, {@useRegex})
 
-  @useReglarExpressionSearch: null
-  getUseReglarExpressionSearch: ->
-    if @getConfig('rememberUseReglarExpressionSearch')
-      @constructor.useReglarExpressionSearch ? @getConfig('useReglarExpressionSearch')
+  @useRegex: null
+  getUseRegex: ->
+    if @getConfig('rememberUseRegex')
+      @constructor.useRegex ? @getConfig('useRegex')
     else
-      @getConfig('useReglarExpressionSearch')
+      @getConfig('useRegex')
 
-  setUseReglarExpressionSearch: (value) ->
-    if @getConfig('rememberUseReglarExpressionSearch')
-      @constructor.useReglarExpressionSearch = value
+  setUseRegex: (value) ->
+    if @getConfig('rememberUseRegex')
+      @constructor.useRegex = value
 
   getSearchTerm: ->
     if @options.search
@@ -65,13 +65,12 @@ class SearchBase extends ProviderBase
         @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
         return @searchTerm
     else
-      Input ?= require '../input'
-      new Input().readInput(@getUseReglarExpressionSearch()).then ({text, isRegExp}) =>
-        @setUseReglarExpressionSearch(isRegExp)
+      readInput(@getUseRegex()).then ({text, useRegex}) =>
+        @setUseRegex(useRegex)
         @searchTerm = text
-        history.save(@searchTerm, isRegExp)
+        history.save(@searchTerm, useRegex)
         # Automatically switch to static search for faster range calcuration and good syntax highlight
-        @isRegExpSearch = isRegExp and _.escapeRegExp(text) isnt text
+        @useRegex = useRegex and _.escapeRegExp(text) isnt text
 
         @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
         return @searchTerm
@@ -93,7 +92,7 @@ class SearchBase extends ProviderBase
     @initiallySearchedRegexp = @searchRegExp
 
   resetRegExpForSearchTerm: ->
-    if @isRegExpSearch
+    if @useRegex
       flags = 'g'
       flags += 'i' if @searchIgnoreCase
       expression = @searchTerm

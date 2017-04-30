@@ -7,9 +7,8 @@ suppressEvent = (event) ->
   event.preventDefault()
   event.stopPropagation()
 
-module.exports =
 class Input
-  regExp: null
+  useRegex: null
 
   constructor: ->
     history.reset()
@@ -22,11 +21,11 @@ class Input
     @editorElement.classList.add('narrow-input')
 
     atom.commands.add @editorElement,
-      'narrow-input:toggle-regexp': => @toggleRegExp()
+      'narrow-input:toggle-use-regex': => @toggleUseRegex()
 
     @container.innerHTML = """
       <div class='options-container'>
-        <span class='regex-search inline-block-tight btn'>.*</span>
+        <span class='use-regex inline-block-tight btn'>.*</span>
       </div>
       <div class='editor-container'>
       </div>
@@ -35,23 +34,22 @@ class Input
     editorContainer = @container.getElementsByClassName('editor-container')[0]
     editorContainer.appendChild(@editorElement)
 
-    @regExpButton = @container.getElementsByClassName('regex-search')[0]
-    @regExpButton.addEventListener 'click', (event) ->
+    @useRegexButton = @container.getElementsByClassName('use-regex')[0]
+    @useRegexButton.addEventListener 'click', (event) ->
       suppressEvent(event)
-      @toggleRegExp()
+      @toggleUseRegex()
     @editorElement.addEventListener('click', suppressEvent)
     addToolTips(
-      element: @regExpButton
-      commandName: 'narrow-input:toggle-regexp'
+      element: @useRegexButton
+      commandName: 'narrow-input:toggle-use-regex'
       keyBindingTarget: @editorElement
     )
 
-  toggleRegExp: ->
-    @regExp = not @regExp
-    @updateRegExpButton()
+  toggleUseRegex: ->
+    @updateUseRegexButton(@useRegex = not @useRegex)
 
-  updateRegExpButton: ->
-    @regExpButton.classList.toggle('btn-primary', @regExp)
+  updateUseRegexButton: (value) ->
+    @useRegexButton.classList.toggle('btn-primary', value)
 
   destroy: ->
     return if @destroyed
@@ -69,12 +67,11 @@ class Input
 
   recallHistory: (direction) ->
     if entry = history.get(direction)
-      @regExp = entry.isRegExp
-      @updateRegExpButton()
+      @updateUseRegexButton(@useRegex = entry.useRegex)
       @editor.setText(entry.text)
 
-  readInput: (@regExp) ->
-    @updateRegExpButton()
+  readInput: (@useRegex) ->
+    @updateUseRegexButton(@useRegex)
 
     @panel = atom.workspace.addBottomPanel(item: @container, visible: true)
     @disposables.add atom.commands.add @editorElement,
@@ -99,6 +96,11 @@ class Input
     @provider = null
     @resolve(
       text: @editor.getText()
-      isRegExp: @regExp
+      useRegex: @useRegex
     )
     @destroy()
+
+readInput = (args...) ->
+  new Input().readInput(args...)
+
+module.exports = readInput

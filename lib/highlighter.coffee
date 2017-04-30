@@ -44,7 +44,7 @@ class Highlighter
       else
         # When search and atom-scan did regexp search, it can't use syntax highlight
         # for narrow-editor, so use normal marker decoration to highlight original searchTerm
-        if @provider.isRegExpSearch
+        if @provider.useRegex
           @subscriptions.add @ui.onDidRefresh =>
             @createMarkerLayerForUi() unless @markerLayerForUi?
             @markerLayerForUi.clear()

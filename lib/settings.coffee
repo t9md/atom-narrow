@@ -137,8 +137,8 @@ newProviderConfigForSearchAndAtomScan = (otherProperties={}) ->
     rememberIgnoreCaseForByHandSearch: false
     rememberIgnoreCaseForByCurrentWordSearch: false
     searchWholeWord: false
-    useReglarExpressionSearch: false
-    rememberUseReglarExpressionSearch: false
+    useRegex: false
+    rememberUseRegex: false
   newProviderConfig(_.extend(properties, otherProperties))
 
 providerSettings =
