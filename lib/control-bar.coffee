@@ -68,9 +68,7 @@ class ControlBar
     @container.appendChild(element)
 
     # searchTerm
-    searchTermElement = element.getElementsByClassName('search-term')[0]
-    @ui.grammar.onDidChangeSearchTerm (regexp) ->
-      searchTermElement.textContent = regexp?.toString() ? ''
+    @searchTermElement = element.getElementsByClassName('search-term')[0]
 
     # searchOptions
     [ignoreCaseButton, wholeWordButton] = element.getElementsByTagName('button')
@@ -108,6 +106,9 @@ class ControlBar
       states.ignoreCaseButton = @provider.searchIgnoreCase
       states.wholeWordButton = @provider.searchWholeWord
     @updateStateElements(states)
+
+  updateSearchTermElement: (regExp) ->
+    @searchTermElement.textContent = regExp?.toString() ? ''
 
   updateStateElements: (states) ->
     for state, value of states

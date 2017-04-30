@@ -22,20 +22,23 @@ class Scan extends ProviderBase
     else
       @searchWholeWord = @getConfig('searchWholeWord')
 
-  scanEditor: (regexp) ->
+  scanEditor: (regExp) ->
     items = []
-    regExp = cloneRegExp(regexp)
+    regExp = cloneRegExp(regExp)
     for lineText, row in @editor.buffer.getLines()
       regExp.lastIndex = 0
       while match = regExp.exec(lineText)
-        start = new Point(row, match.index)
-        end = start.translate([0, match[0].length])
-        items.push(
-          text: lineText
-          point: start
-          range: new Range(start, end)
-        )
+        range = new Range([row, match.index], [row, match.index + match[0].length])
+        items.push(text: lineText, point: range.start, range: range)
     items
+
+  updateRegExp: (regExp) ->
+    @ui.highlighter.setRegExp(regExp)
+    @ui.grammar.setSearchTerm(regExp)
+    @ui.controlBar.updateSearchTermElement(regExp)
+    unless regExp?
+      @ui.highlighter.clear()
+      @ui.grammar.activate()
 
   getItems: ->
     searchTerm = @ui.getQuery().split(/\s+/)[0]
@@ -53,21 +56,15 @@ class Scan extends ProviderBase
         wholeWordButton: @searchWholeWord
         ignoreCaseButton: @searchIgnoreCase
 
-      @ui.highlighter.setRegExp(regexp)
-      @ui.grammar.setSearchTerm(regexp)
+      @updateRegExp(regexp)
+
       @initiallySearchedRegexp = regexp
       @scanEditor(regexp)
     else
-      # Reset search term and grammar
-      @ui.highlighter.clear()
-      @ui.highlighter.setRegExp(null)
-      @ui.grammar.setSearchTerm(null)
-      @ui.grammar.activate()
-
+      @updateRegExp(null)
       @editor.buffer.getLines().map (text, row) ->
-        point: new Point(row, 0)
-        range: new Range([row, 0], [row, 0])
-        text: text
+        point = new Point(row, 0)
+        {text, point, range: new Range(point, point)}
 
   filterItems: (items, {include}) ->
     include.shift()

@@ -94,11 +94,12 @@ class SearchBase extends ProviderBase
       flags = 'g'
       flags += 'i' if @searchIgnoreCase
       @searchRegExp = new RegExp(@searchTerm, flags)
-      @ui.highlighter.setRegExp(@searchRegExp)
     else
       @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
-      @ui.highlighter.setRegExp(@searchRegExp)
       @ui.grammar.setSearchTerm(@searchRegExp)
+
+    @ui.highlighter.setRegExp(@searchRegExp)
+    @ui.controlBar.updateSearchTermElement(@searchRegExp)
 
   toggleSearchWholeWord: ->
     super

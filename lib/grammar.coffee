@@ -25,9 +25,6 @@ class Grammar
   filePath: path.join(__dirname, 'grammar', 'narrow.cson')
   scopeName: 'source.narrow'
 
-  onDidChangeSearchTerm: (fn) -> @emitter.on('did-change-search-term', fn)
-  emitDidChangeSearchTerm: (searchTerm) -> @emitter.emit('did-change-search-term', searchTerm)
-
   constructor: (@editor, {@includeHeaderRules}={}) ->
     @emitter = new Emitter
 
@@ -58,7 +55,6 @@ class Grammar
       @searchTerm = "(?i:#{regexp.source})"
     else
       @searchTerm = source
-    @emitDidChangeSearchTerm(regexp)
 
   getRule: ->
     rule =

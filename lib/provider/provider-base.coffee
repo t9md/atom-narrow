@@ -11,7 +11,6 @@ _ = require 'underscore-plus'
   splitPane
   getFirstCharacterPositionForBufferRow
   isNarrowEditor
-  isNormalItem
   getCurrentWord
 } = require '../utils'
 Ui = require '../ui'

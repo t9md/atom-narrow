@@ -1,16 +1,35 @@
-{CompositeDisposable} = require 'atom'
+{CompositeDisposable, Point, Range} = require 'atom'
+
 _ = require 'underscore-plus'
 {
   getVisibleEditors
   isTextEditor
   isNarrowEditor
   updateDecoration
+  cloneRegExp
+  isNormalItem
 } = require './utils'
 
 module.exports =
 class Highlighter
   regexp: null
   lineMarker: null
+
+  createMarkerLayerForUi: ->
+    editor = @ui.editor
+    @markerLayerForUi = editor.addMarkerLayer()
+    decorationOptions = {type: 'highlight', class: 'narrow-match-ui'}
+    @decorationLayerForUi = editor.decorateMarkerLayer(@markerLayerForUi, decorationOptions)
+
+  scanRangesInNarrowEditor: (regExp, fn) ->
+    lines = @ui.editor.buffer.getLines()
+    regExp = cloneRegExp(regExp)
+    for line, row in lines when isNormalItem(item = @ui.items.getItemForRow(row))
+      regExp.lastIndex = 0
+      while match = regExp.exec(item.text)
+        start = new Point(row, match.index + item._lineHeader.length)
+        end = start.translate([0, match[0].length])
+        fn(new Range(start, end))
 
   constructor: (@ui) ->
     @provider = @ui.provider
@@ -23,6 +42,15 @@ class Highlighter
       if @provider.boundToSingleFile
         @subscriptions.add @ui.onDidRefresh(@refreshAll.bind(this))
       else
+        # When search and atom-scan did regexp search, it can't use syntax highlight
+        # for narrow-editor, so use normal marker decoration to highlight original searchTerm
+        if @provider.isRegExpSearch
+          @subscriptions.add @ui.onDidRefresh =>
+            @createMarkerLayerForUi() unless @markerLayerForUi?
+            @markerLayerForUi.clear()
+            @scanRangesInNarrowEditor @provider.searchRegExp, (range) =>
+              @markerLayerForUi.markBufferRange(range, invalidate: 'inside')
+
         @subscriptions.add @ui.onDidStopRefreshing(@refreshAll.bind(this))
 
     @subscriptions.add @ui.onDidConfirm(@clearCurrentAndLineMarker.bind(this))
@@ -37,6 +65,9 @@ class Highlighter
   setRegExp: (@regexp) ->
 
   destroy: ->
+    @markerLayerForUi?.destroy()
+    @decorationLayerForUi?.destroy()
+
     @clear()
     @clearCurrentAndLineMarker()
     @subscriptions.dispose()
@@ -61,7 +92,7 @@ class Highlighter
 
     # FIXME: highlight called multiple time uselessly
     # console.log "called for", editor.getPath()
-    
+
     return if @provider.boundToSingleFile and editor isnt @provider.editor
     return if @markerLayerByEditor.has(editor)
 
