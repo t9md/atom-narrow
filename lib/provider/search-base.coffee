@@ -53,10 +53,8 @@ class SearchBase extends ProviderBase
       @readInput().then ({text, isRegExp}) =>
         @searchTerm = text
 
-        # Automatically switched to static search since it's faster for highlight
-        # And good for grammar syntax highlight
-        # @isRegExpSearch = isRegExp and _.escapeRegExp(text) isnt text
-        @isRegExpSearch = isRegExp
+        # Automatically switch to static search for faster range calcuration and good syntax highlight
+        @isRegExpSearch = isRegExp and _.escapeRegExp(text) isnt text
 
         history.save(@searchTerm)
         @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
