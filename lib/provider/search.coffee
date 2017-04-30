@@ -22,13 +22,12 @@ unescapeRegExpForRg = (string) ->
     string.replace(/\\\//g, '/')
   else
     ''
+
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
     if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
       console.log "ERROR"
     handle()
-
-
 
 RegExpForOutPutLine = /^(.*?):(\d+):(\d+):(.*)$/
 getOutputterForProject = (project, items) ->
