@@ -85,7 +85,8 @@ getProjectDirectoryForFilePath = (filePath) ->
 
 module.exports =
 class Search extends SearchBase
-  propertiesToRestoreOnReopen: ['projects']
+  getState: ->
+    @mergeState(super, {@projects})
 
   getRangeForItem: (item) =>
     if @isRegExpSearch

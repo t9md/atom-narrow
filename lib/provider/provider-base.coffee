@@ -24,13 +24,13 @@ class ProviderBase
 
   @reopen: ->
     if state = @destroyedProviderStates.shift()
-      {name, options, properties, uiProperties} = state
-      @start(name, options, {properties, uiProperties})
+      {name, options, state} = state
+      @start(name, options, state)
 
-  @start: (name, options, restoredState) ->
+  @start: (name, options, state) ->
     klass = require("./#{name}")
     editor = atom.workspace.getActiveTextEditor()
-    new klass(editor, options, restoredState).start()
+    new klass(editor, options, state).start()
 
   @saveState: (provider) ->
     @destroyedProviderStates.unshift(provider.saveState())
@@ -114,32 +114,31 @@ class ProviderBase
   isActive: ->
     isActiveEditor(@editor)
 
-  saveState: ->
-    properties = {
+  mergeState: (stateA, stateB) ->
+    Object.assign(stateA, stateB)
+
+  getState: ->
+    {
       @searchWholeWord
       @searchWholeWordChangedManually
       @searchIgnoreCase
       @searchIgnoreCaseChangedManually
       @searchTerm
     }
-    for property in @propertiesToRestoreOnReopen ? []
-      properties[property] = this[property]
 
+  saveState: ->
     {
       name: @dashName
       options: {query: @ui.lastQuery}
-      properties: properties
-      uiProperties: {
-        excludedFiles: @ui.excludedFiles
-        queryForSelectFiles: @ui.queryForSelectFiles
-        needRebuildExcludedFiles: @ui.needRebuildExcludedFiles
-      }
+      state:
+        provider: @getState()
+        ui: @ui.getState()
     }
 
   constructor: (editor, @options={}, @restoredState=null) ->
     if @restoredState?
       @reopened = true
-      _.extend(this, @restoredState.properties)
+      @mergeState(this, @restoredState.provider)
 
     @name = @constructor.name
     @dashName = _.dasherize(@name)
@@ -160,7 +159,7 @@ class ProviderBase
     new Promise (resolve) =>
       @checkReady().then (ready) =>
         if ready
-          @ui = new Ui(this, {@query}, @restoredState?.uiProperties)
+          @ui = new Ui(this, {@query}, @restoredState?.ui)
           @initialize()
           @ui.open(pending: @options.pending).then =>
             resolve(@ui)

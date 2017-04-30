@@ -19,6 +19,9 @@ class SearchBase extends ProviderBase
   searchTerm: null
   isRegExpSearch: false
 
+  getState: ->
+    @mergeState(super, {@isRegExpSearch})
+
   @useReglarExpressionSearch: null
   getUseReglarExpressionSearch: ->
     if @getConfig('rememberUseReglarExpressionSearch')
@@ -93,7 +96,10 @@ class SearchBase extends ProviderBase
     if @isRegExpSearch
       flags = 'g'
       flags += 'i' if @searchIgnoreCase
-      @searchRegExp = new RegExp(@searchTerm, flags)
+      expression = @searchTerm
+      if @searchWholeWord
+        expression = "\\b#{@searchTerm}\\b"
+      @searchRegExp = new RegExp(expression, flags)
     else
       @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
       @ui.grammar.setSearchTerm(@searchRegExp)

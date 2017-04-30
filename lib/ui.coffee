@@ -141,6 +141,13 @@ class Ui
   isModified: ->
     @modifiedState
 
+  getState: ->
+    {
+      @excludedFiles
+      @queryForSelectFiles
+      @needRebuildExcludedFiles
+    }
+
   setModifiedState: (state) ->
     return if state is @modifiedState
 
@@ -180,10 +187,10 @@ class Ui
       @editorElement.classList.remove('read-only')
       @vmpActivateInsertMode() if @vmpIsNormalMode()
 
-  constructor: (@provider, {@query}={}, properties) ->
-    if properties?
+  constructor: (@provider, {@query}={}, restoredState) ->
+    if restoredState?
       # This is `narrow:reopen`, to restore STATE properties.
-      _.extend(this, properties)
+      Object.assign(this, restoredState)
 
     SelectFiles ?= require "./provider/select-files"
 
