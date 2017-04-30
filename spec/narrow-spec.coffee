@@ -372,19 +372,28 @@ describe "narrow", ->
         setCursor(r4[1]); previousItem(); ensureCursor([2, 0])
 
   describe "auto reveal on start behavior( revealOnStartCondition )", ->
-    [r1, r2, r3, r4, getEnsureStartState] = []
-    beforeEach ->
-      getEnsureStartState = (startOptions) ->
-        (point, options) ->
-          runs -> editor.setCursorBufferPosition(point)
-          waitsForStartScan(startOptions)
-          runs -> ensure(options)
-          runs -> ui.destroy()
+    [points, pointsA] = []
+    getEnsureStartState = (startOptions) ->
+      (point, options) ->
+        runs -> editor.setCursorBufferPosition(point)
+        waitsForStartScan(startOptions)
+        runs -> ensure(options)
+        runs -> ui.destroy()
 
-      r1 = [[0, 0], [0, 3]] # `line` range of "line 1"
-      r2 = [[1, 2], [1, 6]] # `line` range of "  line 2"
-      r3 = [[2, 0], [2, 3]] # `line` range of "line 3"
-      r4 = [[3, 2], [3, 6]] # `line` range of "  line 4"
+    beforeEach ->
+      headerLength = "1: 1: ".length
+      points = [
+        [0, 0] # `line` start of "line 1"
+        [1, 2] # `line` start of "  line 2"
+        [2, 0] # `line` start of "line 3"
+        [3, 2] # `line` start of "  line 4"
+      ]
+      pointsA = [
+        [1, 0 + headerLength]
+        [2, 2 + headerLength]
+        [3, 0 + headerLength]
+        [4, 2 + headerLength]
+      ]
 
       editor.setText """
         line 1
@@ -407,10 +416,10 @@ describe "narrow", ->
           4: 3:   line 4
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
-        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 6], text: text)
-        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 8], text: text)
-        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 6], text: text)
-        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 8], text: text)
+        ensureStartState(points[0], cursor: pointsA[0], text: text, selectedItemText: 'line 1')
+        ensureStartState(points[1], cursor: pointsA[1], text: text, selectedItemText: '  line 2')
+        ensureStartState(points[2], cursor: pointsA[2], text: text, selectedItemText: 'line 3')
+        ensureStartState(points[3], cursor: pointsA[3], text: text, selectedItemText: '  line 4')
 
       it "NOT auto reveal when no query was provided", ->
         text = """
@@ -422,10 +431,8 @@ describe "narrow", ->
           """
         ensureStartState = getEnsureStartState()
         options = {selectedItemText: "line 1", cursor: [0, 0], text: text}
-        ensureStartState(r1[0], options)
-        ensureStartState(r2[0], options)
-        ensureStartState(r3[0], options)
-        ensureStartState(r4[0], options)
+        for point in points
+          ensureStartState(point, options)
 
     describe "revealOnStartCondition = never", ->
       beforeEach ->
@@ -441,10 +448,8 @@ describe "narrow", ->
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
         options = {selectedItemText: "line 1", cursor: [0, 4], text: text}
-        ensureStartState(r1[0], options)
-        ensureStartState(r2[0], options)
-        ensureStartState(r3[0], options)
-        ensureStartState(r4[0], options)
+        for point in points
+          ensureStartState(point, options)
 
       it "NOT auto reveal when no query was provided", ->
         text = """
@@ -456,10 +461,8 @@ describe "narrow", ->
           """
         ensureStartState = getEnsureStartState()
         options = {selectedItemText: "line 1", cursor: [0, 0], text: text}
-        ensureStartState(r1[0], options)
-        ensureStartState(r2[0], options)
-        ensureStartState(r3[0], options)
-        ensureStartState(r4[0], options)
+        for point in points
+          ensureStartState(point, options)
 
     describe "revealOnStartCondition = always", ->
       beforeEach ->
@@ -474,10 +477,38 @@ describe "narrow", ->
           4: 3:   line 4
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
-        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 6], text: text)
-        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 8], text: text)
-        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 6], text: text)
-        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 8], text: text)
+        ensureStartState points[0], cursor: pointsA[0], text: text, selectedItemText: 'line 1'
+        ensureStartState points[1], cursor: pointsA[1], text: text, selectedItemText: '  line 2'
+        ensureStartState points[2], cursor: pointsA[2], text: text, selectedItemText: 'line 3'
+        ensureStartState points[3], cursor: pointsA[3], text: text, selectedItemText: '  line 4'
+
+      it "auto reveal when initial query was provided when multiple match on same line", ->
+        lineText = "line line line line"
+        editor.setText(lineText)
+
+        text = """
+          line
+          1: 1: line line line line
+          1: 6: line line line line
+          1:11: line line line line
+          1:16: line line line line
+          """
+        ensureStartState = getEnsureStartState(queryCurrentWord: true)
+        headerLength = "1:16: ".length
+        points = [
+          [0, 0]
+          [0, 5]
+          [0, 10]
+          [0, 15]
+        ]
+        pointsA = [
+          [1, 0 + headerLength]
+          [2, 5 + headerLength]
+          [3, 10 + headerLength]
+          [4, 15 + headerLength]
+        ]
+        for point, i in points
+          ensureStartState(point, cursor: pointsA[i], text: text, selectedItemText: lineText)
 
       it "auto reveal for based on current line of bound-editor", ->
         text = """
@@ -488,10 +519,10 @@ describe "narrow", ->
           4: 1:   line 4
           """
         ensureStartState = getEnsureStartState()
-        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 6], text: text)
-        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 6], text: text)
-        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 6], text: text)
-        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 6], text: text)
+        ensureStartState(points[0], cursor: [1, 6], text: text, selectedItemText: "line 1")
+        ensureStartState(points[1], cursor: [2, 6], text: text, selectedItemText: "  line 2")
+        ensureStartState(points[2], cursor: [3, 6], text: text, selectedItemText: "line 3")
+        ensureStartState(points[3], cursor: [4, 6], text: text, selectedItemText: "  line 4")
 
   describe "narrow-editor auto-sync selected-item to active editor", ->
     [editor2] = []

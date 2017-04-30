@@ -138,6 +138,9 @@ itemForGitDiff = (diff, {editor, filePath}) ->
 isDefinedAndEqual = (a, b) ->
   a? and b? and a is b
 
+cloneRegExp = (regExp) ->
+  new RegExp(regExp.source, regExp.flags)
+
 # Utils used in Ui
 # =========================
 # item presenting
@@ -303,6 +306,7 @@ module.exports = {
   updateDecoration
   itemForGitDiff
   isDefinedAndEqual
+  cloneRegExp
 
   injectLineHeader
   ensureNoConflictForChanges

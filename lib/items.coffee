@@ -49,14 +49,6 @@ class Items
     column = @getFirstColumnForItem(@selectedItem)
     new Point(row, column)
 
-  getStartOfMatchedPosition: (regexp) ->
-    # Intentionally avoid directly scan narrow-editor by editor.scanInBufferRanges
-    # to skip lineHeader of each item.
-    if match = regexp.exec(@selectedItem.text)
-      row = @getRowForItem(@selectedItem)
-      column = @getFirstColumnForItem(@selectedItem) + match.index
-      new Point(row, column)
-
   getFirstColumnForItem: (item) ->
     if item._lineHeader?
       item._lineHeader.length

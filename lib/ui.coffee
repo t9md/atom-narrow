@@ -16,6 +16,7 @@ path = require 'path'
   findEqualLocationItem
   getItemsWithHeaders
   getItemsWithoutUnusedHeader
+  cloneRegExp
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -271,10 +272,9 @@ class Ui
     @refresh().then =>
       if @provider.needRevealOnStart()
         @syncToEditor(@provider.editor)
+        @moveToBeginningOfSelectedItem()
         if @provider.initiallySearchedRegexp?
           @moveToSearchedWordAtSelectedItem()
-        else
-          @moveToBeginningOfSelectedItem()
         @preview()
       else if @query and @autoPreviewOnQueryChange
         @preview()
@@ -600,7 +600,6 @@ class Ui
   observeCursorMove: ->
     @editor.onDidChangeCursorPosition (event) =>
       return if @ignoreCursorMove
-
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
       return if textChanged or
         (not cursor.selection.isEmpty()) or
@@ -640,6 +639,9 @@ class Ui
       wasAtPrompt = @isAtPrompt()
       @moveToSelectedItem(scrollToColumnZero: true)
       @emitDidMoveToItemArea() if wasAtPrompt
+
+  isInSyncedToProviderEditor: ->
+    @provider.boundToSingleFile or @items.getSelectedItem().filePath is @provider.editor.getPath()
 
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove, column}={}) ->
     return if (row = @items.getRowForSelectedItem()) is -1
@@ -717,8 +719,14 @@ class Ui
 
   moveToSearchedWordAtSelectedItem: ->
     if @items.hasSelectedItem()
-      if point = @items.getStartOfMatchedPosition(@provider.initiallySearchedRegexp)
-        @editor.setCursorBufferPosition(point)
+      if @isInSyncedToProviderEditor()
+        column = @provider.editor.getCursorBufferPosition().column
+      else
+        text = @items.getSelectedItem().text
+        column = cloneRegExp(@provider.initiallySearchedRegexp).exec(text).index
+
+      point = @items.getFirstPositionForSelectedItem().translate([0, column])
+      @editor.setCursorBufferPosition(point)
 
   moveToPrompt: ->
     @withIgnoreCursorMove =>
