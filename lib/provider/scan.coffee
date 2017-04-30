@@ -23,12 +23,16 @@ class Scan extends ProviderBase
 
   scanEditor: (regexp) ->
     items = []
-    @editor.scan regexp, ({range}) =>
-      items.push({
-        text: @editor.lineTextForBufferRow(range.start.row)
-        point: range.start
-        range: range
-      })
+    regExp = new RegExp(regexp.source, regexp.flags) # clone to reset lastIndex
+    for lineText, row in @editor.buffer.getLines()
+      regExp.lastIndex = 0
+      while result = regExp.exec(lineText)
+        start = new Point(row, result.index)
+        items.push(
+          text: lineText
+          point: start
+          range: Range.fromPointWithDelta(start, 0, result[0].length)
+        )
     items
 
   getItems: ->
