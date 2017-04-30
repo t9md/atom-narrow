@@ -50,15 +50,16 @@ class Items
     new Point(row, column)
 
   getStartOfMatchedPosition: (regexp) ->
-    # Intentionally avoid useing editor.getScanInBufferRanges.
-    # which does not match `^` using regex in this usecase.
-    column = regexp.exec(@selectedItem.text)?.index
-    if column?
-      new Point(@getRowForItem(@selectedItem), column)
+    # Intentionally avoid directly scan narrow-editor by editor.scanInBufferRanges
+    # to skip lineHeader of each item.
+    if match = regexp.exec(@selectedItem.text)
+      row = @getRowForItem(@selectedItem)
+      column = @getFirstColumnForItem(@selectedItem) + match.index
+      new Point(row, column)
 
   getFirstColumnForItem: (item) ->
     if item._lineHeader?
-      item._lineHeader.length - 1
+      item._lineHeader.length
     else
       0
 

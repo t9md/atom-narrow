@@ -52,11 +52,11 @@ class Item
     @point = new Point(row, column)
     @filePath = path.join(project, @filePath) if project
 
-  setRangeHint: (@getRange) ->
+  setRangeHint: (@getRangeForItem) ->
   # this.range is populated on-need via @setRange which is externally set by provider.
   Object.defineProperty @prototype, 'range',
     get: ->
-      @_range ?= @getRange(@point, @filePath)
+      @_range ?= @getRangeForItem(this)
 
 search = ({command, args, project, filePath}) ->
   options =
@@ -88,52 +88,12 @@ module.exports =
 class Search extends SearchBase
   propertiesToRestoreOnReopen: ['projects']
 
-  collectRanges: (filePath) ->
-    editors = atom.workspace.getTextEditors()
-    ranges = []
-
-    # Approach One: Line by line match to avoid across line match by editor.scan
-    if editor = _.find(editors, (editor) -> editor.getPath() is filePath)
-      regExp = new RegExp(@searchRegExp.source, @searchRegExp.flags) # clone to reset lastIndex
-      for lineText, i in editor.buffer.getLines()
-        regExp.lastIndex = 0
-        while result = regExp.exec(lineText)
-          start = [i, result.index]
-          end = [i, result[0].length]
-          ranges.push(new Range(start, end))
-
-    # Approach TWO: use editor.scan and exclude unwanted match
-    # if editor = _.find(editors, (editor) -> editor.getPath() is filePath)
-    #   spaces = "(?:^[\\t ]*\\r?\\n)|(?:\\r?\\n)"
-    #   newSource = ["(#{spaces})", "(#{@searchRegExp.source})"].join('|')
-    #   regExp = new RegExp(newSource, @searchRegExp.flags)
-    #   editor.scan regExp, ({range, match}) ->
-    #     return if match[1]
-    #     ranges.push(range)
-
-    if ranges.length
-      # FIXME: why this guard is necessary is timing issue.
-      # Because highlighter kick collectRange is caled very just afterr workspace.open?
-      # At that time, scan result is empty, although I know it's actually matching item in editor.
-      console.log "collected ", filePath, ranges.length
-      console.log ranges
-      ranges
-    else
-      console.log "collected but empty", filePath,
-      null
-
-  getRange: (point, filePath) =>
-    # console.log 'getRange', point, filePath
+  getRangeForItem: (item) =>
     if @isRegExpSearch
-      @rangesByFilePath ?= {}
-      if ranges = (@rangesByFilePath[filePath] ?= @collectRanges(filePath))
-        found = _.find(ranges, (range) -> range.start.isEqual(point))
-        # unless found?
-        #   console.log '=== not found', point, filePath
-          # console.log ranges.map (r) -> r.toString()
-        found
+      matchedText = item.text[item.point.column...].match(@searchRegExp)[0]
     else
-      Range.fromPointWithDelta(point, 0, @searchTerm.length)
+      matchedText = @searchTerm
+    Range.fromPointWithDelta(item.point, 0, matchedText.length)
 
   checkReady: ->
     if @options.currentProject
@@ -180,7 +140,7 @@ class Search extends SearchBase
     items = _.flatten(items)
     items = _.sortBy items, (item) -> item.filePath
     for item in items
-      item.setRangeHint(@getRange)
+      item.setRangeHint(@getRangeForItem)
     return items
 
   getItems: (filePath) ->
