@@ -92,7 +92,7 @@ class Ui
   onDidStopRefreshing: (fn) -> @emitter.on('did-stop-refreshing', fn)
   emitDidStopRefreshing: ->
     # Debounced, fired after 100ms delay
-    @_emitDidStopRefreshing ?= _.debounce((=> @emitter.emit('did-stop-refreshing')), 300)
+    @_emitDidStopRefreshing ?= _.debounce((=> @emitter.emit('did-stop-refreshing')), 100)
     @_emitDidStopRefreshing()
 
   onDidPreview: (fn) -> @emitter.on('did-preview', fn)
@@ -640,7 +640,7 @@ class Ui
       @moveToSelectedItem(scrollToColumnZero: true)
       @emitDidMoveToItemArea() if wasAtPrompt
 
-  isInSyncedToProviderEditor: ->
+  isInSyncToProviderEditor: ->
     @provider.boundToSingleFile or @items.getSelectedItem().filePath is @provider.editor.getPath()
 
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove, column}={}) ->
@@ -719,13 +719,15 @@ class Ui
 
   moveToSearchedWordAtSelectedItem: ->
     if @items.hasSelectedItem()
-      if @isInSyncedToProviderEditor()
-        column = @provider.editor.getCursorBufferPosition().column
+      point = @items.getFirstPositionForSelectedItem()
+
+      if @isInSyncToProviderEditor()
+        point.column += @provider.editor.getCursorBufferPosition().column
       else
         text = @items.getSelectedItem().text
-        column = cloneRegExp(@provider.initiallySearchedRegexp).exec(text).index
+        match = cloneRegExp(@provider.initiallySearchedRegexp).exec(text)
+        point.column += match.index
 
-      point = @items.getFirstPositionForSelectedItem().translate([0, column])
       @editor.setCursorBufferPosition(point)
 
   moveToPrompt: ->

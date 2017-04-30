@@ -96,9 +96,9 @@ class Input
     new Promise (@resolve) =>
 
   confirm: ->
-    result =
+    @provider = null
+    @resolve(
       text: @editor.getText()
       isRegExp: @regExp
-    @provider = null
-    @resolve(result)
+    )
     @destroy()
