@@ -479,7 +479,7 @@ describe "narrow", ->
         ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 6], text: text)
         ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 8], text: text)
 
-      it "NOT auto reveal when no query was provided", ->
+      it "auto reveal for based on current line of bound-editor", ->
         text = """
 
           1: 1: line 1
@@ -488,10 +488,10 @@ describe "narrow", ->
           4: 1:   line 4
           """
         ensureStartState = getEnsureStartState()
-        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 5], text: text)
-        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 5], text: text)
-        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 5], text: text)
-        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 5], text: text)
+        ensureStartState(r1[0], selectedItemText: "line 1", cursor: [1, 6], text: text)
+        ensureStartState(r2[0], selectedItemText: "  line 2", cursor: [2, 6], text: text)
+        ensureStartState(r3[0], selectedItemText: "line 3", cursor: [3, 6], text: text)
+        ensureStartState(r4[0], selectedItemText: "  line 4", cursor: [4, 6], text: text)
 
   describe "narrow-editor auto-sync selected-item to active editor", ->
     [editor2] = []
