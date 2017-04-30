@@ -138,6 +138,15 @@ itemForGitDiff = (diff, {editor, filePath}) ->
 isDefinedAndEqual = (a, b) ->
   a? and b? and a is b
 
+cloneRegExp = (regExp) ->
+  new RegExp(regExp.source, regExp.flags)
+
+addToolTips = ({element, commandName, keyBindingTarget}) ->
+  atom.tooltips.add element,
+    title: _.humanizeEventName(commandName.split(':')[1])
+    keyBindingCommand: commandName
+    keyBindingTarget: keyBindingTarget
+
 # Utils used in Ui
 # =========================
 # item presenting
@@ -303,6 +312,8 @@ module.exports = {
   updateDecoration
   itemForGitDiff
   isDefinedAndEqual
+  cloneRegExp
+  addToolTips
 
   injectLineHeader
   ensureNoConflictForChanges

@@ -1,18 +1,17 @@
 {CompositeDisposable, Disposable} = require 'atom'
 
 history = require './input-history-manager'
+{addToolTips} = require './utils'
 
 suppressEvent = (event) ->
   event.preventDefault()
   event.stopPropagation()
 
-RegExpStateByProvider = {}
-
 module.exports =
 class Input
   regExp: null
 
-  constructor: (@provider) ->
+  constructor: ->
     history.reset()
     @disposables = new CompositeDisposable()
 
@@ -37,13 +36,17 @@ class Input
     editorContainer.appendChild(@editorElement)
 
     @regExpButton = @container.getElementsByClassName('regex-search')[0]
-    @regExpButton.addEventListener('click', @toggleRegExp)
+    @regExpButton.addEventListener 'click', (event) ->
+      suppressEvent(event)
+      @toggleRegExp()
     @editorElement.addEventListener('click', suppressEvent)
-    @regExp = RegExpStateByProvider[@provider.name] ? true
-    @updateRegExpButton()
+    addToolTips(
+      element: @regExpButton
+      commandName: 'narrow-input:toggle-regexp'
+      keyBindingTarget: @editorElement
+    )
 
-  toggleRegExp: (event) =>
-    suppressEvent(event) if event?
+  toggleRegExp: ->
     @regExp = not @regExp
     @updateRegExpButton()
 
@@ -59,12 +62,20 @@ class Input
     atom.workspace.getActivePane().activate()
 
   setPrevious: ->
-    @editor.setText(history.get('previous'))
+    @recallHistory('previous')
 
   setNext: ->
-    @editor.setText(history.get('next'))
+    @recallHistory('next')
 
-  readInput: ->
+  recallHistory: (direction) ->
+    if entry = history.get(direction)
+      @regExp = entry.isRegExp
+      @updateRegExpButton()
+      @editor.setText(entry.text)
+
+  readInput: (@regExp) ->
+    @updateRegExpButton()
+
     @panel = atom.workspace.addBottomPanel(item: @container, visible: true)
     @disposables.add atom.commands.add @editorElement,
       'core:confirm': => @confirm()
@@ -88,7 +99,6 @@ class Input
     result =
       text: @editor.getText()
       isRegExp: @regExp
-    RegExpStateByProvider[@provider.name] = @regExp
     @provider = null
     @resolve(result)
     @destroy()

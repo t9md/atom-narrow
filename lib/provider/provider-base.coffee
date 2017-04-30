@@ -16,7 +16,6 @@ _ = require 'underscore-plus'
 } = require '../utils'
 Ui = require '../ui'
 settings = require '../settings'
-Input = null
 
 module.exports =
 class ProviderBase
@@ -299,10 +298,6 @@ class ProviderBase
 
   # Helpers
   # -------------------------
-  readInput: ->
-    Input ?= require '../input'
-    new Input(this).readInput()
-
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
 

@@ -1,5 +1,5 @@
 {CompositeDisposable} = require 'atom'
-{humanizeEventName} = require 'underscore-plus'
+{addToolTips} = require './utils'
 
 suppressEvent = (event) ->
   event.preventDefault()
@@ -139,9 +139,7 @@ class ControlBar
 
   addToolTips: (tooltips) ->
     disposables = new CompositeDisposable
+    keyBindingTarget = @editorElement
     for elementName, commandName of tooltips when element = @stateElements[elementName]
-      disposables.add atom.tooltips.add element,
-        title: humanizeEventName(commandName.split(':')[1])
-        keyBindingCommand: commandName
-        keyBindingTarget: @editorElement
+      disposables.add(addToolTips({element, commandName, keyBindingTarget}))
     disposables
