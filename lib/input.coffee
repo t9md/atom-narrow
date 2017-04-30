@@ -86,8 +86,7 @@ class Input
 
   confirm: ->
     result =
-      text: "\\s*desc"
-      # text: @editor.getText()
+      text: @editor.getText()
       isRegExp: @regExp
     RegExpStateByProvider[@provider.name] = @regExp
     @provider = null
