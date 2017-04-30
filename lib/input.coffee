@@ -1,6 +1,7 @@
 {CompositeDisposable, Disposable} = require 'atom'
 
 history = require './input-history-manager'
+{addToolTips} = require './utils'
 
 suppressEvent = (event) ->
   event.preventDefault()
@@ -39,6 +40,11 @@ class Input
       suppressEvent(event)
       @toggleRegExp()
     @editorElement.addEventListener('click', suppressEvent)
+    addToolTips(
+      element: @regExpButton
+      commandName: 'narrow-input:toggle-regexp'
+      keyBindingTarget: @editorElement
+    )
 
   toggleRegExp: ->
     @regExp = not @regExp

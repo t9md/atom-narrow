@@ -141,6 +141,12 @@ isDefinedAndEqual = (a, b) ->
 cloneRegExp = (regExp) ->
   new RegExp(regExp.source, regExp.flags)
 
+addToolTips = ({element, commandName, keyBindingTarget}) ->
+  atom.tooltips.add element,
+    title: _.humanizeEventName(commandName.split(':')[1])
+    keyBindingCommand: commandName
+    keyBindingTarget: keyBindingTarget
+
 # Utils used in Ui
 # =========================
 # item presenting
@@ -307,6 +313,7 @@ module.exports = {
   itemForGitDiff
   isDefinedAndEqual
   cloneRegExp
+  addToolTips
 
   injectLineHeader
   ensureNoConflictForChanges
