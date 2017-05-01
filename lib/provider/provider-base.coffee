@@ -23,8 +23,8 @@ class ProviderBase
   reopened: false
 
   @reopen: ->
-    if state = @destroyedProviderStates.shift()
-      {name, options, state} = state
+    if stateAtDestroyed = @destroyedProviderStates.shift()
+      {name, options, state} = stateAtDestroyed
       @start(name, options, state)
 
   @start: (name, options, state) ->
@@ -223,12 +223,13 @@ class ProviderBase
     if itemToOpen?
       pane.activate() if activatePane
       pane.activateItem(itemToOpen)
-      # console.log 'early return'
       return Promise.resolve(itemToOpen)
 
     openOptions = {pending: true, activatePane: activatePane, activateItem: true}
     if WorkspaceOpenAcceptPaneOption
       openOptions.pane = pane
+      atom.workspace.open(filePath, openOptions)
+
     else
       # NOTE: See #107
       # In Atom v1.16.0 or older, `workspace.open` doesn't allow to specify target pane to open file.
@@ -236,15 +237,14 @@ class ProviderBase
       # Otherwise, when original pane have item for same path(URI), it opens on CURRENT pane.
       originalActivePane = atom.workspace.getActivePane() unless activatePane
       pane.activate()
-
-    atom.workspace.open(filePath, openOptions).then (editor) ->
-      originalActivePane?.activate()
-      return editor
+      atom.workspace.open(filePath, openOptions).then (editor) ->
+        originalActivePane?.activate()
+        return editor
 
   confirmed: (item) ->
     @needRestoreEditorState = false
-    {point} = item
     @openFileForItem(item, activatePane: true).then (editor) ->
+      {point} = item
       editor.setCursorBufferPosition(point, autoscroll: false)
       editor.scrollToBufferPosition(point, center: true)
       return editor
@@ -255,10 +255,7 @@ class ProviderBase
     if item.header?
       item.header
     else
-      if item._lineHeader?
-        item._lineHeader + item.text
-      else
-        item.text
+      (item._lineHeader ? '') + item.text
 
   # Direct Edit
   # -------------------------
