@@ -1,3 +1,34 @@
+# 0.41.0: WIP
+- Improve: #189, #202 When `narrow-editor` open, place cursor on original search word.
+  - e.g.
+    - 1. Your cursor is at `|` in `wor|d`.
+    - 2. Invoke `narrow:search-by-current-word`
+    - 3.
+      - Now: Cursor on `narrow-editor` is at `wor|d` at selected-item.
+      - Before: Cursor was at first column of selected-item.
+
+- Improve: Keep column( `goalColumn` ) when header row was skipped for both core and vmp commands.
+  - `core:move-up`, `core:move-down`,
+  - `vim-mode-plus:move-up-wrap`, `vim-mode-plus:move-down-wrap`
+
+- Improve: #193 For atom v1.17.0 and later, no longer activate preview target pane on preview.
+  - Add note on README.md for limitation in atom v1.16.0 and former
+    - This limitation is only when user have `vim-mode-plus.automaticallyEscapeInsertModeOnActivePaneItemChange` enabled.
+
+- Fix: `narrow:close` on protected `narrow-editor` now properly re-render control-bar.
+- Improve: Delay refresh on query-change event so that frequent refresh not disturbing query-input interaction.
+
+- New: #194 Support regular expression search for provider `search` and `atom-scan`.
+  - New config
+    - `useRegex`: ( default `false` ), initial regexp search state.
+    - `rememberUseRegex`: ( default `false` ), if enabled last regexp search state is remembered.
+  - Don't use grammar highlight for regex search since js to grammar pattern translation is hard.
+  - Search's item.range is populated ON-NEED as prep for highlight regexSearched items
+  - Internal: `--nomultiline` flag for `ag` to make it line based search
+
+- Improve: #200 `narrow:scan` get faster by using manual regexmatch instead of using `editor.scan`.
+- Improve: Tweak highlight not cover text such as base16-tomorrow-dark-theme syntax
+
 # 0.40.1:
 - Fix, Critical: #185 In `PHP`, `ShellScript` file, `search-by-current-word` on `$var` fail to find `$var`.
   - More specific explanation: For the language where `selection.selectWord()` select non word char.
