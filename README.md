@@ -178,10 +178,11 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 ### My keymap(vim-mode-plus user) and config
 
-I set `closeOnConfirm` to `false` for all provider.  
-Since I want to close manually by `ctrl-g`(Maybe change default in future).  
 
 ###### `config.cson`
+
+For `git-diff-all`, and `search`, I want to close manually by `ctrl-g`.
+So disable `closeOnConfirm`.
 
 ```
   narrow:
@@ -189,23 +190,23 @@ Since I want to close manually by `ctrl-g`(Maybe change default in future).
       closeOnConfirm: false
     Search:
       closeOnConfirm: false
-      startByDoubleClick: true
+      rememberIgnoreCaseForByCurrentWordSearch: true
+    SelectFiles:
+      rememberQuery: true
     confirmOnUpdateRealFile: false
 ```
 
 ###### `keymap.cson`
 
-Frequently using keymap with my keymap.
+Explanation of my keymap.
 
 - `cmd-f`: To focus to narrow-editor AND focus-back to original-editor
 - `cmd-i`: To focus to narrow-editor's prompt AND focus-back to original-editor
-- `enter`: start `narrow:search-by-current-word`
-  - In `vim-mode-plus`'s `normal-mode`, `enter` to start `narrow:search` with cursor word.
-  - Of course in `narrow-editor`, I can `enter` to open new `narrow:search-by-current-word`.
-  - This **conflict** normal-mode's `enter` to confirm current-item. but I use `;` for this purpose.
+- `enter`: start `narrow:search-by-current-word` from `vim-mode-plus`'s `normal-mode`
+  - Just `enter` start search cursor-word.
 - `ctrl-g`: Close `narrow-editor` from wherever.
-- `tab`, `shift-tab`: Navigate cursor to next/previous item.
-- `;`: confirm current-item without closing `narrow-editor`, I always close `narrow-editor` explicitly by `backspace` or `ctrl-g`.
+- `tab`, `shift-tab`: to move to next/previous item.
+- `;`: confirm current-item without closing `narrow-editor`, I can close `narrow-editor` by `ctrl-g`.
 
 ```coffeescript
 # From outside of narrow-editor
@@ -254,6 +255,7 @@ Frequently using keymap with my keymap.
   '-': 'narrow-ui:exclude-file'
   '=': 'narrow-ui:clear-excluded-files'
   's': 'narrow-ui:select-files'
+  "enter": 'core:confirm' # recover original enter for narrow-editor
 ```
 
 # Recommended configuration for other packages.
