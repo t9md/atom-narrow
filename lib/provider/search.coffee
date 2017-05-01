@@ -114,15 +114,16 @@ class Search extends SearchBase
     else
       args.push('--case-sensitive')
 
-    # See #176
-    # rg doesn't show filePath on each line when search file was passed explicitly.
-    # Following option make result-output consistent with `ag`.
-    if command is 'rg'
-      args.push(['-H', '--no-heading']...)
-      args.push('--regexp')
-      args.push(unescapeRegExpForRg(@searchRegExp.source))
-    else
-      args.push(@searchRegExp.source)
+    switch command
+      when 'ag'
+        args.push('--nomultiline')
+        args.push(@searchRegExp.source)
+      when 'rg'
+        # See #176
+        # rg doesn't show filePath on each line when search file was passed explicitly.
+        # Following option make result-output consistent with `ag`.
+        args.push(['-H', '--no-heading', '--regexp']...)
+        args.push(unescapeRegExpForRg(@searchRegExp.source))
     args
 
   searchFilePath: (filePath) ->
