@@ -1,6 +1,6 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{Point} = require 'atom'
+{Point, Range} = require 'atom'
 SearchBase = require './search-base'
 
 module.exports =
@@ -33,7 +33,7 @@ class AtomScan extends SearchBase
             filePath: filePath
             text: match.lineText
             point: Point.fromObject(match.range[0])
-            range: match.range
+            range: Range.fromObject(match.range)
           })
       items
 
