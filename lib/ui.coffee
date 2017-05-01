@@ -739,15 +739,13 @@ class Ui
 
   moveToSearchedWordAtSelectedItem: ->
     if @items.hasSelectedItem()
-      point = @items.getFirstPositionForSelectedItem()
-
       if @isInSyncToProviderEditor()
-        point.column += @provider.editor.getCursorBufferPosition().column
+        column = @provider.editor.getCursorBufferPosition().column
       else
         text = @items.getSelectedItem().text
-        match = cloneRegExp(@provider.initiallySearchedRegexp).exec(text)
-        point.column += match.index
+        column = cloneRegExp(@provider.initiallySearchedRegexp).exec(text).index
 
+      point = @items.getFirstPositionForSelectedItem().translate([0, column])
       @editor.setCursorBufferPosition(point)
 
   moveToPrompt: ->
