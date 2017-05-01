@@ -1,6 +1,5 @@
 {CompositeDisposable, Point, Range} = require 'atom'
 
-_ = require 'underscore-plus'
 {
   getVisibleEditors
   isNarrowEditor
@@ -91,7 +90,8 @@ class Highlighter
         decorationLayer.destroy()
         @decorationLayerByEditor.delete(editor)
 
-    @highlight(editor) for editor in getVisibleEditors()
+    for editor in getVisibleEditors()
+      @highlight(editor)
 
   clear: ->
     @markerLayerByEditor.forEach (markerLayer) -> markerLayer.destroy()
@@ -101,7 +101,7 @@ class Highlighter
     @decorationLayerByEditor.clear()
 
   decorationOptions = {type: 'highlight', class: 'narrow-match'}
-  highlight: (editor, reason) ->
+  highlight: (editor) ->
     return unless @regExp
     return if @markerLayerByEditor.has(editor)
     return if isNarrowEditor(editor)
