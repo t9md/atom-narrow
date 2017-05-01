@@ -107,6 +107,13 @@ class Ui
       'core:move-up': (event) => @moveUpOrDown(event, 'up')
       'core:move-down': (event) => @moveUpOrDown(event, 'down')
 
+      # HACK: PreserveGoalColumn when skipping header row.
+      # Following command is earlily invoked than original move-up(down)-wrap,
+      # because it's directly defined on @editorElement.
+      # Actual movement is still done by original command since command event is propagated.
+      'vim-mode-plus:move-up-wrap': => @preserveGoalColumn()
+      'vim-mode-plus:move-down-wrap': => @preserveGoalColumn()
+
       'narrow:close': (event) => @narrowClose(event)
 
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
@@ -369,32 +376,31 @@ class Ui
     @moveToPrompt()
     @controlBar.show()
 
-  # Line-wrapped version of 'core:move-up' override default behavior
-  moveUpOrDown: (event, direction) ->
-    event.stopImmediatePropagation()
-    cursor = @editor.getLastCursor()
-    {row, column} = cursor.getBufferPosition()
+  preserveGoalColumn: ->
     # HACK: In narrow-editor, header row is skipped onDidChangeCursorPosition event
     # But at this point, cursor.goalColumn is explicitly cleared by atom-core
     # I want use original goalColumn info within onDidChangeCursorPosition event
     # to keep original column when header item was auto-skipped.
-    @goalColumn = cursor.goalColumn ? column
+    cursor = @editor.getLastCursor()
+    @goalColumn = cursor.goalColumn ? cursor.getBufferColumn()
 
-    switch direction
-      when 'up'
-        if @isPromptRow(row)
-          setBufferRow(cursor, @items.findRowForNormalOrPromptItem(row, 'previous'))
-        else
-          @editor.moveUp()
-      when 'down'
-        if row is @editor.getLastBufferRow()
-          setBufferRow(cursor, @items.findRowForNormalOrPromptItem(row, 'next'))
-        else
-          @editor.moveDown()
-    # HACK: Explicitly clear @goalColumn state, this is very imporatn.
-    # So that other commands such as `core:move-right` DO NOT use old kept @goalColumn
-    # in onDidChangeCursorPosition event.
-    @goalColumn = null
+  # Line-wrapped version of 'core:move-up' override default behavior
+  moveUpOrDown: (event, direction) ->
+    @preserveGoalColumn()
+    # event.stopImmediatePropagation()
+    cursor = @editor.getLastCursor()
+    row = cursor.getBufferRow()
+    # HACK: In narrow-editor, header row is skipped onDidChangeCursorPosition event
+    # But at this point, cursor.goalColumn is explicitly cleared by atom-core
+    # I want use original goalColumn info within onDidChangeCursorPosition event
+    # to keep original column when header item was auto-skipped.
+    if direction is 'up' and @isPromptRow(row)
+      setBufferRow(cursor, @items.findRowForNormalOrPromptItem(row, 'previous'))
+      event.stopImmediatePropagation()
+
+    if direction is 'down' and row is @editor.getLastBufferRow()
+      setBufferRow(cursor, @items.findRowForNormalOrPromptItem(row, 'next'))
+      event.stopImmediatePropagation()
 
   # Even in movemnt not happens, it should confirm current item
   # This ensure next-item/previous-item always move to selected item.
@@ -607,7 +613,14 @@ class Ui
   observeCursorMove: ->
     @editor.onDidChangeCursorPosition (event) =>
       return if @ignoreCursorMove
+
       {oldBufferPosition, newBufferPosition, textChanged, cursor} = event
+
+      # Clear preserved @goalColumn as early as possible to not affect other
+      # movement commands.
+      goalColumn = @goalColumn ? newBufferPosition.column
+      @goalColumn = null
+
       return if textChanged or
         (not cursor.selection.isEmpty()) or
         (oldBufferPosition.row is newBufferPosition.row)
@@ -623,12 +636,12 @@ class Ui
       if @isPromptRow(newRow)
         if headerWasSkipped
           @withIgnoreCursorMove =>
-            @editor.setCursorBufferPosition([newRow,  @goalColumn ? newBufferPosition.column])
+            @editor.setCursorBufferPosition([newRow, goalColumn])
         @emitDidMoveToPrompt()
       else
         @items.selectItemForRow(newRow)
         if headerWasSkipped
-          @moveToSelectedItem({column: @goalColumn ? newBufferPosition.column})
+          @moveToSelectedItem({column: goalColumn})
         @emitDidMoveToItemArea() if @isPromptRow(oldRow)
         @preview() if @autoPreview
 
