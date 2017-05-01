@@ -104,8 +104,8 @@ class Ui
   registerCommands: ->
     atom.commands.add @editorElement,
       'core:confirm': => @confirm()
-      'core:move-up': (event) => @moveUpOrDown(event, 'up')
-      'core:move-down': (event) => @moveUpOrDown(event, 'down')
+      'core:move-up': (event) => @moveUpOrDownWrap(event, 'up')
+      'core:move-down': (event) => @moveUpOrDownWrap(event, 'down')
 
       # HACK: PreserveGoalColumn when skipping header row.
       # Following command is earlily invoked than original move-up(down)-wrap,
@@ -385,21 +385,18 @@ class Ui
     @goalColumn = cursor.goalColumn ? cursor.getBufferColumn()
 
   # Line-wrapped version of 'core:move-up' override default behavior
-  moveUpOrDown: (event, direction) ->
+  moveUpOrDownWrap: (event, direction) ->
     @preserveGoalColumn()
-    # event.stopImmediatePropagation()
-    cursor = @editor.getLastCursor()
-    row = cursor.getBufferRow()
-    # HACK: In narrow-editor, header row is skipped onDidChangeCursorPosition event
-    # But at this point, cursor.goalColumn is explicitly cleared by atom-core
-    # I want use original goalColumn info within onDidChangeCursorPosition event
-    # to keep original column when header item was auto-skipped.
-    if direction is 'up' and @isPromptRow(row)
-      setBufferRow(cursor, @items.findRowForNormalOrPromptItem(row, 'previous'))
-      event.stopImmediatePropagation()
 
-    if direction is 'down' and row is @editor.getLastBufferRow()
-      setBufferRow(cursor, @items.findRowForNormalOrPromptItem(row, 'next'))
+    cursor = @editor.getLastCursor()
+    cursorRow = cursor.getBufferRow()
+    lastRow = @editor.getLastBufferRow()
+
+    if direction is 'up' and cursorRow is 0
+      setBufferRow(cursor, lastRow)
+      event.stopImmediatePropagation()
+    else if direction is 'down' and cursorRow is lastRow
+      setBufferRow(cursor, 0)
       event.stopImmediatePropagation()
 
   # Even in movemnt not happens, it should confirm current item
@@ -742,7 +739,6 @@ class Ui
       if @isInSyncToProviderEditor()
         column = @provider.editor.getCursorBufferPosition().column
       else
-        console.log 'this!'
         regExp = cloneRegExp(@provider.initiallySearchedRegexp)
         column = regExp.exec(@items.getSelectedItem().text).index
 
