@@ -742,8 +742,9 @@ class Ui
       if @isInSyncToProviderEditor()
         column = @provider.editor.getCursorBufferPosition().column
       else
-        text = @items.getSelectedItem().text
-        column = cloneRegExp(@provider.initiallySearchedRegexp).exec(text).index
+        console.log 'this!'
+        regExp = cloneRegExp(@provider.initiallySearchedRegexp)
+        column = regExp.exec(@items.getSelectedItem().text).index
 
       point = @items.getFirstPositionForSelectedItem().translate([0, column])
       @editor.setCursorBufferPosition(point)
