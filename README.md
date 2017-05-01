@@ -203,7 +203,7 @@ Frequently using keymap with my keymap.
   - In `vim-mode-plus`'s `normal-mode`, `enter` to start `narrow:search` with cursor word.
   - Of course in `narrow-editor`, I can `enter` to open new `narrow:search-by-current-word`.
   - This **conflict** normal-mode's `enter` to confirm current-item. but I use `;` for this purpose.
-- `backspace`, `ctrl-g`: Close `narrow-editor` from wherever.
+- `ctrl-g`: Close `narrow-editor` from wherever.
 - `tab`, `shift-tab`: Navigate cursor to next/previous item.
 - `;`: confirm current-item without closing `narrow-editor`, I always close `narrow-editor` explicitly by `backspace` or `ctrl-g`.
 
@@ -251,22 +251,9 @@ Frequently using keymap with my keymap.
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   # Danger: I use direct-edit very frequently, so intentionally recover `i` of vim-mode-plus.
   'i': 'vim-mode-plus:activate-insert-mode'
-  'backspace': 'narrow:close'
   '-': 'narrow-ui:exclude-file'
   '=': 'narrow-ui:clear-excluded-files'
   's': 'narrow-ui:select-files'
-
-# NOTE: following keymap prevent me to type `;`, `[`, `]` in insert-mode.
-# Which is very problematic in direct-edit mode since I can not insert these chars.
-# Be aware this limitation if you copy this.
-# Solution comes in future by differentiating scope in prompt and item-area.
-'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"],
-atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
-  ';': 'core:confirm-keep-open' # Confirm by `;`
-  "enter": 'core:confirm'
-  ']': 'narrow-ui:preview-next-item' # preview next while cursor is at prompt
-  '[': 'narrow-ui:preview-previous-item' # preview previous while cursor is at prompt
-  'backspace': 'narrow:close' # I use ctrl-h for delete. So no problem.
 ```
 
 # Recommended configuration for other packages.
