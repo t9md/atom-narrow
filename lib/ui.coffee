@@ -166,11 +166,13 @@ class Ui
     @editor.buffer.emitModifiedStatusChanged(state)
 
   toggleSearchWholeWord: ->
-    @controlBar.updateStateElements(wholeWordButton: @provider.toggleSearchWholeWord())
+    @provider.toggleSearchWholeWord()
+    @controlBar.updateStateElements(wholeWordButton: @searchWholeWord)
     @refresh(force: true)
 
   toggleSearchIgnoreCase: ->
-    @controlBar.updateStateElements(ignoreCaseButton: @provider.toggleSearchIgnoreCase())
+    @provider.toggleSearchIgnoreCase()
+    @controlBar.updateStateElements(ignoreCaseButton: @searchIgnoreCase)
     @refresh(force: true)
 
   toggleProtected: ->
