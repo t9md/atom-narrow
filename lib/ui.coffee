@@ -60,6 +60,7 @@ class Ui
   autoPreviewOnQueryChange: null
 
   inPreview: false
+  suppressPreview: false
   ignoreChange: false
   ignoreCursorMove: false
   destroyed: false
@@ -286,9 +287,11 @@ class Ui
     @refresh().then =>
       if @provider.needRevealOnStart()
         @syncToEditor(@provider.editor)
+        @suppressPreview = true
         @moveToBeginningOfSelectedItem()
         if @provider.initiallySearchedRegexp?
           @moveToSearchedWordAtSelectedItem()
+        @suppressPreview = false
         @preview()
       else if @query and @autoPreviewOnQueryChange
         @preview()
@@ -678,13 +681,9 @@ class Ui
       moveAndScroll()
 
   preview: ->
-    # console.log 'called preview!'
+    return if @suppressPreview
     return unless @isActive()
     return unless item = @items.getSelectedItem()
-    # FIXME uselessly preview called multiple time on startup.
-    # return if @inPreview
-    # console.log 'and execute preview!'
-
     @inPreview = true
     @provider.openFileForItem(item, activatePane: false).then (editor) =>
       editor.scrollToBufferPosition(item.point, center: true)

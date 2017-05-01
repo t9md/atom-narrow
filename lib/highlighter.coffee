@@ -3,19 +3,17 @@
 _ = require 'underscore-plus'
 {
   getVisibleEditors
-  isTextEditor
   isNarrowEditor
-  updateDecoration
   cloneRegExp
   isNormalItem
 } = require './utils'
 
 module.exports =
 class Highlighter
-  regexp: null
+  regExp: null
   lineMarker: null
 
-  highlightNarrowEditor: =>
+  highlightNarrowEditor: ->
     editor = @ui.editor
 
     if @markerLayerForUi?
@@ -25,7 +23,7 @@ class Highlighter
       decorationOptions = {type: 'highlight', class: 'narrow-match-ui'}
       @decorationLayerForUi = editor.decorateMarkerLayer(@markerLayerForUi, decorationOptions)
 
-    regExp = cloneRegExp(@provider.searchRegExp)
+    regExp = cloneRegExp(@regExp)
     for line, row in editor.buffer.getLines() when isNormalItem(item = @ui.items.getItemForRow(row))
       regExp.lastIndex = 0
       while match = regExp.exec(item.text)
@@ -37,90 +35,107 @@ class Highlighter
   constructor: (@ui) ->
     @provider = @ui.provider
     @needHighlight = @provider.itemHaveRange
+
     @markerLayerByEditor = new Map()
-    @decorationByItem = new Map()
+    @decorationLayerByEditor = new Map()
+
     @subscriptions = new CompositeDisposable
     subscribe = (disposable) => @subscriptions.add(disposable)
 
     if @needHighlight
-      if @provider.boundToSingleFile
-        subscribe @ui.onDidRefresh(@refreshAll)
-      else
+      subscribe @ui.onDidRefresh =>
+        @previewdEditor = null
         # When search and atom-scan did regexp search, it can't use syntax highlight
         # for narrow-editor, so use normal marker decoration to highlight original searchTerm
         if @provider.useRegex
-          subscribe @ui.onDidRefresh(@highlightNarrowEditor)
-        subscribe @ui.onDidStopRefreshing(@refreshAll)
+          @highlightNarrowEditor()
 
-    subscribe @ui.onDidConfirm(@clearCurrentAndLineMarker)
+        if @provider.boundToSingleFile
+          @refreshAll()
+
+      unless @provider.boundToSingleFile
+        subscribe @ui.onDidStopRefreshing =>
+          @refreshAll()
+
+    subscribe @ui.onDidConfirm =>
+      @clearCurrentAndLineMarker()
 
     subscribe @ui.onDidPreview ({editor, item}) =>
+      @previewdEditor = editor
       @clearCurrentAndLineMarker()
-      @drawLineMarker(editor, item)
       if @needHighlight
         @highlight(editor)
-        @highlightCurrent() if @ui.isActive()
+        @highlightCurrentForEditor(editor, item)
+      @drawLineMarker(editor, item)
 
-  setRegExp: (@regexp) ->
+  setRegExp: (@regExp) ->
 
   destroy: ->
     @markerLayerForUi?.destroy()
     @decorationLayerForUi?.destroy()
-
     @clear()
     @clearCurrentAndLineMarker()
     @subscriptions.dispose()
 
   # Highlight items
   # -------------------------
-  refreshAll: =>
-    @clear()
+  refreshAll: ->
+    # Skip already previewd and highlighted editor kept in @previewdEditor
+    @markerLayerByEditor.forEach (markerLayer, editor) =>
+      if editor isnt @previewdEditor
+        markerLayer.destroy()
+        @markerLayerByEditor.delete(editor)
+
+    @decorationLayerByEditor.forEach (decorationLayer, editor) =>
+      if editor isnt @previewdEditor
+        decorationLayer.destroy()
+        @decorationLayerByEditor.delete(editor)
+
     @highlight(editor) for editor in getVisibleEditors()
-    @highlightCurrent() if @ui.isActive()
 
   clear: ->
-    @markerLayerByEditor.forEach (markerLayer) ->
-      markerLayer.clear()
+    @markerLayerByEditor.forEach (markerLayer) -> markerLayer.destroy()
     @markerLayerByEditor.clear()
-    @decorationByItem.clear()
+
+    @decorationLayerByEditor.forEach (decorationLayer) -> decorationLayer.destroy()
+    @decorationLayerByEditor.clear()
 
   decorationOptions = {type: 'highlight', class: 'narrow-match'}
-  highlight: (editor) ->
-    return unless @regexp
-    return if isNarrowEditor(editor)
-
-    # FIXME: highlight called multiple time uselessly
-    # console.log "called for", editor.getPath()
-
-    return if @provider.boundToSingleFile and editor isnt @provider.editor
+  highlight: (editor, reason) ->
+    return unless @regExp
     return if @markerLayerByEditor.has(editor)
+    return if isNarrowEditor(editor)
+    return if @provider.boundToSingleFile and editor isnt @provider.editor
 
     items = @ui.getNormalItemsForEditor(editor)
-    return unless items.length
+    if items.length
+      @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
+      @decorationLayerByEditor.set(editor, editor.decorateMarkerLayer(markerLayer, decorationOptions))
+      for item in items when range = item.range
+        markerLayer.markBufferRange(range, invalidate: 'inside')
 
-    @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
-    for item in items when range = item.range
-      marker = markerLayer.markBufferRange(range, invalidate: 'inside')
-      # FIXME: BUG decorationByItem should managed by per editor.
-      @decorationByItem.set(item, editor.decorateMarker(marker, decorationOptions))
-
-  clearCurrentAndLineMarker: =>
+  clearCurrentAndLineMarker: ->
     @clearLineMarker()
     @clearCurrent()
 
   # modify current item decoration
   # -------------------------
-  highlightCurrent: ->
-    if decoration = @decorationByItem.get(@ui.items.getSelectedItem())
-      updateDecoration(decoration, (cssClass) -> cssClass + ' current')
+  highlightCurrentForEditor: (editor, {range}) ->
+    startBufferRow = range.start.row
+    if decorationLayer = @decorationLayerByEditor.get(editor)
+      for marker in decorationLayer.getMarkerLayer().findMarkers({startBufferRow})
+        if marker.getBufferRange().isEqual(range)
+          newProperties = {type: 'highlight', class: 'narrow-match current'}
+          decorationLayer.setPropertiesForMarker(marker, newProperties)
+          @selectedMarkerEditor = editor
+          @selectedItemMarker = marker
 
   clearCurrent: ->
-    return unless @needHighlight
-    return unless @decorationByItem.size
-    items = [@ui.items.getPreviouslySelectedItem(), @ui.items.getSelectedItem()]
-    for item in items when item?
-      if decoration = @decorationByItem.get(item)
-        updateDecoration(decoration, (cssClass) -> cssClass.replace(' current', ''))
+    if @selectedMarkerEditor?
+      if decorationLayer = @decorationLayerByEditor.get(@selectedMarkerEditor)
+        decorationLayer.setPropertiesForMarker(@selectedItemMarker, null)
+      @selectedMarkerEditor = null
+      @selectedItemMarker = null
 
   # line marker
   # -------------------------
