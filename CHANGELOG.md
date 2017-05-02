@@ -4,11 +4,13 @@
     - `useRegex`: ( default `false` ), initial regexp search state.
     - `rememberUseRegex`: ( default `false` ), if enabled last regexp search state is remembered.
   - Internal: `--nomultiline` flag for `ag` to make it line based search
-  - Others
+  - Special note for syntax highlight on `narrow-editor`.
     - Automatically fallback to fixed string search if searchTerm didn't include regexp special char.
       - For better performance and syntax highlight on `narrow-editor`.
     - Currently atom doesn't allowing text color( foreground color ) by decoration.
     - So when regexp search was done, it use normal background decoration to highlight searchTerm on `narrow-editor`.
+    - Because translating Js's regexp to grammar's regex( Oniguruma ) is tough for me.
+    - This limitation will be fixed once atom support text color change via decoration.
 - Fix: `narrow:close` on protected `narrow-editor` now properly re-render control-bar.
 - Improve: #189, #202 When `narrow-editor` open, place cursor on original search word.
   - e.g.
