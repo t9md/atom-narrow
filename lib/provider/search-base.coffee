@@ -66,6 +66,14 @@ class SearchBase extends ProviderBase
         return @searchTerm
     else
       readInput(@getUseRegex()).then ({text, useRegex}) =>
+        # Validate regexp
+        if useRegex
+          try
+            new RegExp(text)
+          catch error
+            console.warn "invalid regex pattern:", error
+            return null
+
         @setUseRegex(useRegex)
         @searchTerm = text
         history.save(@searchTerm, useRegex)
