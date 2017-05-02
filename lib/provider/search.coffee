@@ -90,10 +90,13 @@ class Search extends SearchBase
 
   getRangeForItem: (item) =>
     if @useRegex
-      matchedText = item.text[item.point.column...].match(@searchRegExp)[0]
+      # FIXME: Maybe because of BUG of ag?
+      # when I search \) in regexp, it find next line of line which ends with `)`.
+      matchedText = item.text[item.point.column...].match(@searchRegExp)?[0] ? ''
+      Range.fromPointWithDelta(item.point, 0, matchedText.length)
     else
       matchedText = @searchTerm
-    Range.fromPointWithDelta(item.point, 0, matchedText.length)
+      Range.fromPointWithDelta(item.point, 0, matchedText.length)
 
   checkReady: ->
     if @options.currentProject
