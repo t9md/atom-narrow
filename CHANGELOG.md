@@ -1,4 +1,15 @@
-# 0.41.0: WIP
+# 0.41.0:
+- New: #194 Support regular expression search for provider `search` and `atom-scan`.
+  - New config
+    - `useRegex`: ( default `false` ), initial regexp search state.
+    - `rememberUseRegex`: ( default `false` ), if enabled last regexp search state is remembered.
+  - Internal: `--nomultiline` flag for `ag` to make it line based search
+  - Others
+    - Automatically fallback to fixed string search if searchTerm didn't include regexp special char.
+      - For better performance and syntax highlight on `narrow-editor`.
+    - Currently atom doesn't allowing text color( foreground color ) by decoration.
+    - So when regexp search was done, it use normal background decoration to highlight searchTerm on `narrow-editor`.
+- Fix: `narrow:close` on protected `narrow-editor` now properly re-render control-bar.
 - Improve: #189, #202 When `narrow-editor` open, place cursor on original search word.
   - e.g.
     - 1. Your cursor is at `|` in `wor|d`.
@@ -6,28 +17,15 @@
     - 3.
       - Now: Cursor on `narrow-editor` is at `wor|d` at selected-item.
       - Before: Cursor was at first column of selected-item.
-
+- Improve: Delay refresh on query-change event so that frequent refresh not disturb next query-input.
+- Improve: #200 `narrow:scan` get faster by using manual regexmatch instead of using `editor.scan`.
+- Improve: Tweak highlight not cover text such as base16-tomorrow-dark-theme syntax
 - Improve: Keep column( `goalColumn` ) when header row was skipped for both core and vmp commands.
   - `core:move-up`, `core:move-down`,
   - `vim-mode-plus:move-up-wrap`, `vim-mode-plus:move-down-wrap`
-
 - Improve: #193 For atom v1.17.0 and later, no longer activate preview target pane on preview.
   - Add note on README.md for limitation in atom v1.16.0 and former
     - This limitation is only when user have `vim-mode-plus.automaticallyEscapeInsertModeOnActivePaneItemChange` enabled.
-
-- Fix: `narrow:close` on protected `narrow-editor` now properly re-render control-bar.
-- Improve: Delay refresh on query-change event so that frequent refresh not disturbing query-input interaction.
-
-- New: #194 Support regular expression search for provider `search` and `atom-scan`.
-  - New config
-    - `useRegex`: ( default `false` ), initial regexp search state.
-    - `rememberUseRegex`: ( default `false` ), if enabled last regexp search state is remembered.
-  - Don't use grammar highlight for regex search since js to grammar pattern translation is hard.
-  - Search's item.range is populated ON-NEED as prep for highlight regexSearched items
-  - Internal: `--nomultiline` flag for `ag` to make it line based search
-
-- Improve: #200 `narrow:scan` get faster by using manual regexmatch instead of using `editor.scan`.
-- Improve: Tweak highlight not cover text such as base16-tomorrow-dark-theme syntax
 
 # 0.40.1:
 - Fix, Critical: #185 In `PHP`, `ShellScript` file, `search-by-current-word` on `$var` fail to find `$var`.

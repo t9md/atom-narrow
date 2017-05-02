@@ -279,7 +279,7 @@ Explanation of my keymap.
 
 # Notes for vim-mode-plus user
 
-## Limitation: for compatibility with vim-mode-plus.
+## ⚠️ Limitation: for compatibility with vim-mode-plus.
 
 - If you use atom v1.16.0 or older,
   - Don't enable `vim-mode-plus.automaticallyEscapeInsertModeOnActivePaneItemChange`
