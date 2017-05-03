@@ -35,10 +35,10 @@ class Input
     editorContainer.appendChild(@editorElement)
 
     @useRegexButton = @container.getElementsByClassName('use-regex')[0]
-    @useRegexButton.addEventListener 'click', (event) ->
+    @useRegexButton.addEventListener 'click', (event) =>
       suppressEvent(event)
       @toggleUseRegex()
-    @editorElement.addEventListener('click', suppressEvent)
+    @container.addEventListener('click', suppressEvent)
     addToolTips(
       element: @useRegexButton
       commandName: 'narrow-input:toggle-use-regex'
