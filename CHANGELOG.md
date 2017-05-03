@@ -1,3 +1,7 @@
+# 0.41.1:
+- Fix: #204 mouse `click` on useRegex button now work properly.
+- Improve: Clicking `mini-editor` container for search input no longer close `min-editor`.
+
 # 0.41.0:
 - New: #194 Support regular expression search for provider `search` and `atom-scan`.
   - New config
@@ -26,8 +30,9 @@
   - `core:move-up`, `core:move-down`,
   - `vim-mode-plus:move-up-wrap`, `vim-mode-plus:move-down-wrap`
 - Improve: #193 For atom v1.17.0 and later, no longer activate preview target pane on preview.
-  - Add note on README.md for limitation in atom v1.16.0 and former
-    - This limitation is only when user have `vim-mode-plus.automaticallyEscapeInsertModeOnActivePaneItemChange` enabled.
+  - Add note on README.md.
+  - For atom v1.16.0 and former user who use narrow with vim-mode-plus.
+    - You need to disable `vim-mode-plus.automaticallyEscapeInsertModeOnActivePaneItemChange`.
 
 # 0.40.1:
 - Fix, Critical: #185 In `PHP`, `ShellScript` file, `search-by-current-word` on `$var` fail to find `$var`.
