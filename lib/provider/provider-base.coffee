@@ -58,6 +58,7 @@ class ProviderBase
   querySelectedText: true
   queryWordBoundaryOnByCurrentWordInvocation: false
   initiallySearchedRegexp: null
+  useFirstQueryAsSearchTerm: false
 
   getConfig: (name) ->
     value = settings.get("#{@name}.#{name}")

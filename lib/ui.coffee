@@ -135,6 +135,7 @@ class Ui
       'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
       'narrow-ui:toggle-search-whole-word': => @toggleSearchWholeWord()
       'narrow-ui:toggle-search-ignore-case': => @toggleSearchIgnoreCase()
+      'narrow-ui:delete-to-beginning-of-query': => @deleteToBeginningOfQuery()
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
@@ -155,6 +156,27 @@ class Ui
       @queryForSelectFiles
       @needRebuildExcludedFiles
     }
+
+  deleteToBeginningOfQuery: ->
+    if @isAtPrompt()
+      if @provider.useFirstQueryAsSearchTerm
+        searchTerm = @getQuery().split(/\s+/)[0]
+        if searchTerm.length
+          selection = @editor.getLastSelection()
+          cursorPosition = selection.cursor.getBufferPosition()
+
+          column = searchTerm.length + 1
+          if cursorPosition.column <= column
+            column = 0
+
+          range = new Range([0, column], cursorPosition)
+          unless range.isEmpty()
+            selection.setBufferRange(range)
+            selection.delete()
+        else
+          @editor.deleteToBeginningOfLine()
+      else
+        @editor.deleteToBeginningOfLine()
 
   setModifiedState: (state) ->
     return if state is @modifiedState
