@@ -61,6 +61,8 @@ module.exports =
       'narrow:search': => @narrow('search')
       'narrow:search-by-current-word': => @narrow('search', searchCurrentWord: true)
 
+      'narrow:search2': => @narrow('search2')
+
       'narrow:search-current-project': => @narrow('search', currentProject: true)
       'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, searchCurrentWord: true)
 
