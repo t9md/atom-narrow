@@ -12,6 +12,7 @@ class Scan extends ProviderBase
   updateGrammarOnQueryChange: false # for manual update
   itemHaveRange: true
   showSearchOption: true
+  useFirstQueryAsSearchTerm: true
 
   initialize: ->
     return if @reopened

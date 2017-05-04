@@ -25,6 +25,7 @@
       "narrow:scan",
       "narrow:scan-by-current-word",
       "narrow:search",
+      "narrow:search2",
       "narrow:search-by-current-word",
       "narrow:search-current-project",
       "narrow:search-current-project-by-current-word",

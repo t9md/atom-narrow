@@ -169,6 +169,20 @@ providerSettings =
         You can toggle this value by command `narrow:toggle-search-start-by-double-click`
         """
   )
+  Search2: newProviderConfigForSearchAndAtomScan(
+    searcher:
+      default: 'ag'
+      enum: ['ag', 'rg']
+      description: """
+        Choose `ag`( The silver searcher) or `rg`( ripgrep )
+        """
+    startByDoubleClick:
+      default: false
+      description: """
+        [Experimental]: start by dounble click.
+        You can toggle this value by command `narrow:toggle-search-start-by-double-click`
+        """
+  )
   AtomScan: newProviderConfigForSearchAndAtomScan()
   Symbols: newProviderConfig(revealOnStartCondition: 'on-input')
   GitDiffAll: newProviderConfig()
