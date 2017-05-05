@@ -6,6 +6,8 @@ _ = require 'underscore-plus'
 {Point, Range, BufferedProcess} = require 'atom'
 
 LineEndingRegExp = /\n|\r\n/
+RegExpForOutPutLine = /^(.*?):(\d+):(\d+):(.*)$/
+
 unescapeRegExpForRg = (string) ->
   # Why I am unescaping for `rg` specifically?
   # History:
@@ -24,56 +26,36 @@ unescapeRegExpForRg = (string) ->
   else
     ''
 
-runCommand = (options) ->
-  console.log options.args
-  new BufferedProcess(options).onWillThrowError ({error, handle}) ->
-    if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
-      console.log "ERROR"
-    handle()
-
-RegExpForOutPutLine = /^(.*?):(\d+):(\d+):(.*)$/
-getOutputterForProject = (project, items) ->
-  (data) ->
-    for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
-      items.push(new Item(match, project))
-
-# Not used but keep it since I'm planning to introduce per file refresh on modification
-getOutputterForFile = (items) ->
-  (data) ->
-    for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
-      items.push(new Item(match))
-
 class Item
-  constructor: (match, project) ->
-    @filePath = match[1]
+  constructor: (match, project, @getRangeForItem) ->
+    @filePath = path.join(project, match[1])
     row = Math.max(0, parseInt(match[2]) - 1)
     column = Math.max(0, parseInt(match[3]) - 1)
     @text = match[4]
-
     @point = new Point(row, column)
-    @filePath = path.join(project, @filePath) if project
 
-  setRangeHint: (@getRangeForItem) ->
   # this.range is populated on-need via @setRange which is externally set by provider.
   Object.defineProperty @prototype, 'range',
     get: ->
       @_range ?= @getRangeForItem(this)
 
+runCommand = (options) ->
+  new BufferedProcess(options).onWillThrowError ({error, handle}) ->
+    if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
+      console.log "ERROR"
+    handle()
+
 search = ({command, args, project, filePath}) ->
   options =
     stdio: ['ignore', 'pipe', 'pipe']
     env: process.env
+    cwd: project
 
-  # items = []
-  allData = ""
   if filePath?
-    # stdout = getOutputterForFile(items)
-    stdout = (data) -> allData += data
     args.push(filePath)
-  else
-    stdout = (data) -> allData += data
-      # dategetOutputterForProject(project, items)
-    options.cwd = project
+
+  allData = ""
+  stdout = (data) -> allData += data
 
   stderrHeader = "[narrow:search stderr of #{command}]:"
   stderr = (data) -> console.warn(stderrHeader, data)
@@ -106,71 +88,36 @@ class Searcher
         args.push(unescapeRegExpForRg(@searchRegExp.source))
     args
 
-  setRangeHintAndSort: (items) =>
-    for item in items
-      item.setRangeHint(@getRangeForItem)
-    _.sortBy(items, (item) -> item.filePath)
+  translateDataToItems: (project, data) ->
+    items = []
+    for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
+      items.push(new Item(match, project, @getRangeForItem))
+    items
 
   searchFilePath: (filePath) ->
+    [project, filePath] = atom.project.relativizePath(filePath)
+
+    itemize = (data) => @translateDataToItems(project, data)
     args = @getArgs()
-
-    itemize = (data) =>
-      items = []
-      for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
-        items.push(new Item(match))
-      @setRangeHintAndSort(items)
-
-    search({@command, args, filePath}).then(itemize)
+    search({@command, args, project, filePath}).then(itemize)
 
   searchProjects: (projects) ->
     args = @getArgs()
-    searchProject = (project) => search({@command, args, project})
 
     itemizeProjects = (allData) =>
       items = []
       for [project, data] in _.zip(projects, allData)
-        for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
-          items.push(new Item(match, project))
-      @setRangeHintAndSort(items)
+        items.push(@translateDataToItems(project, data)...)
+      _.sortBy(items, (item) -> item.filePath)
 
-    searchPomises = projects.map(searchProject)
-    Promise.all(searchPomises).then(itemizeProjects)
+    searchProject = (project) => search({@command, args, project})
+    Promise.all(projects.map(searchProject)).then(itemizeProjects)
 
   getRangeForItem: (item) =>
     if @useRegex
       # FIXME: Maybe because of BUG of ag?
       # when I search \) in regexp, it find next line of line which ends with `)`.
       matchedText = item.text[item.point.column...].match(@searchRegExp)?[0] ? ''
-      Range.fromPointWithDelta(item.point, 0, matchedText.length)
     else
       matchedText = @searchTerm
-      Range.fromPointWithDelta(item.point, 0, matchedText.length)
-
-searchFilePath = ->
-  options =
-    command: 'rg'
-    useRegex: false
-    searchRegExp: /onWillThrowError/g
-
-  filePath = '/Users/t9md/github/atom-narrow/lib/provider/search.coffee'
-
-  new Searcher(options).searchFilePath(filePath)
-
-# searchProjects = ->
-#   options =
-#     command: 'rg'
-#     useRegex: false
-#     searchRegExp: /searchFilePath/g
-#
-#   projects = atom.project.getPaths()
-#   new Searcher(options).searchProjects(projects)
-#
-# fn = searchFilePath
-# # fn = searchProjects
-# fn().then (items) ->
-#   console.log items
-#
-# # searcher.searchFilePath(filePath).then (items) ->
-# #   console.log items
-# # searcher.searchProjects(projects).then (items) ->
-# #   console.log items
+    Range.fromPointWithDelta(item.point, 0, matchedText.length)
