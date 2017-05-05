@@ -1,6 +1,4 @@
-path = require 'path'
-_ = require 'underscore-plus'
-{Point, Disposable, Range} = require 'atom'
+{Point, Range} = require 'atom'
 {cloneRegExp} = require '../utils'
 ProviderBase = require './provider-base'
 
@@ -33,35 +31,14 @@ class Scan extends ProviderBase
         items.push(text: lineText, point: range.start, range: range)
     items
 
-  updateRegExp: (regExp) ->
-    @ui.highlighter.setRegExp(regExp)
-    @ui.grammar.setSearchTerm(regExp)
-    @ui.controlBar.updateSearchTermElement(regExp)
-    unless regExp?
-      @ui.highlighter.clear()
-      @ui.grammar.activate()
-
   getItems: ->
-    searchTerm = @ui.getSearchTermFromQuery()
-    if searchTerm
-      unless @searchWholeWordChangedManually
-        # Auto relax \b restriction when there is no word-char in searchTerm.
-        @searchWholeWord = false if @searchWholeWord and (not /\w/.test(searchTerm))
-
-      unless @searchIgnoreCaseChangedManually
-        @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(searchTerm)
-
-      regexp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord, @searchIgnoreCase})
-
+    @updateSearchState()
+    if @searchRegExp?
       @ui.controlBar.updateStateElements
         wholeWordButton: @searchWholeWord
         ignoreCaseButton: @searchIgnoreCase
-
-      @updateRegExp(regexp)
-      @initiallySearchedRegexp ?= regexp
-      @scanEditor(regexp)
+      @scanEditor(@searchRegExp)
     else
-      @updateRegExp(null)
       @editor.buffer.getLines().map (text, row) ->
         point = new Point(row, 0)
         {text, point, range: new Range(point, point)}

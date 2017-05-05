@@ -317,3 +317,21 @@ class ProviderBase
     flags = 'g'
     flags += 'i' if searchIgnoreCase
     new RegExp(source, flags)
+
+  # Used for useFirstQueryAsSearchTerm enbled provider.
+  updateSearchState: ->
+    searchTerm = @ui.getSearchTermFromQuery()
+    if searchTerm
+      # Auto relax \b restriction, enable @searchWholeWord only when \w was included.
+      if @searchWholeWord and not @searchWholeWordChangedManually
+        @searchWholeWord = /\w/.test(searchTerm)
+
+      unless @searchIgnoreCaseChangedManually
+        @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(searchTerm)
+
+      @searchRegExp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord, @searchIgnoreCase})
+      @initiallySearchedRegexp ?= @searchRegExp
+    else
+      @searchRegExp = null
+
+    @ui.updateSearchRegExp(@searchRegExp)

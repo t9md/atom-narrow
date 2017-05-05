@@ -907,3 +907,11 @@ class Ui
 
     @provider.updateRealFile(changes)
     @setModifiedState(false)
+
+  updateSearchRegExp: (searchRegExp) ->
+    @highlighter.setRegExp(searchRegExp)
+    @grammar.setSearchTerm(searchRegExp)
+    @controlBar.updateSearchTermElement(searchRegExp)
+    unless searchRegExp?
+      @highlighter.clear()
+      @grammar.activate()
