@@ -121,17 +121,3 @@ class SearchBase extends ProviderBase
   toggleSearchIgnoreCase: ->
     super
     @resetRegExpForSearchTerm()
-
-  # If passed items have filePath's item, replace old items with new items.
-  # If passed items have no filePath's item, append to end.
-  replaceOrAppendItemsForFilePath: (items, filePath, newItems) ->
-    amountOfRemove = 0
-    indexToInsert = items.length - 1
-
-    [firstIndex, lastIndex] = findFirstAndLastIndexBy(items, (item) -> item.filePath is filePath)
-    if firstIndex? and lastIndex?
-      indexToInsert = firstIndex
-      amountOfRemove = lastIndex - firstIndex + 1
-
-    items.splice(indexToInsert, amountOfRemove, newItems...)
-    items

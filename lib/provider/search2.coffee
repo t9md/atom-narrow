@@ -1,8 +1,10 @@
+{inspect} = require 'util'
+p = (args...) -> console.log inspect(args...)
+
+ProviderBase = require './provider-base'
 path = require 'path'
 _ = require 'underscore-plus'
 {Point, Range, BufferedProcess} = require 'atom'
-SearchBase = require './search-base'
-
 LineEndingRegExp = /\n|\r\n/
 
 unescapeRegExpForRg = (string) ->
@@ -84,18 +86,21 @@ getProjectDirectoryForFilePath = (filePath) ->
   null
 
 module.exports =
-class Search2 extends SearchBase
-  updateGrammarOnQueryChange: false # for manual update
-  supportCacheItems: false
+class Search2 extends ProviderBase
+  supportDirectEdit: true
+  showColumnOnLineHeader: true
+  searchRegExp: null
+  itemHaveRange: true
+  showSearchOption: true
+  supportCacheItems: true
+  querySelectedText: false
+  searchTerm: null
   useRegex: false
+
   useFirstQueryAsSearchTerm: true
 
   getState: ->
     @mergeState(super, {@projects})
-
-  initialize: ->
-    # @resetRegExpForSearchTerm()
-    # @initiallySearchedRegexp = @searchRegExp
 
   getRangeForItem: (item) =>
     if @useRegex
@@ -156,52 +161,22 @@ class Search2 extends SearchBase
       item.setRangeHint(@getRangeForItem)
     return items
 
-  startSearch: (filePath) ->
+  search: (filePath) ->
     if filePath?
-      return @items unless atom.project.contains(filePath)
-
-      @searchFilePath(filePath).then (items) =>
-        @items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
+      if atom.project.contains(filePath)
+        @searchFilePath(filePath).then (items) =>
+          items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
+          items
+      else
+        @items
     else
-      @searchProjects(@projects).then (items) =>
-        @items = items
-
-  updateRegExp: (regExp) ->
-    @ui.highlighter.setRegExp(regExp)
-    @ui.grammar.setSearchTerm(regExp)
-    @ui.controlBar.updateSearchTermElement(regExp)
-    unless regExp?
-      @ui.highlighter.clear()
-      @ui.grammar.activate()
-
-  filterItems: (items, {include}) ->
-    include.shift()
-    @ui.grammar.update(include)
-    super
+      return @searchProjects(@projects)
 
   getItems: (filePath) ->
-    searchTerm = @ui.getQuery().split(/\s+/)[0]
-    unless searchTerm
-      return []
+    @updateSearchState()
 
-    if @searchTerm is searchTerm
-      @items
+    if @searchRegExp?
+      @search(filePath).then (items) =>
+        @items = items
     else
-      @searchTerm = searchTerm
-
-      unless @searchWholeWordChangedManually
-        # Auto relax \b restriction when there is no word-char in searchTerm.
-        @searchWholeWord = false if @searchWholeWord and (not /\w/.test(searchTerm))
-
-      unless @searchIgnoreCaseChangedManually
-        @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(searchTerm)
-      # regexp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord, @searchIgnoreCase})
-      @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
-
-      @ui.controlBar.updateStateElements
-        wholeWordButton: @searchWholeWord
-        ignoreCaseButton: @searchIgnoreCase
-
-      @updateRegExp(@searchRegExp)
-      @initiallySearchedRegexp = @searchRegExp
-      @startSearch(filePath)
+      []

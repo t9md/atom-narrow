@@ -320,18 +320,35 @@ class ProviderBase
 
   # Used for useFirstQueryAsSearchTerm enbled provider.
   updateSearchState: ->
-    searchTerm = @ui.getSearchTermFromQuery()
-    if searchTerm
+    @searchTerm = @ui.getSearchTermFromQuery()
+    if @searchTerm
       # Auto relax \b restriction, enable @searchWholeWord only when \w was included.
       if @searchWholeWord and not @searchWholeWordChangedManually
-        @searchWholeWord = /\w/.test(searchTerm)
+        @searchWholeWord = /\w/.test(@searchTerm)
 
       unless @searchIgnoreCaseChangedManually
-        @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(searchTerm)
+        @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(@searchTerm)
 
-      @searchRegExp = @getRegExpForSearchTerm(searchTerm, {@searchWholeWord, @searchIgnoreCase})
+      @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
       @initiallySearchedRegexp ?= @searchRegExp
+
+      @ui.controlBar.updateStateElements
+        wholeWordButton: @searchWholeWord
+        ignoreCaseButton: @searchIgnoreCase
     else
       @searchRegExp = null
 
     @ui.updateSearchRegExp(@searchRegExp)
+
+  # Replace old items for filePath or append if items are new filePath.
+  replaceOrAppendItemsForFilePath: (items, filePath, newItems) ->
+    amountOfRemove = 0
+    indexToInsert = items.length - 1
+
+    [firstIndex, lastIndex] = findFirstAndLastIndexBy(items, (item) -> item.filePath is filePath)
+    if firstIndex? and lastIndex?
+      indexToInsert = firstIndex
+      amountOfRemove = lastIndex - firstIndex + 1
+
+    items.splice(indexToInsert, amountOfRemove, newItems...)
+    items

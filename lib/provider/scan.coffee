@@ -34,9 +34,6 @@ class Scan extends ProviderBase
   getItems: ->
     @updateSearchState()
     if @searchRegExp?
-      @ui.controlBar.updateStateElements
-        wholeWordButton: @searchWholeWord
-        ignoreCaseButton: @searchIgnoreCase
       @scanEditor(@searchRegExp)
     else
       @editor.buffer.getLines().map (text, row) ->

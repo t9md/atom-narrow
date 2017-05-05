@@ -61,11 +61,13 @@ module.exports =
       'narrow:search': => @narrow('search')
       'narrow:search-by-current-word': => @narrow('search', searchCurrentWord: true)
 
-      'narrow:search2': => @narrow('search2')
-      'narrow:search2-by-current-word': => @narrow('search2', queryCurrentWord: true)
-
       'narrow:search-current-project': => @narrow('search', currentProject: true)
       'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, searchCurrentWord: true)
+
+      'narrow:search2': => @narrow('search2')
+      'narrow:search2-by-current-word': => @narrow('search2', queryCurrentWord: true)
+      'narrow:search2-current-project': => @narrow('search2', currentProject: true)
+      'narrow:search2-current-project-by-current-word': => @narrow('search2', currentProject: true, queryCurrentWord: true)
 
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', searchCurrentWord: true)
