@@ -13,6 +13,7 @@ class Scan extends ProviderBase
   itemHaveRange: true
   showSearchOption: true
   useFirstQueryAsSearchTerm: true
+  supportCacheItems: true
 
   initialize: ->
     return if @reopened
@@ -42,7 +43,7 @@ class Scan extends ProviderBase
       @ui.grammar.activate()
 
   getItems: ->
-    searchTerm = @ui.getQuery().split(/\s+/)[0]
+    searchTerm = @ui.getSearchTermFromPrompt()
     if searchTerm
       unless @searchWholeWordChangedManually
         # Auto relax \b restriction when there is no word-char in searchTerm.
@@ -58,8 +59,7 @@ class Scan extends ProviderBase
         ignoreCaseButton: @searchIgnoreCase
 
       @updateRegExp(regexp)
-
-      @initiallySearchedRegexp = regexp
+      @initiallySearchedRegexp ?= regexp
       @scanEditor(regexp)
     else
       @updateRegExp(null)

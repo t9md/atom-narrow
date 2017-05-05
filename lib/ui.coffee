@@ -66,6 +66,7 @@ class Ui
   destroyed: false
   cachedItems: null
   lastQuery: ''
+  lastSearchTerm: ''
   modifiedState: null
   readOnly: false
   protected: false
@@ -136,6 +137,7 @@ class Ui
       'narrow-ui:toggle-search-whole-word': => @toggleSearchWholeWord()
       'narrow-ui:toggle-search-ignore-case': => @toggleSearchIgnoreCase()
       'narrow-ui:delete-to-beginning-of-query': => @deleteToBeginningOfQuery()
+      'narrow-ui:set-search-term-boundary': => @setSearchTermBoundary()
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
@@ -157,10 +159,22 @@ class Ui
       @needRebuildExcludedFiles
     }
 
+  getSearchTermFromPrompt: ->
+    if @provider.useFirstQueryAsSearchTerm
+      if @searchTermMarker?.isValid()
+        @editor.getTextInBufferRange(@searchTermMarker.getBufferRange())
+      else
+        @getQuery().split(/\s+/)[0]
+
+  setSearchTermBoundary: ->
+    if @isAtPrompt() and @provider.useFirstQueryAsSearchTerm
+      range = [[0, 0], @editor.getCursorBufferPosition()]
+      @searchTermMarker = @editor.markBufferRange(range, invalidate: 'inside')
+      @refresh(force: true)
+
   deleteToBeginningOfQuery: ->
     if @isAtPrompt()
-      if @provider.useFirstQueryAsSearchTerm
-        searchTerm = @getQuery().split(/\s+/)[0]
+      if searchTerm = @getSearchTermFromPrompt()
         if searchTerm.length
           selection = @editor.getLastSelection()
           cursorPosition = selection.cursor.getBufferPosition()
@@ -459,7 +473,7 @@ class Ui
     @previewItemForDirection('previous')
 
   getQuery: ->
-    @editor.lineTextForBufferRow(0)
+    @editor.getTextInBufferRange(@getPromptRange())
 
   excludeFile: ->
     return if @provider.boundToSingleFile
@@ -488,6 +502,12 @@ class Ui
       @refresh()
 
   getItems: ({force, filePath}) ->
+    if @provider.useFirstQueryAsSearchTerm
+      searchTerm = @getSearchTermFromPrompt()
+      if searchTerm isnt @lastSearchTerm
+        @cachedItems = null
+        @lastSearchTerm = searchTerm
+
     if @cachedItems? and not force
       Promise.resolve(@cachedItems)
     else
@@ -592,6 +612,7 @@ class Ui
     @editor.buffer.onDidChange (event) =>
       {newRange, oldRange, newText, oldText} = event
       return if @ignoreChange
+
       # Ignore white spaces change
       return if oldText.trim() is newText.trim()
 
