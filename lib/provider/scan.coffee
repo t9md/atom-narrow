@@ -9,7 +9,6 @@ class Scan extends ProviderBase
   boundToSingleFile: true
   supportDirectEdit: true
   showColumnOnLineHeader: true
-  updateGrammarOnQueryChange: false # for manual update
   itemHaveRange: true
   showSearchOption: true
   useFirstQueryAsSearchTerm: true
@@ -43,7 +42,7 @@ class Scan extends ProviderBase
       @ui.grammar.activate()
 
   getItems: ->
-    searchTerm = @ui.getSearchTermFromPrompt()
+    searchTerm = @ui.getSearchTermFromQuery()
     if searchTerm
       unless @searchWholeWordChangedManually
         # Auto relax \b restriction when there is no word-char in searchTerm.
@@ -66,8 +65,3 @@ class Scan extends ProviderBase
       @editor.buffer.getLines().map (text, row) ->
         point = new Point(row, 0)
         {text, point, range: new Range(point, point)}
-
-  filterItems: (items, {include}) ->
-    include.shift()
-    @ui.grammar.update(include)
-    super

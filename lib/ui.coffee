@@ -1,3 +1,5 @@
+{inspect} = require 'util'
+p = (args...) -> console.log inspect(args...)
 _ = require 'underscore-plus'
 path = require 'path'
 {Point, Range, CompositeDisposable, Emitter} = require 'atom'
@@ -20,7 +22,7 @@ path = require 'path'
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
-getFilterSpecForQuery = require './get-filter-spec-for-query'
+getFilterSpec = require './get-filter-spec'
 Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
@@ -159,7 +161,7 @@ class Ui
       @needRebuildExcludedFiles
     }
 
-  getSearchTermFromPrompt: ->
+  getSearchTermFromQuery: ->
     if @provider.useFirstQueryAsSearchTerm
       if @searchTermMarker?.isValid()
         @editor.getTextInBufferRange(@searchTermMarker.getBufferRange())
@@ -174,7 +176,7 @@ class Ui
 
   deleteToBeginningOfQuery: ->
     if @isAtPrompt()
-      if searchTerm = @getSearchTermFromPrompt()
+      if searchTerm = @getSearchTermFromQuery()
         if searchTerm.length
           selection = @editor.getLastSelection()
           cursorPosition = selection.cursor.getBufferPosition()
@@ -502,12 +504,6 @@ class Ui
       @refresh()
 
   getItems: ({force, filePath}) ->
-    if @provider.useFirstQueryAsSearchTerm
-      searchTerm = @getSearchTermFromPrompt()
-      if searchTerm isnt @lastSearchTerm
-        @cachedItems = null
-        @lastSearchTerm = searchTerm
-
     if @cachedItems? and not force
       Promise.resolve(@cachedItems)
     else
@@ -517,14 +513,12 @@ class Ui
         items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
         items
 
-  filterItems: (items) ->
+  filterItems: (items, filterQuery) ->
     @itemsBeforeFiltered = items
-    @lastQuery = @getQuery()
     sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
     negateByEndingExclamation = @provider.getConfig('negateNarrowQueryByEndingExclamation')
-    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity, negateByEndingExclamation})
-    if @provider.updateGrammarOnQueryChange
-      @grammar.update(filterSpec.include) # No need to highlight excluded items
+    filterSpec = getFilterSpec(filterQuery, {sensitivity, negateByEndingExclamation})
+    @grammar.update(filterSpec.include) # No need to highlight excluded items
 
     unless @provider.boundToSingleFile
       if @needRebuildExcludedFiles
@@ -552,7 +546,7 @@ class Ui
     items = @getItemsForSelectFiles()
     sensitivity = settings.get('SelectFiles.caseSensitivityForNarrowQuery')
     negateByEndingExclamation = settings.get('SelectFiles.negateNarrowQueryByEndingExclamation')
-    filterSpec = getFilterSpecForQuery(@queryForSelectFiles, {sensitivity, negateByEndingExclamation})
+    filterSpec = getFilterSpec(@queryForSelectFiles, {sensitivity, negateByEndingExclamation})
     items = SelectFiles::filterItems(items, filterSpec)
 
     selectedFiles = _.pluck(items, 'filePath')
@@ -569,10 +563,21 @@ class Ui
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
 
+    @lastQuery = filterQuery = @getQuery()
+    if @provider.useFirstQueryAsSearchTerm
+      # Extracet filterQuery by removing searchTerm part from query
+      filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
+      searchTerm = @getSearchTermFromQuery()
+      # Invalidate cachedItem in case searchTerm was changed
+      if searchTerm isnt @lastSearchTerm
+        @cachedItems = null
+        @lastSearchTerm = searchTerm
+
     @getItems({force, filePath}).then (items) =>
       if @provider.supportCacheItems
         @cachedItems = items
-      items = @filterItems(items)
+
+      items = @filterItems(items, filterQuery)
       if (not selectFirstItem) and @items.hasSelectedItem()
         selectedItem = findEqualLocationItem(items, @items.getSelectedItem())
         oldColumn = @editor.getCursorBufferPosition().column

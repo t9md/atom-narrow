@@ -41,7 +41,6 @@ class ProviderBase
 
   showLineHeader: true
   showColumnOnLineHeader: false
-  updateGrammarOnQueryChange: true
   itemHaveRange: false
 
   supportDirectEdit: false
