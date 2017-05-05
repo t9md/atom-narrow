@@ -5,6 +5,7 @@ ProviderBase = require './provider-base'
 path = require 'path'
 _ = require 'underscore-plus'
 {Point, Range, BufferedProcess} = require 'atom'
+{getProjectPaths, replaceOrAppendItemsForFilePath} = require '../utils'
 LineEndingRegExp = /\n|\r\n/
 
 unescapeRegExpForRg = (string) ->
@@ -113,16 +114,7 @@ class Search2 extends ProviderBase
       Range.fromPointWithDelta(item.point, 0, matchedText.length)
 
   checkReady: ->
-    if @options.currentProject
-      if dir = getProjectDirectoryForFilePath(@editor.getPath())
-        @projects = [dir.getPath()]
-      else
-        message = "This file is not belonging to any project"
-        atom.notifications.addInfo(message, dismissable: true)
-        return Promise.resolve(false)
-
-    @projects ?= atom.project.getPaths()
-    Promise.resolve(true)
+    @projects ?= getProjectPaths(if @options.currentProject then @editor)
 
   getSearchArgs: (command) ->
     args = ['--vimgrep']
@@ -165,7 +157,7 @@ class Search2 extends ProviderBase
     if filePath?
       if atom.project.contains(filePath)
         @searchFilePath(filePath).then (items) =>
-          items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
+          items = replaceOrAppendItemsForFilePath(@items, filePath, items)
           items
       else
         @items

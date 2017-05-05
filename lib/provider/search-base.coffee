@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 
 ProviderBase = require './provider-base'
-{getCurrentWord, findFirstAndLastIndexBy} = require '../utils'
+{getCurrentWord} = require '../utils'
 history = require '../input-history-manager'
 
 lastIgnoreCaseOption = {}
@@ -46,8 +46,7 @@ class SearchBase extends ProviderBase
       getCurrentWord(editor)
 
   checkReady: ->
-    if @reopened
-      return Promise.resolve(true)
+    return true if @reopened
 
     @searchTerm = @getSearchTerm()
     @searchWholeWord ?= @getConfig('searchWholeWord')
@@ -60,10 +59,9 @@ class SearchBase extends ProviderBase
         @searchIgnoreCase = lastIgnoreCaseOption.byHand
 
     if @searchTerm?
-      Promise.resolve(@searchTerm).then =>
-        history.save(@searchTerm, false)
-        @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
-        return @searchTerm
+      history.save(@searchTerm, false)
+      @searchIgnoreCase ?= @getIgnoreCaseValueForSearchTerm(@searchTerm)
+      return @searchTerm
     else
       readInput(@getUseRegex()).then ({text, useRegex}) =>
         # Validate regexp

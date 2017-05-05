@@ -1,6 +1,7 @@
 path = require 'path'
 _ = require 'underscore-plus'
 {Point, Range} = require 'atom'
+{replaceOrAppendItemsForFilePath} = require '../utils'
 SearchBase = require './search-base'
 
 module.exports =
@@ -42,7 +43,7 @@ class AtomScan extends SearchBase
       return @items unless atom.project.contains(filePath)
 
       @scanFilePath(filePath).then (newItems) =>
-        @items = @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
+        @items = replaceOrAppendItemsForFilePath(@items, filePath, newItems)
     else
       @scanWorkspace().then (items) =>
         @items = items

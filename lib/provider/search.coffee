@@ -2,6 +2,7 @@ path = require 'path'
 _ = require 'underscore-plus'
 {Point, Range, BufferedProcess} = require 'atom'
 SearchBase = require './search-base'
+{getProjectPaths, replaceOrAppendItemsForFilePath} = require '../utils'
 
 LineEndingRegExp = /\n|\r\n/
 
@@ -77,12 +78,6 @@ search = ({command, args, project, filePath}) ->
     exit = -> resolve(items)
     runCommand({command, args, stdout, stderr, exit, options})
 
-getProjectDirectoryForFilePath = (filePath) ->
-  return null unless filePath?
-  for dir in atom.project.getDirectories() when dir.contains(filePath)
-    return dir
-  null
-
 module.exports =
 class Search extends SearchBase
   getState: ->
@@ -99,16 +94,8 @@ class Search extends SearchBase
       Range.fromPointWithDelta(item.point, 0, matchedText.length)
 
   checkReady: ->
-    if @options.currentProject
-      if dir = getProjectDirectoryForFilePath(@editor.getPath())
-        @projects = [dir.getPath()]
-      else
-        message = "This file is not belonging to any project"
-        atom.notifications.addInfo(message, dismissable: true)
-        return Promise.resolve(false)
-
-    @projects ?= atom.project.getPaths()
-    super
+    if @projects ?= getProjectPaths(if @options.currentProject then @editor)
+      super
 
   getSearchArgs: (command) ->
     args = ['--vimgrep']
@@ -152,7 +139,7 @@ class Search extends SearchBase
       return @items unless atom.project.contains(filePath)
 
       @searchFilePath(filePath).then (items) =>
-        @items = @replaceOrAppendItemsForFilePath(@items, filePath, items)
+        @items = replaceOrAppendItemsForFilePath(@items, filePath, items)
     else
       @searchProjects(@projects).then (items) =>
         @items = items

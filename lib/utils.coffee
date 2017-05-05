@@ -288,6 +288,33 @@ getItemsWithHeaders = (_items) ->
       items.push(itemsInFile...)
   items
 
+# Replace old items for filePath or append if items are new filePath.
+replaceOrAppendItemsForFilePath = (items, filePath, newItems) ->
+  amountOfRemove = 0
+  indexToInsert = items.length - 1
+
+  [firstIndex, lastIndex] = findFirstAndLastIndexBy(items, (item) -> item.filePath is filePath)
+  if firstIndex? and lastIndex?
+    indexToInsert = firstIndex
+    amountOfRemove = lastIndex - firstIndex + 1
+
+  items.splice(indexToInsert, amountOfRemove, newItems...)
+  items
+
+getProjectPaths = (editor) ->
+  paths = null
+  if editor?
+    if filePath = editor.getPath()
+      for dir in atom.project.getDirectories() when dir.contains(filePath)
+        paths = [dir.getPath()]
+        break
+    unless paths
+      message = "This file is not belonging to any project"
+      atom.notifications.addInfo(message, dismissable: true)
+  else
+    paths = atom.project.getPaths()
+  paths
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -318,4 +345,6 @@ module.exports = {
   findFirstAndLastIndexBy
   getItemsWithHeaders
   getItemsWithoutUnusedHeader
+  replaceOrAppendItemsForFilePath
+  getProjectPaths
 }

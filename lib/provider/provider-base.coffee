@@ -87,7 +87,7 @@ class ProviderBase
     # to override
 
   checkReady: ->
-    Promise.resolve(true)
+    true
 
   bindEditor: (editor) ->
     return if editor is @editor
@@ -156,13 +156,13 @@ class ProviderBase
     @query = @getInitialQuery(editor)
 
   start: ->
-    new Promise (resolve) =>
-      @checkReady().then (ready) =>
-        if ready
-          @ui = new Ui(this, {@query}, @restoredState?.ui)
-          @initialize()
-          @ui.open(pending: @options.pending).then =>
-            resolve(@ui)
+    checkReady = Promise.resolve(@checkReady())
+    checkReady.then (ready) =>
+      if ready
+        @ui = new Ui(this, {@query}, @restoredState?.ui)
+        @initialize()
+        @ui.open(pending: @options.pending).then =>
+          return @ui
 
   getInitialQuery: (editor) ->
     query = @options.query
@@ -339,16 +339,3 @@ class ProviderBase
       @searchRegExp = null
 
     @ui.updateSearchRegExp(@searchRegExp)
-
-  # Replace old items for filePath or append if items are new filePath.
-  replaceOrAppendItemsForFilePath: (items, filePath, newItems) ->
-    amountOfRemove = 0
-    indexToInsert = items.length - 1
-
-    [firstIndex, lastIndex] = findFirstAndLastIndexBy(items, (item) -> item.filePath is filePath)
-    if firstIndex? and lastIndex?
-      indexToInsert = firstIndex
-      amountOfRemove = lastIndex - firstIndex + 1
-
-    items.splice(indexToInsert, amountOfRemove, newItems...)
-    items
