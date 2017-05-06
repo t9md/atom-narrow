@@ -27,17 +27,29 @@ unescapeRegExpForRg = (string) ->
     ''
 
 class Item
-  constructor: (match, project, @getRangeForItem) ->
+  constructor: (match, project, rangeHint) ->
     @filePath = path.join(project, match[1])
     row = Math.max(0, parseInt(match[2]) - 1)
     column = Math.max(0, parseInt(match[3]) - 1)
     @text = match[4]
     @point = new Point(row, column)
 
+    {@useRegex, @searchTerm, @searchRegExp} = rangeHint
+
   # this.range is populated on-need via @setRange which is externally set by provider.
   Object.defineProperty @prototype, 'range',
     get: ->
-      @_range ?= @getRangeForItem(this)
+      @_range ?= @getRange()
+
+  getRange: =>
+    if @useRegex
+      # FIXME: Maybe because of BUG of ag?
+      # when I search \) in regexp, it find next line of line which ends with `)`.
+      matchedText = @text[@point.column...].match(@searchRegExp)?[0] ? ''
+    else
+      matchedText = @searchTerm
+    Range.fromPointWithDelta(@point, 0, matchedText.length)
+
 
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
@@ -45,14 +57,11 @@ runCommand = (options) ->
       console.log "ERROR"
     handle()
 
-search = ({command, args, project, filePath}) ->
+search = (command, args, project) ->
   options =
     stdio: ['ignore', 'pipe', 'pipe']
     env: process.env
     cwd: project
-
-  if filePath?
-    args.push(filePath)
 
   allData = ""
   stdout = (data) -> allData += data
@@ -88,36 +97,29 @@ class Searcher
         args.push(unescapeRegExpForRg(@searchRegExp.source))
     args
 
-  translateDataToItems: (project, data) ->
+  itemizeProject: (project, data) ->
     items = []
+    rangeHint = {@useRegex, @searchTerm, @searchRegExp}
     for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
-      items.push(new Item(match, project, @getRangeForItem))
+      items.push(new Item(match, project, rangeHint))
     items
 
   searchFilePath: (filePath) ->
     [project, filePath] = atom.project.relativizePath(filePath)
 
-    itemize = (data) => @translateDataToItems(project, data)
     args = @getArgs()
-    search({@command, args, project, filePath}).then(itemize)
+    args.push(filePath)
+
+    itemizeProject = @itemizeProject.bind(this, project)
+    search(@command, args, project).then(itemize)
 
   searchProjects: (projects) ->
-    args = @getArgs()
-
-    itemizeProjects = (allData) =>
-      items = []
-      for [project, data] in _.zip(projects, allData)
-        items.push(@translateDataToItems(project, data)...)
-      _.sortBy(items, (item) -> item.filePath)
-
-    searchProject = (project) => search({@command, args, project})
+    itemizeProjects = @itemizeProjects.bind(this, projects)
+    searchProject = search.bind(this, @command, @getArgs())
     Promise.all(projects.map(searchProject)).then(itemizeProjects)
 
-  getRangeForItem: (item) =>
-    if @useRegex
-      # FIXME: Maybe because of BUG of ag?
-      # when I search \) in regexp, it find next line of line which ends with `)`.
-      matchedText = item.text[item.point.column...].match(@searchRegExp)?[0] ? ''
-    else
-      matchedText = @searchTerm
-    Range.fromPointWithDelta(item.point, 0, matchedText.length)
+  itemizeProjects: (projects, allData) ->
+    items = []
+    for [project, data] in _.zip(projects, allData)
+      items.push(@itemizeProject(project, data)...)
+    _.sortBy(items, (item) -> item.filePath)
