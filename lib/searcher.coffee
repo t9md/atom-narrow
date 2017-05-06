@@ -1,6 +1,3 @@
-{inspect} = require 'util'
-p = (args...) -> console.log inspect(args...)
-
 path = require 'path'
 _ = require 'underscore-plus'
 {Point, Range, BufferedProcess} = require 'atom'
