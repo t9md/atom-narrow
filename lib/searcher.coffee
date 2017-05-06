@@ -97,13 +97,6 @@ class Searcher
         args.push(unescapeRegExpForRg(@searchRegExp.source))
     args
 
-  itemizeProject: (project, data) ->
-    items = []
-    rangeHint = {@useRegex, @searchTerm, @searchRegExp}
-    for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
-      items.push(new Item(match, project, rangeHint))
-    items
-
   searchFilePath: (filePath) ->
     [project, filePath] = atom.project.relativizePath(filePath)
 
@@ -111,12 +104,19 @@ class Searcher
     args.push(filePath)
 
     itemizeProject = @itemizeProject.bind(this, project)
-    search(@command, args, project).then(itemize)
+    search(@command, args, project).then(itemizeProject)
 
   searchProjects: (projects) ->
     itemizeProjects = @itemizeProjects.bind(this, projects)
     searchProject = search.bind(this, @command, @getArgs())
     Promise.all(projects.map(searchProject)).then(itemizeProjects)
+
+  itemizeProject: (project, data) ->
+    items = []
+    rangeHint = {@useRegex, @searchTerm, @searchRegExp}
+    for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
+      items.push(new Item(match, project, rangeHint))
+    items
 
   itemizeProjects: (projects, allData) ->
     items = []
