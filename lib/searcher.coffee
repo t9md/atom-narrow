@@ -41,7 +41,7 @@ class Item
     get: ->
       @_range ?= @getRange()
 
-  getRange: =>
+  getRange: ->
     if @useRegex
       # FIXME: Maybe because of BUG of ag?
       # when I search \) in regexp, it find next line of line which ends with `)`.
