@@ -1,6 +1,3 @@
-{inspect} = require 'util'
-p = (args...) -> console.log inspect(args...)
-
 ProviderBase = require './provider-base'
 {getProjectPaths, replaceOrAppendItemsForFilePath} = require '../utils'
 Searcher = require '../searcher'
