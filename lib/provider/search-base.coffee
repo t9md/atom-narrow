@@ -109,6 +109,7 @@ class SearchBase extends ProviderBase
       @searchRegex = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
       @ui.grammar.setSearchTerm(@searchRegex)
     @ui.highlighter.setRegExp(@searchRegex)
+    @ui.controlBar.updateElements({@searchRegex})
 
   toggleSearchWholeWord: ->
     super

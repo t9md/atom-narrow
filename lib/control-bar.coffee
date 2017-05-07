@@ -19,12 +19,14 @@ class ControlBar
         <a class='protected'></a>
         <a class='select-files'></a>
       </div>
-      <div class='btn-group btn-group-xs'>
-        <button class='btn search-ignore-case'>Aa</button>
-        <button class='btn search-whole-word'>\\b</button>
-        <button class='btn search-use-regex'>.*</button>
+      <div class='search-options inline-block'>
+        <div class='btn-group btn-group-xs'>
+          <button class='btn search-ignore-case'>Aa</button>
+          <button class='btn search-whole-word'>\\b</button>
+          <button class='btn search-use-regex'>.*</button>
+        </div>
+        <span class='search-regex'></span>
       </div>
-      <span class='search-regex'></span>
       """
 
     # NOTE: Avoid mousedown event propagated up to belonging narrow-editor's element
@@ -32,7 +34,7 @@ class ControlBar
     @container.addEventListener('mousedown', suppressEvent)
 
     elementFor = (name) => @container.getElementsByClassName(name)[0]
-    hideElement = (name) => @elements[name].style.display = 'none'
+    hideElement = (name) -> elementFor(name).style.display = 'none'
 
     @elements =
       autoPreview: elementFor('auto-preview')
@@ -45,13 +47,8 @@ class ControlBar
       searchUseRegex: elementFor('search-use-regex')
       searchRegex: elementFor('search-regex')
 
-    if @provider.boundToSingleFile
-      hideElement('selectFiles')
-
-    unless @showSearchOption
-      for elementName in ['searchIgnoreCase', 'searchWholeWord', 'searchUseRegex', 'searchRegex']
-        hideElement(elementName)
-
+    hideElement('select-files') if @provider.boundToSingleFile
+    hideElement('search-options') unless @showSearchOption
     @addClickEvents()
 
   addClickEvents: ->

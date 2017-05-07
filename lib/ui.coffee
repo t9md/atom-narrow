@@ -573,10 +573,7 @@ class Ui
 
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
-    states = {refresh: true}
-    if @showSearchOption
-      Object.assign(states, @provider.getSearchState())
-    @controlBar.updateElements(states)
+    @controlBar.updateElements(refresh: true)
 
     @lastQuery = filterQuery = @getQuery()
     if @provider.useFirstQueryAsSearchTerm
@@ -929,3 +926,4 @@ class Ui
     @highlighter.setRegExp(states.searchRegex)
     @grammar.setSearchTerm(states.searchRegex)
     @grammar.setUseSearchTermRule(not states.searchUseRegex)
+    @controlBar.updateElements(states)
