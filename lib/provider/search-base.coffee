@@ -11,7 +11,7 @@ module.exports =
 class SearchBase extends ProviderBase
   supportDirectEdit: true
   showColumnOnLineHeader: true
-  searchRegExp: null
+  searchRegex: null
   itemHaveRange: true
   showSearchOption: true
   supportCacheItems: true
@@ -95,7 +95,7 @@ class SearchBase extends ProviderBase
 
   initialize: ->
     @resetRegExpForSearchTerm()
-    @initiallySearchedRegexp = @searchRegExp
+    @initialSearchRegex = @searchRegex
 
   resetRegExpForSearchTerm: ->
     if @useRegex
@@ -104,13 +104,11 @@ class SearchBase extends ProviderBase
       expression = @searchTerm
       if @searchWholeWord
         expression = "\\b#{@searchTerm}\\b"
-      @searchRegExp = new RegExp(expression, flags)
+      @searchRegex = new RegExp(expression, flags)
     else
-      @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
-      @ui.grammar.setSearchTerm(@searchRegExp)
-
-    @ui.highlighter.setRegExp(@searchRegExp)
-    @ui.controlBar.updateSearchTermElement(@searchRegExp)
+      @searchRegex = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
+      @ui.grammar.setSearchTerm(@searchRegex)
+    @ui.highlighter.setRegExp(@searchRegex)
 
   toggleSearchWholeWord: ->
     super

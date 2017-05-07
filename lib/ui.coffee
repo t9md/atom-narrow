@@ -19,6 +19,7 @@ path = require 'path'
   getItemsWithHeaders
   getItemsWithoutUnusedHeader
   cloneRegExp
+  suppressEvent
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -125,19 +126,20 @@ class Ui
       'narrow-ui:preview-item': => @preview()
       'narrow-ui:preview-next-item': => @previewNextItem()
       'narrow-ui:preview-previous-item': => @previewPreviousItem()
-      'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
+      'narrow-ui:toggle-auto-preview': @toggleAutoPreview
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt()
       'narrow-ui:start-insert': => @setReadOnly(false)
       'narrow-ui:stop-insert': => @setReadOnly(true)
       'narrow-ui:update-real-file': => @updateRealFile()
       'narrow-ui:exclude-file': => @excludeFile()
-      'narrow-ui:select-files': => @selectFiles()
+      'narrow-ui:select-files': @selectFiles
       'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
       'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
       'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
-      'narrow-ui:toggle-search-whole-word': => @toggleSearchWholeWord()
-      'narrow-ui:toggle-search-ignore-case': => @toggleSearchIgnoreCase()
+      'narrow-ui:toggle-search-whole-word': @toggleSearchWholeWord
+      'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
+      'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
       'narrow-ui:delete-to-beginning-of-query': => @deleteToBeginningOfQuery()
       'narrow-ui:set-search-term-boundary': => @setSearchTermBoundary()
 
@@ -203,24 +205,31 @@ class Ui
     @editor.buffer.isModified = -> state
     @editor.buffer.emitModifiedStatusChanged(state)
 
-  toggleSearchWholeWord: ->
+  toggleSearchWholeWord: (event) =>
+    suppressEvent(event)
     @provider.toggleSearchWholeWord()
-    @controlBar.updateStateElements(wholeWordButton: @searchWholeWord)
     @refresh(force: true)
 
-  toggleSearchIgnoreCase: ->
+  toggleSearchIgnoreCase: (event) =>
+    suppressEvent(event)
     @provider.toggleSearchIgnoreCase()
-    @controlBar.updateStateElements(ignoreCaseButton: @searchIgnoreCase)
     @refresh(force: true)
 
-  toggleProtected: ->
+  toggleSearchUseRegex: (event) =>
+    suppressEvent(event)
+    @provider.toggleSearchUseRegex()
+    @refresh(force: true)
+
+  toggleProtected: (event) =>
+    suppressEvent(event)
     @protected = not @protected
     @itemIndicator.update({@protected})
-    @controlBar.updateStateElements({@protected})
+    @controlBar.updateElements({@protected})
 
-  toggleAutoPreview: ->
+  toggleAutoPreview: (event) =>
+    suppressEvent(event)
     @autoPreview = not @autoPreview
-    @controlBar.updateStateElements({@autoPreview})
+    @controlBar.updateElements({@autoPreview})
     @highlighter.clearCurrentAndLineMarker()
     @preview() if @autoPreview
 
@@ -256,6 +265,7 @@ class Ui
     @emitter = new Emitter
     @autoPreview = @provider.getConfig('autoPreview')
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
+    @showSearchOption = @provider.showSearchOption
     @highlighter = new Highlighter(this)
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
@@ -283,7 +293,7 @@ class Ui
         @setReadOnly(true)
 
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
-    @controlBar = new ControlBar(this, showSearchOption: @provider.showSearchOption)
+    @controlBar = new ControlBar(this)
     @constructor.register(this)
 
   getPaneToOpen: ->
@@ -329,7 +339,7 @@ class Ui
         @syncToEditor(@provider.editor)
         @suppressPreview = true
         @moveToBeginningOfSelectedItem()
-        if @provider.initiallySearchedRegexp?
+        if @provider.initialSearchRegex?
           @moveToSearchedWordAtSelectedItem()
         @suppressPreview = false
         @preview()
@@ -486,7 +496,8 @@ class Ui
       @moveToDifferentFileItem('next')
       @refresh()
 
-  selectFiles: ->
+  selectFiles: (event) =>
+    suppressEvent(event)
     return if @provider.boundToSingleFile
     options =
       query: @queryForSelectFiles
@@ -524,7 +535,7 @@ class Ui
       if @needRebuildExcludedFiles
         @excludedFiles = @buildExcludedFiles()
         @needRebuildExcludedFiles = false
-      @controlBar.updateStateElements(selectFiles: @excludedFiles.length)
+      @controlBar.updateElements(selectFiles: @excludedFiles.length)
       if @excludedFiles.length
         items = items.filter (item) => item.filePath not in @excludedFiles
 
@@ -562,6 +573,10 @@ class Ui
 
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
+    states = {refresh: true}
+    if @showSearchOption
+      Object.assign(states, @provider.getSearchState())
+    @controlBar.updateElements(states)
 
     @lastQuery = filterQuery = @getQuery()
     if @provider.useFirstQueryAsSearchTerm
@@ -596,12 +611,14 @@ class Ui
           # when originally selected item cannot be selected because of excluded.
           @moveToPrompt()
 
+      @controlBar.updateElements(refresh: false, itemCount: @items.getCount())
       @emitDidRefresh()
       @emitDidStopRefreshing()
 
-  refreshManually: (options) ->
+  refreshManually: (event) =>
+    suppressEvent(event)
     @emitWillRefreshManually()
-    @refresh(options)
+    @refresh(force: true)
 
   renderItems: (items) ->
     texts = items.map (item) => @provider.viewForItem(item)
@@ -789,7 +806,7 @@ class Ui
       if @isInSyncToProviderEditor()
         column = @provider.editor.getCursorBufferPosition().column
       else
-        regExp = cloneRegExp(@provider.initiallySearchedRegexp)
+        regExp = cloneRegExp(@provider.initialSearchRegex)
         column = regExp.exec(@items.getSelectedItem().text).index
 
       point = @items.getFirstPositionForSelectedItem().translate([0, column])
@@ -908,10 +925,7 @@ class Ui
     @provider.updateRealFile(changes)
     @setModifiedState(false)
 
-  updateSearchRegExp: (searchRegExp) ->
-    @highlighter.setRegExp(searchRegExp)
-    @grammar.setSearchTerm(searchRegExp)
-    @controlBar.updateSearchTermElement(searchRegExp)
-    unless searchRegExp?
-      @highlighter.clear()
-      @grammar.activate()
+  updateComponents: (states) ->
+    @highlighter.setRegExp(states.searchRegex)
+    @grammar.setSearchTerm(states.searchRegex)
+    @grammar.setUseSearchTermRule(not states.searchUseRegex)

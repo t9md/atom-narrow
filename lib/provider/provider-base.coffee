@@ -53,10 +53,12 @@ class ProviderBase
   searchWholeWordChangedManually: false
   searchIgnoreCase: null
   searchIgnoreCaseChangedManually: false
+  searchUseRegex: null
+  searchUseRegexChangedManually: false
   showSearchOption: false
   querySelectedText: true
   queryWordBoundaryOnByCurrentWordInvocation: false
-  initiallySearchedRegexp: null
+  initialSearchRegex: null
   useFirstQueryAsSearchTerm: false
 
   getConfig: (name) ->
@@ -123,6 +125,8 @@ class ProviderBase
       @searchWholeWordChangedManually
       @searchIgnoreCase
       @searchIgnoreCaseChangedManually
+      @searchUseRegex
+      @searchUseRegexChangedManually
       @searchTerm
     }
 
@@ -291,6 +295,10 @@ class ProviderBase
     @searchIgnoreCaseChangedManually = true
     @searchIgnoreCase = not @searchIgnoreCase
 
+  toggleSearchUseRegex: ->
+    @searchUseRegexChangedManually = true
+    @searchUseRegex = not @searchUseRegex
+
   # Helpers
   # -------------------------
   getFirstCharacterPointOfRow: (row) ->
@@ -300,8 +308,17 @@ class ProviderBase
     sensitivity = @getConfig('caseSensitivityForSearchTerm')
     (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(term))
 
-  getRegExpForSearchTerm: (term, {searchWholeWord, searchIgnoreCase}) ->
-    source = _.escapeRegExp(term)
+  getRegExpForSearchTerm: (term, {searchWholeWord, searchIgnoreCase, searchUseRegex}) ->
+    if searchUseRegex
+      source = term
+      try
+        new RegExp(source, '')
+      catch error
+        console.warn "invalid regex pattern:", error
+        return null
+    else
+      source = _.escapeRegExp(term)
+
     if searchWholeWord
       startBoundary = /^\w/.test(term)
       endBoundary = /\w$/.test(term)
@@ -319,6 +336,9 @@ class ProviderBase
     new RegExp(source, flags)
 
   # Used for useFirstQueryAsSearchTerm enbled provider.
+  getSearchState: ->
+    {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchUseRegex}
+
   updateSearchState: ->
     @searchTerm = @ui.getSearchTermFromQuery()
     if @searchTerm
@@ -329,13 +349,14 @@ class ProviderBase
       unless @searchIgnoreCaseChangedManually
         @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(@searchTerm)
 
-      @searchRegExp = @getRegExpForSearchTerm(@searchTerm, {@searchWholeWord, @searchIgnoreCase})
-      @initiallySearchedRegexp ?= @searchRegExp
+      # Automatically switch to static search for faster range calcuration and good syntax highlight
+      if @searchUseRegex and not @searchUseRegexChangedManually
+        @searchUseRegex = _.escapeRegExp(@searchTerm) isnt @searchTerm
 
-      @ui.controlBar.updateStateElements
-        wholeWordButton: @searchWholeWord
-        ignoreCaseButton: @searchIgnoreCase
+      options = {@searchWholeWord, @searchIgnoreCase, @searchUseRegex}
+      @searchRegex = @getRegExpForSearchTerm(@searchTerm, options)
+      @initialSearchRegex ?= @searchRegex
     else
-      @searchRegExp = null
+      @searchRegex = null
 
-    @ui.updateSearchRegExp(@searchRegExp)
+    @ui.updateComponents(@getSearchState())

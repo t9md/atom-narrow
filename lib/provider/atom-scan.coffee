@@ -10,7 +10,7 @@ class AtomScan extends SearchBase
   scanFilePath: (filePath) ->
     items = []
     atom.workspace.open(filePath, activateItem: false).then (editor) =>
-      editor.scan @searchRegExp, ({range}) ->
+      editor.scan @searchRegex, ({range}) ->
         items.push({
           filePath: filePath
           text: editor.lineTextForBufferRow(range.start.row)
@@ -21,7 +21,7 @@ class AtomScan extends SearchBase
 
   scanWorkspace: ->
     matchesByFilePath = {}
-    scanPromise = atom.workspace.scan @searchRegExp, (result) ->
+    scanPromise = atom.workspace.scan @searchRegex, (result) ->
       if result?.matches?.length
         matchesByFilePath[result.filePath] ?= []
         matchesByFilePath[result.filePath].push(result.matches...)

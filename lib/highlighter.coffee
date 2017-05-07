@@ -13,6 +13,8 @@ class Highlighter
   lineMarker: null
 
   highlightNarrowEditor: ->
+    return unless @regExp
+
     editor = @ui.editor
 
     if @markerLayerForUi?
@@ -26,6 +28,9 @@ class Highlighter
     for line, row in editor.buffer.getLines() when isNormalItem(item = @ui.items.getItemForRow(row))
       regExp.lastIndex = 0
       while match = regExp.exec(item.text)
+        # Avoid infinite loop in zero length match when regExp is /^/
+        break unless match[0]
+
         startColumn = match.index + item._lineHeader.length
         endColumn = startColumn + match[0].length
         range = [[row, startColumn], [row, endColumn]]
@@ -46,7 +51,7 @@ class Highlighter
         @previewdEditor = null
         # When search and atom-scan did regexp search, it can't use syntax highlight
         # for narrow-editor, so use normal marker decoration to highlight original searchTerm
-        if @provider.useRegex
+        if @provider.searchUseRegex
           @highlightNarrowEditor()
 
         if @provider.boundToSingleFile

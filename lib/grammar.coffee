@@ -24,6 +24,7 @@ module.exports =
 class Grammar
   filePath: path.join(__dirname, 'grammar', 'narrow.cson')
   scopeName: 'source.narrow'
+  useSearchTermRule: true
 
   constructor: (@editor, {@includeHeaderRules}={}) ->
     @emitter = new Emitter
@@ -56,6 +57,8 @@ class Grammar
     else
       @searchTerm = source
 
+  setUseSearchTermRule: (@useSearchTermRule) ->
+
   getRule: ->
     rule =
       name: 'Narrow buffer'
@@ -69,7 +72,7 @@ class Grammar
 
     rule.patterns.push(ruleLineHeader)
 
-    if @searchTerm
+    if @searchTerm and @useSearchTermRule
       rule.patterns.push(
         match: @searchTerm
         name: 'entity.name.function.narrow'

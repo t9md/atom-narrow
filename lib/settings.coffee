@@ -150,6 +150,8 @@ providerSettings =
         This provider is exceptional since it use first query as scan term.<br>
         You can toggle value per narrow-editor via `narrow-ui:toggle-search-whole-word`( `alt-cmd-w` )<br>
         """
+    searchUseRegex:
+      default: false
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']

@@ -9,13 +9,12 @@ module.exports =
 class Search2 extends ProviderBase
   supportDirectEdit: true
   showColumnOnLineHeader: true
-  searchRegExp: null
+  searchRegex: null
   itemHaveRange: true
   showSearchOption: true
   supportCacheItems: true
   querySelectedText: false
   searchTerm: null
-  useRegex: false
 
   useFirstQueryAsSearchTerm: true
 
@@ -25,6 +24,14 @@ class Search2 extends ProviderBase
   checkReady: ->
     @projects ?= getProjectPaths(if @options.currentProject then @editor)
 
+  initialize: ->
+    editor = atom.workspace.getActiveTextEditor()
+    if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
+      @searchWholeWord = true
+    else
+      @searchWholeWord = @getConfig('searchWholeWord')
+    @searchUseRegex = @getConfig('searchUseRegex')
+
   searchFilePath: (filePath) ->
     command = @getConfig('searcher')
     args = @getSearchArgs(command)
@@ -32,7 +39,7 @@ class Search2 extends ProviderBase
 
   getSearcher: ->
     command = @getConfig('searcher')
-    new Searcher({command, @useRegex, @searchRegExp, @searchTerm})
+    new Searcher({command, @searchUseRegex, @searchRegex, @searchTerm})
 
   search: (filePath) ->
     # When non project file was saved. We have nothing todo, so just return old @items.
@@ -48,7 +55,7 @@ class Search2 extends ProviderBase
   getItems: (filePath) ->
     @updateSearchState()
 
-    if @searchRegExp?
+    if @searchRegex?
       @search(filePath).then (@items) =>
         @items
     else

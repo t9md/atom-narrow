@@ -315,6 +315,11 @@ getProjectPaths = (editor) ->
     paths = atom.project.getPaths()
   paths
 
+suppressEvent = (event) ->
+  if event?
+    event.preventDefault()
+    event.stopPropagation()
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -347,4 +352,5 @@ module.exports = {
   getItemsWithoutUnusedHeader
   replaceOrAppendItemsForFilePath
   getProjectPaths
+  suppressEvent
 }

@@ -13,7 +13,8 @@ class Search extends SearchBase
 
   getSearcher: ->
     command = @getConfig('searcher')
-    new Searcher({command, @useRegex, @searchRegExp, @searchTerm})
+    searchUseRegex = @useRegex
+    new Searcher({command, searchUseRegex, @searchRegex, @searchTerm})
 
   search: (filePath) ->
     # When non project file was saved. We have nothing todo, so just return old @items.

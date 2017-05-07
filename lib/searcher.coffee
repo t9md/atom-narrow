@@ -15,8 +15,8 @@ unescapeRegExpForRg = (string) ->
   #  - So re-fixed in different way in t9md/atom-narrow#185, 190
   #
   # This what-char-should-be-escaped diff between js, ag and rg is soruce of bug and headache.
-  # Important rule I set is treat `@searchRegExp` as truth.
-  # - DO: Build search term for rg, ag from @searchRegExp.
+  # Important rule I set is treat `@searchRegex` as truth.
+  # - DO: Build search term for rg, ag from @searchRegex.
   # - DONT: build rg version of escapeRegExp and derive search term from @searchTerm.
   if string
     string.replace(/\\\//g, '/')
@@ -31,7 +31,7 @@ class Item
     @text = match[4]
     @point = new Point(row, column)
 
-    {@useRegex, @searchTerm, @searchRegExp} = rangeHint
+    {@searchUseRegex, @searchTerm, @searchRegex} = rangeHint
 
   # this.range is populated on-need via @setRange which is externally set by provider.
   Object.defineProperty @prototype, 'range',
@@ -39,10 +39,10 @@ class Item
       @_range ?= @getRange()
 
   getRange: ->
-    if @useRegex
+    if @searchUseRegex
       # FIXME: Maybe because of BUG of ag?
       # when I search \) in regexp, it find next line of line which ends with `)`.
-      matchedText = @text[@point.column...].match(@searchRegExp)?[0] ? ''
+      matchedText = @text[@point.column...].match(@searchRegex)?[0] ? ''
     else
       matchedText = @searchTerm
     Range.fromPointWithDelta(@point, 0, matchedText.length)
@@ -73,11 +73,11 @@ search = (command, args, project) ->
 module.exports =
 class Searcher
   constructor: (options) ->
-    {@command, @useRegex, @searchRegExp, @searchTerm} = options
+    {@command, @searchUseRegex, @searchRegex, @searchTerm} = options
 
   getArgs: ->
     args = ['--vimgrep']
-    if @searchRegExp.ignoreCase
+    if @searchRegex.ignoreCase
       args.push('--ignore-case')
     else
       args.push('--case-sensitive')
@@ -85,13 +85,13 @@ class Searcher
     switch @command
       when 'ag'
         args.push('--nomultiline')
-        args.push(@searchRegExp.source)
+        args.push(@searchRegex.source)
       when 'rg'
         # See #176
         # rg doesn't show filePath on each line when search file was passed explicitly.
         # Following option make result-output consistent with `ag`.
         args.push(['-H', '--no-heading', '--regexp']...)
-        args.push(unescapeRegExpForRg(@searchRegExp.source))
+        args.push(unescapeRegExpForRg(@searchRegex.source))
     args
 
   searchFilePath: (filePath) ->
@@ -110,7 +110,7 @@ class Searcher
 
   itemizeProject: (project, data) ->
     items = []
-    rangeHint = {@useRegex, @searchTerm, @searchRegExp}
+    rangeHint = {@searchUseRegex, @searchTerm, @searchRegex}
     for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
       items.push(new Item(match, project, rangeHint))
     items
