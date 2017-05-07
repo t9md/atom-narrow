@@ -21,6 +21,8 @@ class Scan extends ProviderBase
     else
       @searchWholeWord = @getConfig('searchWholeWord')
 
+    @searchUseRegex = @getConfig('searchUseRegex')
+
   scanEditor: (regExp) ->
     items = []
     regExp = cloneRegExp(regExp)

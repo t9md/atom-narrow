@@ -84,19 +84,8 @@ class Highlighter
   # Highlight items
   # -------------------------
   refreshAll: ->
-    # Skip already previewd and highlighted editor kept in @previewdEditor
-    @markerLayerByEditor.forEach (markerLayer, editor) =>
-      if editor isnt @previewdEditor
-        markerLayer.destroy()
-        @markerLayerByEditor.delete(editor)
-
-    @decorationLayerByEditor.forEach (decorationLayer, editor) =>
-      if editor isnt @previewdEditor
-        decorationLayer.destroy()
-        @decorationLayerByEditor.delete(editor)
-
-    for editor in getVisibleEditors()
-      @highlight(editor)
+    @clear()
+    @highlight(editor) for editor in getVisibleEditors()
 
   clear: ->
     @markerLayerByEditor.forEach (markerLayer) -> markerLayer.destroy()

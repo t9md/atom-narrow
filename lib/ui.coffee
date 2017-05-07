@@ -579,11 +579,7 @@ class Ui
     if @provider.useFirstQueryAsSearchTerm
       # Extracet filterQuery by removing searchTerm part from query
       filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
-      searchTerm = @getSearchTermFromQuery()
-      # Invalidate cachedItem in case searchTerm was changed
-      if searchTerm isnt @lastSearchTerm
-        @cachedItems = null
-        @lastSearchTerm = searchTerm
+      @lastSearchTerm = @currentSearchTerm
 
     @getItems({force, filePath}).then (items) =>
       if @provider.supportCacheItems
@@ -652,9 +648,18 @@ class Ui
           @withIgnoreChange => @setQuery(@lastQuery) # Recover query
         else
           autoPreview = @autoPreviewOnQueryChange and @isActive()
-          if autoPreview
+          refreshDelay = null
+          if @provider.useFirstQueryAsSearchTerm
+            @currentSearchTerm = @getSearchTermFromQuery()
+
+            if @currentSearchTerm isnt @lastSearchTerm
+              @cachedItems = null
+              refreshDelay = if @provider.boundToSingleFile then 10 else 500
+            else
+              refreshDelay = if @provider.boundToSingleFile then 10 else 150
+
+          if refreshDelay?
             # To avoid frequent auto-preview interferinig smooth-query-input, delay refresh.
-            refreshDelay = if @provider.boundToSingleFile then 10 else 150
             @refreshThenPreviewAfter(refreshDelay)
           else
             @refresh(selectFirstItem: true)
@@ -666,6 +671,7 @@ class Ui
     @cancelDelayedRefresh()
     refreshThenPreview = =>
       @refresh(selectFirstItem: true).then =>
+        console.log 'refreshed!'
         @preview()
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 
@@ -860,7 +866,10 @@ class Ui
         @refresh(force: true) unless @isActive()
     else
       @syncSubcriptions.add editor.onDidSave (event) =>
-        @refresh(force: true, filePath: event.path) unless @isActive()
+        unless @isActive()
+          setTimeout =>
+            @refresh(force: true, filePath: event.path)
+          , 0
 
   # vim-mode-plus integration
   # -------------------------

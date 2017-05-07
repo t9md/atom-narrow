@@ -342,16 +342,20 @@ class ProviderBase
   updateSearchState: ->
     @searchTerm = @ui.getSearchTermFromQuery()
     if @searchTerm
+      # Automatically switch to static search for faster range calcuration and good syntax highlight
+      if @searchUseRegex and not @searchUseRegexChangedManually
+        @searchUseRegex = _.escapeRegExp(@searchTerm) isnt @searchTerm
+
+      if @searchUseRegex and @searchTerm.length < @getConfig('minimumLengthToStartRegexSearch')
+        @searchTerm = ''
+
+    if @searchTerm
       # Auto relax \b restriction, enable @searchWholeWord only when \w was included.
       if @searchWholeWord and not @searchWholeWordChangedManually
         @searchWholeWord = /\w/.test(@searchTerm)
 
       unless @searchIgnoreCaseChangedManually
         @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(@searchTerm)
-
-      # Automatically switch to static search for faster range calcuration and good syntax highlight
-      if @searchUseRegex and not @searchUseRegexChangedManually
-        @searchUseRegex = _.escapeRegExp(@searchTerm) isnt @searchTerm
 
       options = {@searchWholeWord, @searchIgnoreCase, @searchUseRegex}
       @searchRegex = @getRegExpForSearchTerm(@searchTerm, options)

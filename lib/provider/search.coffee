@@ -28,4 +28,5 @@ class Search extends SearchBase
       @getSearcher().searchProjects(@projects)
 
   getItems: (filePath) ->
-    @search(filePath)
+    @search(filePath).then (@items) =>
+      @items

@@ -56,7 +56,7 @@ class Search2 extends ProviderBase
     @updateSearchState()
 
     if @searchRegex?
-      @search(filePath).then (@items) =>
+      @search().then (@items) =>
         @items
     else
       []

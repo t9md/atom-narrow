@@ -138,6 +138,7 @@ newProviderConfigForSearchAndAtomScan = (otherProperties={}) ->
     rememberIgnoreCaseForByCurrentWordSearch: false
     searchWholeWord: false
     useRegex: false
+    minimumLengthToStartRegexSearch: 3
     rememberUseRegex: false
   newProviderConfig(_.extend(properties, otherProperties))
 
@@ -150,8 +151,8 @@ providerSettings =
         This provider is exceptional since it use first query as scan term.<br>
         You can toggle value per narrow-editor via `narrow-ui:toggle-search-whole-word`( `alt-cmd-w` )<br>
         """
-    searchUseRegex:
-      default: false
+    searchUseRegex: true
+    minimumLengthToStartRegexSearch: 3
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
@@ -178,6 +179,8 @@ providerSettings =
       description: """
         Choose `ag`( The silver searcher) or `rg`( ripgrep )
         """
+    searchUseRegex: false
+    minimumLengthToStartRegexSearch: 3
     startByDoubleClick:
       default: false
       description: """
