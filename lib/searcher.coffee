@@ -47,7 +47,6 @@ class Item
       matchedText = @searchTerm
     Range.fromPointWithDelta(@point, 0, matchedText.length)
 
-
 runCommand = (options) ->
   new BufferedProcess(options).onWillThrowError ({error, handle}) ->
     if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
@@ -84,7 +83,6 @@ class Searcher
 
     switch @command
       when 'ag'
-        args.push('--nomultiline')
         args.push(@searchRegex.source)
       when 'rg'
         # See #176
