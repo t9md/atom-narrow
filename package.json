@@ -28,12 +28,6 @@
       "narrow:search-by-current-word",
       "narrow:search-current-project",
       "narrow:search-current-project-by-current-word",
-
-      "narrow:search2",
-      "narrow:search2-by-current-word",
-      "narrow:search2-current-project",
-      "narrow:search2-current-project-by-current-word",
-
       "narrow:symbols",
       "narrow:symbols-by-current-word",
       "narrow:toggle-search-start-by-double-click"

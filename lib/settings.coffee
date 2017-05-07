@@ -123,42 +123,21 @@ newProviderConfig = (otherProperties) ->
     properties: complimentField(properties, true)
   }
 
-newProviderConfigForSearchAndAtomScan = (otherProperties={}) ->
+newProviderConfigForScanAndSearchAndAtomScan = (otherProperties={}) ->
   properties =
-    revealOnStartCondition:
-      default: 'always'
-      enum: ['always', 'never']
-    focusOnStartCondition:
-      default: 'always'
-      enum: ['always', 'never']
     caseSensitivityForSearchTerm:
       default: 'smartcase'
       enum: ['smartcase', 'sensitive', 'insensitive']
-    rememberIgnoreCaseForByHandSearch: false
-    rememberIgnoreCaseForByCurrentWordSearch: false
+    revealOnStartCondition: 'on-input'
     searchWholeWord: false
-    useRegex: false
+    searchUseRegex: false
     minimumLengthToStartRegexSearch: 3
     rememberUseRegex: false
   newProviderConfig(_.extend(properties, otherProperties))
 
 providerSettings =
-  Scan: newProviderConfig(
-    revealOnStartCondition: 'on-input'
-    searchWholeWord:
-      default: false
-      description: """
-        This provider is exceptional since it use first query as scan term.<br>
-        You can toggle value per narrow-editor via `narrow-ui:toggle-search-whole-word`( `alt-cmd-w` )<br>
-        """
-    searchUseRegex: true
-    minimumLengthToStartRegexSearch: 3
-    caseSensitivityForSearchTerm:
-      default: 'smartcase'
-      enum: ['smartcase', 'sensitive', 'insensitive']
-      description: "Search term is first word of query, is used as search term"
-  )
-  Search: newProviderConfigForSearchAndAtomScan(
+  Scan: newProviderConfigForScanAndSearchAndAtomScan()
+  Search: newProviderConfigForScanAndSearchAndAtomScan(
     searcher:
       default: 'ag'
       enum: ['ag', 'rg']
@@ -172,23 +151,7 @@ providerSettings =
         You can toggle this value by command `narrow:toggle-search-start-by-double-click`
         """
   )
-  Search2: newProviderConfigForSearchAndAtomScan(
-    searcher:
-      default: 'ag'
-      enum: ['ag', 'rg']
-      description: """
-        Choose `ag`( The silver searcher) or `rg`( ripgrep )
-        """
-    searchUseRegex: false
-    minimumLengthToStartRegexSearch: 3
-    startByDoubleClick:
-      default: false
-      description: """
-        [Experimental]: start by dounble click.
-        You can toggle this value by command `narrow:toggle-search-start-by-double-click`
-        """
-  )
-  AtomScan: newProviderConfigForSearchAndAtomScan()
+  AtomScan: newProviderConfigForScanAndSearchAndAtomScan()
   Symbols: newProviderConfig(revealOnStartCondition: 'on-input')
   GitDiffAll: newProviderConfig()
   Fold: newProviderConfig(revealOnStartCondition: 'on-input')
@@ -206,6 +169,5 @@ providerSettings =
       default: false
       description: "Remember query per provider basis and apply it at startup"
   )
-
 
 module.exports = new Settings('narrow', _.defaults(globalSettings, providerSettings))

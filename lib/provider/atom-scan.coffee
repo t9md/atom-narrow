@@ -1,11 +1,30 @@
 path = require 'path'
 _ = require 'underscore-plus'
 {Point, Range} = require 'atom'
+ProviderBase = require './provider-base'
 {replaceOrAppendItemsForFilePath} = require '../utils'
-SearchBase = require './search-base'
 
 module.exports =
-class AtomScan extends SearchBase
+class AtomScan extends ProviderBase
+  supportDirectEdit: true
+  showColumnOnLineHeader: true
+  searchRegex: null
+  itemHaveRange: true
+  showSearchOption: true
+  supportCacheItems: true
+  querySelectedText: false
+  searchTerm: null
+  useRegex: false
+  useFirstQueryAsSearchTerm: true
+
+  initialize: ->
+    editor = atom.workspace.getActiveTextEditor()
+    if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
+      @searchWholeWord = true
+    else
+      @searchWholeWord = @getConfig('searchWholeWord')
+    @searchUseRegex = @getConfig('searchUseRegex')
+
   # Not used but keep it since I'm planning to introduce per file refresh on modification
   scanFilePath: (filePath) ->
     items = []
@@ -38,12 +57,20 @@ class AtomScan extends SearchBase
           })
       items
 
-  getItems: (filePath) ->
+  search: (filePath) ->
     if filePath?
+      # When non project file was saved. We have nothing todo, so just return old @items.
       return @items unless atom.project.contains(filePath)
 
-      @scanFilePath(filePath).then (newItems) =>
-        @items = replaceOrAppendItemsForFilePath(@items, filePath, newItems)
+      replaceOrApppend = replaceOrAppendItemsForFilePath.bind(this, @items, filePath)
+      @scanFilePath(filePath).then(replaceOrApppend)
     else
-      @scanWorkspace().then (items) =>
-        @items = items
+      @scanWorkspace()
+
+  getItems: (filePath) ->
+    @updateSearchState()
+    if @searchRegex?
+      @search().then (@items) =>
+        @items
+    else
+      []

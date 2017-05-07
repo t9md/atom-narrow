@@ -671,7 +671,6 @@ class Ui
     @cancelDelayedRefresh()
     refreshThenPreview = =>
       @refresh(selectFirstItem: true).then =>
-        console.log 'refreshed!'
         @preview()
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 

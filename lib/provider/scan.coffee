@@ -31,7 +31,6 @@ class Scan extends ProviderBase
       while match = regExp.exec(lineText)
         range = new Range([row, match.index], [row, match.index + match[0].length])
         items.push(text: lineText, point: range.start, range: range)
-
         # Avoid infinite loop in zero length match when regExp is /^/
         break unless match[0]
     items
