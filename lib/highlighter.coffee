@@ -92,6 +92,7 @@ class Highlighter
   decorationOptions = {type: 'highlight', class: 'narrow-match'}
   highlight: (editor) ->
     return unless @regExp
+    return if @regExp.source is '.' # Avoid uselessly highlight all character in buffer.
     return if @markerLayerByEditor.has(editor)
     return if isNarrowEditor(editor)
     return if @provider.boundToSingleFile and editor isnt @provider.editor
