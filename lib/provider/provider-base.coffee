@@ -341,10 +341,6 @@ class ProviderBase
   updateSearchState: ->
     @searchTerm = @ui.getSearchTermFromQuery()
     if @searchTerm
-      if @searchUseRegex and @searchTerm.length < @getConfig('minimumLengthToStartRegexSearch')
-        @searchTerm = ''
-
-    if @searchTerm
       # Auto relax \b restriction, enable @searchWholeWord only when \w was included.
       if @searchWholeWord and not @searchWholeWordChangedManually
         @searchWholeWord = /\w/.test(@searchTerm)
