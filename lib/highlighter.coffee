@@ -24,17 +24,10 @@ class Highlighter
       decorationOptions = {type: 'highlight', class: 'narrow-match-ui'}
       @decorationLayerForUi = editor.decorateMarkerLayer(@markerLayerForUi, decorationOptions)
 
-    regExp = cloneRegExp(@regExp)
     for line, row in editor.buffer.getLines() when isNormalItem(item = @ui.items.getItemForRow(row))
-      regExp.lastIndex = 0
-      while match = regExp.exec(item.text)
-        # Avoid infinite loop in zero length match when regExp is /^/
-        break unless match[0]
-
-        startColumn = match.index + item._lineHeader.length
-        endColumn = startColumn + match[0].length
-        range = [[row, startColumn], [row, endColumn]]
-        @markerLayerForUi.markBufferRange(range, invalidate: 'inside')
+      {start, end} = item.range.translate([0, item._lineHeader.length])
+      range = [[row, start.column], [row, end.column]]
+      @markerLayerForUi.markBufferRange(range, invalidate: 'inside')
 
   constructor: (@ui) ->
     @provider = @ui.provider

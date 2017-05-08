@@ -317,7 +317,6 @@ class ProviderBase
       try
         new RegExp(source, '')
       catch error
-        console.log error
         return null
     else
       source = _.escapeRegExp(term)
