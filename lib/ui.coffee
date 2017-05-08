@@ -646,6 +646,7 @@ class Ui
             selection.destroy()
           @controlBar.show() if selectionDestroyed
           @withIgnoreChange => @setQuery(@lastQuery) # Recover query
+
         else
           autoPreview = @autoPreviewOnQueryChange and @isActive()
           refreshDelay = null
@@ -654,6 +655,8 @@ class Ui
 
             if @currentSearchTerm isnt @lastSearchTerm
               @cachedItems = null
+              if @provider.searchUseRegex and @currentSearchTerm.length < @provider.getConfig('minimumLengthToStartRegexSearch')
+                return
               refreshDelay = if @provider.boundToSingleFile then 10 else 500
             else
               refreshDelay = if @provider.boundToSingleFile then 10 else 150
