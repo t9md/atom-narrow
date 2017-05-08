@@ -321,13 +321,49 @@ suppressEvent = (event) ->
     event.stopPropagation()
 
 # Return true or false
+compatibleMetaChars = [
+  '\\d'
+  '\\D'
+  '\\w'
+  '\\W'
+  '\\s'
+  '\\S'
+  '\\t'
+  '\\r'
+  '\\n'
+  '\\v'
+  '\\f'
+  '\\b'
+  '\\B'
+  '\\\\'
+  # '^' Incompatible
+  '$'
+  '['
+  '-'
+  '/'
+  # '*'
+  '+'
+  '?'
+  '.'
+  '('
+  ')'
+  '|'
+  '['
+  ']'
+  '{'
+  '}'
+  ']'
+]
 isCompatibleRegExp = (regex) ->
   if regex
     source = regex.source
-    # Remove escaped
-    source = source.replace(/\\\\./g, '')
-    source = source.replace(/\\b/g, '')
-    _.escapeRegExp(source) is source
+    for segment in source.split(/(\\?.)/) when segment isnt ''
+      if segment in compatibleMetaChars
+        valid = true
+      else
+        valid = _.escapeRegExp(segment) is segment
+      return unless valid
+    true
   else
     false
 

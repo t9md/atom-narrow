@@ -87,7 +87,12 @@ class ControlBar
         when 'itemCount'
           element.textContent = value
         when 'searchRegex'
-          element.textContent = value?.toString() ? ''
+          if value?
+            element.textContent = value.toString()
+          else
+            searchTerm = states.searchTerm
+            element.textContent = searchTerm
+            element.classList.toggle('invalid', searchTerm.length isnt 0)
         when 'refresh'
           element.classList.toggle('running', value)
         else

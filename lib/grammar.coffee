@@ -73,7 +73,7 @@ class Grammar
 
     if @searchRegex
       rule.patterns.push(
-        match: @searchRegex
         name: 'entity.name.function.narrow'
+        match: @searchRegex
       )
     rule

@@ -314,7 +314,6 @@ class ProviderBase
       try
         new RegExp(source, '')
       catch error
-        console.warn "invalid regex pattern:", error
         return null
     else
       source = _.escapeRegExp(term)
@@ -337,7 +336,7 @@ class ProviderBase
 
   # Used for useFirstQueryAsSearchTerm enbled provider.
   getSearchState: ->
-    {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchUseRegex}
+    {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchUseRegex, @searchTerm}
 
   updateSearchState: ->
     @searchTerm = @ui.getSearchTermFromQuery()
