@@ -320,6 +320,17 @@ suppressEvent = (event) ->
     event.preventDefault()
     event.stopPropagation()
 
+# Return true or false
+isCompatibleRegExp = (regex) ->
+  if regex
+    source = regex.source
+    # Remove escaped
+    source = source.replace(/\\\\./g, '')
+    source = source.replace(/\\b/g, '')
+    _.escapeRegExp(source) is source
+  else
+    false
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -353,4 +364,5 @@ module.exports = {
   replaceOrAppendItemsForFilePath
   getProjectPaths
   suppressEvent
+  isCompatibleRegExp
 }

@@ -342,10 +342,6 @@ class ProviderBase
   updateSearchState: ->
     @searchTerm = @ui.getSearchTermFromQuery()
     if @searchTerm
-      # Automatically switch to static search for faster range calcuration and good syntax highlight
-      if @searchUseRegex and not @searchUseRegexChangedManually
-        @searchUseRegex = _.escapeRegExp(@searchTerm) isnt @searchTerm
-
       if @searchUseRegex and @searchTerm.length < @getConfig('minimumLengthToStartRegexSearch')
         @searchTerm = ''
 

@@ -1,7 +1,6 @@
-{Emitter} = require 'atom'
-
 path = require 'path'
 _ = require 'underscore-plus'
+{isCompatibleRegExp} = require './utils'
 
 ruleHeaderLevel1 =
   begin: '^#'
@@ -27,7 +26,6 @@ class Grammar
   useSearchTermRule: true
 
   constructor: (@editor, {@includeHeaderRules}={}) ->
-    @emitter = new Emitter
 
   activate: (rule = @getRule()) ->
     atom.grammars.removeGrammarForScopeName(@scopeName)
@@ -38,26 +36,27 @@ class Grammar
   update: (regexps) ->
     rule = @getRule()
     for regexp in regexps ? []
-      source = regexp.source
-      if regexp.ignoreCase
-        match = "(?i:#{source})"
-      else
-        match = "(#{source})"
-
       rule.patterns.push(
-        match: match
+        match: @convertRegex(regexp)
         name: 'keyword.narrow'
       )
     @activate(rule)
 
-  setSearchTerm: (regexp) ->
-    source = regexp?.source ? ''
-    if regexp?.ignoreCase
-      @searchTerm = "(?i:#{regexp.source})"
+  # Convert RegExp form from JavaScript to Oniguruma.
+  convertRegex: (regex) ->
+    if regex.ignoreCase
+      "(?i:#{regex.source})"
     else
-      @searchTerm = source
+      "(#{regex.source})"
 
-  setUseSearchTermRule: (@useSearchTermRule) ->
+  canHighlightSearchRegex: ->
+    @compatible
+
+  setSearchRegex: (regex) ->
+    if regex and @compatible = isCompatibleRegExp(regex)
+      @searchRegex = @convertRegex(regex)
+    else
+      @searchRegex = ''
 
   getRule: ->
     rule =
@@ -72,9 +71,9 @@ class Grammar
 
     rule.patterns.push(ruleLineHeader)
 
-    if @searchTerm and @useSearchTermRule
+    if @searchRegex
       rule.patterns.push(
-        match: @searchTerm
+        match: @searchRegex
         name: 'entity.name.function.narrow'
       )
     rule

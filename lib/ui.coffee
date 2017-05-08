@@ -932,6 +932,5 @@ class Ui
 
   updateComponents: (states) ->
     @highlighter.setRegExp(states.searchRegex)
-    @grammar.setSearchTerm(states.searchRegex)
-    @grammar.setUseSearchTermRule(not states.searchUseRegex)
+    @grammar.setSearchRegex(states.searchRegex)
     @controlBar.updateElements(states)

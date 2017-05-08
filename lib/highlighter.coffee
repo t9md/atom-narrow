@@ -48,10 +48,8 @@ class Highlighter
 
     if @needHighlight
       subscribe @ui.onDidRefresh =>
-        console.log 'did-refresh'
-        # When search and atom-scan did regexp search, it can't use syntax highlight
-        # for narrow-editor, so use normal marker decoration to highlight original searchTerm
-        if @provider.searchUseRegex
+        # console.log 'did-refresh'
+        unless @ui.grammar.canHighlightSearchRegex()
           @highlightNarrowEditor()
 
         if @provider.boundToSingleFile
@@ -59,7 +57,7 @@ class Highlighter
 
       unless @provider.boundToSingleFile
         subscribe @ui.onDidStopRefreshing =>
-          console.log 'did-stop-refresh'
+          # console.log 'did-stop-refresh'
           @refreshAll()
           item = @ui.items.selectedItem
           if item?
@@ -69,7 +67,7 @@ class Highlighter
       @clearCurrentAndLineMarker()
 
     subscribe @ui.onDidPreview ({editor, item}) =>
-      console.log 'did-preview'
+      # console.log 'did-preview'
       @clearCurrentAndLineMarker()
       if @needHighlight
         @highlight(editor)
