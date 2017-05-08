@@ -19,12 +19,7 @@ class Search extends ProviderBase
     @projects ?= getProjectPaths(if @options.currentProject then @editor)
 
   initialize: ->
-    editor = atom.workspace.getActiveTextEditor()
-    if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
-      @searchWholeWord = true
-    else
-      @searchWholeWord = @getConfig('searchWholeWord')
-    @searchUseRegex = @getConfig('searchUseRegex')
+    @initializeSearchOptions() unless @reopened
 
   searchFilePath: (filePath) ->
     command = @getConfig('searcher')

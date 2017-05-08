@@ -83,6 +83,14 @@ class ProviderBase
   initialize: ->
     # to override
 
+  initializeSearchOptions: ->
+    editor = atom.workspace.getActiveTextEditor()
+    if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
+      @searchWholeWord = true
+    else
+      @searchWholeWord = @getConfig('searchWholeWord')
+    @searchUseRegex = @getConfig('searchUseRegex')
+
   # Event is object contains {newEditor, oldEditor}
   onBindEditor: (event) ->
     # to override

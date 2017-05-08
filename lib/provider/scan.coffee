@@ -13,14 +13,7 @@ class Scan extends ProviderBase
   useFirstQueryAsSearchTerm: true
 
   initialize: ->
-    return if @reopened
-
-    editor = atom.workspace.getActiveTextEditor()
-    if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
-      @searchWholeWord = true
-    else
-      @searchWholeWord = @getConfig('searchWholeWord')
-    @searchUseRegex = @getConfig('searchUseRegex')
+    @initializeSearchOptions() unless @reopened
 
   scanEditor: (regExp) ->
     items = []

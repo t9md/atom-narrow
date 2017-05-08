@@ -12,12 +12,7 @@ class AtomScan extends ProviderBase
   useFirstQueryAsSearchTerm: true
 
   initialize: ->
-    editor = atom.workspace.getActiveTextEditor()
-    if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
-      @searchWholeWord = true
-    else
-      @searchWholeWord = @getConfig('searchWholeWord')
-    @searchUseRegex = @getConfig('searchUseRegex')
+    @initializeSearchOptions() unless @reopened
 
   # Not used but keep it since I'm planning to introduce per file refresh on modification
   scanFilePath: (filePath) ->
