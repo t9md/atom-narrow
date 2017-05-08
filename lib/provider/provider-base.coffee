@@ -56,7 +56,6 @@ class ProviderBase
   searchUseRegex: null
   searchUseRegexChangedManually: false
   showSearchOption: false
-  querySelectedText: true
   queryWordBoundaryOnByCurrentWordInvocation: false
   initialSearchRegex: null
   useFirstQueryAsSearchTerm: false
@@ -158,6 +157,7 @@ class ProviderBase
     @bindEditor(editorToBind)
     @restoreEditorState = saveEditorState(@editor)
     @query = @getInitialQuery(editor)
+    # @initiallselectedText = editor.getSelectedText()
 
   start: ->
     checkReady = Promise.resolve(@checkReady())
@@ -169,11 +169,7 @@ class ProviderBase
           return @ui
 
   getInitialQuery: (editor) ->
-    query = @options.query
-
-    if not query and @querySelectedText
-      query = editor.getSelectedText()
-
+    query = @options.query or editor.getSelectedText()
     if not query and @options.queryCurrentWord
       query = getCurrentWord(editor)
       if @queryWordBoundaryOnByCurrentWordInvocation
@@ -248,9 +244,8 @@ class ProviderBase
   confirmed: (item) ->
     @needRestoreEditorState = false
     @openFileForItem(item, activatePane: true).then (editor) ->
-      {point} = item
-      editor.setCursorBufferPosition(point, autoscroll: false)
-      editor.scrollToBufferPosition(point, center: true)
+      editor.setCursorBufferPosition(item.point, autoscroll: false)
+      editor.scrollToBufferPosition(item.point, center: true)
       return editor
 
   # View
@@ -314,6 +309,7 @@ class ProviderBase
       try
         new RegExp(source, '')
       catch error
+        console.log error
         return null
     else
       source = _.escapeRegExp(term)
@@ -351,7 +347,16 @@ class ProviderBase
       options = {@searchWholeWord, @searchIgnoreCase, @searchUseRegex}
       @searchRegex = @getRegExpForSearchTerm(@searchTerm, options)
       @initialSearchRegex ?= @searchRegex
+
+      grammarCanHighlight = not @searchUseRegex or (@searchTerm is _.escapeRegExp(@searchTerm))
+      if grammarCanHighlight
+        @ui.grammar.setSearchRegex(@searchRegex)
+      else
+        @ui.grammar.setSearchRegex(null)
     else
       @searchRegex = null
+      @ui.grammar.setSearchRegex(@searchRegex)
 
-    @ui.updateComponents(@getSearchState())
+    @ui.highlighter.setRegExp(@searchRegex)
+    states = {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchTerm, @searchUseRegex}
+    @ui.controlBar.updateElements(states)

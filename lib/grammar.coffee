@@ -1,6 +1,5 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{isCompatibleRegExp} = require './utils'
 
 ruleHeaderLevel1 =
   begin: '^#'
@@ -49,14 +48,11 @@ class Grammar
     else
       "(#{regex.source})"
 
-  canHighlightSearchRegex: ->
-    @compatible
-
   setSearchRegex: (regex) ->
-    if regex and @compatible = isCompatibleRegExp(regex)
+    if regex?
       @searchRegex = @convertRegex(regex)
     else
-      @searchRegex = ''
+      @searchRegex = null
 
   getRule: ->
     rule =
@@ -71,7 +67,7 @@ class Grammar
 
     rule.patterns.push(ruleLineHeader)
 
-    if @searchRegex
+    if @searchRegex?
       rule.patterns.push(
         name: 'entity.name.function.narrow'
         match: @searchRegex

@@ -1,5 +1,3 @@
-path = require 'path'
-_ = require 'underscore-plus'
 {Point, Range} = require 'atom'
 ProviderBase = require './provider-base'
 {replaceOrAppendItemsForFilePath} = require '../utils'
@@ -8,13 +6,9 @@ module.exports =
 class AtomScan extends ProviderBase
   supportDirectEdit: true
   showColumnOnLineHeader: true
-  searchRegex: null
   itemHaveRange: true
   showSearchOption: true
   supportCacheItems: true
-  querySelectedText: false
-  searchTerm: null
-  useRegex: false
   useFirstQueryAsSearchTerm: true
 
   initialize: ->

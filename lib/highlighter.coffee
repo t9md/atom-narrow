@@ -49,7 +49,7 @@ class Highlighter
     if @needHighlight
       subscribe @ui.onDidRefresh =>
         # console.log 'did-refresh'
-        unless @ui.grammar.canHighlightSearchRegex()
+        unless @ui.grammar.searchRegex?
           @highlightNarrowEditor()
 
         if @provider.boundToSingleFile

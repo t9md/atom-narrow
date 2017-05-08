@@ -6,12 +6,9 @@ module.exports =
 class Search extends ProviderBase
   supportDirectEdit: true
   showColumnOnLineHeader: true
-  searchRegex: null
   itemHaveRange: true
   showSearchOption: true
   supportCacheItems: true
-  querySelectedText: false
-  searchTerm: null
   useFirstQueryAsSearchTerm: true
 
   getState: ->
@@ -50,7 +47,6 @@ class Search extends ProviderBase
 
   getItems: (filePath) ->
     @updateSearchState()
-
     if @searchRegex?
       @search().then (@items) =>
         @items

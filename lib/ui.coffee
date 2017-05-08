@@ -514,15 +514,14 @@ class Ui
       @excludedFiles = []
       @refresh()
 
-  getItems: ({force, filePath}) ->
-    if @cachedItems? and not force
-      Promise.resolve(@cachedItems)
+  injectHeadersIfNecessary: (items) =>
+    if @provider.showLineHeader
+      injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
+
+    if @provider.boundToSingleFile
+      items
     else
-      Promise.resolve(@provider.getItems(filePath)).then (items) =>
-        if @provider.showLineHeader
-          injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
-        items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
-        items
+      getItemsWithHeaders(items)
 
   filterItems: (items, filterQuery) ->
     @itemsBeforeFiltered = items
@@ -571,6 +570,7 @@ class Ui
   getAfterFilteredFileHeaderItems: ->
     @items.getFileHeaderItems()
 
+  # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
     @controlBar.updateElements(refresh: true)
@@ -581,7 +581,16 @@ class Ui
       filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
       @lastSearchTerm = @currentSearchTerm
 
-    @getItems({force, filePath}).then (items) =>
+    if force and @cachedItems?
+      @cachedItems = null
+
+    getItems = =>
+      if @cachedItems?
+        Promise.resolve(@cachedItems)
+      else
+        Promise.resolve(@provider.getItems(filePath)).then(@injectHeadersIfNecessary)
+
+    getItems().then (items) =>
       if @provider.supportCacheItems
         @cachedItems = items
 
@@ -607,6 +616,7 @@ class Ui
       @controlBar.updateElements(refresh: false, itemCount: @items.getCount())
       @emitDidRefresh()
       @emitDidStopRefreshing()
+      return null
 
   refreshManually: (event) =>
     suppressEvent(event)
@@ -655,12 +665,13 @@ class Ui
 
             if @currentSearchTerm isnt @lastSearchTerm
               @cachedItems = null
-              if @provider.searchUseRegex and @currentSearchTerm.length < @provider.getConfig('minimumLengthToStartRegexSearch')
-                return
+              # if @provider.searchUseRegex and @currentSearchTerm.length < @provider.getConfig('minimumLengthToStartRegexSearch')
+              #   return
               refreshDelay = if @provider.boundToSingleFile then 10 else 500
             else
               refreshDelay = if @provider.boundToSingleFile then 10 else 150
 
+          console.log {refreshDelay}
           if refreshDelay?
             # To avoid frequent auto-preview interferinig smooth-query-input, delay refresh.
             @refreshThenPreviewAfter(refreshDelay)
@@ -672,9 +683,7 @@ class Ui
   # Delayed-refresh on query-change event, dont use this for other purpose.
   refreshThenPreviewAfter: (delay) ->
     @cancelDelayedRefresh()
-    refreshThenPreview = =>
-      @refresh(selectFirstItem: true).then =>
-        @preview()
+    refreshThenPreview = => @refresh(selectFirstItem: true).then(@preview)
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 
   cancelDelayedRefresh: ->
@@ -752,7 +761,7 @@ class Ui
     else
       moveAndScroll()
 
-  preview: ->
+  preview: =>
     return if @suppressPreview
     return unless @isActive()
     return unless item = @items.getSelectedItem()
@@ -932,8 +941,3 @@ class Ui
 
     @provider.updateRealFile(changes)
     @setModifiedState(false)
-
-  updateComponents: (states) ->
-    @highlighter.setRegExp(states.searchRegex)
-    @grammar.setSearchRegex(states.searchRegex)
-    @controlBar.updateElements(states)

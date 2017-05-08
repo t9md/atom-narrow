@@ -9,8 +9,8 @@ class Scan extends ProviderBase
   showColumnOnLineHeader: true
   itemHaveRange: true
   showSearchOption: true
-  useFirstQueryAsSearchTerm: true
   supportCacheItems: true
+  useFirstQueryAsSearchTerm: true
 
   initialize: ->
     return if @reopened
@@ -20,7 +20,6 @@ class Scan extends ProviderBase
       @searchWholeWord = true
     else
       @searchWholeWord = @getConfig('searchWholeWord')
-
     @searchUseRegex = @getConfig('searchUseRegex')
 
   scanEditor: (regExp) ->

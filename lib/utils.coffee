@@ -320,53 +320,6 @@ suppressEvent = (event) ->
     event.preventDefault()
     event.stopPropagation()
 
-# Return true or false
-compatibleMetaChars = [
-  '\\d'
-  '\\D'
-  '\\w'
-  '\\W'
-  '\\s'
-  '\\S'
-  '\\t'
-  '\\r'
-  '\\n'
-  '\\v'
-  '\\f'
-  '\\b'
-  '\\B'
-  '\\\\'
-  # '^' Incompatible
-  '$'
-  '['
-  '-'
-  '/'
-  # '*'
-  '+'
-  '?'
-  '.'
-  '('
-  ')'
-  '|'
-  '['
-  ']'
-  '{'
-  '}'
-  ']'
-]
-isCompatibleRegExp = (regex) ->
-  if regex
-    source = regex.source
-    for segment in source.split(/(\\?.)/) when segment isnt ''
-      if segment in compatibleMetaChars
-        valid = true
-      else
-        valid = _.escapeRegExp(segment) is segment
-      return unless valid
-    true
-  else
-    false
-
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -400,5 +353,4 @@ module.exports = {
   replaceOrAppendItemsForFilePath
   getProjectPaths
   suppressEvent
-  isCompatibleRegExp
 }

@@ -89,10 +89,12 @@ class ControlBar
         when 'searchRegex'
           if value?
             element.textContent = value.toString()
+            invalid = false
           else
-            searchTerm = states.searchTerm
-            element.textContent = searchTerm
-            element.classList.toggle('invalid', searchTerm.length isnt 0)
+            element.textContent = states.searchTerm
+            invalid = states.searchTerm.length isnt 0
+
+          element.classList.toggle('invalid', invalid)
         when 'refresh'
           element.classList.toggle('running', value)
         else
