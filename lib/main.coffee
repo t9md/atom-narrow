@@ -132,6 +132,6 @@ module.exports =
 
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
       'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', query: confirmSearch())
-      'vim-mode-plus-user:narrow:search': => @narrow('search', search: confirmSearch())
-      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', search: confirmSearch())
-      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', search: confirmSearch(), currentProject: true)
+      'vim-mode-plus-user:narrow:search': => @narrow('search', query: confirmSearch())
+      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', query: confirmSearch())
+      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', query: confirmSearch(), currentProject: true)
