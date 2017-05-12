@@ -12,6 +12,7 @@ _ = require 'underscore-plus'
   getFirstCharacterPositionForBufferRow
   isNarrowEditor
   getCurrentWord
+  getItemsWithHeaders
 } = require '../utils'
 Ui = require '../ui'
 settings = require '../settings'
@@ -172,9 +173,18 @@ class ProviderBase
     checkReady.then (ready) =>
       if ready
         @ui = new Ui(this, {@query}, @restoredState?.ui)
+        @subscriptions.add @ui.onDidRequestItems (event) =>
+          @requestItems(event)
+
         @initialize()
         @ui.open(pending: @options.pending).then =>
           return @ui
+
+  requestItems: (event) ->
+    {filePath} = event
+    Promise.resolve(@getItems(filePath)).then (items) =>
+      @ui.emitDidUpdateItems(items)
+      @ui.emitFinishUpdateItems()
 
   getInitialQuery: (editor) ->
     query = @options.query or editor.getSelectedText()
@@ -367,3 +377,6 @@ class ProviderBase
     @ui.highlighter.setRegExp(@searchRegex)
     states = {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchTerm, @searchUseRegex}
     @ui.controlBar.updateElements(states)
+
+  getItemsWithHeaders: (items) ->
+    getItemsWithHeaders(items)

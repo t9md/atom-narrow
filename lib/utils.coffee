@@ -1,6 +1,7 @@
 path = require 'path'
 {Point} = require 'atom'
 _ = require 'underscore-plus'
+{inspect} = require 'util'
 
 getAdjacentPane = (basePane, which) ->
   return unless children = basePane.getParent().getChildren?()
@@ -267,7 +268,39 @@ getItemsWithoutUnusedHeader = (items) ->
     else
       true
 
+toMB = (num) ->
+  Math.floor(num / (1024 * 1024))
+
+ignoreSubject = ['refresh', 'getItemsWithHeaders']
+# ignoreSubject = ['getItemsWithHeaders']
+startMeasureMemory = (subject, simple=false) ->
+  return (->) if subject in ignoreSubject
+
+  v8 = require('v8')
+  before = v8.getHeapStatistics()
+  console.time(subject)
+  ->
+    after = v8.getHeapStatistics()
+    diff = {}
+    for key in Object.keys(before)
+      diff[key] = after[key] - before[key]
+
+    console.info "= #{subject}"
+    if simple
+      console.time(subject)
+      console.log "diff.used_heap_size", toMB(diff.used_heap_size)
+    else
+      table = [before, after, diff]
+      for result in table
+        result[key] = toMB(value) for key, value of result
+      console.timeEnd(subject)
+      console.table(table)
+
+
+# NOTE, DANGER: Intentionally mutate passed items for memory effitiency
 getItemsWithHeaders = (_items) ->
+  # console.time "getItemsWithHeaders"
+  stopMeasureMemory = startMeasureMemory('getItemsWithHeaders')
   items = []
 
   # Inject projectName from filePath
@@ -285,7 +318,9 @@ getItemsWithHeaders = (_items) ->
     for filePath, itemsInFile of _.groupBy(itemsInProject, (item) -> item.filePath)
       header = "## " + atom.project.relativize(filePath)
       items.push({header, projectName, filePath, fileHeader: true, skip: true})
-      items.push(itemsInFile...)
+      items.push(item) for item in itemsInFile
+
+  stopMeasureMemory()
   items
 
 # Replace old items for filePath or append if items are new filePath.
@@ -320,6 +355,27 @@ suppressEvent = (event) ->
     event.preventDefault()
     event.stopPropagation()
 
+makeCancelablePromise = (promise, info) ->
+  canceled = false
+  wrappedPromise = new Promise (resolve, reject) ->
+    promise.then (value) ->
+      unless canceled
+        resolve(value)
+
+    promise.catch (error) ->
+      unless canceled
+      # if canceled
+      #   reject({canceled, info})
+      # else
+        reject(error)
+
+  return {
+    promise: wrappedPromise
+    cancel: ->
+      console.log "CANCELED", info
+      canceled = true
+  }
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -353,4 +409,6 @@ module.exports = {
   replaceOrAppendItemsForFilePath
   getProjectPaths
   suppressEvent
+  makeCancelablePromise
+  startMeasureMemory
 }

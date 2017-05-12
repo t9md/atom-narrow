@@ -31,8 +31,8 @@ class AtomScan extends ProviderBase
     matchesByFilePath = {}
     scanPromise = atom.workspace.scan @searchRegex, (result) ->
       if result?.matches?.length
-        matchesByFilePath[result.filePath] ?= []
-        matchesByFilePath[result.filePath].push(result.matches...)
+        results = matchesByFilePath[result.filePath] ?= []
+        results.concat(result.matches)
 
     scanPromise.then ->
       items = []

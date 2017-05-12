@@ -28,6 +28,7 @@ class Scan extends ProviderBase
     items
 
   getItems: ->
+    # console.log "got request"
     @updateSearchState()
     if @searchRegex?
       @scanEditor(@searchRegex)

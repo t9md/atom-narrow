@@ -8,7 +8,6 @@ module.exports =
 class Items
   selectedItem: null
   previouslySelectedItem: null
-  items: []
 
   onDidChangeSelectedItem: (fn) -> @emitter.on('did-change-selected-item', fn)
   emitDidChangeSelectedItem: (event) -> @emitter.emit('did-change-selected-item', event)
@@ -16,14 +15,26 @@ class Items
   constructor: (@ui) ->
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @emitter = new Emitter
+    @items = []
 
   destroy: ->
+    @items = null
 
   setItems: (items) ->
-    @items = [@promptItem, items...]
+    console.time "setItem"
+    # @items = null
+    @items = [@promptItem].concat(items)
+    console.timeEnd "setItem"
     @reset()
 
+  addItems: (items) ->
+    for item in items
+      @items.push(item)
+    @selectedItem = null
+    @previouslySelectedItem = null
+
   reset: ->
+    @items = [@promptItem]
     @selectedItem = null
     @previouslySelectedItem = null
 

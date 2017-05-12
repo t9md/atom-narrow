@@ -20,6 +20,8 @@ path = require 'path'
   getItemsWithoutUnusedHeader
   cloneRegExp
   suppressEvent
+  makeCancelablePromise
+  startMeasureMemory
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -77,8 +79,19 @@ class Ui
   queryForSelectFiles: null
   delayedRefreshTimeout: null
 
+  runningGetItems: []
+
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
+
+  onDidRequestItems: (fn) -> @emitter.on('did-request-items', fn)
+  emitDidRequestItems: (event) -> @emitter.emit('did-request-items', event)
+
+  onDidUpdateItems: (fn) -> @emitter.on('did-update-items', fn)
+  emitDidUpdateItems: (event) -> @emitter.emit('did-update-items', event)
+
+  onFinishUpdateItems: (fn) -> @emitter.on('finish-update-items', fn)
+  emitFinishUpdateItems: -> @emitter.emit('finish-update-items')
 
   onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
   emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
@@ -183,7 +196,7 @@ class Ui
           selection = @editor.getLastSelection()
           cursorPosition = selection.cursor.getBufferPosition()
 
-          column = searchTerm.length + 1
+          column = searchTerm.length# + 1
           if cursorPosition.column <= column
             column = 0
 
@@ -392,6 +405,7 @@ class Ui
 
   destroy: ->
     return if @destroyed
+    # stopMeasureMemory = startMeasureMemory('UI::destoroy')
 
     @destroyed = true
 
@@ -411,6 +425,7 @@ class Ui
     @items.destroy()
     @itemIndicator.destroy()
     @emitDidDestroy()
+    # stopMeasureMemory()
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
@@ -514,22 +529,13 @@ class Ui
       @excludedFiles = []
       @refresh()
 
-  injectHeadersIfNecessary: (items) =>
-    if @provider.showLineHeader
-      injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
-
-    if @provider.boundToSingleFile
-      items
-    else
-      getItemsWithHeaders(items)
-
-  filterItems: (items, filterQuery) ->
-    @itemsBeforeFiltered = items
+  getFilterSpec: (filterQuery) ->
     sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
     negateByEndingExclamation = @provider.getConfig('negateNarrowQueryByEndingExclamation')
-    filterSpec = getFilterSpec(filterQuery, {sensitivity, negateByEndingExclamation})
-    @grammar.update(filterSpec.include) # No need to highlight excluded items
+    getFilterSpec(filterQuery, {sensitivity, negateByEndingExclamation})
 
+  filterItems: (items, filterSpec) ->
+    @itemsBeforeFiltered = items
     unless @provider.boundToSingleFile
       if @needRebuildExcludedFiles
         @excludedFiles = @buildExcludedFiles()
@@ -570,50 +576,96 @@ class Ui
   getAfterFilteredFileHeaderItems: ->
     @items.getFileHeaderItems()
 
+  cancelRunningGetItems: ->
+    if @getItemsPromise?
+      @getItemsPromise.cancel()
+      @getItemsPromise = null
+
+  requestItems: (event) ->
+    if @cachedItems?
+      # console.log 'use Cache'
+      @emitDidUpdateItems(@cachedItems)
+      @emitFinishUpdateItems()
+    else
+      @emitDidRequestItems(event)
+
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
     @emitWillRefresh()
+    @highlighter.clearCurrentAndLineMarker()
     @controlBar.updateElements(refresh: true)
 
-    @lastQuery = filterQuery = @getQuery()
+    @lastQuery = filterQuery = query = @getQuery()
+
+    needGrammarUpdate = false
+
     if @provider.useFirstQueryAsSearchTerm
       # Extracet filterQuery by removing searchTerm part from query
       filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
       @lastSearchTerm = @currentSearchTerm
 
-    if force and @cachedItems?
-      @cachedItems = null
+    if force
+      @cachedItems = null # Invalidate cache
 
-    getItems = =>
-      if @cachedItems?
-        Promise.resolve(@cachedItems)
-      else
-        Promise.resolve(@provider.getItems(filePath)).then(@injectHeadersIfNecessary)
+    cachedItems = @cachedItems
+    filterSpec = @getFilterSpec(filterQuery)
+    @cancelRunningGetItems()
+    resolveGetItem = null
+    itemsBeforeFiltered = []
+    oldSelectedItem = null
+    oldColumn = null
+    @itemAreaStart = Object.freeze(new Point(1, 0))
 
-    getItems().then (items) =>
-      if @provider.supportCacheItems
-        @cachedItems = items
+    @nextRenderingPoint = @itemAreaStart
 
-      items = @filterItems(items, filterQuery)
-      if (not selectFirstItem) and @items.hasSelectedItem()
-        selectedItem = findEqualLocationItem(items, @items.getSelectedItem())
-        oldColumn = @editor.getCursorBufferPosition().column
+    disposables = new CompositeDisposable
+    grammarUpdated = false
+    disposables.add @onDidUpdateItems (items) =>
+      unless grammarUpdated
+        @grammar.update(filterSpec.include) # No need to highlight excluded items
+        grammarUpdated = true
 
-      @items.setItems(items)
+      # console.count('update')
+      if items isnt cachedItems and @provider.showLineHeader
+        injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
+
+      itemsBeforeFiltered = itemsBeforeFiltered.concat(items)
+      items = @filterItems(items, filterSpec)
+      @items.addItems(items)
       @renderItems(items)
-      @highlighter.clearCurrentAndLineMarker()
 
-      if (not selectFirstItem) and selectedItem?
-        @items.selectItem(selectedItem)
-        unless @isAtPrompt()
-          @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
+    stopMeasureMemory = null
+    disposables.add @onFinishUpdateItems =>
+      # console.count('finish')
+      disposables.dispose()
+      if @provider.supportCacheItems
+        @cachedItems = itemsBeforeFiltered
+
+      if (not selectFirstItem) and oldSelectedItem?
+        if item = findEqualLocationItem(@items.getNormalItems(), oldSelectedItem)
+          @items.selectItem(item)
+          unless @isAtPrompt()
+            @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
       else
+        # when originally selected item cannot be selected because of excluded.
         @items.selectFirstNormalItem()
-        unless @isAtPrompt()
-          # when originally selected item cannot be selected because of excluded.
-          @moveToPrompt()
+        @moveToPrompt() unless @isAtPrompt()
 
+      stopMeasureMemory()
       @controlBar.updateElements(refresh: false, itemCount: @items.getCount())
+      resolveGetItem()
+
+    stopMeasureMemory = startMeasureMemory("refresh")
+
+    # Preserve oldSelectedItem before calling @items.reset()
+    oldSelectedItem = @items.getSelectedItem()
+    oldColumn = @editor.getCursorBufferPosition().column
+
+    @items.reset()
+    getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
+    @requestItems({filePath})
+
+    getItemPromise.then =>
       @emitDidRefresh()
       @emitDidStopRefreshing()
       return null
@@ -628,10 +680,19 @@ class Ui
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         @resetQuery()
-      itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
-      range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
+
+
+      itemArea = new Range(@nextRenderingPoint, @editor.getEofBufferPosition())
+
+      if @nextRenderingPoint is @itemAreaStart
+        newLineOrEmptyString = ''
+      else
+        newLineOrEmptyString = "\n"
+
+      range = @editor.setTextInBufferRange(itemArea, newLineOrEmptyString + texts.join("\n"), undo: 'skip')
       @setModifiedState(false)
       @editorLastRow = range.end.row
+    @nextRenderingPoint = @editor.getEofBufferPosition()
 
   observeChange: ->
     @editor.buffer.onDidChange (event) =>
@@ -664,6 +725,7 @@ class Ui
             @currentSearchTerm = @getSearchTermFromQuery()
 
             if @currentSearchTerm isnt @lastSearchTerm
+              @cancelRunningGetItems()
               @cachedItems = null
               # if @provider.searchUseRegex and @currentSearchTerm.length < @provider.getConfig('minimumLengthToStartRegexSearch')
               #   return
@@ -671,7 +733,7 @@ class Ui
             else
               refreshDelay = if @provider.boundToSingleFile then 10 else 150
 
-          console.log {refreshDelay}
+          # console.log {refreshDelay}
           if refreshDelay?
             # To avoid frequent auto-preview interferinig smooth-query-input, delay refresh.
             @refreshThenPreviewAfter(refreshDelay)
@@ -683,7 +745,10 @@ class Ui
   # Delayed-refresh on query-change event, dont use this for other purpose.
   refreshThenPreviewAfter: (delay) ->
     @cancelDelayedRefresh()
-    refreshThenPreview = => @refresh(selectFirstItem: true).then(@preview)
+    refreshThenPreview = =>
+      @refresh(selectFirstItem: true).then(@preview)
+      # .catch (reason) ->
+      #   console.logetItemsPromiseg reason
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 
   cancelDelayedRefresh: ->

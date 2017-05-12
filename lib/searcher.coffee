@@ -1,6 +1,6 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{Point, Range, BufferedProcess} = require 'atom'
+{Point, Range, BufferedProcess, Emitter} = require 'atom'
 
 LineEndingRegExp = /\n|\r\n/
 RegExpForOutPutLine = /^(.*?):(\d+):(\d+):(.*)$/
@@ -48,31 +48,45 @@ class Item
     Range.fromPointWithDelta(@point, 0, matchedText.length)
 
 runCommand = (options) ->
-  new BufferedProcess(options).onWillThrowError ({error, handle}) ->
+  bufferedProcess = new BufferedProcess(options)
+  bufferedProcess.onWillThrowError ({error, handle}) ->
     if error.code is 'ENOENT' and error.syscall.indexOf('spawn') is 0
       console.log "ERROR"
     handle()
-
-search = (command, args, project) ->
-  options =
-    stdio: ['ignore', 'pipe', 'pipe']
-    env: process.env
-    cwd: project
-
-  allData = ""
-  stdout = (data) -> allData += data
-
-  stderrHeader = "[narrow:search stderr of #{command}]:"
-  stderr = (data) -> console.warn(stderrHeader, data)
-
-  new Promise (resolve) ->
-    exit = -> resolve(allData)
-    runCommand({command, args, stdout, stderr, exit, options})
+  bufferedProcess
 
 module.exports =
 class Searcher
   constructor: (options) ->
+    @emitter = new Emitter
+    @runningProcesses = []
+
+  setOptions: (options) ->
     {@command, @searchUseRegex, @searchRegex, @searchTerm} = options
+
+  search: (command, args, project, onItems, onFinish) ->
+    options =
+      stdio: ['ignore', 'pipe', 'pipe']
+      env: process.env
+      cwd: project
+
+    stdout = (data) => onItems(@itemizeProject(project, data), project)
+    stderrHeader = "[narrow:search stderr of #{command}]:"
+    stderr = (data) -> console.warn(stderrHeader, data)
+
+    bufferedProcess = null
+    exit = =>
+      bufferedProcess
+      _.remove(@runningProcesses, bufferedProcess)
+      onFinish()
+
+    bufferedProcess = runCommand({command, args, stdout, stderr, exit, options})
+    @runningProcesses.push(bufferedProcess)
+
+  cancel: ->
+    while bufferedProcess = @runningProcesses.shift()
+      console.log "CANCEL", bufferedProcess.args
+      bufferedProcess?.kill()
 
   getArgs: ->
     args = ['--vimgrep']
@@ -99,12 +113,10 @@ class Searcher
     args.push(filePath)
 
     itemizeProject = @itemizeProject.bind(this, project)
-    search(@command, args, project).then(itemizeProject)
+    @search(@command, args, project).then(itemizeProject)
 
-  searchProjects: (projects) ->
-    itemizeProjects = @itemizeProjects.bind(this, projects)
-    searchProject = search.bind(this, @command, @getArgs())
-    Promise.all(projects.map(searchProject)).then(itemizeProjects)
+  searchProject: (project, onItems, onFinish) ->
+    @search(@command, @getArgs(), project, onItems, onFinish)
 
   itemizeProject: (project, data) ->
     items = []
@@ -112,9 +124,3 @@ class Searcher
     for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
       items.push(new Item(match, project, rangeHint))
     items
-
-  itemizeProjects: (projects, allData) ->
-    items = []
-    for [project, data] in _.zip(projects, allData)
-      items.push(@itemizeProject(project, data)...)
-    _.sortBy(items, (item) -> item.filePath)
