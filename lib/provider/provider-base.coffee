@@ -12,7 +12,6 @@ _ = require 'underscore-plus'
   getFirstCharacterPositionForBufferRow
   isNarrowEditor
   getCurrentWord
-  getItemsWithHeaders
 } = require '../utils'
 Ui = require '../ui'
 settings = require '../settings'
@@ -347,12 +346,9 @@ class ProviderBase
     flags += 'i' if searchIgnoreCase
     new RegExp(source, flags)
 
-  # Used for useFirstQueryAsSearchTerm enbled provider.
-  getSearchState: ->
-    {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchUseRegex, @searchTerm}
-
   updateSearchState: ->
     @searchTerm = @ui.getSearchTermFromQuery()
+
     if @searchTerm
       # Auto relax \b restriction, enable @searchWholeWord only when \w was included.
       if @searchWholeWord and not @searchWholeWordChangedManually
@@ -363,6 +359,7 @@ class ProviderBase
 
       options = {@searchWholeWord, @searchIgnoreCase, @searchUseRegex}
       @searchRegex = @getRegExpForSearchTerm(@searchTerm, options)
+
       @initialSearchRegex ?= @searchRegex
 
       grammarCanHighlight = not @searchUseRegex or (@searchTerm is _.escapeRegExp(@searchTerm))
@@ -377,6 +374,3 @@ class ProviderBase
     @ui.highlighter.setRegExp(@searchRegex)
     states = {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchTerm, @searchUseRegex}
     @ui.controlBar.updateElements(states)
-
-  getItemsWithHeaders: (items) ->
-    getItemsWithHeaders(items)

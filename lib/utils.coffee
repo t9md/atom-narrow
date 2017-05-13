@@ -271,8 +271,7 @@ getItemsWithoutUnusedHeader = (items) ->
 toMB = (num) ->
   Math.floor(num / (1024 * 1024))
 
-ignoreSubject = ['refresh', 'getItemsWithHeaders']
-# ignoreSubject = ['getItemsWithHeaders']
+ignoreSubject = ['refresh']
 startMeasureMemory = (subject, simple=false) ->
   return (->) if subject in ignoreSubject
 
@@ -296,32 +295,6 @@ startMeasureMemory = (subject, simple=false) ->
       console.timeEnd(subject)
       console.table(table)
 
-
-# NOTE, DANGER: Intentionally mutate passed items for memory effitiency
-getItemsWithHeaders = (_items) ->
-  # console.time "getItemsWithHeaders"
-  stopMeasureMemory = startMeasureMemory('getItemsWithHeaders')
-  items = []
-
-  # Inject projectName from filePath
-  for item in _items
-    projectPath = atom.project.relativizePath(item.filePath)[0]
-    if projectPath?
-      item.projectName = path.basename(projectPath)
-    else
-      item.projectName = "( No project )"
-
-  for projectName, itemsInProject of _.groupBy(_items, (item) -> item.projectName)
-    header = "# #{projectName}"
-    items.push({header, projectName, projectHeader: true, skip: true})
-
-    for filePath, itemsInFile of _.groupBy(itemsInProject, (item) -> item.filePath)
-      header = "## " + atom.project.relativize(filePath)
-      items.push({header, projectName, filePath, fileHeader: true, skip: true})
-      items.push(item) for item in itemsInFile
-
-  stopMeasureMemory()
-  items
 
 # Replace old items for filePath or append if items are new filePath.
 replaceOrAppendItemsForFilePath = (items, filePath, newItems) ->
@@ -355,26 +328,33 @@ suppressEvent = (event) ->
     event.preventDefault()
     event.stopPropagation()
 
-makeCancelablePromise = (promise, info) ->
-  canceled = false
-  wrappedPromise = new Promise (resolve, reject) ->
-    promise.then (value) ->
-      unless canceled
-        resolve(value)
+injectHeaderAndProjectName = (rawItems, seenState={}, onFilePathChange) ->
+  items = []
+  seenState.projectNameSeen ?= {}
+  seenState.filePathSeen ?= {}
+  {projectNameSeen, filePathSeen} = seenState
+  for item in rawItems
+    if item.projectName
+      projectName = item.projectName
+    else
+      projectPath = atom.project.relativizePath(item.filePath)[0]
+      projectName = path.basename(projectPath)
+      item.projectName = projectName
 
-    promise.catch (error) ->
-      unless canceled
-      # if canceled
-      #   reject({canceled, info})
-      # else
-        reject(error)
+    if projectName not of projectNameSeen
+      header = "# #{projectName}"
+      items.push({header, projectName, projectHeader: true, skip: true})
+      projectNameSeen[projectName] = true
 
-  return {
-    promise: wrappedPromise
-    cancel: ->
-      console.log "CANCELED", info
-      canceled = true
-  }
+    filePath = item.filePath
+    if filePath not of filePathSeen
+      onFilePathChange?()
+      header = "## " + atom.project.relativize(filePath)
+      items.push({header, projectName, filePath, fileHeader: true, skip: true})
+      filePathSeen[filePath] = true
+
+    items.push(item)
+  return items
 
 module.exports = {
   getNextAdjacentPaneForPane
@@ -404,11 +384,10 @@ module.exports = {
   compareByPoint
   findEqualLocationItem
   findFirstAndLastIndexBy
-  getItemsWithHeaders
   getItemsWithoutUnusedHeader
   replaceOrAppendItemsForFilePath
   getProjectPaths
   suppressEvent
-  makeCancelablePromise
   startMeasureMemory
+  injectHeaderAndProjectName
 }

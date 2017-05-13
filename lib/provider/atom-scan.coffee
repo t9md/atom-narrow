@@ -1,6 +1,7 @@
 {Point, Range} = require 'atom'
 ProviderBase = require './provider-base'
 {replaceOrAppendItemsForFilePath} = require '../utils'
+SearchOptions = require '../search-options'
 
 module.exports =
 class AtomScan extends ProviderBase
@@ -13,6 +14,7 @@ class AtomScan extends ProviderBase
 
   initialize: ->
     @initializeSearchOptions() unless @reopened
+    @searchOptions = new SearchOptions()
 
   # Not used but keep it since I'm planning to introduce per file refresh on modification
   scanFilePath: (filePath) ->
@@ -28,23 +30,28 @@ class AtomScan extends ProviderBase
       items
 
   scanWorkspace: ->
-    matchesByFilePath = {}
-    scanPromise = atom.workspace.scan @searchRegex, (result) ->
-      if result?.matches?.length
-        results = matchesByFilePath[result.filePath] ?= []
-        results.concat(result.matches)
+    seenState = {}
+    onFilePathChange = =>
+      setImmediate =>
+        @ui.controlBar.updateItemCount()
 
-    scanPromise.then ->
-      items = []
-      for filePath, matches of matchesByFilePath
-        for match in matches
-          items.push({
+    itemFound = false
+    scanPromise = atom.workspace.scan @searchRegex, (result) =>
+      if result?.matches?.length
+        itemFound = true
+        {filePath, matches} = result
+        @ui.emitDidUpdateItems matches.map (match) ->
+          {
             filePath: filePath
             text: match.lineText
             point: Point.fromObject(match.range[0])
             range: Range.fromObject(match.range)
-          })
-      items
+          }
+
+    scanPromise.then =>
+      unless itemFound
+        @ui.emitDidUpdateItems([])
+      @ui.emitFinishUpdateItems()
 
   search: (filePath) ->
     if filePath?
@@ -62,4 +69,9 @@ class AtomScan extends ProviderBase
       @search().then (@items) =>
         @items
     else
-      []
+      @ui.emitDidUpdateItems([])
+      @ui.emitFinishUpdateItems()
+
+  requestItems: (event) ->
+    {filePath} = event
+    @getItems()

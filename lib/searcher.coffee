@@ -57,12 +57,11 @@ runCommand = (options) ->
 
 module.exports =
 class Searcher
-  constructor: (options) ->
+  constructor: (@searchOptions) ->
     @emitter = new Emitter
     @runningProcesses = []
 
-  setOptions: (options) ->
-    {@command, @searchUseRegex, @searchRegex, @searchTerm} = options
+  setCommand: (@command) ->
 
   search: (command, args, project, onItems, onFinish) ->
     options =
@@ -81,29 +80,33 @@ class Searcher
       onFinish()
 
     bufferedProcess = runCommand({command, args, stdout, stderr, exit, options})
+    # bufferedProcess.__project = project
     @runningProcesses.push(bufferedProcess)
 
   cancel: ->
     while bufferedProcess = @runningProcesses.shift()
-      console.log "CANCEL", bufferedProcess.args
+      cwd = bufferedProcess.options.cwd
+      searching = bufferedProcess.args.slice(-1)[0]
+      console.log "Searcher canceled", cwd, searching
       bufferedProcess?.kill()
 
   getArgs: ->
     args = ['--vimgrep']
-    if @searchRegex.ignoreCase
+    {searchRegex} = @searchOptions
+    if searchRegex.ignoreCase
       args.push('--ignore-case')
     else
       args.push('--case-sensitive')
 
     switch @command
       when 'ag'
-        args.push(@searchRegex.source)
+        args.push(searchRegex.source)
       when 'rg'
         # See #176
         # rg doesn't show filePath on each line when search file was passed explicitly.
         # Following option make result-output consistent with `ag`.
         args.push(['-H', '--no-heading', '--regexp']...)
-        args.push(unescapeRegExpForRg(@searchRegex.source))
+        args.push(unescapeRegExpForRg(searchRegex.source))
     args
 
   searchFilePath: (filePath) ->
@@ -120,7 +123,7 @@ class Searcher
 
   itemizeProject: (project, data) ->
     items = []
-    rangeHint = {@searchUseRegex, @searchTerm, @searchRegex}
+    rangeHint = @searchOptions.pick('searchUseRegex', 'searchTerm', 'searchRegex')
     for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
       items.push(new Item(match, project, rangeHint))
     items

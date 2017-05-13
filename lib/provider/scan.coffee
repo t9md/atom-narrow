@@ -1,6 +1,7 @@
 {Point, Range} = require 'atom'
 {cloneRegExp} = require '../utils'
 ProviderBase = require './provider-base'
+SearchOptions = require '../search-options'
 
 module.exports =
 class Scan extends ProviderBase
@@ -14,6 +15,7 @@ class Scan extends ProviderBase
 
   initialize: ->
     @initializeSearchOptions() unless @reopened
+    @searchOptions = new SearchOptions()
 
   scanEditor: (regExp) ->
     items = []

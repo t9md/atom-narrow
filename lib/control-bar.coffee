@@ -51,6 +51,7 @@ class ControlBar
     hideElement('search-options') unless @showSearchOption
     @addClickEvents()
 
+
   addClickEvents: ->
     clickEvents =
       autoPreview: @ui.toggleAutoPreview
@@ -115,3 +116,6 @@ class ControlBar
     for elementName, commandName of tooltips when element = @elements[elementName]
       disposables.add(addToolTips({element, commandName, keyBindingTarget}))
     disposables
+    
+  updateItemCount: ->
+    @updateElements(itemCount: @ui.items.getCount())

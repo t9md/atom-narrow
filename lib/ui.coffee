@@ -2,7 +2,7 @@
 p = (args...) -> console.log inspect(args...)
 _ = require 'underscore-plus'
 path = require 'path'
-{Point, Range, CompositeDisposable, Emitter} = require 'atom'
+{Point, Range, CompositeDisposable, Disposable, Emitter} = require 'atom'
 {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -16,12 +16,11 @@ path = require 'path'
   ensureNoConflictForChanges
   isNormalItem
   findEqualLocationItem
-  getItemsWithHeaders
   getItemsWithoutUnusedHeader
   cloneRegExp
   suppressEvent
-  makeCancelablePromise
   startMeasureMemory
+  injectHeaderAndProjectName
 } = require './utils'
 settings = require './settings'
 Grammar = require './grammar'
@@ -92,6 +91,9 @@ class Ui
 
   onFinishUpdateItems: (fn) -> @emitter.on('finish-update-items', fn)
   emitFinishUpdateItems: -> @emitter.emit('finish-update-items')
+
+  onCancelRequestItems: (fn) -> @emitter.on('cancel-request-items', fn)
+  emitCancelRequestItems: -> @emitter.emit('cancel-request-items')
 
   onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
   emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
@@ -577,9 +579,11 @@ class Ui
     @items.getFileHeaderItems()
 
   cancelRunningGetItems: ->
-    if @getItemsPromise?
-      @getItemsPromise.cancel()
-      @getItemsPromise = null
+    # @refreshDisposables?.dispose()
+    # @emitCancelRequestItems()
+    # if @getItemsPromise?
+    #   @getItemsPromise.cancel()
+    #   @getItemsPromise = null
 
   requestItems: (event) ->
     if @cachedItems?
@@ -591,7 +595,18 @@ class Ui
 
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
+
+    unless @refreshDisposables?.disposed
+      console.trace()
+      console.log "disose!"
+    @refreshDisposables?.dispose()
+    @refreshDisposables = new CompositeDisposable
+
+    # @emitCancelRequestItems()
+
     @emitWillRefresh()
+    # @cancelRunningGetItems()
+
     @highlighter.clearCurrentAndLineMarker()
     @controlBar.updateElements(refresh: true)
 
@@ -604,23 +619,27 @@ class Ui
       filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
       @lastSearchTerm = @currentSearchTerm
 
+    query = @currentSearchTerm
+
     if force
       @cachedItems = null # Invalidate cache
 
     cachedItems = @cachedItems
     filterSpec = @getFilterSpec(filterQuery)
-    @cancelRunningGetItems()
     resolveGetItem = null
     itemsBeforeFiltered = []
     oldSelectedItem = null
     oldColumn = null
+    seenState = {}
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
     @nextRenderingPoint = @itemAreaStart
+    onFilePathChange = =>
+      setImmediate =>
+        @controlBar.updateItemCount()
 
-    disposables = new CompositeDisposable
     grammarUpdated = false
-    disposables.add @onDidUpdateItems (items) =>
+    @refreshDisposables.add @onDidUpdateItems (items) =>
       unless grammarUpdated
         @grammar.update(filterSpec.include) # No need to highlight excluded items
         grammarUpdated = true
@@ -629,15 +648,25 @@ class Ui
       if items isnt cachedItems and @provider.showLineHeader
         injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
 
+      unless @provider.boundToSingleFile
+        items = injectHeaderAndProjectName(items, seenState, onFilePathChange)
+
       itemsBeforeFiltered = itemsBeforeFiltered.concat(items)
       items = @filterItems(items, filterSpec)
       @items.addItems(items)
       @renderItems(items)
 
+    getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
+
+    @refreshDisposables.add new Disposable ->
+      console.log 'disposed', query
+
     stopMeasureMemory = null
-    disposables.add @onFinishUpdateItems =>
-      # console.count('finish')
-      disposables.dispose()
+    @refreshDisposables.add @onFinishUpdateItems =>
+      @refreshDisposables.dispose()
+
+      @refreshDisposables = null
+
       if @provider.supportCacheItems
         @cachedItems = itemsBeforeFiltered
 
@@ -662,7 +691,6 @@ class Ui
     oldColumn = @editor.getCursorBufferPosition().column
 
     @items.reset()
-    getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
     @requestItems({filePath})
 
     getItemPromise.then =>
