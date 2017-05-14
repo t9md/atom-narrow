@@ -37,8 +37,7 @@ injectLineHeader = (state) ->
   if state.showColumn
     toColumn = (item) -> item.point.column
     maxColumn = normalItems.map(toColumn).reduce(byMax, 0)
-    maxColumnWidth = Math.max(String(maxColumn).length, 2)
-    console.log maxColumn
+    maxColumnWidth = Math.max(String(maxColumn + 1).length, 2)
 
   for item in normalItems
     item._lineHeader = getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
