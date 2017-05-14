@@ -30,17 +30,12 @@ class AtomScan extends ProviderBase
       items
 
   scanWorkspace: ->
-    seenState = {}
-    onFilePathChange = =>
-      setImmediate =>
-        @ui.controlBar.updateItemCount()
-
     itemFound = false
     scanPromise = atom.workspace.scan @searchRegex, (result) =>
       if result?.matches?.length
         itemFound = true
         {filePath, matches} = result
-        @ui.emitDidUpdateItems matches.map (match) ->
+        @updateItems matches.map (match) ->
           {
             filePath: filePath
             text: match.lineText
@@ -49,9 +44,7 @@ class AtomScan extends ProviderBase
           }
 
     scanPromise.then =>
-      unless itemFound
-        @ui.emitDidUpdateItems([])
-      @ui.emitFinishUpdateItems()
+      @finishUpdateItems([] unless itemFound)
 
   search: (filePath) ->
     if filePath?
@@ -69,9 +62,4 @@ class AtomScan extends ProviderBase
       @search().then (@items) =>
         @items
     else
-      @ui.emitDidUpdateItems([])
-      @ui.emitFinishUpdateItems()
-
-  requestItems: (event) ->
-    {filePath} = event
-    @getItems()
+      @finishUpdateItems([])

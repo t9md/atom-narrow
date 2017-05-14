@@ -33,8 +33,10 @@ class Scan extends ProviderBase
     # console.log "got request"
     @updateSearchState()
     if @searchRegex?
-      @scanEditor(@searchRegex)
+      items = @scanEditor(@searchRegex)
     else
-      @editor.buffer.getLines().map (text, row) ->
+      items = @editor.buffer.getLines().map (text, row) ->
         point = new Point(row, 0)
         {text, point, range: new Range(point, point)}
+
+    @finishUpdateItems(items)

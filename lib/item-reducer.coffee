@@ -25,7 +25,7 @@ getLineHeaderForItem = (point, maxLineWidth, maxColumnWidth) ->
 # If reducer return object, that object is merged to state and passed to next reducer
 # If reducer return nothing, original state is passed to next reducer.
 injectLineHeader = (state) ->
-  return null if state.hasCachedItems
+  return null if state.hasCachedItems or not state.showLineHeader
 
   normalItems = state.items.filter(isNormalItem)
 
@@ -46,7 +46,7 @@ injectLineHeader = (state) ->
   return null
 
 injectHeaderAndProjectName = (state) ->
-  return null if state.hasCachedItems
+  return null if state.hasCachedItems or state.boundToSingleFile
 
   {projectHeadersInserted, fileHeadersInserted} = state
 
@@ -79,6 +79,8 @@ collectBeforeFiltered = (state) ->
   {allItems: state.allItems.concat(state.items)}
 
 removeUnusedHeader = (state) ->
+  return null if state.boundToSingleFile
+
   normalItems = state.items.filter(isNormalItem)
   filePaths = _.uniq(_.pluck(normalItems, "filePath"))
   projectNames = _.uniq(_.pluck(normalItems, "projectName"))

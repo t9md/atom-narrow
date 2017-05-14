@@ -32,4 +32,5 @@ class Bookmarks extends ProviderBase
     items = []
     for {editor, markerLayer} in getBookmarks() when markerLayer.getMarkerCount() > 0
       items.push(@getItemsForEditor(editor, markerLayer)...)
-    items
+
+    @finishUpdateItems(items)

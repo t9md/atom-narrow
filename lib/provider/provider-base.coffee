@@ -172,18 +172,16 @@ class ProviderBase
     checkReady.then (ready) =>
       if ready
         @ui = new Ui(this, {@query}, @restoredState?.ui)
-        @subscriptions.add @ui.onDidRequestItems (event) =>
-          @requestItems(event)
-
         @initialize()
         @ui.open(pending: @options.pending).then =>
           return @ui
 
-  requestItems: (event) ->
-    {filePath} = event
-    Promise.resolve(@getItems(filePath)).then (items) =>
-      @ui.emitDidUpdateItems(items)
-      @ui.emitFinishUpdateItems()
+  updateItems: (items) ->
+    @ui.emitDidUpdateItems(items)
+
+  finishUpdateItems: (items) ->
+    @updateItems(items) if items?
+    @ui.emitFinishUpdateItems()
 
   getInitialQuery: (editor) ->
     query = @options.query or editor.getSelectedText()

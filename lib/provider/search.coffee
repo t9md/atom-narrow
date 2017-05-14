@@ -50,15 +50,13 @@ class Search extends ProviderBase
       itemFound = false
       onItems = (items, project) =>
         itemFound = true
-        @ui.emitDidUpdateItems(items)
+        @updateItems(items)
 
       finishCount = 0
       onFinish = =>
         finishCount++
         if finishCount is @projects.length
-          unless itemFound
-            @ui.emitDidUpdateItems([])
-          @ui.emitFinishUpdateItems()
+          @finishUpdateItems([] unless itemFound)
 
       for project in @projects
         @searcher.searchProject(project, onItems, onFinish)
@@ -83,9 +81,4 @@ class Search extends ProviderBase
       # else
       @search()
     else
-      @ui.emitDidUpdateItems([])
-      @ui.emitFinishUpdateItems()
-
-  requestItems: (event) ->
-    {filePath} = event
-    @getItems()
+      @finishUpdateItems([])

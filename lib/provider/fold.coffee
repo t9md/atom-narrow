@@ -29,6 +29,8 @@ class Fold extends ProviderBase
     @ui.refresh(force: true)
 
   getItems: ->
-    getCodeFoldStartRows(@editor, @foldLevel).map (row) =>
+    items = getCodeFoldStartRows(@editor, @foldLevel).map (row) =>
       point: @getFirstCharacterPointOfRow(row)
       text: @editor.lineTextForBufferRow(row)
+
+    @finishUpdateItems(items)

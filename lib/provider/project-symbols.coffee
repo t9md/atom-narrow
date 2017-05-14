@@ -100,7 +100,7 @@ class ProjectSymbols extends ProviderBase
 
     return cache if cache = getCachedItems()
 
-    @readTags().then (tags) ->
+    @readTags().then (tags) =>
       # Better interests suggestion? I want this less noisy.
       kindOfInterests = 'cfm'
 
@@ -111,4 +111,4 @@ class ProjectSymbols extends ProviderBase
         .sort(compareByPoint)
       items = _.uniq items, (item) -> item.filePath + item.text
       setCachedItems(items)
-      items
+      @finishUpdateItems(items)

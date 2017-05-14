@@ -540,7 +540,10 @@ class Ui
     negateByEndingExclamation = @provider.getConfig('negateNarrowQueryByEndingExclamation')
     getFilterSpec(filterQuery, {sensitivity, negateByEndingExclamation})
 
-  filterItems: (items, filterSpec) ->
+  # reducer
+  filterItems: (state) =>
+    {items, filterSpec} = state
+
     @itemsBeforeFiltered = items
     unless @provider.boundToSingleFile
       if @needRebuildExcludedFiles
@@ -550,7 +553,8 @@ class Ui
       if @excludedFiles.length
         items = items.filter (item) => item.filePath not in @excludedFiles
 
-    @provider.filterItems(items, filterSpec)
+    items = @provider.filterItems(items, filterSpec)
+    Object.assign(state, {items})
 
   getItemsForSelectFiles: ->
     @getBeforeFilteredFileHeaderItems().map ({filePath, projectName}) ->
@@ -584,25 +588,22 @@ class Ui
       @emitDidUpdateItems(@cachedItems)
       @emitFinishUpdateItems()
     else
-      @emitDidRequestItems(event)
+      @provider.getItems(event.filePath)
 
   getReducers: ->
-    filterItems = (state) =>
-      items = @filterItems(state.items, state.filterSpec)
-      Object.assign(state, {items})
-
-    addItems = (state) =>
-      @items.addItems(state.items)
-      return null
-
     [
-      injectLineHeader if @provider.showLineHeader
-      injectHeaderAndProjectName unless @provider.boundToSingleFile
+      injectLineHeader
+      injectHeaderAndProjectName
       collectBeforeFiltered
-      filterItems
-      removeUnusedHeader unless @provider.boundToSingleFile
-      addItems
-    ].filter (reducer) -> reducer?
+      @filterItems
+      removeUnusedHeader
+      @addItems
+    ]
+
+  # reducer
+  addItems: (state) =>
+    @items.addItems(state.items)
+    return null
 
   reduceItems: (items, state) ->
     state.items = items
@@ -626,10 +627,7 @@ class Ui
     @highlighter.clearCurrentAndLineMarker()
     @controlBar.updateElements(refresh: true)
 
-    @lastQuery = filterQuery = query = @getQuery()
-
-    needGrammarUpdate = false
-
+    @lastQuery = filterQuery = @getQuery()
     if @provider.useFirstQueryAsSearchTerm
       # Extracet filterQuery by removing searchTerm part from query
       filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
@@ -649,7 +647,9 @@ class Ui
 
     reducerState = {
       hasCachedItems: @cachedItems?
+      showLineHeader: @provider.showLineHeader
       showColumn: @provider.showColumnOnLineHeader
+      boundToSingleFile: @provider.boundToSingleFile
       projectHeadersInserted: {}
       fileHeadersInserted: {}
       onFilePathChange: => setImmediate(=> @controlBar.updateItemCount())

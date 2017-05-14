@@ -43,3 +43,4 @@ class Symbols extends ProviderBase
     new TagGenerator(filePath, scopeName).generate().then (tags) =>
       tags = _.uniq(tags, (tag) -> tag.position.row)
       @items = tags.map(@itemForTag.bind(this))
+      @finishUpdateItems(@items)
