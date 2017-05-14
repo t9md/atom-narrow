@@ -116,6 +116,3 @@ class ControlBar
     for elementName, commandName of tooltips when element = @elements[elementName]
       disposables.add(addToolTips({element, commandName, keyBindingTarget}))
     disposables
-    
-  updateItemCount: ->
-    @updateElements(itemCount: @ui.items.getCount())

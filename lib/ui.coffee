@@ -153,8 +153,8 @@ class Ui
       'narrow-ui:exclude-file': => @excludeFile()
       'narrow-ui:select-files': @selectFiles
       'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
-      'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
-      'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
+      'narrow-ui:move-to-next-file-item': => @moveToDifferentFileItem('next')
+      'narrow-ui:move-to-previous-file-item': => @moveToDifferentFileItem('previous')
       'narrow-ui:toggle-search-whole-word': @toggleSearchWholeWord
       'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
       'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
@@ -613,6 +613,19 @@ class Ui
       state
     , state
 
+  getInitialReducerState: ({filterSpec}) ->
+    {
+      hasCachedItems: @cachedItems?
+      showLineHeader: @provider.showLineHeader
+      showColumn: @provider.showColumnOnLineHeader
+      boundToSingleFile: @provider.boundToSingleFile
+      projectHeadersInserted: {}
+      fileHeadersInserted: {}
+      allItems: []
+      filterSpec: filterSpec
+      renderStartPosition: @itemAreaStart
+    }
+
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
     # unless @refreshDisposables?.disposed
@@ -620,6 +633,7 @@ class Ui
     #   console.log "disose!"
     @refreshDisposables?.dispose()
     @refreshDisposables = new CompositeDisposable
+
     @emitWillRefresh()
 
     @highlighter.clearCurrentAndLineMarker()
@@ -631,8 +645,6 @@ class Ui
       filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
       @lastSearchTerm = @currentSearchTerm
 
-    query = @currentSearchTerm
-
     if force
       @cachedItems = null # Invalidate cache
 
@@ -642,32 +654,22 @@ class Ui
     oldColumn = null
     grammarUpdated = false
 
-    reducerState = {
-      hasCachedItems: @cachedItems?
-      showLineHeader: @provider.showLineHeader
-      showColumn: @provider.showColumnOnLineHeader
-      boundToSingleFile: @provider.boundToSingleFile
-      projectHeadersInserted: {}
-      fileHeadersInserted: {}
-      onFilePathChange: => setImmediate(=> @controlBar.updateItemCount())
-      allItems: []
-      filterSpec: filterSpec
-      renderStartPosition: @itemAreaStart
-    }
+    updateItemCount = => @controlBar.updateElements(itemCount: @items.getCount())
+    updateItemCountIntervalID = setInterval(updateItemCount, 500)
 
-    itemUpdated = false
+    @refreshDisposables.add new Disposable ->
+      clearInterval(updateItemCountIntervalID)
+      updateItemCountIntervalID = null
+
+    reducerState = @getInitialReducerState({filterSpec})
+
     @refreshDisposables.add @onDidUpdateItems (items) =>
-      itemUpdated = true
       unless grammarUpdated
         @grammar.update(filterSpec.include) # No need to highlight excluded items
         grammarUpdated = true
       @reduceItems(items, reducerState)
 
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
-
-    # @refreshDisposables.add new Disposable ->
-    #   console.log 'disposed', reducerState.filterSpec.include, query
-
     stopMeasureMemory = null
     @refreshDisposables.add @onFinishUpdateItems =>
       # If no items found after request, we should clear item area.
@@ -675,7 +677,7 @@ class Ui
       #  1. editor: found 100 items
       #  2. editors: found 10 items
       #  3. editorsX: found 0 items ( We have to update with [] item here!)
-      unless itemUpdated
+      if reducerState.allItems.length is 0
         @emitDidUpdateItems([])
 
       @refreshDisposables.dispose()
@@ -794,10 +796,7 @@ class Ui
   # Delayed-refresh on query-change event, dont use this for other purpose.
   refreshThenPreviewAfter: (delay) ->
     @cancelDelayedRefresh()
-    refreshThenPreview = =>
-      @refresh(selectFirstItem: true).then(@preview)
-      # .catch (reason) ->
-      #   console.logetItemsPromiseg reason
+    refreshThenPreview = => @refresh(selectFirstItem: true).then(@preview)
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 
   cancelDelayedRefresh: ->
@@ -912,12 +911,6 @@ class Ui
     if item = @items.findDifferentFileItem(direction) ? @items.getSelectedItem()
       @items.selectItem(item)
       @moveToSelectedItem(ignoreCursorMove: false)
-
-  moveToNextFileItem: ->
-    @moveToDifferentFileItem('next')
-
-  moveToPreviousFileItem: ->
-    @moveToDifferentFileItem('previous')
 
   moveToPromptOrSelectedItem: ->
     if @isAtSelectedItem()

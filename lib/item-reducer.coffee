@@ -62,7 +62,6 @@ injectHeaderAndProjectName = (state) ->
 
     filePath = item.filePath
     if filePath not of fileHeadersInserted
-      state.onFilePathChange?()
       header = "## " + atom.project.relativize(filePath)
       items.push({header, projectName, filePath, fileHeader: true, skip: true})
       fileHeadersInserted[filePath] = true
