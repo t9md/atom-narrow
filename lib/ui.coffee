@@ -642,7 +642,6 @@ class Ui
     resolveGetItem = null
     oldSelectedItem = null
     oldColumn = null
-    @nextRenderingPoint = @itemAreaStart
     grammarUpdated = false
 
     reducerState = {
@@ -655,6 +654,7 @@ class Ui
       onFilePathChange: => setImmediate(=> @controlBar.updateItemCount())
       allItems: []
       filterSpec: filterSpec
+      initialRender: true
     }
     console.log 'hasCache', reducerState.hasCachedItems, reducerState.filterSpec.include
 
@@ -724,26 +724,29 @@ class Ui
 
   # reducer
   # -------------------------
+  # editor scan
   renderItems: (state) =>
-    {items} = state
-    return if items.length is 0
+    if not state.items.length and not state.initialRender
+      return null
 
-    texts = items.map (item) => @provider.viewForItem(item)
+    texts = state.items.map (item) => @provider.viewForItem(item)
+
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         @resetQuery()
 
-      itemArea = new Range(@nextRenderingPoint, @editor.getEofBufferPosition())
-
-      if @nextRenderingPoint is @itemAreaStart
-        newLineOrEmptyString = ''
+      eof = @editor.getEofBufferPosition()
+      if state.initialRender
+        range = [@itemAreaStart, eof]
+        text = '' + texts.join("\n")
       else
-        newLineOrEmptyString = "\n"
+        range = [eof, eof]
+        text = "\n" + texts.join("\n")
 
-      range = @editor.setTextInBufferRange(itemArea, newLineOrEmptyString + texts.join("\n"), undo: 'skip')
+      @editorLastRow = @editor.setTextInBufferRange(range, text, undo: 'skip').end.row
       @setModifiedState(false)
-      @editorLastRow = range.end.row
-    @nextRenderingPoint = @editor.getEofBufferPosition()
+
+    {initialRender: false}
 
   observeChange: ->
     @editor.buffer.onDidChange (event) =>
