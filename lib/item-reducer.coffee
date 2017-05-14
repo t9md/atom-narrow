@@ -1,6 +1,3 @@
-# item presenting
-# -------------------------
-_ = require 'underscore-plus'
 path = require('path')
 
 # Helper
@@ -45,7 +42,7 @@ injectLineHeader = (state) ->
   return null
 
 injectHeaderAndProjectName = (state) ->
-  return null if state.hasCachedItems or state.boundToSingleFile
+  return null if state.boundToSingleFile
 
   {projectHeadersInserted, fileHeadersInserted} = state
 
@@ -77,29 +74,9 @@ injectHeaderAndProjectName = (state) ->
 collectBeforeFiltered = (state) ->
   {allItems: state.allItems.concat(state.items)}
 
-removeUnusedHeader = (state) ->
-  return null if state.boundToSingleFile
-
-  normalItems = state.items.filter(isNormalItem)
-  filePaths = _.uniq(_.pluck(normalItems, "filePath"))
-  projectNames = _.uniq(_.pluck(normalItems, "projectName"))
-
-  items = state.items.filter (item) ->
-    if item.header?
-      if item.projectHeader?
-        item.projectName in projectNames
-      else if item.filePath?
-        item.filePath in filePaths
-      else
-        true
-    else
-      true
-  return {items}
-
 # reducers =
 module.exports = {
   injectLineHeader
   injectHeaderAndProjectName
   collectBeforeFiltered
-  removeUnusedHeader
 }

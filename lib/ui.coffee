@@ -24,7 +24,6 @@ path = require 'path'
   injectLineHeader
   injectHeaderAndProjectName
   collectBeforeFiltered
-  removeUnusedHeader
 } = require './item-reducer'
 settings = require './settings'
 Grammar = require './grammar'
@@ -592,10 +591,9 @@ class Ui
   getReducers: ->
     [
       injectLineHeader
-      injectHeaderAndProjectName
       collectBeforeFiltered
       @filterItems
-      removeUnusedHeader
+      injectHeaderAndProjectName
       @addItems
       @renderItems
     ]
@@ -654,9 +652,8 @@ class Ui
       onFilePathChange: => setImmediate(=> @controlBar.updateItemCount())
       allItems: []
       filterSpec: filterSpec
-      initialRender: true
+      renderStartPosition: @itemAreaStart
     }
-    console.log 'hasCache', reducerState.hasCachedItems, reducerState.filterSpec.include
 
     itemUpdated = false
     @refreshDisposables.add @onDidUpdateItems (items) =>
@@ -668,8 +665,8 @@ class Ui
 
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
 
-    @refreshDisposables.add new Disposable ->
-      console.log 'disposed', reducerState.filterSpec.include, query
+    # @refreshDisposables.add new Disposable ->
+    #   console.log 'disposed', reducerState.filterSpec.include, query
 
     stopMeasureMemory = null
     @refreshDisposables.add @onFinishUpdateItems =>
@@ -712,7 +709,7 @@ class Ui
     @requestItems({filePath})
 
     getItemPromise.then =>
-      console.log 'fin', @items.getCount()
+      # console.log 'fin', @items.getCount()
       @emitDidRefresh()
       @emitDidStopRefreshing()
       return null
@@ -726,27 +723,26 @@ class Ui
   # -------------------------
   # editor scan
   renderItems: (state) =>
-    if not state.items.length and not state.initialRender
+    {renderStartPosition} = state
+    renderStartFromItemAreaStart = renderStartPosition.isEqual(@itemAreaStart)
+    if not state.items.length and not renderStartFromItemAreaStart
       return null
 
     texts = state.items.map (item) => @provider.viewForItem(item)
-
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         @resetQuery()
 
       eof = @editor.getEofBufferPosition()
-      if state.initialRender
-        range = [@itemAreaStart, eof]
-        text = '' + texts.join("\n")
-      else
-        range = [eof, eof]
-        text = "\n" + texts.join("\n")
-
-      @editorLastRow = @editor.setTextInBufferRange(range, text, undo: 'skip').end.row
+      text = ""
+      text += "\n" unless renderStartFromItemAreaStart
+      text += texts.join("\n")
+      range = [renderStartPosition, eof]
+      renderStartPosition = @editor.setTextInBufferRange(range, text, undo: 'skip').end
+      @editorLastRow = renderStartPosition.row
       @setModifiedState(false)
 
-    {initialRender: false}
+    return {renderStartPosition}
 
   observeChange: ->
     @editor.buffer.onDidChange (event) =>
