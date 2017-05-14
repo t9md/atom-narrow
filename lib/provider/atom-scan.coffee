@@ -48,10 +48,11 @@ class AtomScan extends ProviderBase
       if message isnt 'cancelled'
         @scanPromise = null
         @finishUpdateItems()
+      else
+        console.log 'canceled'
 
   search: (filePath) ->
     if @scanPromise?
-      console.log 'cancel'
       @scanPromise.cancel()
       @scanPromise = null
 

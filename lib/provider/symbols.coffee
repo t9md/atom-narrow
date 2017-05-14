@@ -36,7 +36,10 @@ class Symbols extends ProviderBase
       @editor.indentationForBufferRow(row)
 
   getItems: ->
-    return @items if @items?
+    if @items
+      @finishUpdateItems(@items)
+      return
+
     # We show full line text of symbol's line, so just care for which line have symbol.
     filePath = @editor.getPath()
     scopeName = @editor.getGrammar().scopeName

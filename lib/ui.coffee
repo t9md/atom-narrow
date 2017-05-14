@@ -543,7 +543,6 @@ class Ui
   # reducer
   filterItems: (state) =>
     {items, filterSpec} = state
-
     @itemsBeforeFiltered = items
     unless @provider.boundToSingleFile
       if @needRebuildExcludedFiles
@@ -598,6 +597,7 @@ class Ui
       @filterItems
       removeUnusedHeader
       @addItems
+      @renderItems
     ]
 
   # reducer
@@ -656,6 +656,7 @@ class Ui
       allItems: []
       filterSpec: filterSpec
     }
+    console.log 'hasCache', reducerState.hasCachedItems, reducerState.filterSpec.include
 
     itemUpdated = false
     @refreshDisposables.add @onDidUpdateItems (items) =>
@@ -663,13 +664,12 @@ class Ui
       unless grammarUpdated
         @grammar.update(filterSpec.include) # No need to highlight excluded items
         grammarUpdated = true
-      items = @reduceItems(items, reducerState).items
-      @renderItems(items)
+      @reduceItems(items, reducerState)
 
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
 
     @refreshDisposables.add new Disposable ->
-      console.log 'disposed', query
+      console.log 'disposed', reducerState.filterSpec.include, query
 
     stopMeasureMemory = null
     @refreshDisposables.add @onFinishUpdateItems =>
@@ -712,6 +712,7 @@ class Ui
     @requestItems({filePath})
 
     getItemPromise.then =>
+      console.log 'fin', @items.getCount()
       @emitDidRefresh()
       @emitDidStopRefreshing()
       return null
@@ -721,7 +722,12 @@ class Ui
     @emitWillRefreshManually()
     @refresh(force: true)
 
-  renderItems: (items) ->
+  # reducer
+  # -------------------------
+  renderItems: (state) =>
+    {items} = state
+    return if items.length is 0
+
     texts = items.map (item) => @provider.viewForItem(item)
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0

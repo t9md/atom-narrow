@@ -98,7 +98,10 @@ class ProjectSymbols extends ProviderBase
     # Refresh watching target tagFile on each execution to catch-up change in outer-world.
     watchTagsFiles()
 
-    return cache if cache = getCachedItems()
+    if cache = getCachedItems()
+      @finishUpdateItems(cache)
+      return
+
 
     @readTags().then (tags) =>
       # Better interests suggestion? I want this less noisy.
