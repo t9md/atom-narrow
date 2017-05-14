@@ -86,17 +86,11 @@ class Ui
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
 
-  onDidRequestItems: (fn) -> @emitter.on('did-request-items', fn)
-  emitDidRequestItems: (event) -> @emitter.emit('did-request-items', event)
-
   onDidUpdateItems: (fn) -> @emitter.on('did-update-items', fn)
   emitDidUpdateItems: (event) -> @emitter.emit('did-update-items', event)
 
   onFinishUpdateItems: (fn) -> @emitter.on('finish-update-items', fn)
   emitFinishUpdateItems: -> @emitter.emit('finish-update-items')
-
-  onCancelRequestItems: (fn) -> @emitter.on('cancel-request-items', fn)
-  emitCancelRequestItems: -> @emitter.emit('cancel-request-items')
 
   onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
   emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
@@ -142,8 +136,8 @@ class Ui
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:protect': => @toggleProtected()
       'narrow-ui:preview-item': => @preview()
-      'narrow-ui:preview-next-item': => @previewNextItem()
-      'narrow-ui:preview-previous-item': => @previewPreviousItem()
+      'narrow-ui:preview-next-item': => @previewItemForDirection('next')
+      'narrow-ui:preview-previous-item': => @previewItemForDirection('previous')
       'narrow-ui:toggle-auto-preview': @toggleAutoPreview
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt()
@@ -497,12 +491,6 @@ class Ui
     if row?
       @items.selectItemForRow(row)
       @preview()
-
-  previewNextItem: ->
-    @previewItemForDirection('next')
-
-  previewPreviousItem: ->
-    @previewItemForDirection('previous')
 
   getQuery: ->
     @editor.getTextInBufferRange(@getPromptRange())
