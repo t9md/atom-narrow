@@ -30,7 +30,7 @@ class AtomScan extends ProviderBase
       items
 
   scanWorkspace: ->
-    scanPromise = atom.workspace.scan @searchRegex, (result) =>
+    @scanPromise = atom.workspace.scan @searchRegex, (result) =>
       if result?.matches?.length
         {filePath, matches} = result
         @updateItems matches.map (match) ->
@@ -41,10 +41,20 @@ class AtomScan extends ProviderBase
             range: Range.fromObject(match.range)
           }
 
-    scanPromise.then =>
-      @finishUpdateItems()
+    @scanPromise.then (message) =>
+      # Relying on Atom's workspace.scan's specific implementation
+      # `workspace.scan` return cancellable promise.
+      # When cancelled, promise is NOT rejected, instead it's resolved with 'cancelled' message
+      if message isnt 'cancelled'
+        @scanPromise = null
+        @finishUpdateItems()
 
   search: (filePath) ->
+    if @scanPromise?
+      console.log 'cancel'
+      @scanPromise.cancel()
+      @scanPromise = null
+
     if filePath?
       # When non project file was saved. We have nothing todo, so just return old @items.
       return @items unless atom.project.contains(filePath)
