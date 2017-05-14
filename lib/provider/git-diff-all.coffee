@@ -25,10 +25,10 @@ class GitDiffAll extends ProviderBase
 
   getItems: ->
     promises = []
-    eachModifiedFilePaths (repo, filePath) ->
-      promises.push(getItemsForFilePath(repo, filePath))
+    eachModifiedFilePaths (repo, filePath) =>
+      promise = getItemsForFilePath(repo, filePath).then (items) =>
+        @updateItems(_.compact(items))
+      promises.push(promise)
 
-    Promise.all(promises).then (items) =>
-      items = _.compact(_.flatten(items))
-
-      @finishUpdateItems(items)
+    Promise.all(promises).then =>
+      @finishUpdateItems()

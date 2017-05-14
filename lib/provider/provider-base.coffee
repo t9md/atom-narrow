@@ -176,10 +176,10 @@ class ProviderBase
         @ui.open(pending: @options.pending).then =>
           return @ui
 
-  updateItems: (items) ->
+  updateItems: (items) =>
     @ui.emitDidUpdateItems(items)
 
-  finishUpdateItems: (items) ->
+  finishUpdateItems: (items) =>
     @updateItems(items) if items?
     @ui.emitFinishUpdateItems()
 

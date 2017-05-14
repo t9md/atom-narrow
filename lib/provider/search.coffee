@@ -47,16 +47,13 @@ class Search extends ProviderBase
       replaceOrApppend = replaceOrAppendItemsForFilePath.bind(this, @items, filePath)
       @searcher.searchFilePath(filePath).then(replaceOrApppend)
     else
-      itemFound = false
-      onItems = (items, project) =>
-        itemFound = true
-        @updateItems(items)
+      onItems = @updateItems
 
       finishCount = 0
       onFinish = =>
         finishCount++
         if finishCount is @projects.length
-          @finishUpdateItems([] unless itemFound)
+          @finishUpdateItems()
 
       for project in @projects
         @searcher.searchProject(project, onItems, onFinish)

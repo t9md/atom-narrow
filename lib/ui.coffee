@@ -656,7 +656,10 @@ class Ui
       allItems: []
       filterSpec: filterSpec
     }
+
+    itemUpdated = false
     @refreshDisposables.add @onDidUpdateItems (items) =>
+      itemUpdated = true
       unless grammarUpdated
         @grammar.update(filterSpec.include) # No need to highlight excluded items
         grammarUpdated = true
@@ -670,6 +673,14 @@ class Ui
 
     stopMeasureMemory = null
     @refreshDisposables.add @onFinishUpdateItems =>
+      # If no items found after request, we should clear item area.
+      # E.g. provider.Search, incrementally update item list on searchTerm change.
+      #  1. editor: found 100 items
+      #  2. editors: found 10 items
+      #  3. editorsX: found 0 items ( We have to update with [] item here!)
+      unless itemUpdated
+        @emitDidUpdateItems([])
+
       @refreshDisposables.dispose()
       @refreshDisposables = null
 

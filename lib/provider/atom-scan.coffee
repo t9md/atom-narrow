@@ -30,10 +30,8 @@ class AtomScan extends ProviderBase
       items
 
   scanWorkspace: ->
-    itemFound = false
     scanPromise = atom.workspace.scan @searchRegex, (result) =>
       if result?.matches?.length
-        itemFound = true
         {filePath, matches} = result
         @updateItems matches.map (match) ->
           {
@@ -44,7 +42,7 @@ class AtomScan extends ProviderBase
           }
 
     scanPromise.then =>
-      @finishUpdateItems([] unless itemFound)
+      @finishUpdateItems()
 
   search: (filePath) ->
     if filePath?
