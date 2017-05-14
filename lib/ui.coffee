@@ -11,17 +11,21 @@ path = require 'path'
   setBufferRow
   paneForItem
   isDefinedAndEqual
-  injectLineHeader
   ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
   isNormalItem
   findEqualLocationItem
-  getItemsWithoutUnusedHeader
   cloneRegExp
   suppressEvent
   startMeasureMemory
-  injectHeaderAndProjectName
 } = require './utils'
+
+{
+  injectLineHeader
+  injectHeaderAndProjectName
+  collectBeforeFiltered
+  removeUnusedHeader
+} = require './item-reducer'
 settings = require './settings'
 Grammar = require './grammar'
 getFilterSpec = require './get-filter-spec'
@@ -546,11 +550,7 @@ class Ui
       if @excludedFiles.length
         items = items.filter (item) => item.filePath not in @excludedFiles
 
-    items = @provider.filterItems(items, filterSpec)
-
-    unless @provider.boundToSingleFile
-      items = getItemsWithoutUnusedHeader(items)
-    items
+    @provider.filterItems(items, filterSpec)
 
   getItemsForSelectFiles: ->
     @getBeforeFilteredFileHeaderItems().map ({filePath, projectName}) ->
@@ -578,13 +578,6 @@ class Ui
   getAfterFilteredFileHeaderItems: ->
     @items.getFileHeaderItems()
 
-  cancelRunningGetItems: ->
-    # @refreshDisposables?.dispose()
-    # @emitCancelRequestItems()
-    # if @getItemsPromise?
-    #   @getItemsPromise.cancel()
-    #   @getItemsPromise = null
-
   requestItems: (event) ->
     if @cachedItems?
       # console.log 'use Cache'
@@ -593,19 +586,42 @@ class Ui
     else
       @emitDidRequestItems(event)
 
+  getReducers: ->
+    filterItems = (state) =>
+      items = @filterItems(state.items, state.filterSpec)
+      Object.assign(state, {items})
+
+    addItems = (state) =>
+      @items.addItems(state.items)
+      return null
+
+    [
+      injectLineHeader if @provider.showLineHeader
+      injectHeaderAndProjectName unless @provider.boundToSingleFile
+      collectBeforeFiltered
+      filterItems
+      removeUnusedHeader unless @provider.boundToSingleFile
+      addItems
+    ].filter (reducer) -> reducer?
+
+  reduceItems: (items, state) ->
+    state.items = items
+
+    @reducers ?= @getReducers()
+    @reducers.reduce (state, reducer) ->
+      newState = reducer(state)
+      state = Object.assign(state, newState) if newState?
+      state
+    , state
+
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
-
-    unless @refreshDisposables?.disposed
-      console.trace()
-      console.log "disose!"
+    # unless @refreshDisposables?.disposed
+    #   console.trace()
+    #   console.log "disose!"
     @refreshDisposables?.dispose()
     @refreshDisposables = new CompositeDisposable
-
-    # @emitCancelRequestItems()
-
     @emitWillRefresh()
-    # @cancelRunningGetItems()
 
     @highlighter.clearCurrentAndLineMarker()
     @controlBar.updateElements(refresh: true)
@@ -624,36 +640,27 @@ class Ui
     if force
       @cachedItems = null # Invalidate cache
 
-    cachedItems = @cachedItems
     filterSpec = @getFilterSpec(filterQuery)
     resolveGetItem = null
-    itemsBeforeFiltered = []
     oldSelectedItem = null
     oldColumn = null
-    seenState = {}
-    @itemAreaStart = Object.freeze(new Point(1, 0))
-
     @nextRenderingPoint = @itemAreaStart
-    onFilePathChange = =>
-      setImmediate =>
-        @controlBar.updateItemCount()
-
     grammarUpdated = false
+
+    reducerState = {
+      hasCachedItems: @cachedItems?
+      showColumn: @provider.showColumnOnLineHeader
+      projectHeadersInserted: {}
+      fileHeadersInserted: {}
+      onFilePathChange: => setImmediate(=> @controlBar.updateItemCount())
+      allItems: []
+      filterSpec: filterSpec
+    }
     @refreshDisposables.add @onDidUpdateItems (items) =>
       unless grammarUpdated
         @grammar.update(filterSpec.include) # No need to highlight excluded items
         grammarUpdated = true
-
-      # console.count('update')
-      if items isnt cachedItems and @provider.showLineHeader
-        injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
-
-      unless @provider.boundToSingleFile
-        items = injectHeaderAndProjectName(items, seenState, onFilePathChange)
-
-      itemsBeforeFiltered = itemsBeforeFiltered.concat(items)
-      items = @filterItems(items, filterSpec)
-      @items.addItems(items)
+      items = @reduceItems(items, reducerState).items
       @renderItems(items)
 
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
@@ -664,11 +671,11 @@ class Ui
     stopMeasureMemory = null
     @refreshDisposables.add @onFinishUpdateItems =>
       @refreshDisposables.dispose()
-
       @refreshDisposables = null
 
       if @provider.supportCacheItems
-        @cachedItems = itemsBeforeFiltered
+        @cachedItems = reducerState.allItems
+        # console.log 'cached', @cachedItems.length
 
       if (not selectFirstItem) and oldSelectedItem?
         if item = findEqualLocationItem(@items.getNormalItems(), oldSelectedItem)
@@ -708,7 +715,6 @@ class Ui
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         @resetQuery()
-
 
       itemArea = new Range(@nextRenderingPoint, @editor.getEofBufferPosition())
 
@@ -753,7 +759,6 @@ class Ui
             @currentSearchTerm = @getSearchTermFromQuery()
 
             if @currentSearchTerm isnt @lastSearchTerm
-              @cancelRunningGetItems()
               @cachedItems = null
               # if @provider.searchUseRegex and @currentSearchTerm.length < @provider.getConfig('minimumLengthToStartRegexSearch')
               #   return

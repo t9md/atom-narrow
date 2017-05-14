@@ -145,36 +145,6 @@ addToolTips = ({element, commandName, keyBindingTarget}) ->
 
 # Utils used in Ui
 # =========================
-# item presenting
-# -------------------------
-injectLineHeader = (items, {showColumn}={}) ->
-  normalItems = items.filter(isNormalItem)
-  maxRow = 0
-  for item in normalItems when (row = item.point.row) > maxRow
-    maxRow = row
-  maxLineWidth = String(maxRow + 1).length
-
-  if showColumn
-    maxColumn = 0
-    for item in normalItems when (column = item.point.column) > maxColumn
-      maxColumn = column
-
-    maxColumnWidth = Math.max(String(maxColumn + 1).length, 2)
-
-  for item in normalItems
-    item._lineHeader = getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
-  items
-
-getLineHeaderForItem = (point, maxLineWidth, maxColumnWidth) ->
-  lineText = String(point.row + 1)
-  padding = " ".repeat(maxLineWidth - lineText.length)
-  lineHeader = "#{padding}#{lineText}"
-  if maxColumnWidth?
-    columnText = String(point.column + 1)
-    padding = " ".repeat(maxColumnWidth - columnText.length)
-    lineHeader = "#{lineHeader}:#{padding}#{columnText}"
-  lineHeader + ": "
-
 # direct-edit related
 # -------------------------
 getModifiedFilePathsInChanges = (changes) ->
@@ -252,22 +222,6 @@ findLastIndexBy = (items, fn) ->
 findFirstAndLastIndexBy = (items, fn) ->
   [findIndexBy(items, fn), findLastIndexBy(items, fn)]
 
-getItemsWithoutUnusedHeader = (items) ->
-  normalItems = items.filter(isNormalItem)
-  filePaths = _.uniq(_.pluck(normalItems, "filePath"))
-  projectNames = _.uniq(_.pluck(normalItems, "projectName"))
-
-  items.filter (item) ->
-    if item.header?
-      if item.projectHeader?
-        item.projectName in projectNames
-      else if item.filePath?
-        item.filePath in filePaths
-      else
-        true
-    else
-      true
-
 toMB = (num) ->
   Math.floor(num / (1024 * 1024))
 
@@ -294,7 +248,6 @@ startMeasureMemory = (subject, simple=false) ->
         result[key] = toMB(value) for key, value of result
       console.timeEnd(subject)
       console.table(table)
-
 
 # Replace old items for filePath or append if items are new filePath.
 replaceOrAppendItemsForFilePath = (items, filePath, newItems) ->
@@ -328,34 +281,6 @@ suppressEvent = (event) ->
     event.preventDefault()
     event.stopPropagation()
 
-injectHeaderAndProjectName = (rawItems, seenState={}, onFilePathChange) ->
-  items = []
-  seenState.projectNameSeen ?= {}
-  seenState.filePathSeen ?= {}
-  {projectNameSeen, filePathSeen} = seenState
-  for item in rawItems
-    if item.projectName
-      projectName = item.projectName
-    else
-      projectPath = atom.project.relativizePath(item.filePath)[0]
-      projectName = path.basename(projectPath)
-      item.projectName = projectName
-
-    if projectName not of projectNameSeen
-      header = "# #{projectName}"
-      items.push({header, projectName, projectHeader: true, skip: true})
-      projectNameSeen[projectName] = true
-
-    filePath = item.filePath
-    if filePath not of filePathSeen
-      onFilePathChange?()
-      header = "## " + atom.project.relativize(filePath)
-      items.push({header, projectName, filePath, fileHeader: true, skip: true})
-      filePathSeen[filePath] = true
-
-    items.push(item)
-  return items
-
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -377,17 +302,14 @@ module.exports = {
   cloneRegExp
   addToolTips
 
-  injectLineHeader
   ensureNoConflictForChanges
   ensureNoModifiedFileForChanges
   isNormalItem
   compareByPoint
   findEqualLocationItem
   findFirstAndLastIndexBy
-  getItemsWithoutUnusedHeader
   replaceOrAppendItemsForFilePath
   getProjectPaths
   suppressEvent
   startMeasureMemory
-  injectHeaderAndProjectName
 }
