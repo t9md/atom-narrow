@@ -559,14 +559,10 @@ class Ui
     return null
 
   reduceItems: (items, state) ->
-    state.items = items
-
     @reducers ?= @getReducers()
     @reducers.reduce (state, reducer) ->
-      newState = reducer(state)
-      state = Object.assign(state, newState) if newState?
-      state
-    , state
+      Object.assign(state, reducer(state))
+    , Object.assign(state, {items})
 
   createReducerState: ({filterSpec}) ->
     console.log 'create', @filterSpecForSelectFiles

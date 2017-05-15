@@ -106,7 +106,6 @@ class ControlBar
             element.textContent = states.searchTerm
             invalid = states.searchTerm.length isnt 0
           element.classList.toggle('invalid', invalid)
-
         when 'refresh'
           element.classList.toggle('running', value)
         else
