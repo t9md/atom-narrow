@@ -57,12 +57,21 @@ atom-text-editor {
 
 @match-ui: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 0.2);
 
+.flash-animation(narrow-editor-cursor-line-flash, @flash-color);
+
+// atom-text-editor.editor .line.cursor-history-flash-line {
+//   .flash(narrow-editor-cursor-line-flash, 0.5s)
+// }
+
 atom-text-editor {
   .narrow-match-ui {
     .region {
       box-sizing: border-box;
       background-color: @match-ui;
     }
+  }
+  .line.narrow-cursor-line {
+    .flash(narrow-editor-cursor-line-flash, 1.0s)
   }
   .narrow-match {
     .region {

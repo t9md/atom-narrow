@@ -347,10 +347,24 @@ class Ui
         @moveToBeginningOfSelectedItem()
         if @provider.initialSearchRegex?
           @moveToSearchedWordAtSelectedItem()
+
         @suppressPreview = false
-        @preview()
+        @preview().then? =>
+          @flashCursorLine()
       else if @query and @autoPreviewOnQueryChange
         @preview()
+
+  flashCursorLine: ->
+    @cursorLineFlashMarker?.destroy()
+    point = @editor.getCursorBufferPosition()
+    @cursorLineFlashMarker = @editor.markBufferPosition(point)
+    decorationOptions = {type: 'line', class: 'narrow-cursor-line'}
+    @editor.decorateMarker(@cursorLineFlashMarker, decorationOptions)
+
+    destroyMarker = =>
+      @cursorLineFlashMarker?.destroy()
+      @cursorLineFlashMarker = null
+    setTimeout(destroyMarker, 1000)
 
   getPane: ->
     paneForItem(@editor)
@@ -601,11 +615,14 @@ class Ui
     @filePathsForAllItems
 
   updateRefreshRunningElementDelayed: ->
-    updateRefreshRunningElement = =>
-      @controlBar.updateElements(refresh: true)
+    @editor.getLastCursor().setVisible?(false)
 
+    updateRefreshRunningElement = => @controlBar.updateElements(refresh: true)
     timeoutID = setTimeout(updateRefreshRunningElement, 300)
-    new Disposable -> clearTimeout(timeoutID)
+
+    new Disposable =>
+      @editor.getLastCursor().setVisible?(true)
+      clearTimeout(timeoutID)
 
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
