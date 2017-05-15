@@ -38,15 +38,8 @@ class SelectFiles extends ProviderBase
 
   confirmed: ->
     if @clientUi.isAlive()
-      @clientUi.updateSelectFilesState(
-        queryForSelectFiles: @ui.lastQuery
-        selectedFiles: _.pluck(@ui.items.getNormalItems(), 'filePath')
-      )
+      queryForSelectFiles = @ui.lastQuery
+      @clientUi.resetQueryForSelectFiles(queryForSelectFiles)
+      queryByProviderName[@clientUi.provider.name] = queryForSelectFiles
 
     Promise.resolve(null) # HACK to noop
-
-  destroy: ->
-    if @clientUi.isAlive()
-      queryByProviderName[@clientUi.provider.name] = @ui.lastQuery
-
-    super

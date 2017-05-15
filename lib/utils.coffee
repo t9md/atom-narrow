@@ -285,6 +285,11 @@ relativizeFilePath = (filePath) ->
   [projectPath, relativeFilePath] = atom.project.relativizePath(filePath)
   path.join(path.basename(projectPath), relativeFilePath)
 
+getMemoizedRelativizeFilePath = ->
+  cache = {}
+  return (filePath) ->
+    cache[filePath] ?= relativizeFilePath(filePath)
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -317,4 +322,5 @@ module.exports = {
   suppressEvent
   startMeasureMemory
   relativizeFilePath
+  getMemoizedRelativizeFilePath
 }

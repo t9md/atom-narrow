@@ -198,7 +198,7 @@ class ProviderBase
     @editorSubscriptions.add(args...)
 
   filterItems: (items, filterSpec) ->
-    filterSpec.filterItems(items)
+    filterSpec.filterItems(items, 'text')
 
   destroy: ->
     if @supportReopen

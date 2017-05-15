@@ -154,7 +154,6 @@ class Ui
       'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
       'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
       'narrow-ui:delete-to-beginning-of-query': => @deleteToBeginningOfQuery()
-      'narrow-ui:set-search-term-boundary': => @setSearchTermBoundary()
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
@@ -177,16 +176,7 @@ class Ui
 
   getSearchTermFromQuery: ->
     if @provider.useFirstQueryAsSearchTerm
-      if @searchTermMarker?.isValid()
-        @editor.getTextInBufferRange(@searchTermMarker.getBufferRange())
-      else
-        @getQuery().split(/\s+/)[0]
-
-  setSearchTermBoundary: ->
-    if @isAtPrompt() and @provider.useFirstQueryAsSearchTerm
-      range = [[0, 0], @editor.getCursorBufferPosition()]
-      @searchTermMarker = @editor.markBufferRange(range, invalidate: 'inside')
-      @refresh(force: true)
+      @getQuery().split(/\s+/)[0]
 
   deleteToBeginningOfQuery: ->
     if @isAtPrompt()
@@ -478,12 +468,6 @@ class Ui
     @items.selectItemInDirection(point, direction)
     @confirm(keepOpen: true, flash: true)
 
-  nextItem: ->
-    @confirmItemForDirection('next')
-
-  previousItem: ->
-    @confirmItemForDirection('previous')
-
   previewItemForDirection: (direction) ->
     rowForSelectedItem = @items.getRowForSelectedItem()
     if not @highlighter.hasLineMarker() and direction is 'next'
@@ -517,28 +501,30 @@ class Ui
       clientUi: this
     new SelectFiles(@editor, options).start()
 
-  updateSelectFilesState: ({@queryForSelectFiles}) ->
+  resetQueryForSelectFiles: (@queryForSelectFiles) ->
     @excludedFiles = []
-    @filterSpecForSelectFiles = @getFilterSpecForSelectFile(@queryForSelectFiles)
+    if @queryForSelectFiles
+      @filterSpecForSelectFiles = @getFilterSpecForSelectFile(@queryForSelectFiles)
+    else
+      @filterSpecForSelectFiles = null
+    console.log @filterSpecForSelectFiles
     @focus(autoPreview: false)
     @refresh()
 
   clearExcludedFiles: ->
     return if @provider.boundToSingleFile
-
+    @filterSpecForSelectFiles = null
     if @excludedFiles.length
       @excludedFiles = []
       @refresh()
 
   getFilterSpecForProvider: (filterQuery) ->
     new FilterSpec filterQuery,
-      filterKey: 'text'
       negateByEndingExclamation: @provider.getConfig('negateNarrowQueryByEndingExclamation')
       sensitivity: @provider.getConfig('caseSensitivityForNarrowQuery')
 
   getFilterSpecForSelectFile: (filterQuery) ->
     new FilterSpec filterQuery,
-      filterKey: 'filePath'
       negateByEndingExclamation: SelectFiles.getConfig('negateNarrowQueryByEndingExclamation')
       sensitivity: SelectFiles.getConfig('caseSensitivityForNarrowQuery')
 
@@ -557,10 +543,10 @@ class Ui
 
   getReducers: ->
     [
-      injectLineHeader
       collectAllItems
       filterFilePath
       @filterItems
+      injectLineHeader
       injectHeaderAndProjectName
       @addItems
       @renderItems
@@ -582,6 +568,7 @@ class Ui
     , state
 
   createReducerState: ({filterSpec}) ->
+    console.log 'create', @filterSpecForSelectFiles
     {
       hasCachedItems: @cachedItems?
       showLineHeader: @provider.showLineHeader

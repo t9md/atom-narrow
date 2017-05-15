@@ -1,4 +1,6 @@
+_ = require 'underscore-plus'
 path = require('path')
+{getMemoizedRelativizeFilePath} = require './utils'
 
 # Helper
 # -------------------------
@@ -82,7 +84,10 @@ filterFilePath = (state) ->
     items = items.filter (item) -> item.filePath not in excludedFiles
 
   if filterSpecForSelectFiles
-    items = filterSpecForSelectFiles.filterItems(items)
+    relativizeFilePath = getMemoizedRelativizeFilePath()
+    for item in items when filePath = item.filePath
+      item._relativeFilePath ?= relativizeFilePath(filePath)
+    items = filterSpecForSelectFiles.filterItems(items, '_relativeFilePath')
 
   after = items.length
 

@@ -52,9 +52,7 @@ class FilterSpec
     @include = []
     @exclude = []
 
-    {@filterKey, negateByEndingExclamation, sensitivity} = options
-    @filterKey ?= 'text'
-
+    {negateByEndingExclamation, sensitivity} = options
     words = _.compact(filterQuery.split(/\s+/))
     for word in words
       if word isnt '!' and word.startsWith('!')
@@ -64,11 +62,11 @@ class FilterSpec
       else
         @include.push(getRegExpForWord(word, sensitivity))
 
-  filterItems: (items) ->
+  filterItems: (items, key) ->
     for regexp in @exclude
-      items = items.filter (item) => item.skip or not regexp.test(item[@filterKey])
+      items = items.filter (item) -> item.skip or not regexp.test(item[key])
 
     for regexp in @include
-      items = items.filter (item) => item.skip or regexp.test(item[@filterKey])
+      items = items.filter (item) -> item.skip or regexp.test(item[key])
 
     items

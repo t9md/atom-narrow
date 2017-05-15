@@ -33,8 +33,8 @@ module.exports =
       'narrow:focus-prompt': => @getUi()?.focusPrompt()
       'narrow:refresh': => @getUi()?.refreshManually()
       'narrow:close': => @getUi(skipProtected: true)?.destroy()
-      'narrow:next-item': => @getUi()?.nextItem()
-      'narrow:previous-item': => @getUi()?.previousItem()
+      'narrow:next-item': => @getUi()?.confirmItemForDirection('next')
+      'narrow:previous-item': => @getUi()?.confirmItemForDirection('previous')
       'narrow:reopen': => @reopen()
 
       # Providers
