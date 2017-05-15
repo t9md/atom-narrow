@@ -23,7 +23,7 @@ path = require 'path'
 
 {
   injectLineHeader
-  injectHeaderAndProjectName
+  insertHeader
   collectAllItems
   filterFilePath
 } = require './item-reducer'
@@ -548,7 +548,7 @@ class Ui
       filterFilePath
       @filterItems
       injectLineHeader
-      injectHeaderAndProjectName
+      insertHeader
       @addItems
       @renderItems
     ]
@@ -564,8 +564,7 @@ class Ui
       Object.assign(state, reducer(state))
     , Object.assign(state, {items})
 
-  createReducerState: ({filterSpec}) ->
-    console.log 'create', @filterSpecForSelectFiles
+  createStateToReduce: ({filterSpec}) ->
     {
       hasCachedItems: @cachedItems?
       showLineHeader: @provider.showLineHeader
@@ -601,6 +600,13 @@ class Ui
   getFilePathsForAllItems: ->
     @filePathsForAllItems
 
+  updateRefreshRunningElementDelayed: ->
+    updateRefreshRunningElement = =>
+      @controlBar.updateElements(refresh: true)
+
+    timeoutID = setTimeout(updateRefreshRunningElement, 300)
+    new Disposable -> clearTimeout(timeoutID)
+
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
     # unless @refreshDisposables?.disposed
@@ -613,7 +619,11 @@ class Ui
     @emitWillRefresh()
 
     @highlighter.clearCurrentAndLineMarker()
-    @controlBar.updateElements(refresh: true)
+
+    if @query?
+      @refreshDisposables.add(@updateRefreshRunningElementDelayed())
+    else
+      @controlBar.updateElements(refresh: true)
 
     @lastQuery = filterQuery = @getQuery()
     if @provider.useFirstQueryAsSearchTerm
@@ -637,7 +647,7 @@ class Ui
     @refreshDisposables.add new Disposable =>
       @stopUpdateItemCount()
 
-    reducerState = @createReducerState({filterSpec})
+    state = @createStateToReduce({filterSpec})
 
     @refreshDisposables.add @onDidUpdateItems (items) =>
       if cachedNormalItems?
@@ -646,7 +656,7 @@ class Ui
         unless grammarUpdated
           @grammar.update(filterSpec.include) # No need to highlight excluded items
           grammarUpdated = true
-      @reduceItems(items, reducerState)
+      @reduceItems(items, state)
 
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
     stopMeasureMemory = null
@@ -657,17 +667,17 @@ class Ui
       #  1. editor: found 100 items
       #  2. editors: found 10 items
       #  3. editorsX: found 0 items ( We have to update with [] item here!)
-      if reducerState.allItems.length is 0
+      if state.allItems.length is 0
         @emitDidUpdateItems([])
 
       @refreshDisposables.dispose()
       @refreshDisposables = null
 
-      unless @provider.boundToSingleFile and reducerState.allItems.length
-        @updateFilePathsForAllItems(reducerState.allItems)
+      unless @provider.boundToSingleFile and state.allItems.length
+        @updateFilePathsForAllItems(state.allItems)
 
       if @provider.supportCacheItems
-        @cachedItems = reducerState.allItems
+        @cachedItems = state.allItems
         # console.log 'cached', @cachedItems.length
 
       if (not selectFirstItem) and oldSelectedItem?
@@ -682,7 +692,7 @@ class Ui
 
       stopMeasureMemory()
       @controlBar.updateElements(
-        selectFiles: reducerState.fileExcluded
+        selectFiles: state.fileExcluded
         itemCount: @items.getCount()
         refresh: false
       )

@@ -43,7 +43,7 @@ injectLineHeader = (state) ->
 
   return null
 
-injectHeaderAndProjectName = (state) ->
+insertHeader = (state) ->
   return null if state.boundToSingleFile
 
   {projectHeadersInserted, fileHeadersInserted} = state
@@ -97,7 +97,7 @@ filterFilePath = (state) ->
 # reducers =
 module.exports = {
   injectLineHeader
-  injectHeaderAndProjectName
+  insertHeader
   collectAllItems
   filterFilePath
 }
