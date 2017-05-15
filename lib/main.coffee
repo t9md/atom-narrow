@@ -36,6 +36,7 @@ module.exports =
       'narrow:next-item': => @getUi()?.confirmItemForDirection('next')
       'narrow:previous-item': => @getUi()?.confirmItemForDirection('previous')
       'narrow:reopen': => @reopen()
+      'narrow:set-cursor-word-as-query': => @getUi()?.setCursorWordAsQuery()
 
       # Providers
       # -------------------------

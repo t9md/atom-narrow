@@ -53,14 +53,13 @@ class Highlighter
           # console.log 'did-stop-refresh'
           @refreshAll()
           item = @ui.items.selectedItem
-          if item?
+          if item? and @ui.isActive()
             @highlightCurrentForEditor(@ui.provider.editor, item)
 
     subscribe @ui.onDidConfirm =>
       @clearCurrentAndLineMarker()
 
     subscribe @ui.onDidPreview ({editor, item}) =>
-      # console.log 'did-preview'
       @clearCurrentAndLineMarker()
       if @needHighlight
         @highlight(editor)
@@ -91,6 +90,7 @@ class Highlighter
 
   decorationOptions = {type: 'highlight', class: 'narrow-match'}
   highlight: (editor) ->
+    # console.count 'highlight'
     return unless @regExp
     return if @regExp.source is '.' # Avoid uselessly highlight all character in buffer.
     return if @markerLayerByEditor.has(editor)
@@ -111,6 +111,7 @@ class Highlighter
   # modify current item decoration
   # -------------------------
   highlightCurrentForEditor: (editor, {range}) ->
+    console.trace()
     startBufferRow = range.start.row
     if decorationLayer = @decorationLayerByEditor.get(editor)
       for marker in decorationLayer.getMarkerLayer().findMarkers({startBufferRow})

@@ -19,6 +19,7 @@ path = require 'path'
   suppressEvent
   startMeasureMemory
   replaceOrAppendItemsForFilePath
+  getCurrentWord
 } = require './utils'
 
 {
@@ -198,6 +199,14 @@ class Ui
           @editor.deleteToBeginningOfLine()
       else
         @editor.deleteToBeginningOfLine()
+
+  setCursorWordAsQuery: ->
+    word = getCurrentWord(atom.workspace.getActiveTextEditor()).trim()
+    # console.log word
+    if word
+      @withIgnoreChange => @setQuery(word)
+      @refresh(force: true, selectFirstItem: true).then =>
+        @moveToBeginningOfSelectedItem()
 
   setModifiedState: (state) ->
     return if state is @modifiedState
@@ -979,7 +988,10 @@ class Ui
 
   # Return range
   setQuery: (text='') ->
-    @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
+    if @editor.getLastBufferRow() is 0
+      @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
+    else
+      @editor.setTextInBufferRange([[0, 0], [0, Infinity]], text)
 
   startSyncToEditor: (editor) ->
     @syncSubcriptions?.dispose()
