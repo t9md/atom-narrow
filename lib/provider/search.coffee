@@ -13,6 +13,7 @@ class Search extends ProviderBase
   showSearchOption: true
   supportCacheItems: true
   useFirstQueryAsSearchTerm: true
+  supportUpdateItemsForFilePath: true
 
   getState: ->
     @mergeState(super, {@projects})
@@ -26,11 +27,6 @@ class Search extends ProviderBase
     @searchOptions = new SearchOptions()
     @searcher = new Searcher(@searchOptions)
 
-  searchFilePath: (filePath) ->
-    command = @getConfig('searcher')
-    args = @getSearchArgs(command)
-    search({command, args, filePath}).then(@flattenSortAndSetRangeHint)
-
   projectHeaderFor: (projectName) ->
     header = "# #{projectName}"
     {header, projectName, projectHeader: true, skip: true}
@@ -39,24 +35,21 @@ class Search extends ProviderBase
     header = "## " + atom.project.relativize(filePath)
     {header, projectName, filePath, fileHeader: true, skip: true}
 
-  search: (filePath) ->
-    if filePath?
-      # When non project file was saved. We have nothing todo, so just return old @items.
-      return @items unless atom.project.contains(filePath)
-
-      replaceOrApppend = replaceOrAppendItemsForFilePath.bind(this, @items, filePath)
-      @searcher.searchFilePath(filePath).then(replaceOrApppend)
+  searchFilePath: (filePath) ->
+    if atom.project.contains(filePath)
+      @searcher.searchFilePath(filePath, @updateItems, @finishUpdateItems)
     else
-      onItems = @updateItems
+      # When non project file was saved. We have nothing todo, so just return old @items.
+      @finishUpdateItems([])
 
-      finishCount = 0
-      onFinish = =>
-        finishCount++
-        if finishCount is @projects.length
-          @finishUpdateItems()
+  search: ->
+    finishCount = 0
+    onFinish = =>
+      if (++finishCount) is @projects.length
+        @finishUpdateItems()
 
-      for project in @projects
-        @searcher.searchProject(project, onItems, onFinish)
+    for project in @projects
+      @searcher.searchProject(project, @updateItems, onFinish)
 
   destroy: ->
     @searcher.cancel()
@@ -71,11 +64,9 @@ class Search extends ProviderBase
     @ui.grammar.update()
 
     if @searchRegex?
-      # if filePath?
-      #   @search(filePath).then (@items) =>
-      #     @ui.emitDidUpdateItems(@items)
-      #     @ui.emitFinishUpdateItems()
-      # else
-      @search()
+      if filePath
+        @searchFilePath(filePath)
+      else
+        @search()
     else
       @finishUpdateItems([])

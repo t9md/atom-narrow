@@ -109,14 +109,10 @@ class Searcher
         args.push(unescapeRegExpForRg(searchRegex.source))
     args
 
-  searchFilePath: (filePath) ->
+  searchFilePath: (filePath, onItems, onFinish) ->
     [project, filePath] = atom.project.relativizePath(filePath)
-
-    args = @getArgs()
-    args.push(filePath)
-
-    itemizeProject = @itemizeProject.bind(this, project)
-    @search(@command, args, project).then(itemizeProject)
+    args = @getArgs().concat(filePath)
+    @search(@command, args, project, onItems, onFinish)
 
   searchProject: (project, onItems, onFinish) ->
     @search(@command, @getArgs(), project, onItems, onFinish)

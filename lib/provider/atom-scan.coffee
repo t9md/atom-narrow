@@ -11,6 +11,7 @@ class AtomScan extends ProviderBase
   showSearchOption: true
   supportCacheItems: true
   useFirstQueryAsSearchTerm: true
+  supportUpdateItemsForFilePath: true
 
   initialize: ->
     @initializeSearchOptions() unless @reopened
@@ -57,11 +58,12 @@ class AtomScan extends ProviderBase
       @scanPromise = null
 
     if filePath?
-      # When non project file was saved. We have nothing todo, so just return old @items.
-      return @items unless atom.project.contains(filePath)
-
-      replaceOrApppend = replaceOrAppendItemsForFilePath.bind(this, @items, filePath)
-      @scanFilePath(filePath).then(replaceOrApppend)
+      if atom.project.contains(filePath)
+        @scanFilePath(filePath).then (items) =>
+          @finishUpdateItems(items)
+      else
+        # When non project file was saved. We have nothing todo, so just return old @items.
+        @finishUpdateItems([])
     else
       @scanWorkspace()
 

@@ -18,6 +18,7 @@ path = require 'path'
   cloneRegExp
   suppressEvent
   startMeasureMemory
+  replaceOrAppendItemsForFilePath
 } = require './utils'
 
 {
@@ -624,6 +625,9 @@ class Ui
       filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
       @lastSearchTerm = @currentSearchTerm
 
+    if @provider.supportUpdateItemsForFilePath and filePath?
+      cachedNormalItems = @cachedItems.filter(isNormalItem)
+
     if force
       @cachedItems = null # Invalidate cache
 
@@ -640,9 +644,12 @@ class Ui
     reducerState = @createReducerState({filterSpec})
 
     @refreshDisposables.add @onDidUpdateItems (items) =>
-      unless grammarUpdated
-        @grammar.update(filterSpec.include) # No need to highlight excluded items
-        grammarUpdated = true
+      if cachedNormalItems?
+        items = replaceOrAppendItemsForFilePath(filePath, cachedNormalItems, items)
+      else
+        unless grammarUpdated
+          @grammar.update(filterSpec.include) # No need to highlight excluded items
+          grammarUpdated = true
       @reduceItems(items, reducerState)
 
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve

@@ -250,17 +250,17 @@ startMeasureMemory = (subject, simple=false) ->
       console.table(table)
 
 # Replace old items for filePath or append if items are new filePath.
-replaceOrAppendItemsForFilePath = (items, filePath, newItems) ->
+replaceOrAppendItemsForFilePath = (filePath, oldItems, newItems) ->
   amountOfRemove = 0
-  indexToInsert = items.length - 1
+  indexToInsert = oldItems.length - 1
 
-  [firstIndex, lastIndex] = findFirstAndLastIndexBy(items, (item) -> item.filePath is filePath)
+  [firstIndex, lastIndex] = findFirstAndLastIndexBy(oldItems, (item) -> item.filePath is filePath)
   if firstIndex? and lastIndex?
     indexToInsert = firstIndex
     amountOfRemove = lastIndex - firstIndex + 1
 
-  items.splice(indexToInsert, amountOfRemove, newItems...)
-  items
+  oldItems.splice(indexToInsert, amountOfRemove, newItems...)
+  oldItems
 
 getProjectPaths = (editor) ->
   paths = null

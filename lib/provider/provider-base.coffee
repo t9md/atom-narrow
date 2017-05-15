@@ -46,6 +46,7 @@ class ProviderBase
   supportDirectEdit: false
   supportCacheItems: false
   supportReopen: true
+  supportUpdateItemsForFilePath: false
   editor: null
 
   # used by scan, search, atom-scan
