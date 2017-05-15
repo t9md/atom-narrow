@@ -1,7 +1,6 @@
 {CompositeDisposable} = require 'atom'
 {addToolTips, suppressEvent} = require './utils'
 
-
 # This is NOT Panel in Atom's terminology, Just naming.
 module.exports =
 class ControlBar
@@ -32,38 +31,51 @@ class ControlBar
     # NOTE: Avoid mousedown event propagated up to belonging narrow-editor's element
     # If propagated, button clicking cause narrow-editor's cursor move etc See #123.
     @container.addEventListener('mousedown', suppressEvent)
+    # @toolTipDisposables = new CompositeDisposable
+    keyBindingTarget = @editorElement
+    @toolTipsSpecs = []
 
-    elementFor = (name) => @container.getElementsByClassName(name)[0]
-    hideElement = (name) -> elementFor(name).style.display = 'none'
+    elementFor = (name, {click, hideIf, selected, tips}={}) =>
+      element = @container.getElementsByClassName(name)[0]
+      if click
+        element.addEventListener('click', click)
+      if hideIf
+        element.style.display = 'none'
+      if selected
+        element.classList.toggle('selected')
+      if tips
+        @toolTipsSpecs.push({element, commandName: tips, keyBindingTarget})
+      element
 
     @elements =
-      autoPreview: elementFor('auto-preview')
-      protected: elementFor('protected')
-      refresh: elementFor('refresh')
-      itemCount: elementFor('item-count')
-      selectFiles: elementFor('select-files')
-      searchIgnoreCase: elementFor('search-ignore-case')
-      searchWholeWord: elementFor('search-whole-word')
-      searchUseRegex: elementFor('search-use-regex')
-      searchRegex: elementFor('search-regex')
+      autoPreview: elementFor 'auto-preview',
+        click: @ui.toggleAutoPreview
+        tips: "narrow-ui:toggle-auto-preview"
+        selected: @ui.autoPreview
+      protected: elementFor 'protected',
+        click: @ui.toggleProtected
+        tips: "narrow-ui:protect"
+        selected: @ui.protected
+      refresh: elementFor 'refresh',
+        click: @ui.refreshManually
+        tips: "narrow:refresh"
+      itemCount: elementFor 'item-count'
+      selectFiles: elementFor 'select-files',
+        click: @ui.selectFiles,
+        hideIf: @provider.boundToSingleFile
+        tips: "narrow-ui:select-files"
+      searchIgnoreCase: elementFor 'search-ignore-case',
+        click: @ui.toggleSearchIgnoreCase
+        tips: "narrow-ui:toggle-search-ignore-case"
+      searchWholeWord: elementFor 'search-whole-word',
+        click: @ui.toggleSearchWholeWord
+        tips: "narrow-ui:toggle-search-whole-word"
+      searchUseRegex: elementFor 'search-use-regex',
+        click: @ui.toggleSearchUseRegex
+        tips: "narrow-ui:toggle-search-use-regex"
+      searchRegex: elementFor 'search-regex'
 
-    hideElement('select-files') if @provider.boundToSingleFile
-    hideElement('search-options') unless @showSearchOption
-    @addClickEvents()
-
-
-  addClickEvents: ->
-    clickEvents =
-      autoPreview: @ui.toggleAutoPreview
-      protected: @ui.toggleProtected
-      refresh: @ui.refreshManually
-      selectFiles: @ui.selectFiles
-      searchIgnoreCase: @ui.toggleSearchIgnoreCase
-      searchWholeWord: @ui.toggleSearchWholeWord
-      searchUseRegex: @ui.toggleSearchUseRegex
-
-    for elementName, fn of clickEvents when element = @elements[elementName]
-      element.addEventListener('click', fn)
+    elementFor('search-options', hideIf: not @showSearchOption)
 
   destroy: ->
     @toolTipDisposables?.dispose()
@@ -76,11 +88,10 @@ class ControlBar
     @marker = @editor.markBufferPosition([0, 0])
     @editor.decorateMarker(@marker, type: 'block', item: @container, position: 'before')
 
-    @toolTipDisposables ?= @addToolTips()
-
-    @updateElements
-      autoPreview: @ui.autoPreview
-      protected: @ui.protected
+    unless @toolTipDisposables?
+      @toolTipDisposables = new CompositeDisposable
+      for toolTipsSpec in @toolTipsSpecs
+        @toolTipDisposables.add(addToolTips(toolTipsSpec))
 
   updateElements: (states) ->
     for elementName, value of states when element = @elements[elementName]
@@ -94,25 +105,9 @@ class ControlBar
           else
             element.textContent = states.searchTerm
             invalid = states.searchTerm.length isnt 0
-
           element.classList.toggle('invalid', invalid)
+
         when 'refresh'
           element.classList.toggle('running', value)
         else
           element.classList.toggle('selected', value)
-
-  addToolTips: ->
-    tooltips =
-      autoPreview: "narrow-ui:toggle-auto-preview"
-      protected: "narrow-ui:protect"
-      refresh: "narrow:refresh"
-      selectFiles: "narrow-ui:select-files"
-      searchWholeWord: "narrow-ui:toggle-search-whole-word"
-      searchIgnoreCase: "narrow-ui:toggle-search-ignore-case"
-      searchUseRegex: "narrow-ui:toggle-search-use-regex"
-
-    disposables = new CompositeDisposable
-    keyBindingTarget = @editorElement
-    for elementName, commandName of tooltips when element = @elements[elementName]
-      disposables.add(addToolTips({element, commandName, keyBindingTarget}))
-    disposables
