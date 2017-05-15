@@ -755,6 +755,9 @@ class Ui
           @withIgnoreChange => @setQuery(@lastQuery) # Recover query
 
         else
+          if @lastQuery.trim() is @getQuery().trim()
+            return
+
           autoPreview = @autoPreviewOnQueryChange and @isActive()
           refreshDelay = null
           if @provider.useFirstQueryAsSearchTerm
