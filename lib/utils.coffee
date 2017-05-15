@@ -281,6 +281,10 @@ suppressEvent = (event) ->
     event.preventDefault()
     event.stopPropagation()
 
+relativizeFilePath = (filePath) ->
+  [projectPath, relativeFilePath] = atom.project.relativizePath(filePath)
+  path.join(path.basename(projectPath), relativeFilePath)
+
 module.exports = {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -312,4 +316,5 @@ module.exports = {
   getProjectPaths
   suppressEvent
   startMeasureMemory
+  relativizeFilePath
 }

@@ -70,12 +70,29 @@ injectHeaderAndProjectName = (state) ->
 
   return {projectHeadersInserted, fileHeadersInserted, items}
 
-collectBeforeFiltered = (state) ->
+collectAllItems = (state) ->
   {allItems: state.allItems.concat(state.items)}
+
+# reducer
+filterFilePath = (state) ->
+  {items, fileExcluded, excludedFiles, selectedFiles} = state
+  before = items.length
+
+  if excludedFiles.length
+    items = items.filter (item) -> item.filePath not in excludedFiles
+
+  if selectedFiles.length
+    items = items.filter (item) -> item.filePath in selectedFiles
+
+  after = items.length
+
+  fileExcluded = before isnt after unless fileExcluded
+  return {items, fileExcluded}
 
 # reducers =
 module.exports = {
   injectLineHeader
   injectHeaderAndProjectName
-  collectBeforeFiltered
+  collectAllItems
+  filterFilePath
 }

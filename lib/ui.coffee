@@ -23,7 +23,8 @@ path = require 'path'
 {
   injectLineHeader
   injectHeaderAndProjectName
-  collectBeforeFiltered
+  collectAllItems
+  filterFilePath
 } = require './item-reducer'
 settings = require './settings'
 Grammar = require './grammar'
@@ -172,7 +173,6 @@ class Ui
     {
       @excludedFiles
       @queryForSelectFiles
-      @needRebuildExcludedFiles
     }
 
   getSearchTermFromQuery: ->
@@ -267,9 +267,10 @@ class Ui
     # -------------------------
     # NOTE: These state is restored when `narrow:reopen`
     # So assign initial value unless assigned.
-    @needRebuildExcludedFiles ?= true
     @queryForSelectFiles ?= SelectFiles.getLastQuery(@provider.name)
     @excludedFiles ?= []
+    @selectedFiles ?= []
+    @filePathsForAllItems = []
     @query ?= ''
     # Initial state asignment: end
 
@@ -411,6 +412,8 @@ class Ui
     # NOTE: Prevent delayed-refresh on destroyed editor.
     @cancelDelayedRefresh()
 
+    @stopUpdateItemCount()
+
     @constructor.unregister(this)
     @highlighter.destroy()
     @syncSubcriptions?.dispose()
@@ -512,61 +515,28 @@ class Ui
       clientUi: this
     new SelectFiles(@editor, options).start()
 
-  setQueryForSelectFiles: (@queryForSelectFiles) ->
-    @needRebuildExcludedFiles = true
+  updateSelectFilesState: ({@queryForSelectFiles, @selectedFiles}) ->
+    @excludedFiles = []
+    @focus(autoPreview: false)
+    @refresh()
 
   clearExcludedFiles: ->
     return if @provider.boundToSingleFile
 
-    if @excludedFiles.length
+    if @excludedFiles.length or @selectedFiles.length
       @excludedFiles = []
+      @selectedFiles = []
       @refresh()
 
-  getFilterSpec: (filterQuery) ->
-    sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
-    negateByEndingExclamation = @provider.getConfig('negateNarrowQueryByEndingExclamation')
+  getFilterSpec: (provider, filterQuery) ->
+    sensitivity = provider.getConfig('caseSensitivityForNarrowQuery')
+    negateByEndingExclamation = provider.getConfig('negateNarrowQueryByEndingExclamation')
     getFilterSpec(filterQuery, {sensitivity, negateByEndingExclamation})
 
   # reducer
   filterItems: (state) =>
-    {items, filterSpec} = state
-    @itemsBeforeFiltered = items
-    unless @provider.boundToSingleFile
-      if @needRebuildExcludedFiles
-        @excludedFiles = @buildExcludedFiles()
-        @needRebuildExcludedFiles = false
-      @controlBar.updateElements(selectFiles: @excludedFiles.length)
-      if @excludedFiles.length
-        items = items.filter (item) => item.filePath not in @excludedFiles
-
-    items = @provider.filterItems(items, filterSpec)
-    Object.assign(state, {items})
-
-  getItemsForSelectFiles: ->
-    @getBeforeFilteredFileHeaderItems().map ({filePath, projectName}) ->
-      text: path.join(projectName, atom.project.relativize(filePath))
-      filePath: filePath
-      point: new Point(0, 0)
-
-  buildExcludedFiles: ->
-    return [] unless @queryForSelectFiles
-
-    items = @getItemsForSelectFiles()
-    sensitivity = settings.get('SelectFiles.caseSensitivityForNarrowQuery')
-    negateByEndingExclamation = settings.get('SelectFiles.negateNarrowQueryByEndingExclamation')
-    filterSpec = getFilterSpec(@queryForSelectFiles, {sensitivity, negateByEndingExclamation})
-    items = SelectFiles::filterItems(items, filterSpec)
-
-    selectedFiles = _.pluck(items, 'filePath')
-    allFiles = _.pluck(@getBeforeFilteredFileHeaderItems(), 'filePath')
-    excludedFiles = _.without(allFiles, selectedFiles...)
-    excludedFiles
-
-  getBeforeFilteredFileHeaderItems: ->
-    (@itemsBeforeFiltered ? []).filter (item) -> item.fileHeader
-
-  getAfterFilteredFileHeaderItems: ->
-    @items.getFileHeaderItems()
+    items = @provider.filterItems(state.items, state.filterSpec)
+    return {items}
 
   requestItems: (event) ->
     if @cachedItems?
@@ -579,7 +549,8 @@ class Ui
   getReducers: ->
     [
       injectLineHeader
-      collectBeforeFiltered
+      collectAllItems
+      filterFilePath
       @filterItems
       injectHeaderAndProjectName
       @addItems
@@ -601,7 +572,7 @@ class Ui
       state
     , state
 
-  getInitialReducerState: ({filterSpec}) ->
+  createReducerState: ({filterSpec}) ->
     {
       hasCachedItems: @cachedItems?
       showLineHeader: @provider.showLineHeader
@@ -611,8 +582,31 @@ class Ui
       fileHeadersInserted: {}
       allItems: []
       filterSpec: filterSpec
+      fileExcluded: false
+      excludedFiles: @excludedFiles
+      selectedFiles: @selectedFiles
       renderStartPosition: @itemAreaStart
     }
+
+  startUpdateItemCount: ->
+    updateItemCount = => @controlBar.updateElements(itemCount: @items.getCount())
+    @updateItemCountIntervalID = setInterval(updateItemCount, 500)
+
+  stopUpdateItemCount: ->
+    if @updateItemCountIntervalID?
+      clearInterval(@updateItemCountIntervalID)
+      @updateItemCountIntervalID = null
+
+  updateFilePathsForAllItems: (allItems) =>
+    @filePathsForAllItems = []
+    fileSet = allItems.reduce (set, item) ->
+      set.add(item.filePath)
+    , new Set
+    fileSet.forEach (value) =>
+      @filePathsForAllItems.push(value)
+
+  getFilePathsForAllItems: ->
+    @filePathsForAllItems
 
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
@@ -621,6 +615,7 @@ class Ui
     #   console.log "disose!"
     @refreshDisposables?.dispose()
     @refreshDisposables = new CompositeDisposable
+    @filePathsForAllItems = []
 
     @emitWillRefresh()
 
@@ -636,20 +631,17 @@ class Ui
     if force
       @cachedItems = null # Invalidate cache
 
-    filterSpec = @getFilterSpec(filterQuery)
+    filterSpec = @getFilterSpec(@provider, filterQuery)
     resolveGetItem = null
     oldSelectedItem = null
     oldColumn = null
     grammarUpdated = false
 
-    updateItemCount = => @controlBar.updateElements(itemCount: @items.getCount())
-    updateItemCountIntervalID = setInterval(updateItemCount, 500)
+    @startUpdateItemCount()
+    @refreshDisposables.add new Disposable =>
+      @stopUpdateItemCount()
 
-    @refreshDisposables.add new Disposable ->
-      clearInterval(updateItemCountIntervalID)
-      updateItemCountIntervalID = null
-
-    reducerState = @getInitialReducerState({filterSpec})
+    reducerState = @createReducerState({filterSpec})
 
     @refreshDisposables.add @onDidUpdateItems (items) =>
       unless grammarUpdated
@@ -659,6 +651,7 @@ class Ui
 
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
     stopMeasureMemory = null
+
     @refreshDisposables.add @onFinishUpdateItems =>
       # If no items found after request, we should clear item area.
       # E.g. provider.Search, incrementally update item list on searchTerm change.
@@ -670,6 +663,9 @@ class Ui
 
       @refreshDisposables.dispose()
       @refreshDisposables = null
+
+      unless @provider.boundToSingleFile and reducerState.allItems.length
+        @updateFilePathsForAllItems(reducerState.allItems)
 
       if @provider.supportCacheItems
         @cachedItems = reducerState.allItems
@@ -686,7 +682,11 @@ class Ui
         @moveToPrompt() unless @isAtPrompt()
 
       stopMeasureMemory()
-      @controlBar.updateElements(refresh: false, itemCount: @items.getCount())
+      @controlBar.updateElements(
+        selectFiles: reducerState.fileExcluded
+        itemCount: @items.getCount()
+        refresh: false
+      )
       resolveGetItem()
 
     stopMeasureMemory = startMeasureMemory("refresh")
@@ -711,7 +711,6 @@ class Ui
 
   # reducer
   # -------------------------
-  # editor scan
   renderItems: (state) =>
     {renderStartPosition} = state
     renderStartFromItemAreaStart = renderStartPosition.isEqual(@itemAreaStart)

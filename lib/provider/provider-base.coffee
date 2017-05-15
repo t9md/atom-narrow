@@ -60,12 +60,15 @@ class ProviderBase
   initialSearchRegex: null
   useFirstQueryAsSearchTerm: false
 
-  getConfig: (name) ->
+  @getConfig: (name) ->
     value = settings.get("#{@name}.#{name}")
-    if value is 'inherit' or not value?
+    if value is 'inherit'
       settings.get(name)
     else
       value
+
+  getConfig: (name) ->
+    @constructor.getConfig(name)
 
   getOnStartConditionValueFor: (name) ->
     switch @getConfig(name)
