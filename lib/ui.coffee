@@ -738,9 +738,6 @@ class Ui
       {newRange, oldRange, newText, oldText} = event
       return if @ignoreChange
 
-      # Ignore white spaces change
-      return if oldText.trim() is newText.trim()
-
       promptRange = @getPromptRange()
       onPrompt = (range) -> range.intersectsWith(promptRange)
       isQueryModified = (newRange, oldRange) ->
