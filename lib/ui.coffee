@@ -349,22 +349,32 @@ class Ui
           @moveToSearchedWordAtSelectedItem()
 
         @suppressPreview = false
-        @preview().then? =>
-          @flashCursorLine()
+        @preview()?.then? => @flashCursorLine()
       else if @query and @autoPreviewOnQueryChange
         @preview()
 
   flashCursorLine: ->
+    itemCount = @items.getCount()
+    return if itemCount <= 5
+
+    flashSpec =
+      if itemCount < 10
+        duration: 1000
+        class: 'narrow-cursor-line-flash-medium'
+      else
+        duration: 2000
+        class: 'narrow-cursor-line-flash-long'
+
     @cursorLineFlashMarker?.destroy()
     point = @editor.getCursorBufferPosition()
     @cursorLineFlashMarker = @editor.markBufferPosition(point)
-    decorationOptions = {type: 'line', class: 'narrow-cursor-line'}
+    decorationOptions = {type: 'line', class: flashSpec.class}
     @editor.decorateMarker(@cursorLineFlashMarker, decorationOptions)
 
     destroyMarker = =>
       @cursorLineFlashMarker?.destroy()
       @cursorLineFlashMarker = null
-    setTimeout(destroyMarker, 1000)
+    setTimeout(destroyMarker, flashSpec.duration)
 
   getPane: ->
     paneForItem(@editor)

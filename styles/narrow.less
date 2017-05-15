@@ -56,12 +56,16 @@ atom-text-editor {
 @match-border-current: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 1.0);
 
 @match-ui: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 0.2);
+@flash-cursor-line-color: contrast(
+  @syntax-background-color,
+  darken(@syntax-selection-color, 3%),
+  lighten(@syntax-selection-color, 3%)
+);
 
-.flash-animation(narrow-editor-cursor-line-flash, @flash-color);
-
-// atom-text-editor.editor .line.cursor-history-flash-line {
-//   .flash(narrow-editor-cursor-line-flash, 0.5s)
-// }
+// .flash-animation(narrow-editor-cursor-line-flash, @flash-cursor-line-color);
+.flash-animation(narrow-editor-cursor-line-flash-short, @flash-color);
+.flash-animation(narrow-editor-cursor-line-flash-medium, @flash-color);
+.flash-animation(narrow-editor-cursor-line-flash-long, @flash-color);
 
 atom-text-editor {
   .narrow-match-ui {
@@ -70,8 +74,14 @@ atom-text-editor {
       background-color: @match-ui;
     }
   }
-  .line.narrow-cursor-line {
-    .flash(narrow-editor-cursor-line-flash, 1.0s)
+  .line.narrow-cursor-line-flash-short {
+    .flash(narrow-editor-cursor-line-flash-short, 0.5s)
+  }
+  .line.narrow-cursor-line-flash-medium {
+    .flash(narrow-editor-cursor-line-flash-medium, 1.0s)
+  }
+  .line.narrow-cursor-line-flash-long {
+    .flash(narrow-editor-cursor-line-flash-long, 2.0s)
   }
   .narrow-match {
     .region {
