@@ -28,7 +28,7 @@ path = require 'path'
 } = require './item-reducer'
 settings = require './settings'
 Grammar = require './grammar'
-getFilterSpec = require './get-filter-spec'
+FilterSpec = require './filter-spec'
 Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
@@ -268,8 +268,10 @@ class Ui
     # NOTE: These state is restored when `narrow:reopen`
     # So assign initial value unless assigned.
     @queryForSelectFiles ?= SelectFiles.getLastQuery(@provider.name)
+    if @queryForSelectFiles
+      @filterSpecForSelectFiles = @getFilterSpecForSelectFile(@queryForSelectFiles)
+
     @excludedFiles ?= []
-    @selectedFiles ?= []
     @filePathsForAllItems = []
     @query ?= ''
     # Initial state asignment: end
@@ -515,23 +517,30 @@ class Ui
       clientUi: this
     new SelectFiles(@editor, options).start()
 
-  updateSelectFilesState: ({@queryForSelectFiles, @selectedFiles}) ->
+  updateSelectFilesState: ({@queryForSelectFiles}) ->
     @excludedFiles = []
+    @filterSpecForSelectFiles = @getFilterSpecForSelectFile(@queryForSelectFiles)
     @focus(autoPreview: false)
     @refresh()
 
   clearExcludedFiles: ->
     return if @provider.boundToSingleFile
 
-    if @excludedFiles.length or @selectedFiles.length
+    if @excludedFiles.length
       @excludedFiles = []
-      @selectedFiles = []
       @refresh()
 
-  getFilterSpec: (provider, filterQuery) ->
-    sensitivity = provider.getConfig('caseSensitivityForNarrowQuery')
-    negateByEndingExclamation = provider.getConfig('negateNarrowQueryByEndingExclamation')
-    getFilterSpec(filterQuery, {sensitivity, negateByEndingExclamation})
+  getFilterSpecForProvider: (filterQuery) ->
+    new FilterSpec filterQuery,
+      filterKey: 'text'
+      negateByEndingExclamation: @provider.getConfig('negateNarrowQueryByEndingExclamation')
+      sensitivity: @provider.getConfig('caseSensitivityForNarrowQuery')
+
+  getFilterSpecForSelectFile: (filterQuery) ->
+    new FilterSpec filterQuery,
+      filterKey: 'filePath'
+      negateByEndingExclamation: SelectFiles.getConfig('negateNarrowQueryByEndingExclamation')
+      sensitivity: SelectFiles.getConfig('caseSensitivityForNarrowQuery')
 
   # reducer
   filterItems: (state) =>
@@ -582,9 +591,9 @@ class Ui
       fileHeadersInserted: {}
       allItems: []
       filterSpec: filterSpec
+      filterSpecForSelectFiles: @filterSpecForSelectFiles
       fileExcluded: false
       excludedFiles: @excludedFiles
-      selectedFiles: @selectedFiles
       renderStartPosition: @itemAreaStart
     }
 
@@ -631,7 +640,7 @@ class Ui
     if force
       @cachedItems = null # Invalidate cache
 
-    filterSpec = @getFilterSpec(@provider, filterQuery)
+    filterSpec = @getFilterSpecForProvider(filterQuery)
     resolveGetItem = null
     oldSelectedItem = null
     oldColumn = null
@@ -767,7 +776,7 @@ class Ui
               @cachedItems = null
               # if @provider.searchUseRegex and @currentSearchTerm.length < @provider.getConfig('minimumLengthToStartRegexSearch')
               #   return
-              refreshDelay = if @provider.boundToSingleFile then 10 else 500
+              refreshDelay = if @provider.boundToSingleFile then 10 else 700
             else
               refreshDelay = if @provider.boundToSingleFile then 10 else 150
 

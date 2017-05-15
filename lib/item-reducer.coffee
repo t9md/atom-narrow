@@ -75,14 +75,14 @@ collectAllItems = (state) ->
 
 # reducer
 filterFilePath = (state) ->
-  {items, fileExcluded, excludedFiles, selectedFiles} = state
+  {items, fileExcluded, excludedFiles, filterSpecForSelectFiles} = state
   before = items.length
 
   if excludedFiles.length
     items = items.filter (item) -> item.filePath not in excludedFiles
 
-  if selectedFiles.length
-    items = items.filter (item) -> item.filePath in selectedFiles
+  if filterSpecForSelectFiles
+    items = filterSpecForSelectFiles.filterItems(items)
 
   after = items.length
 

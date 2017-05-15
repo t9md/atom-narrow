@@ -197,14 +197,8 @@ class ProviderBase
   subscribeEditor: (args...) ->
     @editorSubscriptions.add(args...)
 
-  filterItems: (items, {include, exclude}) ->
-    for regexp in exclude
-      items = items.filter (item) -> item.skip or not regexp.test(item.text)
-
-    for regexp in include
-      items = items.filter (item) -> item.skip or regexp.test(item.text)
-
-    items
+  filterItems: (items, filterSpec) ->
+    filterSpec.filterItems(items)
 
   destroy: ->
     if @supportReopen
