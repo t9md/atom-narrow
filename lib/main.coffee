@@ -1,4 +1,4 @@
-{CompositeDisposable} = require 'atom'
+{CompositeDisposable, Disposable} = require 'atom'
 settings = require './settings'
 Ui = require './ui'
 globalSubscriptions = require './global-subscriptions'
@@ -9,17 +9,28 @@ ProviderBase = require "./provider/provider-base"
 module.exports =
   config: settings.config
   lastFocusedNarrowEditor: null
-  providers: []
 
   activate: ->
-    @subscriptions = new CompositeDisposable
+    @subscriptions = subs = new CompositeDisposable
     settings.removeDeprecated()
 
-    @subscriptions.add(@observeStopChangingActivePaneItem())
-    @subscriptions.add(@registerCommands())
-    @subscriptions.add atom.commands.add 'atom-text-editor', 'dblclick', =>
-      if settings.get('Search.startByDoubleClick')
-        @narrow('search', currentWord: true, pending: true)
+    subs.add(@observeStopChangingActivePaneItem())
+    subs.add(@registerCommands())
+
+    if settings.get('queryCurrentWordByDoubleClick')
+      onMouseDown = @onMouseDown.bind(this)
+      subs.add atom.workspace.observeTextEditors (editor) ->
+        editor.element.addEventListener('mousedown', onMouseDown, true)
+        removeListener = -> editor.element.removeEventListener('mousedown', onMouseDown, true)
+        subs.add(sub = new Disposable(removeListener))
+        editor.onDidDestroy -> subs.remove(sub)
+
+  onMouseDown: (event) ->
+    {detail, shiftKey, metaKey, ctrlKey} = event
+    if detail is 2 and Ui.getSize()
+      event.stopPropagation()
+      event.preventDefault()
+      @getUi()?.queryCurrentWord()
 
   deactivate: ->
     globalSubscriptions.dispose()
@@ -36,7 +47,7 @@ module.exports =
       'narrow:next-item': => @getUi()?.confirmItemForDirection('next')
       'narrow:previous-item': => @getUi()?.confirmItemForDirection('previous')
       'narrow:reopen': => @reopen()
-      'narrow:set-cursor-word-as-query': => @getUi()?.setCursorWordAsQuery()
+      'narrow:query-current-word': => @getUi()?.queryCurrentWord()
 
       # Providers
       # -------------------------
@@ -61,6 +72,7 @@ module.exports =
       # search family
       'narrow:search': => @narrow('search')
       'narrow:search-by-current-word': => @narrow('search', queryCurrentWord: true)
+      'narrow:search-by-current-word-without-focus': => @narrow('search', queryCurrentWord: true, focus: false)
       'narrow:search-current-project': => @narrow('search', currentProject: true)
       'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, queryCurrentWord: true)
 

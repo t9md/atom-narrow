@@ -177,7 +177,7 @@ class ProviderBase
       if ready
         @ui = new Ui(this, {@query}, @restoredState?.ui)
         @initialize()
-        @ui.open(pending: @options.pending).then =>
+        @ui.open(pending: @options.pending, focus: @options.focus).then =>
           return @ui
 
   updateItems: (items) =>

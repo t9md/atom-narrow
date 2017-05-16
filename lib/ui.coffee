@@ -200,13 +200,15 @@ class Ui
       else
         @editor.deleteToBeginningOfLine()
 
-  setCursorWordAsQuery: ->
+  queryCurrentWord: ->
     word = getCurrentWord(atom.workspace.getActiveTextEditor()).trim()
     # console.log word
     if word
       @withIgnoreChange => @setQuery(word)
       @refresh(force: true, selectFirstItem: true).then =>
         @moveToBeginningOfSelectedItem()
+        if @provider.searchRegex?
+          @moveToSearchedWordAtSelectedItem(@provider.searchRegex?)
 
   setModifiedState: (state) ->
     return if state is @modifiedState
@@ -326,8 +328,9 @@ class Ui
 
     pane ? splitPane(basePane, split: direction)
 
-  open: ({pending}={}) ->
+  open: ({pending, focus}={}) ->
     pending ?= false
+    focus ?= true
     # [NOTE] When new item is activated, existing PENDING item is destroyed.
     # So existing PENDING narrow-editor is destroyed at this timing.
     # And PENDING narrow-editor's provider's editor have foucsed.
@@ -335,7 +338,7 @@ class Ui
     pane = @getPaneToOpen()
     pane.activateItem(@editor, {pending})
 
-    if @provider.needActivateOnStart()
+    if focus and @provider.needActivateOnStart()
       pane.activate()
 
     @grammar.activate()
@@ -354,8 +357,8 @@ class Ui
         @syncToEditor(@provider.editor)
         @suppressPreview = true
         @moveToBeginningOfSelectedItem()
-        if @provider.initialSearchRegex?
-          @moveToSearchedWordAtSelectedItem()
+        if @provider.searchRegex?
+          @moveToSearchedWordAtSelectedItem(@provider.searchRegex?)
 
         @suppressPreview = false
         @preview()?.then? => @flashCursorLine()
@@ -954,12 +957,12 @@ class Ui
     if @items.hasSelectedItem()
       @editor.setCursorBufferPosition(@items.getFirstPositionForSelectedItem())
 
-  moveToSearchedWordAtSelectedItem: ->
+  moveToSearchedWordAtSelectedItem: (searchRegex) ->
     if @items.hasSelectedItem()
       if @isInSyncToProviderEditor()
         column = @provider.editor.getCursorBufferPosition().column
       else
-        regExp = cloneRegExp(@provider.initialSearchRegex)
+        regExp = cloneRegExp(searchRegex)
         column = regExp.exec(@items.getSelectedItem().text).index
 
       point = @items.getFirstPositionForSelectedItem().translate([0, column])
