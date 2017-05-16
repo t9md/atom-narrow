@@ -31,7 +31,7 @@ class ControlBar
     # NOTE: Avoid mousedown event propagated up to belonging narrow-editor's element
     # If propagated, button clicking cause narrow-editor's cursor move etc See #123.
     @container.addEventListener('mousedown', suppressEvent)
-    # @toolTipDisposables = new CompositeDisposable
+
     keyBindingTarget = @editorElement
     @toolTipsSpecs = []
 
@@ -76,6 +76,9 @@ class ControlBar
       searchRegex: elementFor 'search-regex'
 
     elementFor('search-options', hideIf: not @showSearchOption)
+
+  containsElement: (element) ->
+    @container.contains(element)
 
   destroy: ->
     @toolTipDisposables?.dispose()

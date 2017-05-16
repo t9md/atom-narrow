@@ -26,11 +26,13 @@ module.exports =
         editor.onDidDestroy -> subs.remove(sub)
 
   onMouseDown: (event) ->
-    {detail, shiftKey, metaKey, ctrlKey} = event
-    if detail is 2 and Ui.getSize()
-      event.stopPropagation()
-      event.preventDefault()
-      @getUi()?.queryCurrentWord()
+    if event.detail is 2 and Ui.getSize()
+      editor = event.currentTarget.getModel()
+      # Ignore click at control-bar element.
+      unless Ui.get(editor)?.controlBar.containsElement(event.target)
+        event.stopPropagation()
+        event.preventDefault()
+        @getUi()?.queryCurrentWord()
 
   deactivate: ->
     globalSubscriptions.dispose()

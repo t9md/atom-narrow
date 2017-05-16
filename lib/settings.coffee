@@ -93,6 +93,7 @@ globalSettings =
     enum: ['smartcase', 'sensitive', 'insensitive']
     description: "Case sensitivity of your query in narrow-editor"
   confirmOnUpdateRealFile: true
+  queryCurrentWordByDoubleClick: true
 
 inheritGlobalEnum = (name) ->
   default: 'inherit'
