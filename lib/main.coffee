@@ -4,7 +4,7 @@ Ui = require './ui'
 globalSubscriptions = require './global-subscriptions'
 ProviderBase = require "./provider/provider-base"
 
-{isNarrowEditor, getVisibleEditors, isTextEditor} = require './utils'
+{isNarrowEditor, getVisibleEditors, isTextEditor, suppressEvent} = require './utils'
 
 module.exports =
   config: settings.config
@@ -25,13 +25,20 @@ module.exports =
         subs.add(sub = new Disposable(removeListener))
         editor.onDidDestroy -> subs.remove(sub)
 
+  isControlBarElementClick: (event) ->
+    editor = event.currentTarget.getModel()
+    Ui.get(editor)?.controlBar.containsElement(event.target)
+
   onMouseDown: (event) ->
-    if event.detail is 2 and Ui.getSize()
-      editor = event.currentTarget.getModel()
-      # Ignore click at control-bar element.
-      unless Ui.get(editor)?.controlBar.containsElement(event.target)
-        event.stopPropagation()
-        event.preventDefault()
+    return unless event.detail is 2 # handle double click only
+
+    if not Ui.getSize()
+      if settings.get('Search.startByDoubleClick')
+        @narrow('search', queryCurrentWord: true, focus: false)
+        suppressEvent(event)
+    else
+      if settings.get('queryCurrentWordByDoubleClick') and not @isControlBarElementClick(event)
+        suppressEvent(event)
         @getUi()?.queryCurrentWord()
 
   deactivate: ->
