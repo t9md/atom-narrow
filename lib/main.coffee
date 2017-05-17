@@ -17,13 +17,12 @@ module.exports =
     subs.add(@observeStopChangingActivePaneItem())
     subs.add(@registerCommands())
 
-    if settings.get('queryCurrentWordByDoubleClick')
-      onMouseDown = @onMouseDown.bind(this)
-      subs.add atom.workspace.observeTextEditors (editor) ->
-        editor.element.addEventListener('mousedown', onMouseDown, true)
-        removeListener = -> editor.element.removeEventListener('mousedown', onMouseDown, true)
-        subs.add(sub = new Disposable(removeListener))
-        editor.onDidDestroy -> subs.remove(sub)
+    onMouseDown = @onMouseDown.bind(this)
+    subs.add atom.workspace.observeTextEditors (editor) ->
+      editor.element.addEventListener('mousedown', onMouseDown, true)
+      removeListener = -> editor.element.removeEventListener('mousedown', onMouseDown, true)
+      subs.add(sub = new Disposable(removeListener))
+      editor.onDidDestroy -> subs.remove(sub)
 
   isControlBarElementClick: (event) ->
     editor = event.currentTarget.getModel()
