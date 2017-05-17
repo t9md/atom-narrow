@@ -15,6 +15,7 @@ _ = require 'underscore-plus'
 } = require '../utils'
 Ui = require '../ui'
 settings = require '../settings'
+FilterSpec = require '../filter-spec'
 
 module.exports =
 class ProviderBase
@@ -340,6 +341,12 @@ class ProviderBase
     flags = 'g'
     flags += 'i' if searchIgnoreCase
     new RegExp(source, flags)
+
+  getFilterSpec: (filterQuery) ->
+    if filterQuery
+      new FilterSpec filterQuery,
+        negateByEndingExclamation: @getConfig('negateNarrowQueryByEndingExclamation')
+        sensitivity: @getConfig('caseSensitivityForNarrowQuery')
 
   updateSearchState: ->
     @searchTerm = @ui.getSearchTermFromQuery()

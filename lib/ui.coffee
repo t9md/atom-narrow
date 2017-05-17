@@ -25,7 +25,6 @@ path = require 'path'
 itemReducer = require './item-reducer'
 settings = require './settings'
 Grammar = require './grammar'
-FilterSpec = require './filter-spec'
 Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
@@ -541,18 +540,6 @@ class Ui
     @queryForSelectFiles = ''
     @refresh()
 
-  getFilterSpecForProvider: (filterQuery) ->
-    if filterQuery
-      new FilterSpec filterQuery,
-        negateByEndingExclamation: @provider.getConfig('negateNarrowQueryByEndingExclamation')
-        sensitivity: @provider.getConfig('caseSensitivityForNarrowQuery')
-
-  getFilterSpecForSelectFile: (filterQuery) ->
-    if filterQuery
-      new FilterSpec filterQuery,
-        negateByEndingExclamation: SelectFiles.getConfig('negateNarrowQueryByEndingExclamation')
-        sensitivity: SelectFiles.getConfig('caseSensitivityForNarrowQuery')
-
   # reducer
   filterItems: (state) =>
     if state.filterSpec?
@@ -563,7 +550,6 @@ class Ui
 
   requestItems: (event) ->
     if @cachedItems?
-      # console.log 'use Cache'
       @emitDidUpdateItems(@cachedItems)
       @emitFinishUpdateItems()
     else
@@ -601,8 +587,8 @@ class Ui
       projectHeadersInserted: {}
       fileHeadersInserted: {}
       allItems: []
-      filterSpec: @getFilterSpecForProvider(@getFilterQuery())
-      filterSpecForSelectFiles: @getFilterSpecForSelectFile(@queryForSelectFiles)
+      filterSpec: @provider.getFilterSpec(@getFilterQuery())
+      filterSpecForSelectFiles: SelectFiles::getFilterSpec(@queryForSelectFiles)
       fileExcluded: false
       excludedFiles: @excludedFiles
       renderStartPosition: @itemAreaStart
