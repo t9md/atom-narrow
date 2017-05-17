@@ -111,7 +111,7 @@ class Highlighter
   # modify current item decoration
   # -------------------------
   highlightCurrentForEditor: (editor, {range}) ->
-    console.trace()
+    # console.trace()
     startBufferRow = range.start.row
     if decorationLayer = @decorationLayerByEditor.get(editor)
       for marker in decorationLayer.getMarkerLayer().findMarkers({startBufferRow})

@@ -83,7 +83,7 @@ filterFilePath = (state) ->
   if excludedFiles.length
     items = items.filter (item) -> item.filePath not in excludedFiles
 
-  if filterSpecForSelectFiles
+  if filterSpecForSelectFiles?
     relativizeFilePath = getMemoizedRelativizeFilePath()
     for item in items when filePath = item.filePath
       item._relativeFilePath ?= relativizeFilePath(filePath)

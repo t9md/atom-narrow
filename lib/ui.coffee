@@ -266,8 +266,6 @@ class Ui
     # NOTE: These state is restored when `narrow:reopen`
     # So assign initial value unless assigned.
     @queryForSelectFiles ?= SelectFiles.getLastQuery(@provider.name)
-    if @queryForSelectFiles
-      @filterSpecForSelectFiles = @getFilterSpecForSelectFile(@queryForSelectFiles)
 
     @excludedFiles ?= []
     @filePathsForAllItems = []
@@ -428,7 +426,6 @@ class Ui
 
   destroy: ->
     return if @destroyed
-    # stopMeasureMemory = startMeasureMemory('UI::destoroy')
 
     @destroyed = true
 
@@ -450,7 +447,6 @@ class Ui
     @items.destroy()
     @itemIndicator.destroy()
     @emitDidDestroy()
-    # stopMeasureMemory()
 
   # This function is mapped from `narrow:close`
   # To differentiate `narrow:close` for protected narrow-editor.
@@ -515,6 +511,13 @@ class Ui
   getQuery: ->
     @editor.getTextInBufferRange(@getPromptRange())
 
+  getFilterQuery: ->
+    if @provider.useFirstQueryAsSearchTerm
+      # Extracet filterQuery by removing searchTerm part from query
+      @getQuery().replace(/^.*?\S+\s*/, '')
+    else
+      @getQuery()
+
   excludeFile: ->
     return if @provider.boundToSingleFile
 
@@ -534,35 +537,34 @@ class Ui
 
   resetQueryForSelectFiles: (@queryForSelectFiles) ->
     @excludedFiles = []
-    if @queryForSelectFiles
-      @filterSpecForSelectFiles = @getFilterSpecForSelectFile(@queryForSelectFiles)
-    else
-      @filterSpecForSelectFiles = null
-    console.log @filterSpecForSelectFiles
     @focus(autoPreview: false)
     @refresh()
 
   clearExcludedFiles: ->
     return if @provider.boundToSingleFile
-    @filterSpecForSelectFiles = null
-    if @excludedFiles.length
-      @excludedFiles = []
-      @refresh()
+    @excludedFiles = []
+    @queryForSelectFiles = ''
+    @refresh()
 
   getFilterSpecForProvider: (filterQuery) ->
-    new FilterSpec filterQuery,
-      negateByEndingExclamation: @provider.getConfig('negateNarrowQueryByEndingExclamation')
-      sensitivity: @provider.getConfig('caseSensitivityForNarrowQuery')
+    if filterQuery
+      new FilterSpec filterQuery,
+        negateByEndingExclamation: @provider.getConfig('negateNarrowQueryByEndingExclamation')
+        sensitivity: @provider.getConfig('caseSensitivityForNarrowQuery')
 
   getFilterSpecForSelectFile: (filterQuery) ->
-    new FilterSpec filterQuery,
-      negateByEndingExclamation: SelectFiles.getConfig('negateNarrowQueryByEndingExclamation')
-      sensitivity: SelectFiles.getConfig('caseSensitivityForNarrowQuery')
+    if filterQuery
+      new FilterSpec filterQuery,
+        negateByEndingExclamation: SelectFiles.getConfig('negateNarrowQueryByEndingExclamation')
+        sensitivity: SelectFiles.getConfig('caseSensitivityForNarrowQuery')
 
   # reducer
   filterItems: (state) =>
-    items = @provider.filterItems(state.items, state.filterSpec)
-    return {items}
+    if state.filterSpec?
+      items = @provider.filterItems(state.items, state.filterSpec)
+      return {items}
+    else
+      return null
 
   requestItems: (event) ->
     if @cachedItems?
@@ -574,10 +576,10 @@ class Ui
 
   getReducers: ->
     [
+      injectLineHeader
       collectAllItems
       filterFilePath
       @filterItems
-      injectLineHeader
       insertHeader
       @addItems
       @renderItems
@@ -594,7 +596,7 @@ class Ui
       Object.assign(state, reducer(state))
     , Object.assign(state, {items})
 
-  createStateToReduce: ({filterSpec}) ->
+  createStateToReduce: ->
     {
       hasCachedItems: @cachedItems?
       showLineHeader: @provider.showLineHeader
@@ -603,8 +605,8 @@ class Ui
       projectHeadersInserted: {}
       fileHeadersInserted: {}
       allItems: []
-      filterSpec: filterSpec
-      filterSpecForSelectFiles: @filterSpecForSelectFiles
+      filterSpec: @getFilterSpecForProvider(@getFilterQuery())
+      filterSpecForSelectFiles: @getFilterSpecForSelectFile(@queryForSelectFiles)
       fileExcluded: false
       excludedFiles: @excludedFiles
       renderStartPosition: @itemAreaStart
@@ -642,9 +644,6 @@ class Ui
 
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
-    # unless @refreshDisposables?.disposed
-    #   console.trace()
-    #   console.log "disose!"
     @refreshDisposables?.dispose()
     @refreshDisposables = new CompositeDisposable
     @filePathsForAllItems = []
@@ -658,10 +657,8 @@ class Ui
     else
       @controlBar.updateElements(refresh: true)
 
-    @lastQuery = filterQuery = @getQuery()
+    @lastQuery = @getQuery()
     if @provider.useFirstQueryAsSearchTerm
-      # Extracet filterQuery by removing searchTerm part from query
-      filterQuery = filterQuery.replace(/^.*?\S+\s*/, '')
       @lastSearchTerm = @currentSearchTerm
 
     if @provider.supportUpdateItemsForFilePath and filePath?
@@ -670,29 +667,24 @@ class Ui
     if force
       @cachedItems = null # Invalidate cache
 
-    filterSpec = @getFilterSpecForProvider(filterQuery)
-    resolveGetItem = null
-    oldSelectedItem = null
-    oldColumn = null
+    [resolveGetItem, oldSelectedItem, oldColumn] = []
     grammarUpdated = false
 
     @startUpdateItemCount()
     @refreshDisposables.add new Disposable =>
       @stopUpdateItemCount()
 
-    state = @createStateToReduce({filterSpec})
-
+    state = @createStateToReduce()
     @refreshDisposables.add @onDidUpdateItems (items) =>
       if cachedNormalItems?
         items = replaceOrAppendItemsForFilePath(filePath, cachedNormalItems, items)
       else
         unless grammarUpdated
-          @grammar.update(filterSpec.include) # No need to highlight excluded items
+          @grammar.update(state.filterSpec?.include) # No need to highlight excluded items
           grammarUpdated = true
       @reduceItems(items, state)
 
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
-    stopMeasureMemory = null
 
     @refreshDisposables.add @onFinishUpdateItems =>
       # If no items found after request, we should clear item area.
@@ -723,15 +715,12 @@ class Ui
         @items.selectFirstNormalItem()
         @moveToPrompt() unless @isAtPrompt()
 
-      stopMeasureMemory()
       @controlBar.updateElements(
         selectFiles: state.fileExcluded
         itemCount: @items.getCount()
         refresh: false
       )
       resolveGetItem()
-
-    stopMeasureMemory = startMeasureMemory("refresh")
 
     # Preserve oldSelectedItem before calling @items.reset()
     oldSelectedItem = @items.getSelectedItem()

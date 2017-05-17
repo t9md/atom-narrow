@@ -169,7 +169,6 @@ class ProviderBase
     @bindEditor(editorToBind)
     @restoreEditorState = saveEditorState(@editor)
     @query = @getInitialQuery(editor)
-    # @initiallselectedText = editor.getSelectedText()
 
   start: ->
     checkReady = Promise.resolve(@checkReady())
