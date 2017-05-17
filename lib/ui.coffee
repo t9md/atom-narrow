@@ -22,12 +22,7 @@ path = require 'path'
   getCurrentWord
 } = require './utils'
 
-{
-  injectLineHeader
-  insertHeader
-  collectAllItems
-  filterFilePath
-} = require './item-reducer'
+itemReducer = require './item-reducer'
 settings = require './settings'
 Grammar = require './grammar'
 FilterSpec = require './filter-spec'
@@ -576,11 +571,11 @@ class Ui
 
   getReducers: ->
     [
-      injectLineHeader
-      collectAllItems
-      filterFilePath
+      itemReducer.injectLineHeader
+      itemReducer.collectAllItems
+      itemReducer.filterFilePath
       @filterItems
-      insertHeader
+      itemReducer.insertHeader
       @addItems
       @renderItems
     ]
