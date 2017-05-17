@@ -879,14 +879,10 @@ class Ui
   confirm: ({keepOpen, flash}={}) ->
     return unless item = @items.getSelectedItem()
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
-    console.log 'hey', {needDestroy}
-
     @provider.confirmed(item).then (editor) =>
       if needDestroy or not editor?
-        console.log 'case1'
         @editor.destroy()
       else
-        console.log 'case2'
         @highlighter.flashItem(editor, item) if flash
         @emitDidConfirm({editor, item})
 
