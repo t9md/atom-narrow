@@ -792,18 +792,18 @@ class Ui
         else
           if @lastQuery.trim() is @getQuery().trim()
             return
-
-          if @provider.useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
-            delay = @provider.getConfig('refreshDelayOnSearchTermChange')
-          else
-            delay = if @provider.boundToSingleFile then 0 else 150
-          @refreshAfter(delay)
+          @refreshWithDelay()
       else
         @setModifiedState(true)
 
   # Delayed-refresh on query-change event, dont use this for other purpose.
-  refreshAfter: (delay) ->
+  refreshWithDelay: ->
     @cancelDelayedRefresh()
+    if @provider.useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
+      delay = @provider.getConfig('refreshDelayOnSearchTermChange')
+    else
+      delay = if @provider.boundToSingleFile then 0 else 150
+
     refreshThenPreview = =>
       @refresh(selectFirstItem: true).then =>
         @preview() if @autoPreviewOnQueryChange and @isActive()
