@@ -18,6 +18,9 @@ complimentField = (config, injectTitle=false) ->
 
     value = config[key]
     value.type ?= inferType(value.default)
+
+    # To remove provider prefix
+    # e.g. "Scan.AutoPreview" config to appear as "Auto Preview"
     value.title ?= _.uncamelcase(key) if injectTitle
 
   # Inject order props to display orderd in setting-view
@@ -28,7 +31,6 @@ complimentField = (config, injectTitle=false) ->
 
 class Settings
   constructor: (@scope, @config) ->
-    complimentField(@config)
 
   get: (param) ->
     atom.config.get("#{@scope}.#{param}")
@@ -99,42 +101,41 @@ inheritGlobalEnum = (name) ->
   default: 'inherit'
   enum: ['inherit', globalSettings[name].enum...]
 
-# inhe
-newProviderConfig = (otherProperties) ->
-  properties =
-    directionToOpen: inheritGlobalEnum('directionToOpen')
-    caseSensitivityForNarrowQuery: inheritGlobalEnum('caseSensitivityForNarrowQuery')
-    revealOnStartCondition:
-      default: 'always'
-      enum: ['always', 'never', 'on-input']
-    focusOnStartCondition:
-      default: 'always'
-      description: "[Experiment] In-eval if this is really useful( I don't use this )"
-      enum: ['always', 'never', 'no-input']
-    negateNarrowQueryByEndingExclamation: false
-    autoPreview: true
-    autoPreviewOnQueryChange: true
-    closeOnConfirm: true
+ProviderConfig =
+  directionToOpen: inheritGlobalEnum('directionToOpen')
+  caseSensitivityForNarrowQuery: inheritGlobalEnum('caseSensitivityForNarrowQuery')
+  revealOnStartCondition:
+    default: 'always'
+    enum: ['always', 'never', 'on-input']
+  focusOnStartCondition:
+    default: 'always'
+    description: "Condition when focus to narrow-editor on start"
+    enum: ['always', 'never', 'no-input']
+  negateNarrowQueryByEndingExclamation: false
+  autoPreview: true
+  autoPreviewOnQueryChange: true
+  closeOnConfirm: true
 
-  _.deepExtend(properties, complimentField(otherProperties)) if otherProperties?
-
+newProviderConfig = (other={}) ->
+  properties = Object.assign({}, ProviderConfig, other)
   return {
     type: 'object'
     collapsed: true
     properties: complimentField(properties, true)
   }
 
-newProviderConfigForScanAndSearchAndAtomScan = (otherProperties={}) ->
-  properties =
-    caseSensitivityForSearchTerm:
-      default: 'smartcase'
-      enum: ['smartcase', 'sensitive', 'insensitive']
-    revealOnStartCondition: 'on-input'
-    searchWholeWord: false
-    searchUseRegex: false
-    minimumLengthToStartRegexSearch: 3
-    rememberUseRegex: false
-  newProviderConfig(_.extend(properties, otherProperties))
+ScanAndSearchAndAtomScanConfig =
+  caseSensitivityForSearchTerm:
+    default: 'smartcase'
+    enum: ['smartcase', 'sensitive', 'insensitive']
+  revealOnStartCondition: 'on-input'
+  searchWholeWord: false
+  searchUseRegex: false
+  minimumLengthToStartRegexSearch: 3
+  rememberUseRegex: false
+
+newProviderConfigForScanAndSearchAndAtomScan = (other={}) ->
+  newProviderConfig(Object.assign({}, ScanAndSearchAndAtomScanConfig, other))
 
 providerSettings =
   Scan: newProviderConfigForScanAndSearchAndAtomScan()
@@ -171,4 +172,4 @@ providerSettings =
       description: "Remember query per provider basis and apply it at startup"
   )
 
-module.exports = new Settings('narrow', _.defaults(globalSettings, providerSettings))
+module.exports = new Settings('narrow', Object.assign(complimentField(globalSettings), providerSettings))
