@@ -270,12 +270,12 @@ class Ui
     @emitter = new Emitter
     @autoPreview = @provider.getConfig('autoPreview')
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
-    @showSearchOption = @provider.showSearchOption
     @highlighter = new Highlighter(this)
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
     # Pull never changing info-only-properties from provider.
     {
+      @showSearchOption
       @showLineHeader
       @showColumnOnLineHeader
       @boundToSingleFile
@@ -641,9 +641,7 @@ class Ui
     @refreshDisposables?.dispose()
     @refreshDisposables = new CompositeDisposable
     @filePathsForAllItems = []
-
     @emitWillRefresh()
-
     @highlighter.clearCurrentAndLineMarker()
 
     if @query?
@@ -727,7 +725,6 @@ class Ui
     @requestItems({filePath})
 
     getItemPromise.then =>
-      # console.log 'fin', @items.getCount()
       @emitDidRefresh()
       @emitDidStopRefreshing()
       return null
