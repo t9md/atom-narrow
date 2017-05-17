@@ -23,20 +23,23 @@ getLineHeaderForItem = (point, maxLineWidth, maxColumnWidth) ->
 # All reducers take single state object as argument
 # If reducer return object, that object is merged to state and passed to next reducer
 # If reducer return nothing, original state is passed to next reducer.
+byMax = (max, value) -> Math.max(max, value)
+toRow = (item) -> item.point.row
+toColumn = (item) -> item.point.column
+
 injectLineHeader = (state) ->
   return null if state.hasCachedItems or not state.showLineHeader
 
   normalItems = state.items.filter(isNormalItem)
-
-  toRow = (item) -> item.point.row
-  byMax = (max, value) -> Math.max(max, value)
-  maxRow = normalItems.map(toRow).reduce(byMax, 0)
+  maxRow = state.maxRow ? normalItems.map(toRow).reduce(byMax, 0)
   maxLineWidth = String(maxRow + 1).length
 
   if state.showColumn
-    toColumn = (item) -> item.point.column
     maxColumn = normalItems.map(toColumn).reduce(byMax, 0)
-    maxColumnWidth = Math.max(String(maxColumn + 1).length, 2)
+    # The purpose of keeping minimum 3 width is to prevent item text
+    # side-shifted on filtered as long as matched column don't exceed column
+    # 100. matched at 1000 column is unlikely. but 100 is likely.
+    maxColumnWidth = Math.max(String(maxColumn + 1).length, 3)
 
   for item in normalItems
     item._lineHeader = getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
