@@ -138,7 +138,7 @@ class Items
     @getItemForRow(row) if row?
 
   findDifferentFileItem: (direction) ->
-    return if @ui.provider.boundToSingleFile
+    return if @ui.boundToSingleFile
     return null unless selectedItem = @getSelectedItem()
     filePath = selectedItem.filePath
     row = @findRowBy @getRowForSelectedItem(), direction, (row) =>

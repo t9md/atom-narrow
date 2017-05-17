@@ -286,6 +286,16 @@ class Ui
       @useFirstQueryAsSearchTerm
     } = @provider
 
+    @reducers = [
+      itemReducer.injectLineHeader
+      itemReducer.collectAllItems
+      itemReducer.filterFilePath
+      @filterItems
+      itemReducer.insertHeader
+      @addItems
+      @renderItems
+    ]
+
     # Setup narrow-editor
     # -------------------------
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
@@ -302,8 +312,7 @@ class Ui
     @items = new Items(this)
     @itemIndicator = new ItemIndicator(@editor)
 
-    @items.onDidChangeSelectedItem ({row}) =>
-      @itemIndicator.update(row: row)
+    @items.onDidChangeSelectedItem ({row}) => @itemIndicator.update({row})
 
     if settings.get('autoShiftReadOnlyOnMoveToItemArea')
       @disposables.add @onDidMoveToItemArea =>
@@ -552,14 +561,6 @@ class Ui
     @queryForSelectFiles = ''
     @refresh()
 
-  # reducer
-  filterItems: (state) =>
-    if state.filterSpec?
-      items = @provider.filterItems(state.items, state.filterSpec)
-      return {items}
-    else
-      return null
-
   requestItems: (event) ->
     if @cachedItems?
       @emitDidUpdateItems(@cachedItems)
@@ -567,16 +568,13 @@ class Ui
     else
       @provider.getItems(event.filePath)
 
-  getReducers: ->
-    [
-      itemReducer.injectLineHeader
-      itemReducer.collectAllItems
-      itemReducer.filterFilePath
-      @filterItems
-      itemReducer.insertHeader
-      @addItems
-      @renderItems
-    ]
+  # reducer
+  filterItems: (state) =>
+    if state.filterSpec?
+      items = @provider.filterItems(state.items, state.filterSpec)
+      return {items}
+    else
+      return null
 
   # reducer
   addItems: (state) =>
