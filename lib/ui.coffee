@@ -171,7 +171,7 @@ class Ui
     }
 
   getSearchTermFromQuery: ->
-    if @provider.useFirstQueryAsSearchTerm
+    if @useFirstQueryAsSearchTerm
       @getQuery().split(/\s+/)[0]
 
   deleteToBeginningOfQuery: ->
@@ -274,6 +274,18 @@ class Ui
     @highlighter = new Highlighter(this)
     @itemAreaStart = Object.freeze(new Point(1, 0))
 
+    # Pull never changing info-only-properties from provider.
+    {
+      @showLineHeader
+      @showColumnOnLineHeader
+      @boundToSingleFile
+      @itemHaveRange
+      @supportDirectEdit
+      @supportCacheItems
+      @supportFilePathOnlyItemsUpdate
+      @useFirstQueryAsSearchTerm
+    } = @provider
+
     # Setup narrow-editor
     # -------------------------
     @editor = atom.workspace.buildTextEditor(lineNumberGutterVisible: false)
@@ -285,7 +297,7 @@ class Ui
     @editorElement.classList.add('narrow', 'narrow-editor', @provider.dashName)
     @setModifiedState(false)
 
-    @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
+    @grammar = new Grammar(@editor, includeHeaderRules: not @boundToSingleFile)
 
     @items = new Items(this)
     @itemIndicator = new ItemIndicator(@editor)
@@ -425,7 +437,7 @@ class Ui
 
     # NOTE: Prevent delayed-refresh on destroyed editor.
     @cancelDelayedRefresh()
-
+    @refreshDisposables?.dispose()
     @stopUpdateItemCount()
 
     @constructor.unregister(this)
@@ -506,14 +518,14 @@ class Ui
     @editor.getTextInBufferRange(@getPromptRange())
 
   getFilterQuery: ->
-    if @provider.useFirstQueryAsSearchTerm
+    if @useFirstQueryAsSearchTerm
       # Extracet filterQuery by removing searchTerm part from query
       @getQuery().replace(/^.*?\S+\s*/, '')
     else
       @getQuery()
 
   excludeFile: ->
-    return if @provider.boundToSingleFile
+    return if @boundToSingleFile
 
     filePath = @items.getSelectedItem()?.filePath
     if filePath? and (filePath not in @excludedFiles)
@@ -523,7 +535,7 @@ class Ui
 
   selectFiles: (event) =>
     suppressEvent(event)
-    return if @provider.boundToSingleFile
+    return if @boundToSingleFile
     options =
       query: @queryForSelectFiles
       clientUi: this
@@ -535,7 +547,7 @@ class Ui
     @refresh()
 
   clearExcludedFiles: ->
-    return if @provider.boundToSingleFile
+    return if @boundToSingleFile
     @excludedFiles = []
     @queryForSelectFiles = ''
     @refresh()
@@ -580,10 +592,10 @@ class Ui
   createStateToReduce: ->
     {
       hasCachedItems: @cachedItems?
-      showLineHeader: @provider.showLineHeader
-      showColumn: @provider.showColumnOnLineHeader
-      maxRow: @provider.editor.getLastBufferRow() if @provider.boundToSingleFile
-      boundToSingleFile: @provider.boundToSingleFile
+      showLineHeader: @showLineHeader
+      showColumn: @showColumnOnLineHeader
+      maxRow: @provider.editor.getLastBufferRow() if @boundToSingleFile
+      boundToSingleFile: @boundToSingleFile
       projectHeadersInserted: {}
       fileHeadersInserted: {}
       allItems: []
@@ -640,13 +652,13 @@ class Ui
       @controlBar.updateElements(refresh: true)
 
     @lastQuery = @getQuery()
-    if @provider.useFirstQueryAsSearchTerm
+    if @useFirstQueryAsSearchTerm
       searchTerm = @getSearchTermFromQuery()
       if searchTerm isnt @lastSearchTerm
         @lastSearchTerm = searchTerm
         @cachedItems = null
 
-    if @provider.supportUpdateItemsForFilePath and filePath?
+    if @supportFilePathOnlyItemsUpdate and filePath?
       cachedNormalItems = @cachedItems?.filter(isNormalItem)
 
     if force
@@ -683,10 +695,10 @@ class Ui
       @refreshDisposables.dispose()
       @refreshDisposables = null
 
-      unless @provider.boundToSingleFile and state.allItems.length
+      unless @boundToSingleFile and state.allItems.length
         @updateFilePathsForAllItems(state.allItems)
 
-      if @provider.supportCacheItems
+      if @supportCacheItems
         @cachedItems = state.allItems
         # console.log 'cached', @cachedItems.length
 
@@ -780,10 +792,10 @@ class Ui
   # Delayed-refresh on query-change event, dont use this for other purpose.
   refreshWithDelay: ->
     @cancelDelayedRefresh()
-    if @provider.useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
+    if @useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
       delay = @provider.getConfig('refreshDelayOnSearchTermChange')
     else
-      delay = if @provider.boundToSingleFile then 0 else 150
+      delay = if @boundToSingleFile then 0 else 150
 
     refreshThenPreview = =>
       @refresh(selectFirstItem: true).then =>
@@ -834,7 +846,7 @@ class Ui
     return if @inPreview
 
     point = editor.getCursorBufferPosition()
-    if @provider.boundToSingleFile
+    if @boundToSingleFile
       item = @items.findClosestItemForBufferPosition(point)
     else
       item = @items.findClosestItemForBufferPosition(point, filePath: editor.getPath())
@@ -846,7 +858,7 @@ class Ui
       @emitDidMoveToItemArea() if wasAtPrompt
 
   isInSyncToProviderEditor: ->
-    @provider.boundToSingleFile or @items.getSelectedItem().filePath is @provider.editor.getPath()
+    @boundToSingleFile or @items.getSelectedItem().filePath is @provider.editor.getPath()
 
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove, column}={}) ->
     return if (row = @items.getRowForSelectedItem()) is -1
@@ -941,7 +953,7 @@ class Ui
     @isPromptRow(@editor.getCursorBufferPosition().row)
 
   getNormalItemsForEditor: (editor) ->
-    if @provider.boundToSingleFile
+    if @boundToSingleFile
       @items.getNormalItems()
     else
       @items.getNormalItems(editor.getPath())
@@ -966,16 +978,15 @@ class Ui
     @provider.bindEditor(editor)
     @syncToEditor(editor)
 
-    ignoreColumnChange = not @provider.itemHaveRange
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
       return if event.textChanged
-      return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
+      return if not @itemHaveRange and (event.oldBufferPosition.row is event.newBufferPosition.row)
       @syncToEditor(editor) if isActiveEditor(editor)
 
     @syncSubcriptions.add @onDidRefresh =>
       @syncToEditor(editor) if isActiveEditor(editor)
 
-    if @provider.boundToSingleFile
+    if @boundToSingleFile
       unless isDefinedAndEqual(oldFilePath, newFilePath)
         @refresh(force: true)
       @syncSubcriptions.add editor.onDidStopChanging =>
@@ -1007,7 +1018,7 @@ class Ui
   # Direct-edit related
   # -------------------------
   updateRealFile: ->
-    return unless @provider.supportDirectEdit
+    return unless @supportDirectEdit
     return unless @isModified()
 
     if settings.get('confirmOnUpdateRealFile')
@@ -1033,7 +1044,7 @@ class Ui
 
     return unless changes.length
 
-    unless @provider.boundToSingleFile
+    unless @boundToSingleFile
       {success, message} = ensureNoModifiedFileForChanges(changes)
       unless success
         atom.notifications.addWarning(message, dismissable: true)

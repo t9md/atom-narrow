@@ -62,7 +62,7 @@ class ControlBar
       itemCount: elementFor 'item-count'
       selectFiles: elementFor 'select-files',
         click: @ui.selectFiles,
-        hideIf: @provider.boundToSingleFile
+        hideIf: @ui.boundToSingleFile
         tips: "narrow-ui:select-files"
       searchIgnoreCase: elementFor 'search-ignore-case',
         click: @ui.toggleSearchIgnoreCase

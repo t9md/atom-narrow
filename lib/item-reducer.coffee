@@ -35,6 +35,7 @@ injectLineHeader = (state) ->
   maxLineWidth = String(maxRow + 1).length
 
   if state.showColumn
+    # NOTE: Intentionally avoid Math.max(columns...) here to keep memory usage low.
     maxColumn = normalItems.map(toColumn).reduce(byMax, 0)
     # The purpose of keeping minimum 3 width is to prevent item text
     # side-shifted on filtered as long as matched column don't exceed column

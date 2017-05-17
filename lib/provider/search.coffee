@@ -13,7 +13,7 @@ class Search extends ProviderBase
   showSearchOption: true
   supportCacheItems: true
   useFirstQueryAsSearchTerm: true
-  supportUpdateItemsForFilePath: true
+  supportFilePathOnlyItemsUpdate: true
 
   getState: ->
     @mergeState(super, {@projects})

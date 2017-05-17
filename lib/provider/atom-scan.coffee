@@ -11,7 +11,7 @@ class AtomScan extends ProviderBase
   showSearchOption: true
   supportCacheItems: true
   useFirstQueryAsSearchTerm: true
-  supportUpdateItemsForFilePath: true
+  supportFilePathOnlyItemsUpdate: true
 
   initialize: ->
     @initializeSearchOptions() unless @reopened
