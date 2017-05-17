@@ -133,12 +133,15 @@ ScanAndSearchAndAtomScanConfig =
   searchUseRegex: false
   minimumLengthToStartRegexSearch: 3
   rememberUseRegex: false
+  refreshDelayOnSearchTermChange: 700
 
 newProviderConfigForScanAndSearchAndAtomScan = (other={}) ->
   newProviderConfig(Object.assign({}, ScanAndSearchAndAtomScanConfig, other))
 
 providerSettings =
-  Scan: newProviderConfigForScanAndSearchAndAtomScan()
+  Scan: newProviderConfigForScanAndSearchAndAtomScan(
+    refreshDelayOnSearchTermChange: 10
+  )
   Search: newProviderConfigForScanAndSearchAndAtomScan(
     searcher:
       default: 'ag'

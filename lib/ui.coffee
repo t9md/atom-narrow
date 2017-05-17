@@ -601,6 +601,7 @@ class Ui
       hasCachedItems: @cachedItems?
       showLineHeader: @provider.showLineHeader
       showColumn: @provider.showColumnOnLineHeader
+      maxRow: @provider.editor.getLastBufferRow() if @provider.boundToSingleFile
       boundToSingleFile: @provider.boundToSingleFile
       projectHeadersInserted: {}
       fileHeadersInserted: {}
@@ -659,10 +660,13 @@ class Ui
 
     @lastQuery = @getQuery()
     if @provider.useFirstQueryAsSearchTerm
-      @lastSearchTerm = @currentSearchTerm
+      searchTerm = @getSearchTermFromQuery()
+      if searchTerm isnt @lastSearchTerm
+        @lastSearchTerm = searchTerm
+        @cachedItems = null
 
     if @provider.supportUpdateItemsForFilePath and filePath?
-      cachedNormalItems = @cachedItems.filter(isNormalItem)
+      cachedNormalItems = @cachedItems?.filter(isNormalItem)
 
     if force
       @cachedItems = null # Invalidate cache
@@ -789,32 +793,20 @@ class Ui
           if @lastQuery.trim() is @getQuery().trim()
             return
 
-          autoPreview = @autoPreviewOnQueryChange and @isActive()
-          refreshDelay = null
-          if @provider.useFirstQueryAsSearchTerm
-            @currentSearchTerm = @getSearchTermFromQuery()
-
-            if @currentSearchTerm isnt @lastSearchTerm
-              @cachedItems = null
-              # if @provider.searchUseRegex and @currentSearchTerm.length < @provider.getConfig('minimumLengthToStartRegexSearch')
-              #   return
-              refreshDelay = if @provider.boundToSingleFile then 10 else 700
-            else
-              refreshDelay = if @provider.boundToSingleFile then 10 else 150
-
-          # console.log {refreshDelay}
-          if refreshDelay?
-            # To avoid frequent auto-preview interferinig smooth-query-input, delay refresh.
-            @refreshThenPreviewAfter(refreshDelay)
+          if @provider.useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
+            delay = @provider.getConfig('refreshDelayOnSearchTermChange')
           else
-            @refresh(selectFirstItem: true)
+            delay = if @provider.boundToSingleFile then 0 else 150
+          @refreshAfter(delay)
       else
         @setModifiedState(true)
 
   # Delayed-refresh on query-change event, dont use this for other purpose.
-  refreshThenPreviewAfter: (delay) ->
+  refreshAfter: (delay) ->
     @cancelDelayedRefresh()
-    refreshThenPreview = => @refresh(selectFirstItem: true).then(@preview)
+    refreshThenPreview = =>
+      @refresh(selectFirstItem: true).then =>
+        @preview() if @autoPreviewOnQueryChange and @isActive()
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 
   cancelDelayedRefresh: ->
@@ -906,11 +898,14 @@ class Ui
   confirm: ({keepOpen, flash}={}) ->
     return unless item = @items.getSelectedItem()
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
+    console.log 'hey', {needDestroy}
 
     @provider.confirmed(item).then (editor) =>
       if needDestroy or not editor?
+        console.log 'case1'
         @editor.destroy()
       else
+        console.log 'case2'
         @highlighter.flashItem(editor, item) if flash
         @emitDidConfirm({editor, item})
 
