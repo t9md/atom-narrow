@@ -60,6 +60,9 @@ class Items
     column = @getFirstColumnForItem(@selectedItem)
     new Point(row, column)
 
+  getPointForSelectedItemAtColumn: (column) ->
+    @getFirstPositionForSelectedItem().translate([0, column])
+
   getFirstColumnForItem: (item) ->
     if item._lineHeader?
       item._lineHeader.length

@@ -201,14 +201,10 @@ class Ui
         @editor.deleteToBeginningOfLine()
 
   queryCurrentWord: ->
-    word = getCurrentWord(atom.workspace.getActiveTextEditor()).trim()
-    # console.log word
-    if word
+    if word = getCurrentWord(atom.workspace.getActiveTextEditor()).trim()
       @withIgnoreChange => @setQuery(word)
       @refresh(force: true, selectFirstItem: true).then =>
-        @moveToBeginningOfSelectedItem()
-        if @provider.searchRegex?
-          @moveToSearchedWordAtSelectedItem(@provider.searchRegex?)
+        @moveToSearchedWordOrBeginningOfSelectedItem()
 
   setModifiedState: (state) ->
     return if state is @modifiedState
@@ -356,12 +352,10 @@ class Ui
       if @provider.needRevealOnStart()
         @syncToEditor(@provider.editor)
         @suppressPreview = true
-        @moveToBeginningOfSelectedItem()
-        if @provider.searchRegex?
-          @moveToSearchedWordAtSelectedItem(@provider.searchRegex?)
-
-        @suppressPreview = false
-        @preview()?.then? => @flashCursorLine()
+        if @items.hasSelectedItem()
+          @moveToSearchedWordOrBeginningOfSelectedItem()
+          @suppressPreview = false
+          @preview()?.then? => @flashCursorLine()
       else if @query and @autoPreviewOnQueryChange
         @preview()
 
@@ -953,6 +947,12 @@ class Ui
     else
       @moveToBeginningOfSelectedItem()
 
+  moveToSearchedWordOrBeginningOfSelectedItem: ->
+    if @provider.searchRegex?
+      @moveToSearchedWordAtSelectedItem(@provider.searchRegex)
+    else
+      @moveToBeginningOfSelectedItem()
+
   moveToBeginningOfSelectedItem: ->
     if @items.hasSelectedItem()
       @editor.setCursorBufferPosition(@items.getFirstPositionForSelectedItem())
@@ -964,8 +964,7 @@ class Ui
       else
         regExp = cloneRegExp(searchRegex)
         column = regExp.exec(@items.getSelectedItem().text).index
-
-      point = @items.getFirstPositionForSelectedItem().translate([0, column])
+      point = @items.getPointForSelectedItemAtColumn(column)
       @editor.setCursorBufferPosition(point)
 
   moveToPrompt: ->
