@@ -101,11 +101,10 @@ module.exports =
         # When non-narrow-editor editor was activated
         # no longer restore editor's state at cancel.
         ui.provider.needRestoreEditorState = false
-
         ui.startSyncToEditor(item) unless ui.isSamePaneItem(item)
 
         ui.highlighter.clearCurrentAndLineMarker()
-        ui.highlighter.highlight(item)
+        ui.highlighter.highlightEditor(item)
 
   getUi: ({skipProtected}={}) ->
     if ui = Ui.get(@lastFocusedNarrowEditor)

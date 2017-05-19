@@ -193,8 +193,9 @@ class Ui
   queryCurrentWord: ->
     if word = getCurrentWord(atom.workspace.getActiveTextEditor()).trim()
       @withIgnoreChange => @setQuery(word)
-      @refresh(force: true, selectFirstItem: true).then =>
+      @refresh(force: true).then =>
         @moveToSearchedWordOrBeginningOfSelectedItem()
+        @flashCursorLine()
 
   setModifiedState: (state) ->
     return if state is @modifiedState
@@ -250,6 +251,18 @@ class Ui
       Object.assign(this, restoredState)
 
     SelectFiles ?= require "./provider/select-files"
+    # Pull never changing info-only-properties from provider.
+    {
+      @showSearchOption
+      @showLineHeader
+      @showColumnOnLineHeader
+      @boundToSingleFile
+      @itemHaveRange
+      @supportDirectEdit
+      @supportCacheItems
+      @supportFilePathOnlyItemsUpdate
+      @useFirstQueryAsSearchTerm
+    } = @provider
 
     # Initial state asignment: start
     # -------------------------
@@ -268,19 +281,6 @@ class Ui
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
     @highlighter = new Highlighter(this)
     @itemAreaStart = Object.freeze(new Point(1, 0))
-
-    # Pull never changing info-only-properties from provider.
-    {
-      @showSearchOption
-      @showLineHeader
-      @showColumnOnLineHeader
-      @boundToSingleFile
-      @itemHaveRange
-      @supportDirectEdit
-      @supportCacheItems
-      @supportFilePathOnlyItemsUpdate
-      @useFirstQueryAsSearchTerm
-    } = @provider
 
     @reducers = [
       itemReducer.spliceItemsForFilePath
@@ -684,8 +684,7 @@ class Ui
 
       if (not selectFirstItem) and oldSelectedItem?
         @items.selectEqualLocationItem(oldSelectedItem)
-        unless @isAtPrompt()
-          @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
+        @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn) unless @isAtPrompt()
       else
         # when originally selected item cannot be selected because of excluded.
         @items.selectFirstNormalItem()
@@ -759,7 +758,7 @@ class Ui
       if isQueryModified(event.newRange, event.oldRange)
         if @editor.hasMultipleCursors()
           # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
-          @destroyPromptSelection()
+          destroyPromptSelection()
         else
           return if @lastQuery.trim() is @getQuery().trim()
           @refreshWithDelay()
@@ -934,17 +933,20 @@ class Ui
 
   moveToBeginningOfSelectedItem: ->
     if @items.hasSelectedItem()
-      @editor.setCursorBufferPosition(@items.getFirstPositionForSelectedItem())
+      point = @items.getFirstPositionForSelectedItem()
+      @editor.setCursorBufferPosition(point)
 
   moveToSearchedWordAtSelectedItem: (searchRegex) ->
-    if @items.hasSelectedItem()
+    if item = @items.getSelectedItem()
+      cursorPosition = @provider.editor.getCursorBufferPosition()
+      {row, column} = @items.getFirstPositionForItem(item)
+
       if @isInSyncToProviderEditor()
-        column = @provider.editor.getCursorBufferPosition().column
+        column += cursorPosition.column
       else
-        regExp = cloneRegExp(searchRegex)
-        column = regExp.exec(@items.getSelectedItem().text).index
-      point = @items.getPointForSelectedItemAtColumn(column)
-      @editor.setCursorBufferPosition(point)
+        column += cloneRegExp(searchRegex).exec(item.text).index
+
+      @editor.setCursorBufferPosition([row, column])
 
   moveToPrompt: ->
     @withIgnoreCursorMove =>

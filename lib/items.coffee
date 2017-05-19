@@ -3,6 +3,7 @@
   isNormalItem
   getValidIndexForList
 } = require './utils'
+_ = require 'underscore-plus'
 
 module.exports =
 class Items
@@ -55,8 +56,11 @@ class Items
     @selectItemForRow(@findRowForNormalItem(0, 'next'))
 
   getFirstPositionForSelectedItem: ->
-    row = @getRowForItem(@selectedItem)
-    column = @getFirstColumnForItem(@selectedItem)
+    @getFirstPositionForItem(@selectedItem)
+
+  getFirstPositionForItem: (item) ->
+    row = @getRowForItem(item)
+    column = @getFirstColumnForItem(item)
     new Point(row, column)
 
   getPointForSelectedItemAtColumn: (column) ->
@@ -155,8 +159,6 @@ class Items
   selectEqualLocationItem: (item) ->
     if item = @findEqualLocationItem(item)
       @selectItem(item)
-      unless @isAtPrompt()
-        @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
 
   selectItemInDirection: (point, direction) ->
     itemToSelect = null

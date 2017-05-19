@@ -30,8 +30,7 @@ class Highlighter
       @markerLayerForUi.markBufferRange(range, invalidate: 'inside')
 
   constructor: (@ui) ->
-    @provider = @ui.provider
-    @needHighlight = @provider.itemHaveRange
+    {@boundToSingleFile, @itemHaveRange, @itemHaveRange, @provider} = @ui
 
     @markerLayerByEditor = new Map()
     @decorationLayerByEditor = new Map()
@@ -39,32 +38,20 @@ class Highlighter
     @subscriptions = new CompositeDisposable
     subscribe = (disposable) => @subscriptions.add(disposable)
 
-    if @needHighlight
+    if @itemHaveRange
       subscribe @ui.onDidRefresh =>
-        # console.log 'did-refresh'
-        unless @ui.grammar.searchRegex?
-          @highlightNarrowEditor()
-
-        if @provider.boundToSingleFile
-          @refreshAll()
-
-      unless @provider.boundToSingleFile
-        subscribe @ui.onDidStopRefreshing =>
-          # console.log 'did-stop-refresh'
-          @refreshAll()
-          item = @ui.items.selectedItem
-          if item? and @ui.isActive()
-            @highlightCurrentForEditor(@ui.provider.editor, item)
+        @highlightNarrowEditor() unless @ui.grammar.searchRegex?
+        @refreshAll()
 
     subscribe @ui.onDidConfirm =>
       @clearCurrentAndLineMarker()
 
     subscribe @ui.onDidPreview ({editor, item}) =>
       @clearCurrentAndLineMarker()
-      if @needHighlight
-        @highlight(editor)
-        @highlightCurrentForEditor(editor, item)
       @drawLineMarker(editor, item)
+      if @itemHaveRange
+        @highlightEditor(editor)
+        @highlightCurrentItem(editor, item)
 
   setRegExp: (@regExp) ->
 
@@ -79,7 +66,8 @@ class Highlighter
   # -------------------------
   refreshAll: ->
     @clear()
-    @highlight(editor) for editor in getVisibleEditors()
+    for editor in getVisibleEditors() when not isNarrowEditor(editor)
+      @highlightEditor(editor)
 
   clear: ->
     @markerLayerByEditor.forEach (markerLayer) -> markerLayer.destroy()
@@ -89,28 +77,27 @@ class Highlighter
     @decorationLayerByEditor.clear()
 
   decorationOptions = {type: 'highlight', class: 'narrow-match'}
-  highlight: (editor) ->
-    # console.count 'highlight'
+  highlightEditor: (editor) ->
     return unless @regExp
     return if @regExp.source is '.' # Avoid uselessly highlight all character in buffer.
     return if @markerLayerByEditor.has(editor)
-    return if isNarrowEditor(editor)
-    return if @provider.boundToSingleFile and editor isnt @provider.editor
+    return if @boundToSingleFile and editor isnt @provider.editor
 
+    markerLayer = editor.addMarkerLayer()
+    decorationLayer = editor.decorateMarkerLayer(markerLayer, decorationOptions)
+    @markerLayerByEditor.set(editor, markerLayer)
+    @decorationLayerByEditor.set(editor, decorationLayer)
     items = @ui.getNormalItemsForEditor(editor)
-    if items.length
-      @markerLayerByEditor.set(editor, markerLayer = editor.addMarkerLayer())
-      @decorationLayerByEditor.set(editor, editor.decorateMarkerLayer(markerLayer, decorationOptions))
-      for item in items when range = item.range
-        markerLayer.markBufferRange(range, invalidate: 'inside')
+    for item in items when range = item.range
+      markerLayer.markBufferRange(range, invalidate: 'inside')
 
   clearCurrentAndLineMarker: ->
     @clearLineMarker()
-    @clearCurrent()
+    @clearCurrentItemHiglight()
 
   # modify current item decoration
   # -------------------------
-  highlightCurrentForEditor: (editor, {range}) ->
+  highlightCurrentItem: (editor, {range}) ->
     # console.trace()
     startBufferRow = range.start.row
     if decorationLayer = @decorationLayerByEditor.get(editor)
@@ -118,15 +105,15 @@ class Highlighter
         if marker.getBufferRange().isEqual(range)
           newProperties = {type: 'highlight', class: 'narrow-match current'}
           decorationLayer.setPropertiesForMarker(marker, newProperties)
-          @selectedMarkerEditor = editor
-          @selectedItemMarker = marker
+          @currentItemEditor = editor
+          @currentItemMarker = marker
 
-  clearCurrent: ->
-    if @selectedMarkerEditor?
-      if decorationLayer = @decorationLayerByEditor.get(@selectedMarkerEditor)
-        decorationLayer.setPropertiesForMarker(@selectedItemMarker, null)
-      @selectedMarkerEditor = null
-      @selectedItemMarker = null
+  clearCurrentItemHiglight: ->
+    if @currentItemEditor?
+      if decorationLayer = @decorationLayerByEditor.get(@currentItemEditor)
+        decorationLayer.setPropertiesForMarker(@currentItemMarker, null)
+      @currentItemEditor = null
+      @currentItemMarker = null
 
   # line marker
   # -------------------------
@@ -150,7 +137,7 @@ class Highlighter
     @flashMarker = null
 
   flashItem: (editor, item) ->
-    return unless @needHighlight
+    return unless @itemHaveRange
     @clearFlashMarker()
     @flashMarker = editor.markBufferRange(item.range)
     editor.decorateMarker(@flashMarker, type: 'highlight', class: 'narrow-match flash')

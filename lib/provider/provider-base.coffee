@@ -207,7 +207,6 @@ class ProviderBase
     @subscriptions.dispose()
     @editorSubscriptions.dispose()
     if @needRestoreEditorState
-      console.log 'restoring'
       @restoreEditorState()
     {@editor, @editorSubscriptions} = {}
 

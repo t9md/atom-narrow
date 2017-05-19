@@ -20,7 +20,6 @@ getMemoizedRelativizeFilePath = ->
   return (filePath) ->
     cache[filePath] ?= relativizeFilePath(filePath)
 
-
 # Since underscore-plus not support _.findIndex
 findIndexBy = (items, fn) ->
   for item, i in items when fn(item)
@@ -78,7 +77,7 @@ injectLineHeader = (state) ->
 
 spliceItemsForFilePath = (state) ->
   {cachedNormalItems, spliceFilePath, items} = state
-  if cachedNormalItems? and filePath?
+  if cachedNormalItems? and spliceFilePath?
     return {items: replaceOrAppendItemsForFilePath(spliceFilePath, cachedNormalItems, items)}
   else
     null
