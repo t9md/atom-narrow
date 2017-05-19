@@ -1,5 +1,6 @@
 _ = require 'underscore-plus'
 path = require('path')
+{getMemoizedRelativizeFilePath} = require './utils'
 
 # Helper
 # -------------------------
@@ -14,11 +15,6 @@ getLineHeaderForItem = (point, maxLineWidth, maxColumnWidth) ->
     padding = " ".repeat(maxColumnWidth - columnText.length)
     lineHeader = "#{lineHeader}:#{padding}#{columnText}"
   lineHeader + ": "
-
-getMemoizedRelativizeFilePath = ->
-  cache = {}
-  return (filePath) ->
-    cache[filePath] ?= relativizeFilePath(filePath)
 
 # Since underscore-plus not support _.findIndex
 findIndexBy = (items, fn) ->

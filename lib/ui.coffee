@@ -684,7 +684,10 @@ class Ui
 
       if (not selectFirstItem) and oldSelectedItem?
         @items.selectEqualLocationItem(oldSelectedItem)
-        @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn) unless @isAtPrompt()
+        unless @items.hasSelectedItem()
+          @items.selectFirstNormalItem()
+        unless @isAtPrompt()
+          @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
       else
         # when originally selected item cannot be selected because of excluded.
         @items.selectFirstNormalItem()
@@ -894,7 +897,9 @@ class Ui
     return unless item = @items.getSelectedItem()
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
     @provider.confirmed(item).then (editor) =>
-      if needDestroy or not editor?
+      return unless editor?
+
+      if needDestroy
         # when editor.destroyed here, setScrollTop request done at @provider.confirmed is
         # not correctly respected unless updateSyncing here.
         editor.element.component.updateSync()

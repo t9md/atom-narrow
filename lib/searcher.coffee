@@ -60,6 +60,7 @@ class Searcher
   constructor: (@searchOptions) ->
     @emitter = new Emitter
     @runningProcesses = []
+    @sortLines = atom.inSpecMode()
 
   setCommand: (@command) ->
 
@@ -119,6 +120,14 @@ class Searcher
   itemizeProject: (project, data) ->
     items = []
     rangeHint = @searchOptions.pick('searchUseRegex', 'searchTerm', 'searchRegex')
-    for line in data.split(LineEndingRegExp) when match = line.match(RegExpForOutPutLine)
+    lines = data.split(LineEndingRegExp)
+    if @sortLines
+      # FIXME: This is quick and easy workaround just pass write spec easily.
+      # If lines are not sorted, writing spec become very difficult.
+      # But this sorting is NOT work if single file result comes in separate data.
+      # Currently spec's sample text is small enough.
+      lines.sort()
+
+    for line in lines when match = line.match(RegExpForOutPutLine)
       items.push(new Item(match, project, rangeHint))
     items

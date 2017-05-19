@@ -36,17 +36,16 @@ class Highlighter
     @decorationLayerByEditor = new Map()
 
     @subscriptions = new CompositeDisposable
-    subscribe = (disposable) => @subscriptions.add(disposable)
 
     if @itemHaveRange
-      subscribe @ui.onDidRefresh =>
+      @subscriptions.add @ui.onDidRefresh =>
         @highlightNarrowEditor() unless @ui.grammar.searchRegex?
         @refreshAll()
 
-    subscribe @ui.onDidConfirm =>
+    @subscriptions.add @ui.onDidConfirm =>
       @clearCurrentAndLineMarker()
 
-    subscribe @ui.onDidPreview ({editor, item}) =>
+    @subscriptions.add @ui.onDidPreview ({editor, item}) =>
       @clearCurrentAndLineMarker()
       @drawLineMarker(editor, item)
       if @itemHaveRange

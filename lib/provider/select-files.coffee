@@ -42,4 +42,5 @@ class SelectFiles extends ProviderBase
       @clientUi.resetQueryForSelectFiles(queryForSelectFiles)
       queryByProviderName[@clientUi.provider.name] = queryForSelectFiles
 
+    @ui.editor.destroy()
     Promise.resolve(null) # HACK to noop
