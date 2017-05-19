@@ -40,9 +40,6 @@ class SelectFiles extends ProviderBase
     if @clientUi.isAlive()
       queryForSelectFiles = @ui.lastQuery
       @clientUi.resetQueryForSelectFiles(queryForSelectFiles)
-      {inspect} = require 'util'
-      p = (args...) -> console.log inspect(args...)
-      p {queryForSelectFiles}
       queryByProviderName[@clientUi.provider.name] = queryForSelectFiles
 
     Promise.resolve(null) # HACK to noop

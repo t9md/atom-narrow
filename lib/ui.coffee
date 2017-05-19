@@ -78,8 +78,6 @@ class Ui
   queryForSelectFiles: null
   delayedRefreshTimeout: null
 
-  runningGetItems: []
-
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
 
@@ -364,8 +362,8 @@ class Ui
     @refresh().then =>
       if @provider.needRevealOnStart()
         @syncToEditor(@provider.editor)
-        @suppressPreview = true
         if @items.hasSelectedItem()
+          @suppressPreview = true
           @moveToSearchedWordOrBeginningOfSelectedItem()
           @suppressPreview = false
           @preview()?.then? => @flashCursorLine()
@@ -447,7 +445,6 @@ class Ui
     # NOTE: Prevent delayed-refresh on destroyed editor.
     @cancelDelayedRefresh()
     @refreshDisposables?.dispose()
-    @stopUpdateItemCount()
 
     @constructor.unregister(this)
     @highlighter.destroy()
@@ -582,7 +579,6 @@ class Ui
     return null
 
   reduceItems: (items, state) ->
-    @reducers ?= @getReducers()
     @reducers.reduce (state, reducer) ->
       Object.assign(state, reducer(state))
     , Object.assign(state, {items})
@@ -606,20 +602,10 @@ class Ui
 
   startUpdateItemCount: ->
     updateItemCount = => @controlBar.updateElements(itemCount: @items.getCount())
-    @updateItemCountIntervalID = setInterval(updateItemCount, 500)
-
-  stopUpdateItemCount: ->
-    if @updateItemCountIntervalID?
-      clearInterval(@updateItemCountIntervalID)
-      @updateItemCountIntervalID = null
-
-  updateFilePathsForAllItems: (allItems) =>
-    @filePathsForAllItems = []
-    fileSet = allItems.reduce (set, item) ->
-      set.add(item.filePath)
-    , new Set
-    fileSet.forEach (value) =>
-      @filePathsForAllItems.push(value)
+    intervalID = setInterval(updateItemCount, 500)
+    new Disposable ->
+      clearInterval(intervalID)
+      intervalID = null
 
   getFilePathsForAllItems: ->
     @filePathsForAllItems
@@ -639,8 +625,8 @@ class Ui
     @refreshDisposables?.dispose()
     @refreshDisposables = new CompositeDisposable
     @filePathsForAllItems = []
-    @emitWillRefresh()
     @highlighter.clearCurrentAndLineMarker()
+    @emitWillRefresh()
 
     if @query?
       @refreshDisposables.add(@updateRefreshRunningElementDelayed())
@@ -662,10 +648,9 @@ class Ui
 
     [resolveGetItem, oldSelectedItem, oldColumn] = []
     grammarUpdated = false
+    getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
 
-    @startUpdateItemCount()
-    @refreshDisposables.add new Disposable =>
-      @stopUpdateItemCount()
+    @refreshDisposables.add @startUpdateItemCount()
 
     state = @createStateToReduce()
     @refreshDisposables.add @onDidUpdateItems (items) =>
@@ -676,8 +661,6 @@ class Ui
           @grammar.update(state.filterSpec?.include) # No need to highlight excluded items
           grammarUpdated = true
       @reduceItems(items, state)
-
-    getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
 
     @refreshDisposables.add @onFinishUpdateItems =>
       # If no items found after request, we should clear item area.
@@ -691,12 +674,11 @@ class Ui
       @refreshDisposables.dispose()
       @refreshDisposables = null
 
-      unless @boundToSingleFile and state.allItems.length
-        @updateFilePathsForAllItems(state.allItems)
+      unless @boundToSingleFile
+        @filePathsForAllItems = _.chain(state.allItems).pluck('filePath').uniq().value()
 
       if @supportCacheItems
         @cachedItems = state.allItems
-        # console.log 'cached', @cachedItems.length
 
       if (not selectFirstItem) and oldSelectedItem?
         if item = findEqualLocationItem(@items.getNormalItems(), oldSelectedItem)
@@ -757,31 +739,31 @@ class Ui
     return {renderStartPosition}
 
   observeChange: ->
+    onPrompt = (range) =>
+      range.intersectsWith(@getPromptRange())
+    isQueryModified = (newRange, oldRange) ->
+      (not newRange.isEmpty() and onPrompt(newRange)) or
+        (not oldRange.isEmpty() and onPrompt(oldRange))
+
+    destroyPromptSelection = =>
+      selectionDestroyed = false
+      for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
+        selectionDestroyed = true
+        selection.destroy()
+      @controlBar.show() if selectionDestroyed
+      @withIgnoreChange => @setQuery(@lastQuery) # Recover query
+
     @editor.buffer.onDidChange (event) =>
-      {newRange, oldRange, newText, oldText} = event
       return if @ignoreChange
-
-      promptRange = @getPromptRange()
-      onPrompt = (range) -> range.intersectsWith(promptRange)
-      isQueryModified = (newRange, oldRange) ->
-        (not newRange.isEmpty() and onPrompt(newRange)) or (not oldRange.isEmpty() and onPrompt(oldRange))
-
-      if isQueryModified(newRange, oldRange)
-        # is Query changed
+      if isQueryModified(event.newRange, event.oldRange)
         if @editor.hasMultipleCursors()
           # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
-          selectionDestroyed = false
-          for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
-            selectionDestroyed = true
-            selection.destroy()
-          @controlBar.show() if selectionDestroyed
-          @withIgnoreChange => @setQuery(@lastQuery) # Recover query
-
+          @destroyPromptSelection()
         else
-          if @lastQuery.trim() is @getQuery().trim()
-            return
+          return if @lastQuery.trim() is @getQuery().trim()
           @refreshWithDelay()
       else
+        # Item area modified, direct editor
         @setModifiedState(true)
 
   # Delayed-refresh on query-change event, dont use this for other purpose.
@@ -790,11 +772,14 @@ class Ui
     if @useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
       delay = @provider.getConfig('refreshDelayOnSearchTermChange')
     else
-      delay = if @boundToSingleFile then 0 else 150
+      delay = if @boundToSingleFile then 0 else 100
 
     refreshThenPreview = =>
+      @delayedRefreshTimeout = null
       @refresh(selectFirstItem: true).then =>
-        @preview() if @autoPreviewOnQueryChange and @isActive()
+        if @autoPreviewOnQueryChange and @isActive()
+          @preview()
+
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 
   cancelDelayedRefresh: ->
@@ -835,7 +820,29 @@ class Ui
         if headerWasSkipped
           @moveToSelectedItem({column: goalColumn})
         @emitDidMoveToItemArea() if @isPromptRow(oldRow)
-        @preview() if @autoPreview
+        if @autoPreview
+          @previewWithDelay()
+
+  # itemHaveAlreadyOpened: ->
+  selectedItemFileHaveAlreadyOpened: ->
+    if @boundToSingleFile
+      true
+    else
+      @provider.getPane()?.itemForURI(@items.getSelectedItem().filePath)
+
+  previewWithDelay: ->
+    @cancelDelayedPreview()
+    delay = if @selectedItemFileHaveAlreadyOpened() then 0 else 20
+    preview = =>
+      @delayedPreviewTimeout = null
+      @preview()
+
+    @delayedPreviewTimeout = setTimeout(preview, delay)
+
+  cancelDelayedPreview: ->
+    if @delayedPreviewTimeout?
+      clearTimeout(@delayedPreviewTimeout)
+      @delayedPreviewTimeout = null
 
   syncToEditor: (editor) ->
     return if @inPreview
@@ -888,6 +895,9 @@ class Ui
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
     @provider.confirmed(item).then (editor) =>
       if needDestroy or not editor?
+        # when editor.destroyed here, setScrollTop request done at @provider.confirmed is
+        # not correctly respected unless updateSyncing here.
+        editor.element.component.updateSync()
         @editor.destroy()
       else
         @highlighter.flashItem(editor, item) if flash
@@ -1023,7 +1033,7 @@ class Ui
     return if @editorLastRow isnt @editor.getLastBufferRow()
 
     # Ensure all item have valid line header
-    if @provider.showLineHeader
+    if @showLineHeader
       itemHaveOriginalLineHeader = (item) =>
         @editor.lineTextForBufferRow(@items.getRowForItem(item)).startsWith(item._lineHeader)
       unless @items.getNormalItems().every(itemHaveOriginalLineHeader)

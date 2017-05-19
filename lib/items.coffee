@@ -20,13 +20,6 @@ class Items
   destroy: ->
     @items = null
 
-  setItems: (items) ->
-    console.time "setItem"
-    # @items = null
-    @items = [@promptItem].concat(items)
-    console.timeEnd "setItem"
-    @reset()
-
   addItems: (items) ->
     for item in items
       @items.push(item)
@@ -89,9 +82,6 @@ class Items
 
   getItemForRow: (row) ->
     @items[row]
-
-  getFileHeaderItems: ->
-    @items.filter (item) -> item.fileHeader
 
   getNormalItems: (filePath=null) ->
     if filePath?

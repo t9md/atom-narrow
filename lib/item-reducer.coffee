@@ -63,13 +63,13 @@ insertHeader = (state) ->
 
     if projectName not of projectHeadersInserted
       header = "# #{projectName}"
-      items.push({header, projectName, projectHeader: true, skip: true})
+      items.push({header, projectName, skip: true})
       projectHeadersInserted[projectName] = true
 
     filePath = item.filePath
     if filePath not of fileHeadersInserted
       header = "## " + atom.project.relativize(filePath)
-      items.push({header, projectName, filePath, fileHeader: true, skip: true})
+      items.push({header, projectName, filePath, skip: true})
       fileHeadersInserted[filePath] = true
 
     items.push(item)

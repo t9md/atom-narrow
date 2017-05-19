@@ -27,14 +27,6 @@ class Search extends ProviderBase
     @searchOptions = new SearchOptions()
     @searcher = new Searcher(@searchOptions)
 
-  projectHeaderFor: (projectName) ->
-    header = "# #{projectName}"
-    {header, projectName, projectHeader: true, skip: true}
-
-  filePathHeaderFor: (projectName, filePath) ->
-    header = "## " + atom.project.relativize(filePath)
-    {header, projectName, filePath, fileHeader: true, skip: true}
-
   searchFilePath: (filePath) ->
     if atom.project.contains(filePath)
       @searcher.searchFilePath(filePath, @updateItems, @finishUpdateItems)

@@ -206,7 +206,9 @@ class ProviderBase
       ProviderBase.saveState(this)
     @subscriptions.dispose()
     @editorSubscriptions.dispose()
-    @restoreEditorState() if @needRestoreEditorState
+    if @needRestoreEditorState
+      console.log 'restoring'
+      @restoreEditorState()
     {@editor, @editorSubscriptions} = {}
 
   # When narrow was invoked from existing narrow-editor.
@@ -257,8 +259,10 @@ class ProviderBase
   confirmed: (item) ->
     @needRestoreEditorState = false
     @openFileForItem(item, activatePane: true).then (editor) ->
-      editor.setCursorBufferPosition(item.point, autoscroll: false)
-      editor.scrollToBufferPosition(item.point, center: true)
+      point = item.point
+      editor.setCursorBufferPosition(point, autoscroll: false)
+      editor.unfoldBufferRow(point.row)
+      editor.scrollToBufferPosition(point, center: true)
       return editor
 
   # View
