@@ -1,5 +1,5 @@
 ProviderBase = require './provider-base'
-{getProjectPaths, replaceOrAppendItemsForFilePath} = require '../utils'
+{getProjectPaths} = require '../utils'
 Searcher = require '../searcher'
 SearchOptions = require '../search-options'
 path = require 'path'

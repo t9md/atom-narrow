@@ -1,6 +1,5 @@
 {Point, Range} = require 'atom'
 ProviderBase = require './provider-base'
-{replaceOrAppendItemsForFilePath} = require '../utils'
 SearchOptions = require '../search-options'
 
 module.exports =

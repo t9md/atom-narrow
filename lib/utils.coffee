@@ -210,18 +210,6 @@ findEqualLocationItem = (items, itemToFind) ->
   _.detect normalItems, ({point, filePath}) ->
     point.isEqual(itemToFind.point) and (filePath is itemToFind.filePath)
 
-# Since underscore-plus not support _.findIndex
-findIndexBy = (items, fn) ->
-  for item, i in items when fn(item)
-    return i
-
-findLastIndexBy = (items, fn) ->
-  for item, i in items by -1 when fn(item)
-    return i
-
-findFirstAndLastIndexBy = (items, fn) ->
-  [findIndexBy(items, fn), findLastIndexBy(items, fn)]
-
 toMB = (num) ->
   Math.floor(num / (1024 * 1024))
 
@@ -249,19 +237,6 @@ startMeasureMemory = (subject, simple=false) ->
       console.timeEnd(subject)
       console.table(table)
 
-# Replace old items for filePath or append if items are new filePath.
-replaceOrAppendItemsForFilePath = (filePath, oldItems, newItems) ->
-  amountOfRemove = 0
-  indexToInsert = oldItems.length - 1
-
-  [firstIndex, lastIndex] = findFirstAndLastIndexBy(oldItems, (item) -> item.filePath is filePath)
-  if firstIndex? and lastIndex?
-    indexToInsert = firstIndex
-    amountOfRemove = lastIndex - firstIndex + 1
-
-  oldItems.splice(indexToInsert, amountOfRemove, newItems...)
-  oldItems
-
 getProjectPaths = (editor) ->
   paths = null
   if editor?
@@ -284,11 +259,6 @@ suppressEvent = (event) ->
 relativizeFilePath = (filePath) ->
   [projectPath, relativeFilePath] = atom.project.relativizePath(filePath)
   path.join(path.basename(projectPath), relativeFilePath)
-
-getMemoizedRelativizeFilePath = ->
-  cache = {}
-  return (filePath) ->
-    cache[filePath] ?= relativizeFilePath(filePath)
 
 module.exports = {
   getNextAdjacentPaneForPane
@@ -316,11 +286,8 @@ module.exports = {
   isNormalItem
   compareByPoint
   findEqualLocationItem
-  findFirstAndLastIndexBy
-  replaceOrAppendItemsForFilePath
   getProjectPaths
   suppressEvent
   startMeasureMemory
   relativizeFilePath
-  getMemoizedRelativizeFilePath
 }

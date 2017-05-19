@@ -8,6 +8,7 @@ module.exports =
 class Items
   selectedItem: null
   previouslySelectedItem: null
+  cachedItems: null
 
   onDidChangeSelectedItem: (fn) -> @emitter.on('did-change-selected-item', fn)
   emitDidChangeSelectedItem: (event) -> @emitter.emit('did-change-selected-item', event)
@@ -19,6 +20,11 @@ class Items
 
   destroy: ->
     @items = null
+
+  setCachedItems: (@cachedItems) ->
+
+  clearCachedItems: ->
+    @cachedItems = null
 
   addItems: (items) ->
     for item in items
@@ -141,6 +147,16 @@ class Items
     for item in items by -1 when item.point.isLessThanOrEqual(point)
       return item
     return items[0]
+
+  findEqualLocationItem: (item) ->
+    _.detect @getNormalItems(), ({point, filePath}) ->
+      point.isEqual(item.point) and (filePath is item.filePath)
+
+  selectEqualLocationItem: (item) ->
+    if item = @findEqualLocationItem(item)
+      @selectItem(item)
+      unless @isAtPrompt()
+        @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
 
   selectItemInDirection: (point, direction) ->
     itemToSelect = null

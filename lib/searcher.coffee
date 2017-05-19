@@ -87,7 +87,6 @@ class Searcher
     while bufferedProcess = @runningProcesses.shift()
       cwd = bufferedProcess.options.cwd
       searching = bufferedProcess.args.slice(-1)[0]
-      console.log "Searcher canceled", cwd, searching
       bufferedProcess?.kill()
 
   getArgs: ->

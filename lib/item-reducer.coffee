@@ -1,6 +1,5 @@
 _ = require 'underscore-plus'
 path = require('path')
-{getMemoizedRelativizeFilePath} = require './utils'
 
 # Helper
 # -------------------------
@@ -15,6 +14,36 @@ getLineHeaderForItem = (point, maxLineWidth, maxColumnWidth) ->
     padding = " ".repeat(maxColumnWidth - columnText.length)
     lineHeader = "#{lineHeader}:#{padding}#{columnText}"
   lineHeader + ": "
+
+getMemoizedRelativizeFilePath = ->
+  cache = {}
+  return (filePath) ->
+    cache[filePath] ?= relativizeFilePath(filePath)
+
+
+# Since underscore-plus not support _.findIndex
+findIndexBy = (items, fn) ->
+  for item, i in items when fn(item)
+    return i
+
+findLastIndexBy = (items, fn) ->
+  for item, i in items by -1 when fn(item)
+    return i
+
+# Replace old items for filePath or append if items are new filePath.
+replaceOrAppendItemsForFilePath = (filePath, oldItems, newItems) ->
+  amountOfRemove = 0
+  indexToInsert = oldItems.length - 1
+
+  isSameFilePath = (item) -> item.filePath is filePath
+  firstIndex = findIndexBy(oldItems, isSameFilePath)
+  if firstIndex?
+    lastIndex = findLastIndexBy(oldItems, isSameFilePath)
+    indexToInsert = firstIndex
+    amountOfRemove = lastIndex - firstIndex + 1
+
+  oldItems.splice(indexToInsert, amountOfRemove, newItems...)
+  oldItems
 
 # Reducer
 # -------------------------
@@ -46,6 +75,13 @@ injectLineHeader = (state) ->
     item._lineHeader = getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
 
   return null
+
+spliceItemsForFilePath = (state) ->
+  {cachedNormalItems, spliceFilePath, items} = state
+  if cachedNormalItems? and filePath?
+    return {items: replaceOrAppendItemsForFilePath(spliceFilePath, cachedNormalItems, items)}
+  else
+    null
 
 insertHeader = (state) ->
   return null if state.boundToSingleFile
@@ -98,10 +134,10 @@ filterFilePath = (state) ->
   fileExcluded = before isnt after unless fileExcluded
   return {items, fileExcluded}
 
-# reducers =
 module.exports = {
   injectLineHeader
   insertHeader
+  spliceItemsForFilePath
   collectAllItems
   filterFilePath
 }

@@ -18,7 +18,6 @@ path = require 'path'
   cloneRegExp
   suppressEvent
   startMeasureMemory
-  replaceOrAppendItemsForFilePath
   getCurrentWord
 } = require './utils'
 
@@ -68,7 +67,6 @@ class Ui
   ignoreChange: false
   ignoreCursorMove: false
   destroyed: false
-  cachedItems: null
   lastQuery: ''
   lastSearchTerm: ''
   modifiedState: null
@@ -285,6 +283,7 @@ class Ui
     } = @provider
 
     @reducers = [
+      itemReducer.spliceItemsForFilePath
       itemReducer.injectLineHeader
       itemReducer.collectAllItems
       itemReducer.filterFilePath
@@ -559,8 +558,8 @@ class Ui
     @refresh()
 
   requestItems: (event) ->
-    if @cachedItems?
-      @emitDidUpdateItems(@cachedItems)
+    if @items.cachedItems?
+      @emitDidUpdateItems(@items.cachedItems)
       @emitFinishUpdateItems()
     else
       @provider.getItems(event.filePath)
@@ -581,11 +580,12 @@ class Ui
   reduceItems: (items, state) ->
     @reducers.reduce (state, reducer) ->
       Object.assign(state, reducer(state))
-    , Object.assign(state, {items})
+    , Object.assign(state, {items, reduced: true})
 
   createStateToReduce: ->
     {
-      hasCachedItems: @cachedItems?
+      reduced: false
+      hasCachedItems: @items.cachedItems?
       showLineHeader: @showLineHeader
       showColumn: @showColumnOnLineHeader
       maxRow: @provider.editor.getLastBufferRow() if @boundToSingleFile
@@ -610,81 +610,82 @@ class Ui
   getFilePathsForAllItems: ->
     @filePathsForAllItems
 
-  updateRefreshRunningElementDelayed: ->
-    @editor.getLastCursor().setVisible?(false)
+  updateRefreshRunningElement: =>
+    @controlBar.updateElements(refresh: true)
 
-    updateRefreshRunningElement = => @controlBar.updateElements(refresh: true)
-    timeoutID = setTimeout(updateRefreshRunningElement, 300)
+  updateControlBarRefreshElement: ->
+    if @query?
+      @editor.getLastCursor().setVisible?(false)
+      timeoutID = setTimeout(@updateRefreshRunningElement, 300)
+      new Disposable =>
+        @editor.getLastCursor().setVisible?(true)
+        clearTimeout(timeoutID)
+    else
+      @updateRefreshRunningElement()
+      return new Disposable()
 
-    new Disposable =>
-      @editor.getLastCursor().setVisible?(true)
-      clearTimeout(timeoutID)
+  cancelRefresh: ->
+    if @refreshDisposables?
+      @refreshDisposables.dispose()
+      @refreshDisposables = null
 
   # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
-    @refreshDisposables?.dispose()
+    @cancelRefresh()
     @refreshDisposables = new CompositeDisposable
     @filePathsForAllItems = []
     @highlighter.clearCurrentAndLineMarker()
     @emitWillRefresh()
 
-    if @query?
-      @refreshDisposables.add(@updateRefreshRunningElementDelayed())
-    else
-      @controlBar.updateElements(refresh: true)
+    @refreshDisposables.add(
+      @updateControlBarRefreshElement()
+      @startUpdateItemCount()
+    )
 
     @lastQuery = @getQuery()
     if @useFirstQueryAsSearchTerm
-      searchTerm = @getSearchTermFromQuery()
-      if searchTerm isnt @lastSearchTerm
+      if @lastSearchTerm isnt (searchTerm = @getSearchTermFromQuery())
         @lastSearchTerm = searchTerm
-        @cachedItems = null
+        force = true
 
     if @supportFilePathOnlyItemsUpdate and filePath?
-      cachedNormalItems = @cachedItems?.filter(isNormalItem)
+      cachedNormalItems = @items.cachedItems?.filter(isNormalItem)
 
     if force
-      @cachedItems = null # Invalidate cache
+      @items.clearCachedItems()
 
     [resolveGetItem, oldSelectedItem, oldColumn] = []
     grammarUpdated = false
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
 
-    @refreshDisposables.add @startUpdateItemCount()
-
     state = @createStateToReduce()
+    Object.assign(state, {cachedNormalItems, spliceFilePath: filePath})
+
     @refreshDisposables.add @onDidUpdateItems (items) =>
-      if cachedNormalItems?
-        items = replaceOrAppendItemsForFilePath(filePath, cachedNormalItems, items)
-      else
-        unless grammarUpdated
-          @grammar.update(state.filterSpec?.include) # No need to highlight excluded items
-          grammarUpdated = true
+      unless grammarUpdated
+        @grammar.update(state.filterSpec?.include) # No need to highlight excluded items
+        grammarUpdated = true
       @reduceItems(items, state)
 
     @refreshDisposables.add @onFinishUpdateItems =>
-      # If no items found after request, we should clear item area.
-      # E.g. provider.Search, incrementally update item list on searchTerm change.
-      #  1. editor: found 100 items
-      #  2. editors: found 10 items
-      #  3. editorsX: found 0 items ( We have to update with [] item here!)
-      if state.allItems.length is 0
-        @emitDidUpdateItems([])
-
-      @refreshDisposables.dispose()
-      @refreshDisposables = null
+      # After requestItems, no items sent via @onDidUpdateItems.
+      # manually update with empty items.
+      # e.g.
+      #   1. search `editor` found 100 items
+      #   2. search `editorX` found 0 items (clear items via emitDidUpdateItems([]))
+      @emitDidUpdateItems([]) unless state.reduced
+      @cancelRefresh()
 
       unless @boundToSingleFile
         @filePathsForAllItems = _.chain(state.allItems).pluck('filePath').uniq().value()
 
       if @supportCacheItems
-        @cachedItems = state.allItems
+        @items.setCachedItems(state.allItems)
 
       if (not selectFirstItem) and oldSelectedItem?
-        if item = findEqualLocationItem(@items.getNormalItems(), oldSelectedItem)
-          @items.selectItem(item)
-          unless @isAtPrompt()
-            @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
+        @items.selectEqualLocationItem(oldSelectedItem)
+        unless @isAtPrompt()
+          @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
       else
         # when originally selected item cannot be selected because of excluded.
         @items.selectFirstNormalItem()
