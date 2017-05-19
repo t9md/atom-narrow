@@ -36,10 +36,14 @@ class Symbols extends ProviderBase
       @editor.indentationForBufferRow(row)
 
   getItems: ->
-    return @items if @items?
+    if @items
+      @finishUpdateItems(@items)
+      return
+
     # We show full line text of symbol's line, so just care for which line have symbol.
     filePath = @editor.getPath()
     scopeName = @editor.getGrammar().scopeName
     new TagGenerator(filePath, scopeName).generate().then (tags) =>
       tags = _.uniq(tags, (tag) -> tag.position.row)
       @items = tags.map(@itemForTag.bind(this))
+      @finishUpdateItems(@items)

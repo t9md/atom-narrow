@@ -3,12 +3,13 @@
   isNormalItem
   getValidIndexForList
 } = require './utils'
+_ = require 'underscore-plus'
 
 module.exports =
 class Items
   selectedItem: null
   previouslySelectedItem: null
-  items: []
+  cachedItems: null
 
   onDidChangeSelectedItem: (fn) -> @emitter.on('did-change-selected-item', fn)
   emitDidChangeSelectedItem: (event) -> @emitter.emit('did-change-selected-item', event)
@@ -16,14 +17,24 @@ class Items
   constructor: (@ui) ->
     @promptItem = Object.freeze({_prompt: true, skip: true})
     @emitter = new Emitter
+    @items = []
 
   destroy: ->
+    @items = null
 
-  setItems: (items) ->
-    @items = [@promptItem, items...]
-    @reset()
+  setCachedItems: (@cachedItems) ->
+
+  clearCachedItems: ->
+    @cachedItems = null
+
+  addItems: (items) ->
+    for item in items
+      @items.push(item)
+    @selectedItem = null
+    @previouslySelectedItem = null
 
   reset: ->
+    @items = [@promptItem]
     @selectedItem = null
     @previouslySelectedItem = null
 
@@ -45,9 +56,15 @@ class Items
     @selectItemForRow(@findRowForNormalItem(0, 'next'))
 
   getFirstPositionForSelectedItem: ->
-    row = @getRowForItem(@selectedItem)
-    column = @getFirstColumnForItem(@selectedItem)
+    @getFirstPositionForItem(@selectedItem)
+
+  getFirstPositionForItem: (item) ->
+    row = @getRowForItem(item)
+    column = @getFirstColumnForItem(item)
     new Point(row, column)
+
+  getPointForSelectedItemAtColumn: (column) ->
+    @getFirstPositionForSelectedItem().translate([0, column])
 
   getFirstColumnForItem: (item) ->
     if item._lineHeader?
@@ -75,9 +92,6 @@ class Items
 
   getItemForRow: (row) ->
     @items[row]
-
-  getFileHeaderItems: ->
-    @items.filter (item) -> item.fileHeader
 
   getNormalItems: (filePath=null) ->
     if filePath?
@@ -124,7 +138,7 @@ class Items
     @getItemForRow(row) if row?
 
   findDifferentFileItem: (direction) ->
-    return if @ui.provider.boundToSingleFile
+    return if @ui.boundToSingleFile
     return null unless selectedItem = @getSelectedItem()
     filePath = selectedItem.filePath
     row = @findRowBy @getRowForSelectedItem(), direction, (row) =>
@@ -137,6 +151,14 @@ class Items
     for item in items by -1 when item.point.isLessThanOrEqual(point)
       return item
     return items[0]
+
+  findEqualLocationItem: (item) ->
+    _.detect @getNormalItems(), ({point, filePath}) ->
+      point.isEqual(item.point) and (filePath is item.filePath)
+
+  selectEqualLocationItem: (item) ->
+    if item = @findEqualLocationItem(item)
+      @selectItem(item)
 
   selectItemInDirection: (point, direction) ->
     itemToSelect = null

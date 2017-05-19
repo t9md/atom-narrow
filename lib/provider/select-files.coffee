@@ -1,10 +1,10 @@
 # This is META provider, invoked from UI.
 # Provide narrow-ui to select narrowing target files.
 {Point} = require 'atom'
-path = require 'path'
 _ = require 'underscore-plus'
 ProviderBase = require './provider-base'
 settings = require '../settings'
+{relativizeFilePath} = require '../utils'
 
 queryByProviderName = {}
 
@@ -18,9 +18,9 @@ class SelectFiles extends ProviderBase
 
   @getLastQuery: (providerName) ->
     if settings.get('SelectFiles.rememberQuery')
-      queryByProviderName[providerName]
+      queryByProviderName[providerName] ? ''
     else
-      null
+      ''
 
   initialize: ->
     {@clientUi} = @options
@@ -28,18 +28,19 @@ class SelectFiles extends ProviderBase
       @clientUi.focus(autoPreview: false) if @clientUi.isAlive()
 
   getItems: ->
-    @clientUi.getItemsForSelectFiles()
+    filePaths = @clientUi.getFilePathsForAllItems()
+    @finishUpdateItems filePaths.map (filePath) ->
+      {
+        text: relativizeFilePath(filePath)
+        filePath: filePath
+        point: new Point(0, 0)
+      }
 
   confirmed: ->
     if @clientUi.isAlive()
-      @clientUi.focus(autoPreview: false)
-      @clientUi.setQueryForSelectFiles(@ui.lastQuery)
-      @clientUi.refresh()
+      queryForSelectFiles = @ui.lastQuery
+      @clientUi.resetQueryForSelectFiles(queryForSelectFiles)
+      queryByProviderName[@clientUi.provider.name] = queryForSelectFiles
 
+    @ui.editor.destroy()
     Promise.resolve(null) # HACK to noop
-
-  destroy: ->
-    if @clientUi.isAlive()
-      queryByProviderName[@clientUi.provider.name] = @ui.lastQuery
-
-    super

@@ -20,6 +20,7 @@
   # Follow find-and-replace's key-setting
   'alt-cmd-w': 'narrow-ui:toggle-search-whole-word'
   'alt-cmd-c': 'narrow-ui:toggle-search-ignore-case'
+  'alt-cmd-/': 'narrow-ui:toggle-search-use-regex'
 
 'atom-text-editor.narrow.narrow-editor:not(.read-only):not(.autocomplete-active)[data-grammar="source narrow"]':
   'enter': 'core:confirm'
@@ -79,6 +80,3 @@
   'ctrl-l': 'vim-mode-plus-user:narrow:scan'
   'cmd-/': 'vim-mode-plus-user:narrow:search'
   'ctrl-cmd-/': 'vim-mode-plus-user:narrow:search-current-project'
-
-'atom-text-editor.narrow-input':
-  'ctrl-/': 'narrow-input:toggle-use-regex'

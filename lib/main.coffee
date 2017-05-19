@@ -1,25 +1,44 @@
-{CompositeDisposable} = require 'atom'
+{CompositeDisposable, Disposable} = require 'atom'
 settings = require './settings'
 Ui = require './ui'
 globalSubscriptions = require './global-subscriptions'
 ProviderBase = require "./provider/provider-base"
 
-{isNarrowEditor, getVisibleEditors, isTextEditor} = require './utils'
+{isNarrowEditor, getVisibleEditors, isTextEditor, suppressEvent} = require './utils'
 
 module.exports =
   config: settings.config
   lastFocusedNarrowEditor: null
-  providers: []
 
   activate: ->
-    @subscriptions = new CompositeDisposable
+    @subscriptions = subs = new CompositeDisposable
     settings.removeDeprecated()
 
-    @subscriptions.add(@observeStopChangingActivePaneItem())
-    @subscriptions.add(@registerCommands())
-    @subscriptions.add atom.commands.add 'atom-text-editor', 'dblclick', =>
+    subs.add(@observeStopChangingActivePaneItem())
+    subs.add(@registerCommands())
+
+    onMouseDown = @onMouseDown.bind(this)
+    subs.add atom.workspace.observeTextEditors (editor) ->
+      editor.element.addEventListener('mousedown', onMouseDown, true)
+      removeListener = -> editor.element.removeEventListener('mousedown', onMouseDown, true)
+      subs.add(sub = new Disposable(removeListener))
+      editor.onDidDestroy -> subs.remove(sub)
+
+  isControlBarElementClick: (event) ->
+    editor = event.currentTarget.getModel()
+    Ui.get(editor)?.controlBar.containsElement(event.target)
+
+  onMouseDown: (event) ->
+    return unless event.detail is 2 # handle double click only
+
+    if not Ui.getSize()
       if settings.get('Search.startByDoubleClick')
-        @narrow('search', currentWord: true, pending: true)
+        @narrow('search', queryCurrentWord: true, focus: false)
+        suppressEvent(event)
+    else
+      if settings.get('queryCurrentWordByDoubleClick') and not @isControlBarElementClick(event)
+        suppressEvent(event)
+        @getUi()?.queryCurrentWord()
 
   deactivate: ->
     globalSubscriptions.dispose()
@@ -31,11 +50,12 @@ module.exports =
       # Shared commands
       'narrow:focus': => @getUi()?.toggleFocus()
       'narrow:focus-prompt': => @getUi()?.focusPrompt()
-      'narrow:refresh': => @getUi()?.refreshManually(force: true)
+      'narrow:refresh': => @getUi()?.refreshManually()
       'narrow:close': => @getUi(skipProtected: true)?.destroy()
-      'narrow:next-item': => @getUi()?.nextItem()
-      'narrow:previous-item': => @getUi()?.previousItem()
+      'narrow:next-item': => @getUi()?.confirmItemForDirection('next')
+      'narrow:previous-item': => @getUi()?.confirmItemForDirection('previous')
       'narrow:reopen': => @reopen()
+      'narrow:query-current-word': => @getUi()?.queryCurrentWord()
 
       # Providers
       # -------------------------
@@ -59,13 +79,13 @@ module.exports =
 
       # search family
       'narrow:search': => @narrow('search')
-      'narrow:search-by-current-word': => @narrow('search', searchCurrentWord: true)
-
+      'narrow:search-by-current-word': => @narrow('search', queryCurrentWord: true)
+      'narrow:search-by-current-word-without-focus': => @narrow('search', queryCurrentWord: true, focus: false)
       'narrow:search-current-project': => @narrow('search', currentProject: true)
-      'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, searchCurrentWord: true)
+      'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, queryCurrentWord: true)
 
       'narrow:atom-scan': => @narrow('atom-scan')
-      'narrow:atom-scan-by-current-word': => @narrow('atom-scan', searchCurrentWord: true)
+      'narrow:atom-scan-by-current-word': => @narrow('atom-scan', queryCurrentWord: true)
 
       'narrow:toggle-search-start-by-double-click': -> settings.toggle('Search.startByDoubleClick')
 
@@ -81,11 +101,10 @@ module.exports =
         # When non-narrow-editor editor was activated
         # no longer restore editor's state at cancel.
         ui.provider.needRestoreEditorState = false
-
         ui.startSyncToEditor(item) unless ui.isSamePaneItem(item)
 
         ui.highlighter.clearCurrentAndLineMarker()
-        ui.highlighter.highlight(item)
+        ui.highlighter.highlightEditor(item)
 
   getUi: ({skipProtected}={}) ->
     if ui = Ui.get(@lastFocusedNarrowEditor)
@@ -133,6 +152,6 @@ module.exports =
 
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
       'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', query: confirmSearch())
-      'vim-mode-plus-user:narrow:search': => @narrow('search', search: confirmSearch())
-      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', search: confirmSearch())
-      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', search: confirmSearch(), currentProject: true)
+      'vim-mode-plus-user:narrow:search': => @narrow('search', query: confirmSearch())
+      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', query: confirmSearch())
+      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', query: confirmSearch(), currentProject: true)

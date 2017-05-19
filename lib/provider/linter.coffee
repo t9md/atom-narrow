@@ -26,12 +26,12 @@ class Linter extends ProviderBase
     for filePath, items of _.groupBy(items, ({filePath}) -> filePath)
       promises.push(injectLineText(filePath, items))
 
-    Promise.all(promises).then (values) ->
+    Promise.all(promises).then (values) =>
       items = []
       for item in _.flatten(values)
         items.push(header: "### #{item.info}", filePath: item.filePath, skip: true, item: item)
         items.push(item)
-      items
+      @finishUpdateItems(items)
 
   filterItems: (items, filterSpec) ->
     items = super

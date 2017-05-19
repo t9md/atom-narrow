@@ -1,6 +1,8 @@
+{inspect} = require 'util'
+p = (args...) -> console.log inspect(args...)
 _ = require 'underscore-plus'
 path = require 'path'
-{Point, Range, CompositeDisposable, Emitter} = require 'atom'
+{Point, Range, CompositeDisposable, Disposable, Emitter} = require 'atom'
 {
   getNextAdjacentPaneForPane
   getPreviousAdjacentPaneForPane
@@ -9,18 +11,19 @@ path = require 'path'
   setBufferRow
   paneForItem
   isDefinedAndEqual
-  injectLineHeader
   ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
   isNormalItem
   findEqualLocationItem
-  getItemsWithHeaders
-  getItemsWithoutUnusedHeader
   cloneRegExp
+  suppressEvent
+  startMeasureMemory
+  getCurrentWord
 } = require './utils'
+
+itemReducer = require './item-reducer'
 settings = require './settings'
 Grammar = require './grammar'
-getFilterSpecForQuery = require './get-filter-spec-for-query'
 Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
@@ -64,8 +67,8 @@ class Ui
   ignoreChange: false
   ignoreCursorMove: false
   destroyed: false
-  cachedItems: null
   lastQuery: ''
+  lastSearchTerm: ''
   modifiedState: null
   readOnly: false
   protected: false
@@ -75,6 +78,12 @@ class Ui
 
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
+
+  onDidUpdateItems: (fn) -> @emitter.on('did-update-items', fn)
+  emitDidUpdateItems: (event) -> @emitter.emit('did-update-items', event)
+
+  onFinishUpdateItems: (fn) -> @emitter.on('finish-update-items', fn)
+  emitFinishUpdateItems: -> @emitter.emit('finish-update-items')
 
   onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
   emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
@@ -120,21 +129,23 @@ class Ui
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:protect': => @toggleProtected()
       'narrow-ui:preview-item': => @preview()
-      'narrow-ui:preview-next-item': => @previewNextItem()
-      'narrow-ui:preview-previous-item': => @previewPreviousItem()
-      'narrow-ui:toggle-auto-preview': => @toggleAutoPreview()
+      'narrow-ui:preview-next-item': => @previewItemForDirection('next')
+      'narrow-ui:preview-previous-item': => @previewItemForDirection('previous')
+      'narrow-ui:toggle-auto-preview': @toggleAutoPreview
       'narrow-ui:move-to-prompt-or-selected-item': => @moveToPromptOrSelectedItem()
       'narrow-ui:move-to-prompt': => @moveToPrompt()
       'narrow-ui:start-insert': => @setReadOnly(false)
       'narrow-ui:stop-insert': => @setReadOnly(true)
       'narrow-ui:update-real-file': => @updateRealFile()
       'narrow-ui:exclude-file': => @excludeFile()
-      'narrow-ui:select-files': => @selectFiles()
+      'narrow-ui:select-files': @selectFiles
       'narrow-ui:clear-excluded-files': => @clearExcludedFiles()
-      'narrow-ui:move-to-next-file-item': => @moveToNextFileItem()
-      'narrow-ui:move-to-previous-file-item': => @moveToPreviousFileItem()
-      'narrow-ui:toggle-search-whole-word': => @toggleSearchWholeWord()
-      'narrow-ui:toggle-search-ignore-case': => @toggleSearchIgnoreCase()
+      'narrow-ui:move-to-next-file-item': => @moveToDifferentFileItem('next')
+      'narrow-ui:move-to-previous-file-item': => @moveToDifferentFileItem('previous')
+      'narrow-ui:toggle-search-whole-word': @toggleSearchWholeWord
+      'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
+      'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
+      'narrow-ui:delete-to-beginning-of-query': => @deleteToBeginningOfQuery()
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
@@ -153,8 +164,38 @@ class Ui
     {
       @excludedFiles
       @queryForSelectFiles
-      @needRebuildExcludedFiles
     }
+
+  getSearchTermFromQuery: ->
+    if @useFirstQueryAsSearchTerm
+      @getQuery().split(/\s+/)[0]
+
+  deleteToBeginningOfQuery: ->
+    if @isAtPrompt()
+      if searchTerm = @getSearchTermFromQuery()
+        if searchTerm.length
+          selection = @editor.getLastSelection()
+          cursorPosition = selection.cursor.getBufferPosition()
+
+          column = searchTerm.length# + 1
+          if cursorPosition.column <= column
+            column = 0
+
+          range = new Range([0, column], cursorPosition)
+          unless range.isEmpty()
+            selection.setBufferRange(range)
+            selection.delete()
+        else
+          @editor.deleteToBeginningOfLine()
+      else
+        @editor.deleteToBeginningOfLine()
+
+  queryCurrentWord: ->
+    if word = getCurrentWord(atom.workspace.getActiveTextEditor()).trim()
+      @withIgnoreChange => @setQuery(word)
+      @refresh(force: true).then =>
+        @moveToSearchedWordOrBeginningOfSelectedItem()
+        @flashCursorLine()
 
   setModifiedState: (state) ->
     return if state is @modifiedState
@@ -165,24 +206,31 @@ class Ui
     @editor.buffer.isModified = -> state
     @editor.buffer.emitModifiedStatusChanged(state)
 
-  toggleSearchWholeWord: ->
+  toggleSearchWholeWord: (event) =>
+    suppressEvent(event)
     @provider.toggleSearchWholeWord()
-    @controlBar.updateStateElements(wholeWordButton: @searchWholeWord)
     @refresh(force: true)
 
-  toggleSearchIgnoreCase: ->
+  toggleSearchIgnoreCase: (event) =>
+    suppressEvent(event)
     @provider.toggleSearchIgnoreCase()
-    @controlBar.updateStateElements(ignoreCaseButton: @searchIgnoreCase)
     @refresh(force: true)
 
-  toggleProtected: ->
+  toggleSearchUseRegex: (event) =>
+    suppressEvent(event)
+    @provider.toggleSearchUseRegex()
+    @refresh(force: true)
+
+  toggleProtected: (event) =>
+    suppressEvent(event)
     @protected = not @protected
     @itemIndicator.update({@protected})
-    @controlBar.updateStateElements({@protected})
+    @controlBar.updateElements({@protected})
 
-  toggleAutoPreview: ->
+  toggleAutoPreview: (event) =>
+    suppressEvent(event)
     @autoPreview = not @autoPreview
-    @controlBar.updateStateElements({@autoPreview})
+    @controlBar.updateElements({@autoPreview})
     @highlighter.clearCurrentAndLineMarker()
     @preview() if @autoPreview
 
@@ -203,14 +251,27 @@ class Ui
       Object.assign(this, restoredState)
 
     SelectFiles ?= require "./provider/select-files"
+    # Pull never changing info-only-properties from provider.
+    {
+      @showSearchOption
+      @showLineHeader
+      @showColumnOnLineHeader
+      @boundToSingleFile
+      @itemHaveRange
+      @supportDirectEdit
+      @supportCacheItems
+      @supportFilePathOnlyItemsUpdate
+      @useFirstQueryAsSearchTerm
+    } = @provider
 
     # Initial state asignment: start
     # -------------------------
     # NOTE: These state is restored when `narrow:reopen`
     # So assign initial value unless assigned.
-    @needRebuildExcludedFiles ?= true
     @queryForSelectFiles ?= SelectFiles.getLastQuery(@provider.name)
+
     @excludedFiles ?= []
+    @filePathsForAllItems = []
     @query ?= ''
     # Initial state asignment: end
 
@@ -220,6 +281,17 @@ class Ui
     @autoPreviewOnQueryChange = @provider.getConfig('autoPreviewOnQueryChange')
     @highlighter = new Highlighter(this)
     @itemAreaStart = Object.freeze(new Point(1, 0))
+
+    @reducers = [
+      itemReducer.spliceItemsForFilePath
+      itemReducer.injectLineHeader
+      itemReducer.collectAllItems
+      itemReducer.filterFilePath
+      @filterItems
+      itemReducer.insertHeader
+      @addItems
+      @renderItems
+    ]
 
     # Setup narrow-editor
     # -------------------------
@@ -232,20 +304,19 @@ class Ui
     @editorElement.classList.add('narrow', 'narrow-editor', @provider.dashName)
     @setModifiedState(false)
 
-    @grammar = new Grammar(@editor, includeHeaderRules: not @provider.boundToSingleFile)
+    @grammar = new Grammar(@editor, includeHeaderRules: not @boundToSingleFile)
 
     @items = new Items(this)
     @itemIndicator = new ItemIndicator(@editor)
 
-    @items.onDidChangeSelectedItem ({row}) =>
-      @itemIndicator.update(row: row)
+    @items.onDidChangeSelectedItem ({row}) => @itemIndicator.update({row})
 
     if settings.get('autoShiftReadOnlyOnMoveToItemArea')
       @disposables.add @onDidMoveToItemArea =>
         @setReadOnly(true)
 
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
-    @controlBar = new ControlBar(this, showSearchOption: @provider.showSearchOption)
+    @controlBar = new ControlBar(this)
     @constructor.register(this)
 
   getPaneToOpen: ->
@@ -263,8 +334,9 @@ class Ui
 
     pane ? splitPane(basePane, split: direction)
 
-  open: ({pending}={}) ->
+  open: ({pending, focus}={}) ->
     pending ?= false
+    focus ?= true
     # [NOTE] When new item is activated, existing PENDING item is destroyed.
     # So existing PENDING narrow-editor is destroyed at this timing.
     # And PENDING narrow-editor's provider's editor have foucsed.
@@ -272,7 +344,7 @@ class Ui
     pane = @getPaneToOpen()
     pane.activateItem(@editor, {pending})
 
-    if @provider.needActivateOnStart()
+    if focus and @provider.needActivateOnStart()
       pane.activate()
 
     @grammar.activate()
@@ -289,14 +361,36 @@ class Ui
     @refresh().then =>
       if @provider.needRevealOnStart()
         @syncToEditor(@provider.editor)
-        @suppressPreview = true
-        @moveToBeginningOfSelectedItem()
-        if @provider.initiallySearchedRegexp?
-          @moveToSearchedWordAtSelectedItem()
-        @suppressPreview = false
-        @preview()
+        if @items.hasSelectedItem()
+          @suppressPreview = true
+          @moveToSearchedWordOrBeginningOfSelectedItem()
+          @suppressPreview = false
+          @preview()?.then? => @flashCursorLine()
       else if @query and @autoPreviewOnQueryChange
         @preview()
+
+  flashCursorLine: ->
+    itemCount = @items.getCount()
+    return if itemCount <= 5
+
+    flashSpec =
+      if itemCount < 10
+        duration: 1000
+        class: 'narrow-cursor-line-flash-medium'
+      else
+        duration: 2000
+        class: 'narrow-cursor-line-flash-long'
+
+    @cursorLineFlashMarker?.destroy()
+    point = @editor.getCursorBufferPosition()
+    @cursorLineFlashMarker = @editor.markBufferPosition(point)
+    decorationOptions = {type: 'line', class: flashSpec.class}
+    @editor.decorateMarker(@cursorLineFlashMarker, decorationOptions)
+
+    destroyMarker = =>
+      @cursorLineFlashMarker?.destroy()
+      @cursorLineFlashMarker = null
+    setTimeout(destroyMarker, flashSpec.duration)
 
   getPane: ->
     paneForItem(@editor)
@@ -349,6 +443,7 @@ class Ui
 
     # NOTE: Prevent delayed-refresh on destroyed editor.
     @cancelDelayedRefresh()
+    @refreshDisposables?.dispose()
 
     @constructor.unregister(this)
     @highlighter.destroy()
@@ -411,12 +506,6 @@ class Ui
     @items.selectItemInDirection(point, direction)
     @confirm(keepOpen: true, flash: true)
 
-  nextItem: ->
-    @confirmItemForDirection('next')
-
-  previousItem: ->
-    @confirmItemForDirection('previous')
-
   previewItemForDirection: (direction) ->
     rowForSelectedItem = @items.getRowForSelectedItem()
     if not @highlighter.hasLineMarker() and direction is 'next'
@@ -430,17 +519,18 @@ class Ui
       @items.selectItemForRow(row)
       @preview()
 
-  previewNextItem: ->
-    @previewItemForDirection('next')
-
-  previewPreviousItem: ->
-    @previewItemForDirection('previous')
-
   getQuery: ->
-    @editor.lineTextForBufferRow(0)
+    @editor.getTextInBufferRange(@getPromptRange())
+
+  getFilterQuery: ->
+    if @useFirstQueryAsSearchTerm
+      # Extracet filterQuery by removing searchTerm part from query
+      @getQuery().replace(/^.*?\S+\s*/, '')
+    else
+      @getQuery()
 
   excludeFile: ->
-    return if @provider.boundToSingleFile
+    return if @boundToSingleFile
 
     filePath = @items.getSelectedItem()?.filePath
     if filePath? and (filePath not in @excludedFiles)
@@ -448,163 +538,251 @@ class Ui
       @moveToDifferentFileItem('next')
       @refresh()
 
-  selectFiles: ->
-    return if @provider.boundToSingleFile
+  selectFiles: (event) =>
+    suppressEvent(event)
+    return if @boundToSingleFile
     options =
       query: @queryForSelectFiles
       clientUi: this
     new SelectFiles(@editor, options).start()
 
-  setQueryForSelectFiles: (@queryForSelectFiles) ->
-    @needRebuildExcludedFiles = true
+  resetQueryForSelectFiles: (@queryForSelectFiles) ->
+    @excludedFiles = []
+    @focus(autoPreview: false)
+    @refresh()
 
   clearExcludedFiles: ->
-    return if @provider.boundToSingleFile
+    return if @boundToSingleFile
+    @excludedFiles = []
+    @queryForSelectFiles = ''
+    @refresh()
 
-    if @excludedFiles.length
-      @excludedFiles = []
-      @refresh()
-
-  getItems: ({force, filePath}) ->
-    if @cachedItems? and not force
-      Promise.resolve(@cachedItems)
+  requestItems: (event) ->
+    if @items.cachedItems?
+      @emitDidUpdateItems(@items.cachedItems)
+      @emitFinishUpdateItems()
     else
-      Promise.resolve(@provider.getItems(filePath)).then (items) =>
-        if @provider.showLineHeader
-          injectLineHeader(items, showColumn: @provider.showColumnOnLineHeader)
-        items = getItemsWithHeaders(items) unless @provider.boundToSingleFile
-        items
+      @provider.getItems(event.filePath)
 
-  filterItems: (items) ->
-    @itemsBeforeFiltered = items
-    @lastQuery = @getQuery()
-    sensitivity = @provider.getConfig('caseSensitivityForNarrowQuery')
-    negateByEndingExclamation = @provider.getConfig('negateNarrowQueryByEndingExclamation')
-    filterSpec = getFilterSpecForQuery(@lastQuery, {sensitivity, negateByEndingExclamation})
-    if @provider.updateGrammarOnQueryChange
-      @grammar.update(filterSpec.include) # No need to highlight excluded items
+  # reducer
+  filterItems: (state) =>
+    if state.filterSpec?
+      items = @provider.filterItems(state.items, state.filterSpec)
+      return {items}
+    else
+      return null
 
-    unless @provider.boundToSingleFile
-      if @needRebuildExcludedFiles
-        @excludedFiles = @buildExcludedFiles()
-        @needRebuildExcludedFiles = false
-      @controlBar.updateStateElements(selectFiles: @excludedFiles.length)
-      if @excludedFiles.length
-        items = items.filter (item) => item.filePath not in @excludedFiles
+  # reducer
+  addItems: (state) =>
+    @items.addItems(state.items)
+    return null
 
-    items = @provider.filterItems(items, filterSpec)
+  reduceItems: (items, state) ->
+    @reducers.reduce (state, reducer) ->
+      Object.assign(state, reducer(state))
+    , Object.assign(state, {items, reduced: true})
 
-    unless @provider.boundToSingleFile
-      items = getItemsWithoutUnusedHeader(items)
-    items
+  createStateToReduce: ->
+    {
+      reduced: false
+      hasCachedItems: @items.cachedItems?
+      showLineHeader: @showLineHeader
+      showColumn: @showColumnOnLineHeader
+      maxRow: @provider.editor.getLastBufferRow() if @boundToSingleFile
+      boundToSingleFile: @boundToSingleFile
+      projectHeadersInserted: {}
+      fileHeadersInserted: {}
+      allItems: []
+      filterSpec: @provider.getFilterSpec(@getFilterQuery())
+      filterSpecForSelectFiles: SelectFiles::getFilterSpec(@queryForSelectFiles)
+      fileExcluded: false
+      excludedFiles: @excludedFiles
+      renderStartPosition: @itemAreaStart
+    }
 
-  getItemsForSelectFiles: ->
-    @getBeforeFilteredFileHeaderItems().map ({filePath, projectName}) ->
-      text: path.join(projectName, atom.project.relativize(filePath))
-      filePath: filePath
-      point: new Point(0, 0)
+  startUpdateItemCount: ->
+    updateItemCount = => @controlBar.updateElements(itemCount: @items.getCount())
+    intervalID = setInterval(updateItemCount, 500)
+    new Disposable ->
+      clearInterval(intervalID)
+      intervalID = null
 
-  buildExcludedFiles: ->
-    return [] unless @queryForSelectFiles
+  getFilePathsForAllItems: ->
+    @filePathsForAllItems
 
-    items = @getItemsForSelectFiles()
-    sensitivity = settings.get('SelectFiles.caseSensitivityForNarrowQuery')
-    negateByEndingExclamation = settings.get('SelectFiles.negateNarrowQueryByEndingExclamation')
-    filterSpec = getFilterSpecForQuery(@queryForSelectFiles, {sensitivity, negateByEndingExclamation})
-    items = SelectFiles::filterItems(items, filterSpec)
+  updateRefreshRunningElement: =>
+    @controlBar.updateElements(refresh: true)
 
-    selectedFiles = _.pluck(items, 'filePath')
-    allFiles = _.pluck(@getBeforeFilteredFileHeaderItems(), 'filePath')
-    excludedFiles = _.without(allFiles, selectedFiles...)
-    excludedFiles
+  updateControlBarRefreshElement: ->
+    if @query?
+      @editor.getLastCursor().setVisible?(false)
+      timeoutID = setTimeout(@updateRefreshRunningElement, 300)
+      new Disposable =>
+        @editor.getLastCursor().setVisible?(true)
+        clearTimeout(timeoutID)
+    else
+      @updateRefreshRunningElement()
+      return new Disposable()
 
-  getBeforeFilteredFileHeaderItems: ->
-    (@itemsBeforeFiltered ? []).filter (item) -> item.fileHeader
+  cancelRefresh: ->
+    if @refreshDisposables?
+      @refreshDisposables.dispose()
+      @refreshDisposables = null
 
-  getAfterFilteredFileHeaderItems: ->
-    @items.getFileHeaderItems()
-
+  # Return promise
   refresh: ({force, selectFirstItem, filePath}={}) ->
+    @cancelRefresh()
+    @refreshDisposables = new CompositeDisposable
+    @filePathsForAllItems = []
+    @highlighter.clearCurrentAndLineMarker()
     @emitWillRefresh()
 
-    @getItems({force, filePath}).then (items) =>
-      if @provider.supportCacheItems
-        @cachedItems = items
-      items = @filterItems(items)
-      if (not selectFirstItem) and @items.hasSelectedItem()
-        selectedItem = findEqualLocationItem(items, @items.getSelectedItem())
-        oldColumn = @editor.getCursorBufferPosition().column
+    @refreshDisposables.add(
+      @updateControlBarRefreshElement()
+      @startUpdateItemCount()
+    )
 
-      @items.setItems(items)
-      @renderItems(items)
-      @highlighter.clearCurrentAndLineMarker()
+    @lastQuery = @getQuery()
+    if @useFirstQueryAsSearchTerm
+      if @lastSearchTerm isnt (searchTerm = @getSearchTermFromQuery())
+        @lastSearchTerm = searchTerm
+        force = true
 
-      if (not selectFirstItem) and selectedItem?
-        @items.selectItem(selectedItem)
+    if @supportFilePathOnlyItemsUpdate and filePath?
+      cachedNormalItems = @items.cachedItems?.filter(isNormalItem)
+
+    if force
+      @items.clearCachedItems()
+
+    [resolveGetItem, oldSelectedItem, oldColumn] = []
+    grammarUpdated = false
+    getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
+
+    state = @createStateToReduce()
+    Object.assign(state, {cachedNormalItems, spliceFilePath: filePath})
+
+    @refreshDisposables.add @onDidUpdateItems (items) =>
+      unless grammarUpdated
+        @grammar.update(state.filterSpec?.include) # No need to highlight excluded items
+        grammarUpdated = true
+      @reduceItems(items, state)
+
+    @refreshDisposables.add @onFinishUpdateItems =>
+      # After requestItems, no items sent via @onDidUpdateItems.
+      # manually update with empty items.
+      # e.g.
+      #   1. search `editor` found 100 items
+      #   2. search `editorX` found 0 items (clear items via emitDidUpdateItems([]))
+      @emitDidUpdateItems([]) unless state.reduced
+      @cancelRefresh()
+
+      unless @boundToSingleFile
+        @filePathsForAllItems = _.chain(state.allItems).pluck('filePath').uniq().value()
+
+      if @supportCacheItems
+        @items.setCachedItems(state.allItems)
+
+      if (not selectFirstItem) and oldSelectedItem?
+        @items.selectEqualLocationItem(oldSelectedItem)
+        unless @items.hasSelectedItem()
+          @items.selectFirstNormalItem()
         unless @isAtPrompt()
           @moveToSelectedItem(ignoreCursorMove: not @isActive(), column: oldColumn)
       else
+        # when originally selected item cannot be selected because of excluded.
         @items.selectFirstNormalItem()
-        unless @isAtPrompt()
-          # when originally selected item cannot be selected because of excluded.
-          @moveToPrompt()
+        @moveToPrompt() unless @isAtPrompt()
 
+      @controlBar.updateElements(
+        selectFiles: state.fileExcluded
+        itemCount: @items.getCount()
+        refresh: false
+      )
+      resolveGetItem()
+
+    # Preserve oldSelectedItem before calling @items.reset()
+    oldSelectedItem = @items.getSelectedItem()
+    oldColumn = @editor.getCursorBufferPosition().column
+
+    @items.reset()
+    @requestItems({filePath})
+
+    getItemPromise.then =>
       @emitDidRefresh()
       @emitDidStopRefreshing()
+      return null
 
-  refreshManually: (options) ->
+  refreshManually: (event) =>
+    suppressEvent(event)
     @emitWillRefreshManually()
-    @refresh(options)
+    @refresh(force: true)
 
-  renderItems: (items) ->
-    texts = items.map (item) => @provider.viewForItem(item)
+  # reducer
+  # -------------------------
+  renderItems: (state) =>
+    {renderStartPosition} = state
+    renderStartFromItemAreaStart = renderStartPosition.isEqual(@itemAreaStart)
+    if not state.items.length and not renderStartFromItemAreaStart
+      return null
+
+    texts = state.items.map (item) => @provider.viewForItem(item)
     @withIgnoreChange =>
       if @editor.getLastBufferRow() is 0
         @resetQuery()
-      itemArea = new Range(@itemAreaStart, @editor.getEofBufferPosition())
-      range = @editor.setTextInBufferRange(itemArea, texts.join("\n"), undo: 'skip')
+
+      eof = @editor.getEofBufferPosition()
+      text = ""
+      text += "\n" unless renderStartFromItemAreaStart
+      text += texts.join("\n")
+      range = [renderStartPosition, eof]
+      renderStartPosition = @editor.setTextInBufferRange(range, text, undo: 'skip').end
+      @editorLastRow = renderStartPosition.row
       @setModifiedState(false)
-      @editorLastRow = range.end.row
+
+    return {renderStartPosition}
 
   observeChange: ->
+    onPrompt = (range) =>
+      range.intersectsWith(@getPromptRange())
+    isQueryModified = (newRange, oldRange) ->
+      (not newRange.isEmpty() and onPrompt(newRange)) or
+        (not oldRange.isEmpty() and onPrompt(oldRange))
+
+    destroyPromptSelection = =>
+      selectionDestroyed = false
+      for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
+        selectionDestroyed = true
+        selection.destroy()
+      @controlBar.show() if selectionDestroyed
+      @withIgnoreChange => @setQuery(@lastQuery) # Recover query
+
     @editor.buffer.onDidChange (event) =>
-      {newRange, oldRange, newText, oldText} = event
       return if @ignoreChange
-      # Ignore white spaces change
-      return if oldText.trim() is newText.trim()
-
-      promptRange = @getPromptRange()
-      onPrompt = (range) -> range.intersectsWith(promptRange)
-      isQueryModified = (newRange, oldRange) ->
-        (not newRange.isEmpty() and onPrompt(newRange)) or (not oldRange.isEmpty() and onPrompt(oldRange))
-
-      if isQueryModified(newRange, oldRange)
-        # is Query changed
+      if isQueryModified(event.newRange, event.oldRange)
         if @editor.hasMultipleCursors()
           # Destroy cursors on prompt to protect query from mutation on 'find-and-replace:select-all'( cmd-alt-g ).
-          selectionDestroyed = false
-          for selection in @editor.getSelections() when onPrompt(selection.getBufferRange())
-            selectionDestroyed = true
-            selection.destroy()
-          @controlBar.show() if selectionDestroyed
-          @withIgnoreChange => @setQuery(@lastQuery) # Recover query
+          destroyPromptSelection()
         else
-          autoPreview = @autoPreviewOnQueryChange and @isActive()
-          if autoPreview
-            # To avoid frequent auto-preview interferinig smooth-query-input, delay refresh.
-            refreshDelay = if @provider.boundToSingleFile then 10 else 150
-            @refreshThenPreviewAfter(refreshDelay)
-          else
-            @refresh(selectFirstItem: true)
+          return if @lastQuery.trim() is @getQuery().trim()
+          @refreshWithDelay()
       else
+        # Item area modified, direct editor
         @setModifiedState(true)
 
   # Delayed-refresh on query-change event, dont use this for other purpose.
-  refreshThenPreviewAfter: (delay) ->
+  refreshWithDelay: ->
     @cancelDelayedRefresh()
+    if @useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
+      delay = @provider.getConfig('refreshDelayOnSearchTermChange')
+    else
+      delay = if @boundToSingleFile then 0 else 100
+
     refreshThenPreview = =>
+      @delayedRefreshTimeout = null
       @refresh(selectFirstItem: true).then =>
-        @preview()
+        if @autoPreviewOnQueryChange and @isActive()
+          @preview()
+
     @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
 
   cancelDelayedRefresh: ->
@@ -645,13 +823,35 @@ class Ui
         if headerWasSkipped
           @moveToSelectedItem({column: goalColumn})
         @emitDidMoveToItemArea() if @isPromptRow(oldRow)
-        @preview() if @autoPreview
+        if @autoPreview
+          @previewWithDelay()
+
+  # itemHaveAlreadyOpened: ->
+  selectedItemFileHaveAlreadyOpened: ->
+    if @boundToSingleFile
+      true
+    else
+      @provider.getPane()?.itemForURI(@items.getSelectedItem().filePath)
+
+  previewWithDelay: ->
+    @cancelDelayedPreview()
+    delay = if @selectedItemFileHaveAlreadyOpened() then 0 else 20
+    preview = =>
+      @delayedPreviewTimeout = null
+      @preview()
+
+    @delayedPreviewTimeout = setTimeout(preview, delay)
+
+  cancelDelayedPreview: ->
+    if @delayedPreviewTimeout?
+      clearTimeout(@delayedPreviewTimeout)
+      @delayedPreviewTimeout = null
 
   syncToEditor: (editor) ->
     return if @inPreview
 
     point = editor.getCursorBufferPosition()
-    if @provider.boundToSingleFile
+    if @boundToSingleFile
       item = @items.findClosestItemForBufferPosition(point)
     else
       item = @items.findClosestItemForBufferPosition(point, filePath: editor.getPath())
@@ -663,7 +863,7 @@ class Ui
       @emitDidMoveToItemArea() if wasAtPrompt
 
   isInSyncToProviderEditor: ->
-    @provider.boundToSingleFile or @items.getSelectedItem().filePath is @provider.editor.getPath()
+    @boundToSingleFile or @items.getSelectedItem().filePath is @provider.editor.getPath()
 
   moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove, column}={}) ->
     return if (row = @items.getRowForSelectedItem()) is -1
@@ -682,7 +882,7 @@ class Ui
     else
       moveAndScroll()
 
-  preview: ->
+  preview: =>
     return if @suppressPreview
     return unless @isActive()
     return unless item = @items.getSelectedItem()
@@ -696,9 +896,13 @@ class Ui
   confirm: ({keepOpen, flash}={}) ->
     return unless item = @items.getSelectedItem()
     needDestroy = not keepOpen and not @protected and @provider.getConfig('closeOnConfirm')
-
     @provider.confirmed(item).then (editor) =>
-      if needDestroy or not editor?
+      return unless editor?
+
+      if needDestroy
+        # when editor.destroyed here, setScrollTop request done at @provider.confirmed is
+        # not correctly respected unless updateSyncing here.
+        editor.element.component.updateSync()
         @editor.destroy()
       else
         @highlighter.flashItem(editor, item) if flash
@@ -720,32 +924,34 @@ class Ui
       @items.selectItem(item)
       @moveToSelectedItem(ignoreCursorMove: false)
 
-  moveToNextFileItem: ->
-    @moveToDifferentFileItem('next')
-
-  moveToPreviousFileItem: ->
-    @moveToDifferentFileItem('previous')
-
   moveToPromptOrSelectedItem: ->
     if @isAtSelectedItem()
       @moveToPrompt()
     else
       @moveToBeginningOfSelectedItem()
 
+  moveToSearchedWordOrBeginningOfSelectedItem: ->
+    if @provider.searchRegex?
+      @moveToSearchedWordAtSelectedItem(@provider.searchRegex)
+    else
+      @moveToBeginningOfSelectedItem()
+
   moveToBeginningOfSelectedItem: ->
     if @items.hasSelectedItem()
-      @editor.setCursorBufferPosition(@items.getFirstPositionForSelectedItem())
-
-  moveToSearchedWordAtSelectedItem: ->
-    if @items.hasSelectedItem()
-      if @isInSyncToProviderEditor()
-        column = @provider.editor.getCursorBufferPosition().column
-      else
-        regExp = cloneRegExp(@provider.initiallySearchedRegexp)
-        column = regExp.exec(@items.getSelectedItem().text).index
-
-      point = @items.getFirstPositionForSelectedItem().translate([0, column])
+      point = @items.getFirstPositionForSelectedItem()
       @editor.setCursorBufferPosition(point)
+
+  moveToSearchedWordAtSelectedItem: (searchRegex) ->
+    if item = @items.getSelectedItem()
+      cursorPosition = @provider.editor.getCursorBufferPosition()
+      {row, column} = @items.getFirstPositionForItem(item)
+
+      if @isInSyncToProviderEditor()
+        column += cursorPosition.column
+      else
+        column += cloneRegExp(searchRegex).exec(item.text).index
+
+      @editor.setCursorBufferPosition([row, column])
 
   moveToPrompt: ->
     @withIgnoreCursorMove =>
@@ -760,7 +966,7 @@ class Ui
     @isPromptRow(@editor.getCursorBufferPosition().row)
 
   getNormalItemsForEditor: (editor) ->
-    if @provider.boundToSingleFile
+    if @boundToSingleFile
       @items.getNormalItems()
     else
       @items.getNormalItems(editor.getPath())
@@ -770,7 +976,10 @@ class Ui
 
   # Return range
   setQuery: (text='') ->
-    @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
+    if @editor.getLastBufferRow() is 0
+      @editor.setTextInBufferRange([[0, 0], @itemAreaStart], text + "\n")
+    else
+      @editor.setTextInBufferRange([[0, 0], [0, Infinity]], text)
 
   startSyncToEditor: (editor) ->
     @syncSubcriptions?.dispose()
@@ -782,23 +991,25 @@ class Ui
     @provider.bindEditor(editor)
     @syncToEditor(editor)
 
-    ignoreColumnChange = not @provider.itemHaveRange
     @syncSubcriptions.add editor.onDidChangeCursorPosition (event) =>
       return if event.textChanged
-      return if ignoreColumnChange and (event.oldBufferPosition.row is event.newBufferPosition.row)
+      return if not @itemHaveRange and (event.oldBufferPosition.row is event.newBufferPosition.row)
       @syncToEditor(editor) if isActiveEditor(editor)
 
     @syncSubcriptions.add @onDidRefresh =>
       @syncToEditor(editor) if isActiveEditor(editor)
 
-    if @provider.boundToSingleFile
+    if @boundToSingleFile
       unless isDefinedAndEqual(oldFilePath, newFilePath)
         @refresh(force: true)
       @syncSubcriptions.add editor.onDidStopChanging =>
         @refresh(force: true) unless @isActive()
     else
       @syncSubcriptions.add editor.onDidSave (event) =>
-        @refresh(force: true, filePath: event.path) unless @isActive()
+        unless @isActive()
+          setTimeout =>
+            @refresh(force: true, filePath: event.path)
+          , 0
 
   # vim-mode-plus integration
   # -------------------------
@@ -820,7 +1031,7 @@ class Ui
   # Direct-edit related
   # -------------------------
   updateRealFile: ->
-    return unless @provider.supportDirectEdit
+    return unless @supportDirectEdit
     return unless @isModified()
 
     if settings.get('confirmOnUpdateRealFile')
@@ -830,7 +1041,7 @@ class Ui
     return if @editorLastRow isnt @editor.getLastBufferRow()
 
     # Ensure all item have valid line header
-    if @provider.showLineHeader
+    if @showLineHeader
       itemHaveOriginalLineHeader = (item) =>
         @editor.lineTextForBufferRow(@items.getRowForItem(item)).startsWith(item._lineHeader)
       unless @items.getNormalItems().every(itemHaveOriginalLineHeader)
@@ -846,7 +1057,7 @@ class Ui
 
     return unless changes.length
 
-    unless @provider.boundToSingleFile
+    unless @boundToSingleFile
       {success, message} = ensureNoModifiedFileForChanges(changes)
       unless success
         atom.notifications.addWarning(message, dismissable: true)

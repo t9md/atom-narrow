@@ -1,15 +1,26 @@
-path = require 'path'
-_ = require 'underscore-plus'
 {Point, Range} = require 'atom'
-SearchBase = require './search-base'
+ProviderBase = require './provider-base'
+SearchOptions = require '../search-options'
 
 module.exports =
-class AtomScan extends SearchBase
+class AtomScan extends ProviderBase
+  supportDirectEdit: true
+  showColumnOnLineHeader: true
+  itemHaveRange: true
+  showSearchOption: true
+  supportCacheItems: true
+  useFirstQueryAsSearchTerm: true
+  supportFilePathOnlyItemsUpdate: true
+
+  initialize: ->
+    @initializeSearchOptions() unless @reopened
+    @searchOptions = new SearchOptions()
+
   # Not used but keep it since I'm planning to introduce per file refresh on modification
   scanFilePath: (filePath) ->
     items = []
     atom.workspace.open(filePath, activateItem: false).then (editor) =>
-      editor.scan @searchRegExp, ({range}) ->
+      editor.scan @searchRegex, ({range}) ->
         items.push({
           filePath: filePath
           text: editor.lineTextForBufferRow(range.start.row)
@@ -19,30 +30,46 @@ class AtomScan extends SearchBase
       items
 
   scanWorkspace: ->
-    matchesByFilePath = {}
-    scanPromise = atom.workspace.scan @searchRegExp, (result) ->
+    @scanPromise = atom.workspace.scan @searchRegex, (result) =>
       if result?.matches?.length
-        matchesByFilePath[result.filePath] ?= []
-        matchesByFilePath[result.filePath].push(result.matches...)
-
-    scanPromise.then ->
-      items = []
-      for filePath, matches of matchesByFilePath
-        for match in matches
-          items.push({
+        {filePath, matches} = result
+        @updateItems matches.map (match) ->
+          {
             filePath: filePath
             text: match.lineText
             point: Point.fromObject(match.range[0])
             range: Range.fromObject(match.range)
-          })
-      items
+          }
+
+    @scanPromise.then (message) =>
+      # Relying on Atom's workspace.scan's specific implementation
+      # `workspace.scan` return cancellable promise.
+      # When cancelled, promise is NOT rejected, instead it's resolved with 'cancelled' message
+      if message isnt 'cancelled'
+        @scanPromise = null
+        @finishUpdateItems()
+      else
+        console.log 'canceled'
+
+  search: (filePath) ->
+    if @scanPromise?
+      @scanPromise.cancel()
+      @scanPromise = null
+
+    if filePath?
+      if atom.project.contains(filePath)
+        @scanFilePath(filePath).then (items) =>
+          @finishUpdateItems(items)
+      else
+        # When non project file was saved. We have nothing todo, so just return old @items.
+        @finishUpdateItems([])
+    else
+      @scanWorkspace()
 
   getItems: (filePath) ->
-    if filePath?
-      return @items unless atom.project.contains(filePath)
-
-      @scanFilePath(filePath).then (newItems) =>
-        @items = @replaceOrAppendItemsForFilePath(@items, filePath, newItems)
+    @updateSearchState()
+    if @searchRegex?
+      @search().then (@items) =>
+        @items
     else
-      @scanWorkspace().then (items) =>
-        @items = items
+      @finishUpdateItems([])

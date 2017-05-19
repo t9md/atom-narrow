@@ -18,6 +18,9 @@ complimentField = (config, injectTitle=false) ->
 
     value = config[key]
     value.type ?= inferType(value.default)
+
+    # To remove provider prefix
+    # e.g. "Scan.AutoPreview" config to appear as "Auto Preview"
     value.title ?= _.uncamelcase(key) if injectTitle
 
   # Inject order props to display orderd in setting-view
@@ -28,7 +31,6 @@ complimentField = (config, injectTitle=false) ->
 
 class Settings
   constructor: (@scope, @config) ->
-    complimentField(@config)
 
   get: (param) ->
     atom.config.get("#{@scope}.#{param}")
@@ -93,69 +95,54 @@ globalSettings =
     enum: ['smartcase', 'sensitive', 'insensitive']
     description: "Case sensitivity of your query in narrow-editor"
   confirmOnUpdateRealFile: true
+  queryCurrentWordByDoubleClick: true
 
 inheritGlobalEnum = (name) ->
   default: 'inherit'
   enum: ['inherit', globalSettings[name].enum...]
 
-# inhe
-newProviderConfig = (otherProperties) ->
-  properties =
-    directionToOpen: inheritGlobalEnum('directionToOpen')
-    caseSensitivityForNarrowQuery: inheritGlobalEnum('caseSensitivityForNarrowQuery')
-    revealOnStartCondition:
-      default: 'always'
-      enum: ['always', 'never', 'on-input']
-    focusOnStartCondition:
-      default: 'always'
-      description: "[Experiment] In-eval if this is really useful( I don't use this )"
-      enum: ['always', 'never', 'no-input']
-    negateNarrowQueryByEndingExclamation: false
-    autoPreview: true
-    autoPreviewOnQueryChange: true
-    closeOnConfirm: true
+ProviderConfig =
+  directionToOpen: inheritGlobalEnum('directionToOpen')
+  caseSensitivityForNarrowQuery: inheritGlobalEnum('caseSensitivityForNarrowQuery')
+  revealOnStartCondition:
+    default: 'always'
+    enum: ['always', 'never', 'on-input']
+  focusOnStartCondition:
+    default: 'always'
+    description: "Condition when focus to narrow-editor on start"
+    enum: ['always', 'never', 'no-input']
+  negateNarrowQueryByEndingExclamation: false
+  autoPreview: true
+  autoPreviewOnQueryChange: true
+  closeOnConfirm: true
 
-  _.deepExtend(properties, complimentField(otherProperties)) if otherProperties?
-
+newProviderConfig = (other={}) ->
+  properties = Object.assign({}, ProviderConfig, other)
   return {
     type: 'object'
     collapsed: true
     properties: complimentField(properties, true)
   }
 
-newProviderConfigForSearchAndAtomScan = (otherProperties={}) ->
-  properties =
-    revealOnStartCondition:
-      default: 'always'
-      enum: ['always', 'never']
-    focusOnStartCondition:
-      default: 'always'
-      enum: ['always', 'never']
-    caseSensitivityForSearchTerm:
-      default: 'smartcase'
-      enum: ['smartcase', 'sensitive', 'insensitive']
-    rememberIgnoreCaseForByHandSearch: false
-    rememberIgnoreCaseForByCurrentWordSearch: false
-    searchWholeWord: false
-    useRegex: false
-    rememberUseRegex: false
-  newProviderConfig(_.extend(properties, otherProperties))
+ScanAndSearchAndAtomScanConfig =
+  caseSensitivityForSearchTerm:
+    default: 'smartcase'
+    enum: ['smartcase', 'sensitive', 'insensitive']
+  revealOnStartCondition: 'on-input'
+  searchWholeWord: false
+  searchUseRegex: false
+  minimumLengthToStartRegexSearch: 3
+  rememberUseRegex: false
+  refreshDelayOnSearchTermChange: 700
+
+newProviderConfigForScanAndSearchAndAtomScan = (other={}) ->
+  newProviderConfig(Object.assign({}, ScanAndSearchAndAtomScanConfig, other))
 
 providerSettings =
-  Scan: newProviderConfig(
-    revealOnStartCondition: 'on-input'
-    searchWholeWord:
-      default: false
-      description: """
-        This provider is exceptional since it use first query as scan term.<br>
-        You can toggle value per narrow-editor via `narrow-ui:toggle-search-whole-word`( `alt-cmd-w` )<br>
-        """
-    caseSensitivityForSearchTerm:
-      default: 'smartcase'
-      enum: ['smartcase', 'sensitive', 'insensitive']
-      description: "Search term is first word of query, is used as search term"
+  Scan: newProviderConfigForScanAndSearchAndAtomScan(
+    refreshDelayOnSearchTermChange: 10
   )
-  Search: newProviderConfigForSearchAndAtomScan(
+  Search: newProviderConfigForScanAndSearchAndAtomScan(
     searcher:
       default: 'ag'
       enum: ['ag', 'rg']
@@ -169,7 +156,7 @@ providerSettings =
         You can toggle this value by command `narrow:toggle-search-start-by-double-click`
         """
   )
-  AtomScan: newProviderConfigForSearchAndAtomScan()
+  AtomScan: newProviderConfigForScanAndSearchAndAtomScan()
   Symbols: newProviderConfig(revealOnStartCondition: 'on-input')
   GitDiffAll: newProviderConfig()
   Fold: newProviderConfig(revealOnStartCondition: 'on-input')
@@ -188,5 +175,4 @@ providerSettings =
       description: "Remember query per provider basis and apply it at startup"
   )
 
-
-module.exports = new Settings('narrow', _.defaults(globalSettings, providerSettings))
+module.exports = new Settings('narrow', Object.assign(complimentField(globalSettings), providerSettings))

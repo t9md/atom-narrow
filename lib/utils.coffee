@@ -1,6 +1,7 @@
 path = require 'path'
 {Point} = require 'atom'
 _ = require 'underscore-plus'
+{inspect} = require 'util'
 
 getAdjacentPane = (basePane, which) ->
   return unless children = basePane.getParent().getChildren?()
@@ -144,36 +145,6 @@ addToolTips = ({element, commandName, keyBindingTarget}) ->
 
 # Utils used in Ui
 # =========================
-# item presenting
-# -------------------------
-injectLineHeader = (items, {showColumn}={}) ->
-  normalItems = items.filter(isNormalItem)
-  maxRow = 0
-  for item in normalItems when (row = item.point.row) > maxRow
-    maxRow = row
-  maxLineWidth = String(maxRow + 1).length
-
-  if showColumn
-    maxColumn = 0
-    for item in normalItems when (column = item.point.column) > maxColumn
-      maxColumn = column
-
-    maxColumnWidth = Math.max(String(maxColumn + 1).length, 2)
-
-  for item in normalItems
-    item._lineHeader = getLineHeaderForItem(item.point, maxLineWidth, maxColumnWidth)
-  items
-
-getLineHeaderForItem = (point, maxLineWidth, maxColumnWidth) ->
-  lineText = String(point.row + 1)
-  padding = " ".repeat(maxLineWidth - lineText.length)
-  lineHeader = "#{padding}#{lineText}"
-  if maxColumnWidth?
-    columnText = String(point.column + 1)
-    padding = " ".repeat(maxColumnWidth - columnText.length)
-    lineHeader = "#{lineHeader}:#{padding}#{columnText}"
-  lineHeader + ": "
-
 # direct-edit related
 # -------------------------
 getModifiedFilePathsInChanges = (changes) ->
@@ -239,54 +210,60 @@ findEqualLocationItem = (items, itemToFind) ->
   _.detect normalItems, ({point, filePath}) ->
     point.isEqual(itemToFind.point) and (filePath is itemToFind.filePath)
 
-# Since underscore-plus not support _.findIndex
-findIndexBy = (items, fn) ->
-  for item, i in items when fn(item)
-    return i
+toMB = (num) ->
+  Math.floor(num / (1024 * 1024))
 
-findLastIndexBy = (items, fn) ->
-  for item, i in items by -1 when fn(item)
-    return i
+ignoreSubject = ['refresh']
+startMeasureMemory = (subject, simple=false) ->
+  return (->) if subject in ignoreSubject
 
-findFirstAndLastIndexBy = (items, fn) ->
-  [findIndexBy(items, fn), findLastIndexBy(items, fn)]
+  v8 = require('v8')
+  before = v8.getHeapStatistics()
+  console.time(subject)
+  ->
+    after = v8.getHeapStatistics()
+    diff = {}
+    for key in Object.keys(before)
+      diff[key] = after[key] - before[key]
 
-getItemsWithoutUnusedHeader = (items) ->
-  normalItems = items.filter(isNormalItem)
-  filePaths = _.uniq(_.pluck(normalItems, "filePath"))
-  projectNames = _.uniq(_.pluck(normalItems, "projectName"))
-
-  items.filter (item) ->
-    if item.header?
-      if item.projectHeader?
-        item.projectName in projectNames
-      else if item.filePath?
-        item.filePath in filePaths
-      else
-        true
+    console.info "= #{subject}"
+    if simple
+      console.time(subject)
+      console.log "diff.used_heap_size", toMB(diff.used_heap_size)
     else
-      true
+      table = [before, after, diff]
+      for result in table
+        result[key] = toMB(value) for key, value of result
+      console.timeEnd(subject)
+      console.table(table)
 
-getItemsWithHeaders = (_items) ->
-  items = []
+getProjectPaths = (editor) ->
+  paths = null
+  if editor?
+    if filePath = editor.getPath()
+      for dir in atom.project.getDirectories() when dir.contains(filePath)
+        paths = [dir.getPath()]
+        break
+    unless paths
+      message = "This file is not belonging to any project"
+      atom.notifications.addInfo(message, dismissable: true)
+  else
+    paths = atom.project.getPaths()
+  paths
 
-  # Inject projectName from filePath
-  for item in _items
-    projectPath = atom.project.relativizePath(item.filePath)[0]
-    if projectPath?
-      item.projectName = path.basename(projectPath)
-    else
-      item.projectName = "( No project )"
+suppressEvent = (event) ->
+  if event?
+    event.preventDefault()
+    event.stopPropagation()
 
-  for projectName, itemsInProject of _.groupBy(_items, (item) -> item.projectName)
-    header = "# #{projectName}"
-    items.push({header, projectName, projectHeader: true, skip: true})
+relativizeFilePath = (filePath) ->
+  [projectPath, relativeFilePath] = atom.project.relativizePath(filePath)
+  path.join(path.basename(projectPath), relativeFilePath)
 
-    for filePath, itemsInFile of _.groupBy(itemsInProject, (item) -> item.filePath)
-      header = "## " + atom.project.relativize(filePath)
-      items.push({header, projectName, filePath, fileHeader: true, skip: true})
-      items.push(itemsInFile...)
-  items
+getMemoizedRelativizeFilePath = ->
+  cache = {}
+  return (filePath) ->
+    cache[filePath] ?= relativizeFilePath(filePath)
 
 module.exports = {
   getNextAdjacentPaneForPane
@@ -309,13 +286,14 @@ module.exports = {
   cloneRegExp
   addToolTips
 
-  injectLineHeader
   ensureNoConflictForChanges
   ensureNoModifiedFileForChanges
   isNormalItem
   compareByPoint
   findEqualLocationItem
-  findFirstAndLastIndexBy
-  getItemsWithHeaders
-  getItemsWithoutUnusedHeader
+  getProjectPaths
+  suppressEvent
+  startMeasureMemory
+  relativizeFilePath
+  getMemoizedRelativizeFilePath
 }

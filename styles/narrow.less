@@ -56,6 +56,16 @@ atom-text-editor {
 @match-border-current: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 1.0);
 
 @match-ui: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 0.2);
+@flash-cursor-line-color: contrast(
+  @syntax-background-color,
+  darken(@syntax-selection-color, 3%),
+  lighten(@syntax-selection-color, 3%)
+);
+
+// .flash-animation(narrow-editor-cursor-line-flash, @flash-cursor-line-color);
+.flash-animation(narrow-editor-cursor-line-flash-short, @flash-color);
+.flash-animation(narrow-editor-cursor-line-flash-medium, @flash-color);
+.flash-animation(narrow-editor-cursor-line-flash-long, @flash-color);
 
 atom-text-editor {
   .narrow-match-ui {
@@ -63,6 +73,15 @@ atom-text-editor {
       box-sizing: border-box;
       background-color: @match-ui;
     }
+  }
+  .line.narrow-cursor-line-flash-short {
+    .flash(narrow-editor-cursor-line-flash-short, 0.5s)
+  }
+  .line.narrow-cursor-line-flash-medium {
+    .flash(narrow-editor-cursor-line-flash-medium, 1.0s)
+  }
+  .line.narrow-cursor-line-flash-long {
+    .flash(narrow-editor-cursor-line-flash-long, 2.0s)
   }
   .narrow-match {
     .region {
@@ -80,20 +99,6 @@ atom-text-editor {
     &.flash .region {
       .flash(narrow-match-flash, 1s);
     }
-  }
-}
-
-// search min editor
-// =========================
-.narrow-input-container {
-  display: flex;
-  > div {
-    padding: @component-padding/2 @component-padding;
-    border: none;
-  }
-  // .narrow-input {
-  .editor-container {
-    width: 100%;
   }
 }
 
@@ -153,7 +158,7 @@ atom-text-editor.narrow-editor {
     .auto-preview {
       .octicon(eye, 1.0em);
     }
-    .item-counter {
+    .item-count {
       text-align: right;
       min-width: 25px;
       color: @text-color-warning;
@@ -177,8 +182,11 @@ atom-text-editor.narrow-editor {
     }
   }
   .search-options {
-    .search-term {
+    .search-regex {
       color: @text-color-info;
+      &.invalid {
+        color: @text-color-error;
+      }
     }
   }
 }

@@ -1,5 +1,4 @@
 _ = require 'underscore-plus'
-settings = require './settings'
 
 wildCardTable = {
   '*': '.*'
@@ -14,7 +13,7 @@ expandWildCard = (word) ->
     segments.push(wildCardTable[segment] ? _.escapeRegExp(segment))
   segments.join('')
 
-getRegExpForWord = (word, {wildcard, sensitivity}={}) ->
+getRegExpForWord = (word, sensitivity) ->
   isIncludeUpperCase = /[A-Z]/.test(word)
 
   if not word.startsWith('|') and not word.endsWith('|')
@@ -47,18 +46,27 @@ getRegExpForWord = (word, {wildcard, sensitivity}={}) ->
 
   new RegExp(patterns.join('|'), options)
 
-module.exports = (query, options={}) ->
-  include = []
-  exclude = []
-  {negateByEndingExclamation} = options
-  delete options.negateByEndingExclamation
-  words = _.compact(query.split(/\s+/))
-  for word in words
-    if word isnt '!' and word.startsWith('!')
-      exclude.push(getRegExpForWord(word[1...], options))
-    else if word isnt '!' and negateByEndingExclamation and word.endsWith('!')
-      exclude.push(getRegExpForWord(word[...-1], options))
-    else
-      include.push(getRegExpForWord(word, options))
+module.exports =
+class FilterSpec
+  constructor: (filterQuery, options={}) ->
+    @include = []
+    @exclude = []
 
-  {include, exclude}
+    {negateByEndingExclamation, sensitivity} = options
+    words = _.compact(filterQuery.split(/\s+/))
+    for word in words
+      if word isnt '!' and word.startsWith('!')
+        @exclude.push(getRegExpForWord(word[1...], sensitivity))
+      else if word isnt '!' and negateByEndingExclamation and word.endsWith('!')
+        @exclude.push(getRegExpForWord(word[...-1], sensitivity))
+      else
+        @include.push(getRegExpForWord(word, sensitivity))
+
+  filterItems: (items, key) ->
+    for regexp in @exclude
+      items = items.filter (item) -> item.skip or not regexp.test(item[key])
+
+    for regexp in @include
+      items = items.filter (item) -> item.skip or regexp.test(item[key])
+
+    items

@@ -3,6 +3,7 @@ Ui = require '../lib/ui'
 fs = require 'fs-plus'
 path = require 'path'
 settings = require '../lib/settings'
+Searcher = require '../lib/searcher'
 {
   startNarrow
   reopen
@@ -58,8 +59,8 @@ describe "narrow", ->
         ensure "l",
           text: """
             l
-            1: 4: apple
-            3: 1: lemmon
+            1:  4: apple
+            3:  1: lemmon
             """
           selectedItemRow: 1
 
@@ -251,17 +252,17 @@ describe "narrow", ->
         runs -> expect(atom.workspace.getActiveTextEditor().getText()).toBe(text)
 
       runs ->
-        narrows[0].ensure "1", text: "1\n1: 1: 1"
-        narrows[1].ensure "2", text: "2\n2: 1: 2"
-        narrows[2].ensure "3", text: "3\n3: 1: 3"
-        narrows[3].ensure "4", text: "4\n4: 1: 4"
-        narrows[4].ensure "5", text: "5\n5: 1: 5"
-        narrows[5].ensure "6", text: "6\n6: 1: 6"
-        narrows[6].ensure "7", text: "7\n7: 1: 7"
-        narrows[7].ensure "8", text: "8\n8: 1: 8"
-        narrows[8].ensure "9", text: "9\n9: 1: 9"
-        narrows[9].ensure "a", text: "a\n10: 1: a"
-        narrows[10].ensure "b", text: "b\n11: 1: b"
+        narrows[0].ensure "1", text: "1\n 1:  1: 1"
+        narrows[1].ensure "2", text: "2\n 2:  1: 2"
+        narrows[2].ensure "3", text: "3\n 3:  1: 3"
+        narrows[3].ensure "4", text: "4\n 4:  1: 4"
+        narrows[4].ensure "5", text: "5\n 5:  1: 5"
+        narrows[5].ensure "6", text: "6\n 6:  1: 6"
+        narrows[6].ensure "7", text: "7\n 7:  1: 7"
+        narrows[7].ensure "8", text: "8\n 8:  1: 8"
+        narrows[8].ensure "9", text: "9\n 9:  1: 9"
+        narrows[9].ensure "a", text: "a\n10:  1: a"
+        narrows[10].ensure "b", text: "b\n11:  1: b"
 
       ensureUiSize(11)
 
@@ -269,16 +270,16 @@ describe "narrow", ->
 
       ensureUiSize(0)
 
-      waitsForReopen(); ensureText("b\n11: 1: b"); ensureUiSize(1)
-      waitsForReopen(); ensureText("a\n10: 1: a"); ensureUiSize(2)
-      waitsForReopen(); ensureText("9\n9: 1: 9"); ensureUiSize(3)
-      waitsForReopen(); ensureText("8\n8: 1: 8"); ensureUiSize(4)
-      waitsForReopen(); ensureText("7\n7: 1: 7"); ensureUiSize(5)
-      waitsForReopen(); ensureText("6\n6: 1: 6"); ensureUiSize(6)
-      waitsForReopen(); ensureText("5\n5: 1: 5"); ensureUiSize(7)
-      waitsForReopen(); ensureText("4\n4: 1: 4"); ensureUiSize(8)
-      waitsForReopen(); ensureText("3\n3: 1: 3"); ensureUiSize(9)
-      waitsForReopen(); ensureText("2\n2: 1: 2"); ensureUiSize(10)
+      waitsForReopen(); ensureText("b\n11:  1: b"); ensureUiSize(1)
+      waitsForReopen(); ensureText("a\n10:  1: a"); ensureUiSize(2)
+      waitsForReopen(); ensureText("9\n 9:  1: 9"); ensureUiSize(3)
+      waitsForReopen(); ensureText("8\n 8:  1: 8"); ensureUiSize(4)
+      waitsForReopen(); ensureText("7\n 7:  1: 7"); ensureUiSize(5)
+      waitsForReopen(); ensureText("6\n 6:  1: 6"); ensureUiSize(6)
+      waitsForReopen(); ensureText("5\n 5:  1: 5"); ensureUiSize(7)
+      waitsForReopen(); ensureText("4\n 4:  1: 4"); ensureUiSize(8)
+      waitsForReopen(); ensureText("3\n 3:  1: 3"); ensureUiSize(9)
+      waitsForReopen(); ensureText("2\n 2:  1: 2"); ensureUiSize(10)
       runs -> expect(reopen()).toBeFalsy()
       ensureUiSize(10)
 
@@ -296,9 +297,9 @@ describe "narrow", ->
           ensure "p",
             text: """
               p
-              1: 2: apple
-              1: 3: apple
-              2: 4: grape
+              1:  2: apple
+              1:  3: apple
+              2:  4: grape
               """
 
       it "move to next/previous item with wrap", ->
@@ -332,10 +333,10 @@ describe "narrow", ->
           ensure "line",
             text: """
               line
-              1: 1: line 1
-              2: 3:   line 2
-              3: 1: line 3
-              4: 3:   line 4
+              1:  1: line 1
+              2:  3:   line 2
+              3:  1: line 3
+              4:  3:   line 4
               """
 
       it "move to next/previous", ->
@@ -381,7 +382,7 @@ describe "narrow", ->
         runs -> ui.destroy()
 
     beforeEach ->
-      headerLength = "1: 1: ".length
+      headerLength = "1:  1: ".length
       points = [
         [0, 0] # `line` start of "line 1"
         [1, 2] # `line` start of "  line 2"
@@ -410,10 +411,10 @@ describe "narrow", ->
       it "auto reveal when initial query was provided", ->
         text = """
           line
-          1: 1: line 1
-          2: 3:   line 2
-          3: 1: line 3
-          4: 3:   line 4
+          1:  1: line 1
+          2:  3:   line 2
+          3:  1: line 3
+          4:  3:   line 4
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
         ensureStartState(points[0], cursor: pointsA[0], text: text, selectedItemText: 'line 1')
@@ -424,10 +425,10 @@ describe "narrow", ->
       it "NOT auto reveal when no query was provided", ->
         text = """
 
-          1: 1: line 1
-          2: 1:   line 2
-          3: 1: line 3
-          4: 1:   line 4
+          1:  1: line 1
+          2:  1:   line 2
+          3:  1: line 3
+          4:  1:   line 4
           """
         ensureStartState = getEnsureStartState()
         options = {selectedItemText: "line 1", cursor: [0, 0], text: text}
@@ -441,10 +442,10 @@ describe "narrow", ->
       it "NOT auto reveal when initial query was provided", ->
         text = """
           line
-          1: 1: line 1
-          2: 3:   line 2
-          3: 1: line 3
-          4: 3:   line 4
+          1:  1: line 1
+          2:  3:   line 2
+          3:  1: line 3
+          4:  3:   line 4
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
         options = {selectedItemText: "line 1", cursor: [0, 4], text: text}
@@ -454,10 +455,10 @@ describe "narrow", ->
       it "NOT auto reveal when no query was provided", ->
         text = """
 
-          1: 1: line 1
-          2: 1:   line 2
-          3: 1: line 3
-          4: 1:   line 4
+          1:  1: line 1
+          2:  1:   line 2
+          3:  1: line 3
+          4:  1:   line 4
           """
         ensureStartState = getEnsureStartState()
         options = {selectedItemText: "line 1", cursor: [0, 0], text: text}
@@ -471,10 +472,10 @@ describe "narrow", ->
       it "auto reveal when initial query was provided", ->
         text = """
           line
-          1: 1: line 1
-          2: 3:   line 2
-          3: 1: line 3
-          4: 3:   line 4
+          1:  1: line 1
+          2:  3:   line 2
+          3:  1: line 3
+          4:  3:   line 4
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
         ensureStartState points[0], cursor: pointsA[0], text: text, selectedItemText: 'line 1'
@@ -488,13 +489,13 @@ describe "narrow", ->
 
         text = """
           line
-          1: 1: line line line line
-          1: 6: line line line line
-          1:11: line line line line
-          1:16: line line line line
+          1:  1: line line line line
+          1:  6: line line line line
+          1: 11: line line line line
+          1: 16: line line line line
           """
         ensureStartState = getEnsureStartState(queryCurrentWord: true)
-        headerLength = "1:16: ".length
+        headerLength = "1: 16: ".length
         points = [
           [0, 0]
           [0, 5]
@@ -513,16 +514,16 @@ describe "narrow", ->
       it "auto reveal for based on current line of bound-editor", ->
         text = """
 
-          1: 1: line 1
-          2: 1:   line 2
-          3: 1: line 3
-          4: 1:   line 4
+          1:  1: line 1
+          2:  1:   line 2
+          3:  1: line 3
+          4:  1:   line 4
           """
         ensureStartState = getEnsureStartState()
-        ensureStartState(points[0], cursor: [1, 6], text: text, selectedItemText: "line 1")
-        ensureStartState(points[1], cursor: [2, 6], text: text, selectedItemText: "  line 2")
-        ensureStartState(points[2], cursor: [3, 6], text: text, selectedItemText: "line 3")
-        ensureStartState(points[3], cursor: [4, 6], text: text, selectedItemText: "  line 4")
+        ensureStartState([0, 0], cursor: [1, 7], text: text, selectedItemText: "line 1")
+        ensureStartState([1, 2], cursor: [2, 7], text: text, selectedItemText: "  line 2")
+        ensureStartState([2, 0], cursor: [3, 7], text: text, selectedItemText: "line 3")
+        ensureStartState([3, 2], cursor: [4, 7], text: text, selectedItemText: "  line 4")
 
   describe "narrow-editor auto-sync selected-item to active editor", ->
     [editor2] = []
@@ -568,11 +569,11 @@ describe "narrow", ->
         ensure "line",
           text: """
             line
-             2: 1: line 2
-             4: 1: line 4
-             6: 1: line 6
-             8: 1: line 8
-            10: 1: line 10
+             2:  1: line 2
+             4:  1: line 4
+             6:  1: line 6
+             8:  1: line 8
+            10:  1: line 10
             """
 
     describe "re-bound to active text-editor", ->
@@ -587,11 +588,11 @@ describe "narrow", ->
           ensure
             text: """
               line
-              1: 1: line 1
-              3: 1: line 3
-              5: 1: line 5
-              7: 1: line 7
-              9: 1: line 9
+               1:  1: line 1
+               3:  1: line 3
+               5:  1: line 5
+               7:  1: line 7
+               9:  1: line 9
               """
 
         setActiveTextEditorWithWaits(editor2)
@@ -602,11 +603,11 @@ describe "narrow", ->
           ensure
             text: """
               line
-               2: 1: line 2
-               4: 1: line 4
-               6: 1: line 6
-               8: 1: line 8
-              10: 1: line 10
+               2:  1: line 2
+               4:  1: line 4
+               6:  1: line 6
+               8:  1: line 8
+              10:  1: line 10
               """
 
     describe "auto-sync selected-item to acitive-editor's cursor position", ->
@@ -647,7 +648,7 @@ describe "narrow", ->
           ensure selectedItemText: "line 2"
 
   describe "scan", ->
-    describe "with empty qury", ->
+    describe "with empty query", ->
       confirm = -> narrow.waitsForDestroy -> runCommand('core:confirm')
       beforeEach ->
         editor.setText(appleGrapeLemmonText)
@@ -661,16 +662,16 @@ describe "narrow", ->
         ensure
           text: """
 
-          1: 1: apple
-          2: 1: grape
-          3: 1: lemmon
+          1:  1: apple
+          2:  1: grape
+          3:  1: lemmon
           """
 
       it "can filter by query", ->
         ensure "app",
           text: """
             app
-            1: 1: apple
+            1:  1: apple
             """
           selectedItemRow: 1
           itemsCount: 1
@@ -678,7 +679,7 @@ describe "narrow", ->
         ensure "r",
           text: """
             r
-            2: 2: grape
+            2:  2: grape
             """
           selectedItemRow: 1
           itemsCount: 1
@@ -686,8 +687,8 @@ describe "narrow", ->
         ensure "l",
           text: """
             l
-            1: 4: apple
-            3: 1: lemmon
+            1:  4: apple
+            3:  1: lemmon
             """
           selectedItemRow: 1
           itemsCount: 2
@@ -697,8 +698,8 @@ describe "narrow", ->
           ensure "l",
             text: """
               l
-              1: 4: apple
-              3: 1: lemmon
+              1:  4: apple
+              3:  1: lemmon
               """
             selectedItemRow: 1
 
@@ -709,7 +710,7 @@ describe "narrow", ->
           ensure "mm",
             text: """
               mm
-              3: 3: lemmon
+              3:  3: lemmon
               """
             selectedItemRow: 1
         runs -> confirm(); runs -> ensureEditor editor, cursor: [2, 2]
@@ -725,7 +726,7 @@ describe "narrow", ->
             narrow.ensure
               text: """
                 apple
-                1: 1: apple
+                1:  1: apple
                 """
               selectedItemRow: 1
               itemsCount: 1
@@ -737,7 +738,7 @@ describe "narrow", ->
             narrow.ensure
               text: """
                 grape
-                2: 1: grape
+                2:  1: grape
                 """
               selectedItemRow: 1
               itemsCount: 1
@@ -749,7 +750,7 @@ describe "narrow", ->
             narrow.ensure
               text: """
                 lemmon
-                3: 1: lemmon
+                3:  1: lemmon
                 """
               selectedItemRow: 1
               itemsCount: 1
@@ -776,9 +777,10 @@ describe "narrow", ->
 
     describe "basic behavior", ->
       beforeEach ->
-        waitsForStartNarrow('search', search: 'apple')
+        waitsForStartNarrow('search', query: 'apple')
 
       it "preview on cursor move with skipping header", ->
+        jasmine.useRealClock()
         moveUpWithPreview = ->
           narrow.waitsForPreview -> runCommand('core:move-up')
         moveDownWithPreview = ->
@@ -786,33 +788,33 @@ describe "narrow", ->
 
         ensure
           text: """
-
+            apple
             # project1
             ## p1-f1
-            1: 8: p1-f1: apple
+            1:  8: p1-f1: apple
             ## p1-f2
-            1: 8: p1-f2: apple
+            1:  8: p1-f2: apple
             # project2
             ## p2-f1
-            1: 8: p2-f1: apple
+            1:  8: p2-f1: apple
             ## p2-f2
-            1: 8: p2-f2: apple
+            1:  8: p2-f2: apple
             """
-          cursor: [3, 13]
+          cursor: [3, 14]
           selectedItemText: "p1-f1: apple"
 
         runs ->
           runCommand('core:move-up')
           ensure
             selectedItemText: "p1-f1: apple"
-            cursor: [0, 0]
+            cursor: [0, 5]
 
         runs -> moveDownWithPreview()
 
         runs ->
           ensure
             selectedItemText: "p1-f1: apple"
-            cursor: [3, 13]
+            cursor: [3, 14]
             filePathForProviderPane: p1f1
 
         runs -> moveDownWithPreview()
@@ -820,7 +822,7 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p1-f2: apple"
-            cursor: [5, 13]
+            cursor: [5, 14]
             filePathForProviderPane: p1f2
           ensureEditorIsActive(ui.editor)
 
@@ -829,7 +831,7 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p2-f1: apple"
-            cursor: [8, 13]
+            cursor: [8, 14]
             filePathForProviderPane: p2f1
 
         runs -> moveDownWithPreview()
@@ -837,7 +839,7 @@ describe "narrow", ->
         runs ->
           ensure
             selectedItemText: "p2-f2: apple"
-            cursor: [10, 13]
+            cursor: [10, 14]
             filePathForProviderPane: p2f2
 
       it "preview on query change by default( autoPreviewOnQueryChange )", ->
@@ -846,17 +848,17 @@ describe "narrow", ->
         runs ->
           narrow.waitsForPreview ->
             ui.moveToPrompt()
-            ui.editor.insertText("f2")
+            ui.editor.insertText(" f2")
         runs ->
           ensure
             text: """
-              f2
+              apple f2
               # project1
               ## p1-f2
-              1: 8: p1-f2: apple
+              1:  8: p1-f2: apple
               # project2
               ## p2-f2
-              1: 8: p2-f2: apple
+              1:  8: p2-f2: apple
               """
             selectedItemText: "p1-f2: apple"
             filePathForProviderPane: p1f2
@@ -867,33 +869,34 @@ describe "narrow", ->
         runs ->
           ensure
             text: """
-              f2 p2
+              apple f2 p2
               # project2
               ## p2-f2
-              1: 8: p2-f2: apple
+              1:  8: p2-f2: apple
               """
             selectedItemText: "p2-f2: apple"
             filePathForProviderPane: p2f2
 
       it "can filter files by selet-files provider", ->
+        jasmine.useRealClock()
         selectFiles = null
 
         runs ->
           ensure
             text: """
-
+              apple
               # project1
               ## p1-f1
-              1: 8: p1-f1: apple
+              1:  8: p1-f1: apple
               ## p1-f2
-              1: 8: p1-f2: apple
+              1:  8: p1-f2: apple
               # project2
               ## p2-f1
-              1: 8: p2-f1: apple
+              1:  8: p2-f1: apple
               ## p2-f2
-              1: 8: p2-f2: apple
+              1:  8: p2-f2: apple
               """
-            cursor: [3, 13]
+            cursor: [3, 14]
             selectedItemText: "p1-f1: apple"
 
         waitsForPromise ->
@@ -935,21 +938,18 @@ describe "narrow", ->
         runs ->
           # Ensure f1 matching files are excluded and not listed in narrow-editor.
           ensureEditorIsActive(ui.editor)
-          expect(ui.excludedFiles).toEqual([
-            p1f1
-            p2f1
-          ])
+          expect(ui.excludedFiles).toEqual([])
           ensure
             text: """
-
+              apple
               # project1
               ## p1-f2
-              1: 8: p1-f2: apple
+              1:  8: p1-f2: apple
               # project2
               ## p2-f2
-              1: 8: p2-f2: apple
+              1:  8: p2-f2: apple
               """
-            cursor: [0, 0]
+            cursor: [3, 14]
             selectedItemText: "p1-f2: apple"
 
         waitsForPromise ->
@@ -990,19 +990,19 @@ describe "narrow", ->
           expect(ui.excludedFiles).toEqual([])
           ensure
             text: """
-
+              apple
               # project1
               ## p1-f1
-              1: 8: p1-f1: apple
+              1:  8: p1-f1: apple
               ## p1-f2
-              1: 8: p1-f2: apple
+              1:  8: p1-f2: apple
               # project2
               ## p2-f1
-              1: 8: p2-f1: apple
+              1:  8: p2-f1: apple
               ## p2-f2
-              1: 8: p2-f2: apple
+              1:  8: p2-f2: apple
               """
-            cursor: [0, 0]
+            cursor: [5, 14]
             selectedItemText: "p1-f2: apple"
 
     describe "searchCurrentWord with variable-includes-special-char language, PHP", ->
@@ -1011,15 +1011,15 @@ describe "narrow", ->
         expect(ui.excludedFiles).toEqual([])
         ensure
           text: """
-
+            $file
             # project1
             ## p1-f3.php
-            2: 1: $file = "p1-f3.php";
+            2:  1: $file = "p1-f3.php";
             # project2
             ## p2-f3.php
-            2: 1: $file = "p2-f3.php";
+            2:  1: $file = "p2-f3.php";
             """
-          cursor: [3, 6]
+          cursor: [3, 7]
           selectedItemText: '$file = "p1-f3.php";'
 
       beforeEach ->
@@ -1032,111 +1032,111 @@ describe "narrow", ->
             phpEditor.setCursorBufferPosition([1, 0])
 
       it "[atom-scan]", ->
-        waitsForStartNarrow('atom-scan', searchCurrentWord: true)
+        waitsForStartNarrow('atom-scan', queryCurrentWord: true)
         runs -> ensureFindPHPVar()
 
       it "search with ag", ->
         settings.set('Search.searcher', 'ag')
-        waitsForStartNarrow('search', searchCurrentWord: true)
+        waitsForStartNarrow('search', queryCurrentWord: true)
         runs -> ensureFindPHPVar()
 
       it "search with rg", ->
         settings.set('Search.searcher', 'rg')
-        waitsForStartNarrow('search', searchCurrentWord: true)
+        waitsForStartNarrow('search', queryCurrentWord: true)
         runs -> ensureFindPHPVar()
 
     describe "search regex special char include search term", ->
-      [search, ensureOptions] = []
+      [query, ensureOptions] = []
       resultText =
         "project1/p1-f": """
-
+            project1/p1-f
             # project1
             ## p1-f1
-            2: 7: path: project1/p1-f1
+            2:  7: path: project1/p1-f1
             ## p1-f2
-            2: 7: path: project1/p1-f2
+            2:  7: path: project1/p1-f2
             """
         "a/b/c": """
-
+            a/b/c
             # project1
             ## p1-f1
-            3: 7: path: a/b/c
+            3:  7: path: a/b/c
             ## p1-f2
-            3: 7: path: a/b/c
+            3:  7: path: a/b/c
             """
         "a\\/b\\/c": """
-
+            a\\/b\\/c
             # project1
             ## p1-f1
-            4: 7: path: a\\/b\\/c
+            4:  7: path: a\\/b\\/c
             ## p1-f2
-            4: 7: path: a\\/b\\/c
+            4:  7: path: a\\/b\\/c
             """
       beforeEach ->
-        [search, ensureOptions] = [] # null reset
+        [query, ensureOptions] = [] # null reset
 
       describe "search project1/p1-f", ->
         beforeEach ->
-          search = 'project1/p1-f'
+          query = 'project1/p1-f'
           ensureOptions =
-            text: resultText[search]
-            cursor: [3, 12]
+            text: resultText[query]
+            cursor: [3, 13]
             selectedItemText: 'path: project1/p1-f1'
 
         it "[atom-scan]", ->
-          waitsForStartNarrow('atom-scan', {search})
+          waitsForStartNarrow('atom-scan', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:ag]", ->
           settings.set('Search.searcher', 'ag')
-          waitsForStartNarrow('search', {search})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:rg]", ->
           settings.set('Search.searcher', 'rg')
-          waitsForStartNarrow('search', {search})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
       describe "search a/b/c", ->
         beforeEach ->
-          search = 'a/b/c'
+          query = 'a/b/c'
           ensureOptions =
-            text: resultText[search]
-            cursor: [3, 12]
+            text: resultText[query]
+            cursor: [3, 13]
             selectedItemText: 'path: a/b/c'
 
         it "[atom-scan]", ->
-          waitsForStartNarrow('atom-scan', {search})
+          waitsForStartNarrow('atom-scan', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:ag]", ->
           settings.set('Search.searcher', 'ag')
-          waitsForStartNarrow('search', {search})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:rg]", ->
           settings.set('Search.searcher', 'rg')
-          waitsForStartNarrow('search', {search})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
       describe "search a/b/c", ->
         beforeEach ->
-          search = 'a\\/b\\/c'
+          query = 'a\\/b\\/c'
           ensureOptions =
-            text: resultText[search]
-            cursor: [3, 12]
+            text: resultText[query]
+            cursor: [3, 13]
             selectedItemText: 'path: a\\/b\\/c'
 
         it "[atom-scan]", ->
-          waitsForStartNarrow('atom-scan', {search})
+          waitsForStartNarrow('atom-scan', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:ag]", ->
           settings.set('Search.searcher', 'ag')
-          waitsForStartNarrow('search', {search})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:rg]", ->
           settings.set('Search.searcher', 'rg')
-          waitsForStartNarrow('search', {search})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)

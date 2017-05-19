@@ -16,5 +16,5 @@ class GitDiff extends ProviderBase
   getItems: ->
     filePath = @editor.getPath()
     diffs = repositoryForPath(filePath)?.getLineDiffs(filePath, @editor.getText()) ? []
-    diffs.map (diff) =>
+    @finishUpdateItems diffs.map (diff) =>
       itemForGitDiff(diff, {@editor, filePath})

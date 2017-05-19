@@ -26,6 +26,7 @@
       "narrow:scan-by-current-word",
       "narrow:search",
       "narrow:search-by-current-word",
+      "narrow:search-by-current-word-without-focus",
       "narrow:search-current-project",
       "narrow:search-current-project-by-current-word",
       "narrow:symbols",

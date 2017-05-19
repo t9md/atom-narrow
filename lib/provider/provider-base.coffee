@@ -15,6 +15,7 @@ _ = require 'underscore-plus'
 } = require '../utils'
 Ui = require '../ui'
 settings = require '../settings'
+FilterSpec = require '../filter-spec'
 
 module.exports =
 class ProviderBase
@@ -41,12 +42,12 @@ class ProviderBase
 
   showLineHeader: true
   showColumnOnLineHeader: false
-  updateGrammarOnQueryChange: true
   itemHaveRange: false
 
   supportDirectEdit: false
   supportCacheItems: false
   supportReopen: true
+  supportFilePathOnlyItemsUpdate: false
   editor: null
 
   # used by scan, search, atom-scan
@@ -54,17 +55,22 @@ class ProviderBase
   searchWholeWordChangedManually: false
   searchIgnoreCase: null
   searchIgnoreCaseChangedManually: false
+  searchUseRegex: null
+  searchUseRegexChangedManually: false
   showSearchOption: false
-  querySelectedText: true
   queryWordBoundaryOnByCurrentWordInvocation: false
-  initiallySearchedRegexp: null
+  initialSearchRegex: null
+  useFirstQueryAsSearchTerm: false
 
-  getConfig: (name) ->
+  @getConfig: (name) ->
     value = settings.get("#{@name}.#{name}")
-    if value is 'inherit' or not value?
+    if value is 'inherit'
       settings.get(name)
     else
       value
+
+  getConfig: (name) ->
+    @constructor.getConfig(name)
 
   getOnStartConditionValueFor: (name) ->
     switch @getConfig(name)
@@ -82,12 +88,20 @@ class ProviderBase
   initialize: ->
     # to override
 
+  initializeSearchOptions: ->
+    editor = atom.workspace.getActiveTextEditor()
+    if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
+      @searchWholeWord = true
+    else
+      @searchWholeWord = @getConfig('searchWholeWord')
+    @searchUseRegex = @getConfig('searchUseRegex')
+
   # Event is object contains {newEditor, oldEditor}
   onBindEditor: (event) ->
     # to override
 
   checkReady: ->
-    Promise.resolve(true)
+    true
 
   bindEditor: (editor) ->
     return if editor is @editor
@@ -123,6 +137,8 @@ class ProviderBase
       @searchWholeWordChangedManually
       @searchIgnoreCase
       @searchIgnoreCaseChangedManually
+      @searchUseRegex
+      @searchUseRegexChangedManually
       @searchTerm
     }
 
@@ -156,20 +172,23 @@ class ProviderBase
     @query = @getInitialQuery(editor)
 
   start: ->
-    new Promise (resolve) =>
-      @checkReady().then (ready) =>
-        if ready
-          @ui = new Ui(this, {@query}, @restoredState?.ui)
-          @initialize()
-          @ui.open(pending: @options.pending).then =>
-            resolve(@ui)
+    checkReady = Promise.resolve(@checkReady())
+    checkReady.then (ready) =>
+      if ready
+        @ui = new Ui(this, {@query}, @restoredState?.ui)
+        @initialize()
+        @ui.open(pending: @options.pending, focus: @options.focus).then =>
+          return @ui
+
+  updateItems: (items) =>
+    @ui.emitDidUpdateItems(items)
+
+  finishUpdateItems: (items) =>
+    @updateItems(items) if items?
+    @ui.emitFinishUpdateItems()
 
   getInitialQuery: (editor) ->
-    query = @options.query
-
-    if not query and @querySelectedText
-      query = editor.getSelectedText()
-
+    query = @options.query or editor.getSelectedText()
     if not query and @options.queryCurrentWord
       query = getCurrentWord(editor)
       if @queryWordBoundaryOnByCurrentWordInvocation
@@ -179,21 +198,16 @@ class ProviderBase
   subscribeEditor: (args...) ->
     @editorSubscriptions.add(args...)
 
-  filterItems: (items, {include, exclude}) ->
-    for regexp in exclude
-      items = items.filter (item) -> item.skip or not regexp.test(item.text)
-
-    for regexp in include
-      items = items.filter (item) -> item.skip or regexp.test(item.text)
-
-    items
+  filterItems: (items, filterSpec) ->
+    filterSpec.filterItems(items, 'text')
 
   destroy: ->
     if @supportReopen
       ProviderBase.saveState(this)
     @subscriptions.dispose()
     @editorSubscriptions.dispose()
-    @restoreEditorState() if @needRestoreEditorState
+    if @needRestoreEditorState
+      @restoreEditorState()
     {@editor, @editorSubscriptions} = {}
 
   # When narrow was invoked from existing narrow-editor.
@@ -244,8 +258,9 @@ class ProviderBase
   confirmed: (item) ->
     @needRestoreEditorState = false
     @openFileForItem(item, activatePane: true).then (editor) ->
-      {point} = item
+      point = item.point
       editor.setCursorBufferPosition(point, autoscroll: false)
+      editor.unfoldBufferRow(point.row)
       editor.scrollToBufferPosition(point, center: true)
       return editor
 
@@ -291,6 +306,10 @@ class ProviderBase
     @searchIgnoreCaseChangedManually = true
     @searchIgnoreCase = not @searchIgnoreCase
 
+  toggleSearchUseRegex: ->
+    @searchUseRegexChangedManually = true
+    @searchUseRegex = not @searchUseRegex
+
   # Helpers
   # -------------------------
   getFirstCharacterPointOfRow: (row) ->
@@ -300,8 +319,16 @@ class ProviderBase
     sensitivity = @getConfig('caseSensitivityForSearchTerm')
     (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(term))
 
-  getRegExpForSearchTerm: (term, {searchWholeWord, searchIgnoreCase}) ->
-    source = _.escapeRegExp(term)
+  getRegExpForSearchTerm: (term, {searchWholeWord, searchIgnoreCase, searchUseRegex}) ->
+    if searchUseRegex
+      source = term
+      try
+        new RegExp(source, '')
+      catch error
+        return null
+    else
+      source = _.escapeRegExp(term)
+
     if searchWholeWord
       startBoundary = /^\w/.test(term)
       endBoundary = /\w$/.test(term)
@@ -317,3 +344,38 @@ class ProviderBase
     flags = 'g'
     flags += 'i' if searchIgnoreCase
     new RegExp(source, flags)
+
+  getFilterSpec: (filterQuery) ->
+    if filterQuery
+      new FilterSpec filterQuery,
+        negateByEndingExclamation: @getConfig('negateNarrowQueryByEndingExclamation')
+        sensitivity: @getConfig('caseSensitivityForNarrowQuery')
+
+  updateSearchState: ->
+    @searchTerm = @ui.getSearchTermFromQuery()
+
+    if @searchTerm
+      # Auto relax \b restriction, enable @searchWholeWord only when \w was included.
+      if @searchWholeWord and not @searchWholeWordChangedManually
+        @searchWholeWord = /\w/.test(@searchTerm)
+
+      unless @searchIgnoreCaseChangedManually
+        @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(@searchTerm)
+
+      options = {@searchWholeWord, @searchIgnoreCase, @searchUseRegex}
+      @searchRegex = @getRegExpForSearchTerm(@searchTerm, options)
+
+      @initialSearchRegex ?= @searchRegex
+
+      grammarCanHighlight = not @searchUseRegex or (@searchTerm is _.escapeRegExp(@searchTerm))
+      if grammarCanHighlight
+        @ui.grammar.setSearchRegex(@searchRegex)
+      else
+        @ui.grammar.setSearchRegex(null)
+    else
+      @searchRegex = null
+      @ui.grammar.setSearchRegex(@searchRegex)
+
+    @ui.highlighter.setRegExp(@searchRegex)
+    states = {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchTerm, @searchUseRegex}
+    @ui.controlBar.updateElements(states)
