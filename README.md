@@ -46,12 +46,9 @@ I use `scan`, `search`, `git-diff-all`, `symbols` in daily-basis, for other prov
 - `search`: Search by `ag`( you need to install `ag` by yourself).
 - `atom-scan`: Similar to `search` but use Atom's `atom.workspace.scan`.
 - `fold`: Provide fold-starting rows as item.
-- `git-diff`: Show git-diff for current active-editor. Info source is from core `git-diff` package.
 - `git-diff-all`: Show all modified state file across project.
-- `bookmarks`: For core `bookmarks` package
 - `symbols`: Provide symbols for current file.
 - `project-symbols`: Provide project-wide symbols information by reading `tags` file.
-- `linter`: Use message provided by [linter](https://atom.io/packages/linter) package.
 
 # Quick tour
 
@@ -143,9 +140,6 @@ No keymaps are provided
 - `narrow:symbols-by-current-word`
 - `narrow:project-symbols`:
 - `narrow:project-symbols-by-current-word`:
-- `narrow:linter`
-- `narrow:bookmarks`
-- `narrow:git-diff`
 - `narrow:git-diff-all`
 
 ### Available in narrow-editor(narrow-ui)
@@ -228,13 +222,11 @@ Explanation of my keymap.
   'space o': 'narrow:symbols'
   'space l': 'narrow:scan'
   'space L': 'narrow:scan-by-current-word'
-  'space c': 'narrow:linter'
   'space s': 'narrow:search'
   'space S': 'narrow:search-by-current-word'
   'space a': 'narrow:atom-scan'
   'space A': 'narrow:atom-scan-by-current-word'
   'space G': 'narrow:git-diff-all'
-  'space B': 'narrow:bookmarks'
 
 # When workspace has narrow-editor
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode':
@@ -321,10 +313,7 @@ In daily editing, I use.
 Why I'm not using others? reason is here.
 
 - `fold`: Since it similar to `symbols`.
-- `git-diff`: since `git-diff-all` is better.
-- `bookmarks`: since I don' use `bookmarks` feature
-- `linter`: rarely use it( this is just-tried-idea state, not polished ).
-- `atom-scan`: it is provided for windows user who can't use `search`(need `ag`).
+- `atom-scan`: it is provided for windows user who can't use `search`(need `ag` or `rg`).
 
 ### How can I exclude particular file from `narrow:search`
 

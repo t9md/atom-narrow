@@ -65,11 +65,7 @@ module.exports =
       'narrow:project-symbols': => @narrow('project-symbols')
       'narrow:project-symbols-by-current-word': => @narrow('project-symbols', queryCurrentWord: true)
 
-      'narrow:git-diff': => @narrow('git-diff')
       'narrow:git-diff-all': => @narrow('git-diff-all')
-
-      'narrow:bookmarks': => @narrow('bookmarks')
-      'narrow:linter': => @narrow('linter')
 
       'narrow:fold': => @narrow('fold')
       'narrow:fold-by-current-word': => @narrow('fold', queryCurrentWord: true)
