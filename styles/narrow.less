@@ -103,21 +103,6 @@ atom-text-editor {
 }
 
 atom-text-editor.narrow-editor {
-  // Hide linumber gutter but still shows icon to fold/un-fold.
-  // https://discuss.atom.io/t/use-the-gutter-without-enabling-linenumbers/2461/16
-  .gutter {
-    .line-numbers {
-      text-indent: 999em;
-      width: 23px;
-      overflow: hidden;
-      position: relative;
-      .icon-right {
-        position: absolute;
-        left: 0;
-        text-indent: 0;
-      }
-    }
-  }
   // block-cursor on read-only mode
   &.read-only {
     &.is-focused {
