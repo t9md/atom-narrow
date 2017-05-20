@@ -40,6 +40,10 @@ describe "narrow", ->
   waitsForStartScan = (options) -> waitsForStartNarrow('scan', options)
 
   beforeEach ->
+    # `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
+    # So set it to `true` again here to test with default value.
+    atom.config.set('core.destroyEmptyPanes', true)
+
     waitsForPromise ->
       activationPromise = atom.packages.activatePackage('narrow')
       atom.workspace.open().then (_editor) ->

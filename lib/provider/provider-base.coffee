@@ -201,13 +201,15 @@ class ProviderBase
   filterItems: (items, filterSpec) ->
     filterSpec.filterItems(items, 'text')
 
+  restoreEditorStateIfNecessary: ->
+    if @needRestoreEditorState
+      @restoreEditorState()
+
   destroy: ->
     if @supportReopen
       ProviderBase.saveState(this)
     @subscriptions.dispose()
     @editorSubscriptions.dispose()
-    if @needRestoreEditorState
-      @restoreEditorState()
     {@editor, @editorSubscriptions} = {}
 
   # When narrow was invoked from existing narrow-editor.
