@@ -15,11 +15,6 @@ class Search extends ProviderBase
   useFirstQueryAsSearchTerm: true
   supportFilePathOnlyItemsUpdate: true
 
-  constructor: ->
-    if atom.inSpecMode()
-      @search = @searchInOrder
-    super
-
   getState: ->
     @mergeState(super, {@projects})
 

@@ -1,9 +1,12 @@
-_ = require 'underscore-plus'
 Ui = require '../lib/ui'
 fs = require 'fs-plus'
 path = require 'path'
 settings = require '../lib/settings'
-Searcher = require '../lib/searcher'
+
+# FIXME
+Search = require '../lib/provider/search'
+Search::search = Search::searchInOrder
+
 {
   startNarrow
   reopen
