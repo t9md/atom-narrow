@@ -124,8 +124,6 @@ class Ui
       'vim-mode-plus:move-up-wrap': => @preserveGoalColumn()
       'vim-mode-plus:move-down-wrap': => @preserveGoalColumn()
 
-      'narrow:close': (event) => @narrowClose(event)
-
       'narrow-ui:confirm-keep-open': => @confirm(keepOpen: true)
       'narrow-ui:protect': => @toggleProtected()
       'narrow-ui:preview-item': => @preview()
@@ -450,8 +448,6 @@ class Ui
     @syncSubcriptions?.dispose()
     @disposables.dispose()
     @editor.destroy()
-    unless @provider.name is 'SelectFiles'
-      @activateProviderPane()
 
     @controlBar.destroy()
     @provider?.destroy?()
@@ -459,17 +455,9 @@ class Ui
     @itemIndicator.destroy()
     @emitDidDestroy()
 
-  # This function is mapped from `narrow:close`
-  # To differentiate `narrow:close` for protected narrow-editor.
-  # * Two purpose.
-  # 1. So that don't close non-protected narrow-editor when narrow:close is
-  #   invoked from protected narrow-editor
-  # 2. To re-focus to caller editor for not interfering regular preview-then-close-by-ctrl-g flow.
-  narrowClose: (event) ->
-    if @protected
-      event.stopImmediatePropagation()
-      @resetQuery()
-      @activateProviderPane()
+  close: ->
+    @provider.restoreEditorStateIfNecessary()
+    @destroy()
 
   resetQuery: ->
     @setQuery() # clear query
