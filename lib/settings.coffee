@@ -161,9 +161,6 @@ providerSettings =
   GitDiffAll: newProviderConfig()
   Fold: newProviderConfig(revealOnStartCondition: 'on-input')
   ProjectSymbols: newProviderConfig(revealOnStartCondition: 'on-input')
-  Linter: newProviderConfig()
-  Bookmarks: newProviderConfig()
-  GitDiff: newProviderConfig()
   SelectFiles: newProviderConfig(
     autoPreview: false
     autoPreviewOnQueryChange: false

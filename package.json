@@ -14,12 +14,9 @@
     "atom-text-editor": [
       "narrow:atom-scan",
       "narrow:atom-scan-by-current-word",
-      "narrow:bookmarks",
       "narrow:fold",
       "narrow:fold-by-current-word",
-      "narrow:git-diff",
       "narrow:git-diff-all",
-      "narrow:linter",
       "narrow:project-symbols",
       "narrow:project-symbols-by-current-word",
       "narrow:scan",
