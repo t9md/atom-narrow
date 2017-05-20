@@ -15,6 +15,11 @@ class Search extends ProviderBase
   useFirstQueryAsSearchTerm: true
   supportFilePathOnlyItemsUpdate: true
 
+  constructor: ->
+    if atom.inSpecMode()
+      @search = @searchInOrder
+    super
+
   getState: ->
     @mergeState(super, {@projects})
 
@@ -42,6 +47,23 @@ class Search extends ProviderBase
 
     for project in @projects
       @searcher.searchProject(project, @updateItems, onFinish)
+
+  searchInOrder: ->
+    projects = @projects.slice()
+    onItems = (items) =>
+      items = _.sortBy(items, (item) -> item.filePath)
+      @updateItems(items)
+
+    searchNextProject = =>
+      @searcher.searchProject(projects.shift(), onItems, onFinish)
+
+    onFinish = =>
+      if projects.length
+        searchNextProject()
+      else
+        @finishUpdateItems()
+
+    searchNextProject()
 
   destroy: ->
     @searcher.cancel()

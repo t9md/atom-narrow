@@ -33,11 +33,11 @@ validateOptions = (options, validOptions, message) ->
     throw new Error("#{message}: #{inspect(invalidOptions)}")
 
 ensureEditor = (editor, options) ->
-  ensureOptionsOrdered = [
+  ensureEditorOptionsOrdered = [
     'cursor', 'text', 'active', 'alive'
   ]
-  validateOptions(options, ensureOptionsOrdered, "invalid options ensureEditor")
-  for name in ensureOptionsOrdered when (value = options[name])?
+  validateOptions(options, ensureEditorOptionsOrdered, "invalid options ensureEditor")
+  for name in ensureEditorOptionsOrdered when (value = options[name])?
     switch name
       when 'cursor'
         expect(editor.getCursorBufferPosition()).toEqual(value)
@@ -49,6 +49,23 @@ ensureEditor = (editor, options) ->
 ensureEditorIsActive = (editor) ->
   expect(atom.workspace.getActiveTextEditor()).toBe(editor)
 
+isProjectHeaderItem = (item) ->
+  item.header? and item.projectName and not item.filePath?
+
+isFileHeaderItem = (item) ->
+  item.header? and item.projectName and item.filePath?
+
+addCustomMatchers = (spec) ->
+  spec.addMatchers
+    toEqualSearchItems: (expected) ->
+      @message = ->
+        "Expected '" + inspect(@actual) + "' to equal '" + inspect(expected)
+
+      _.isEqual(@actual, expected)
+
+beforeEach ->
+  addCustomMatchers(this)
+
 class Ensureer
   constructor: (@ui, @provider) ->
     {@editor, @items, @editorElement} = @ui
@@ -57,6 +74,9 @@ class Ensureer
     'itemsCount', 'selectedItemRow', 'selectedItemText'
     'text', 'cursor', 'classListContains'
     'filePathForProviderPane'
+    'query'
+    'searchItems'
+    'columnForSelectedItem'
   ]
 
   waitsForDestroy: (fn) =>
@@ -114,8 +134,35 @@ class Ensureer
   ensureText: (text) ->
     expect(@editor.getText()).toBe(text)
 
+  ensureQuery: (text) ->
+    expect(@ui.getQuery()).toBe(text)
+
+  ensureSearchItems: (object) ->
+    relativizedFilePath = (item) ->
+      atom.project.relativize(item.filePath)
+
+    actualObject = {}
+    projectName = null
+    for item in @ui.items.items[1...]
+      switch
+        when isProjectHeaderItem(item)
+          projectName = item.projectName
+          actualObject[projectName] = {}
+        when isFileHeaderItem(item)
+          actualObject[projectName][relativizedFilePath(item)] = []
+        else
+          itemText = @ui.getTextForItem(item)
+          actualObject[projectName][relativizedFilePath(item)].push(itemText)
+
+    expect(actualObject).toEqual(object)
+
   ensureCursor: (cursor) ->
     expect(@editor.getCursorBufferPosition()).toEqual(cursor)
+
+  ensureColumnForSelectedItem: (column) ->
+    cursorPosition = @editor.getCursorBufferPosition()
+    expect(@items.getRowForSelectedItem()).toBe(cursorPosition.row)
+    expect(cursorPosition.column).toBe(column)
 
   ensureClassListContains: (classList) ->
     for className in classList

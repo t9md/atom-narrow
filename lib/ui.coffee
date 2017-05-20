@@ -965,6 +965,9 @@ class Ui
   isAtPrompt: ->
     @isPromptRow(@editor.getCursorBufferPosition().row)
 
+  getTextForItem: (item) ->
+    @editor.lineTextForBufferRow(@items.getRowForItem(item))
+
   getNormalItemsForEditor: (editor) ->
     if @boundToSingleFile
       @items.getNormalItems()
