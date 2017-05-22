@@ -146,8 +146,6 @@ class Ui
       'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
       'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
       'narrow-ui:delete-to-end-of-search-term': => @deleteToEndOfSearchTerm()
-      'narrow-ui:next-query-history': => @setQueryFromHistroy('next')
-      'narrow-ui:previous-query-history': => @setQueryFromQueryHistroy('previous')
       'narrow-ui:clear-query-history': => @clearHistroy()
 
   setQueryFromHistroy: (direction, retry) ->
@@ -155,7 +153,10 @@ class Ui
       if text is @getQuery() and not retry
         @setQueryFromHistroy(direction, true)
       else
-        @setQuery(text)
+        @withIgnoreChange => @setQuery(text)
+        @refreshWithDelay force: true, 100, =>
+          @moveToSearchedWordOrBeginningOfSelectedItem()
+          @flashCursorLine()
 
   clearHistroy: ->
     queryHistory.clear(@provider.name)
@@ -783,26 +784,26 @@ class Ui
           destroyPromptSelection()
         else
           return if @lastQuery.trim() is @getQuery().trim()
-          @refreshWithDelay()
+          if @useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
+            delay = @provider.getConfig('refreshDelayOnSearchTermChange')
+          else
+            delay = if @boundToSingleFile then 0 else 100
+
+          @refreshWithDelay selectFirstItem: true, delay, =>
+            @preview() if @autoPreviewOnQueryChange and @isActive()
       else
         # Item area modified, direct editor
         @setModifiedState(true)
 
-  # Delayed-refresh on query-change event, dont use this for other purpose.
-  refreshWithDelay: ->
+  # Delayed-refresh
+  refreshWithDelay: (options, delay, onRefresh) ->
     @cancelDelayedRefresh()
-    if @useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
-      delay = @provider.getConfig('refreshDelayOnSearchTermChange')
-    else
-      delay = if @boundToSingleFile then 0 else 100
 
-    refreshThenPreview = =>
+    refresh = =>
       @delayedRefreshTimeout = null
-      @refresh(selectFirstItem: true).then =>
-        if @autoPreviewOnQueryChange and @isActive()
-          @preview()
+      @refresh(options).then(onRefresh)
 
-    @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
+    @delayedRefreshTimeout = setTimeout(refresh, delay)
 
   cancelDelayedRefresh: ->
     if @delayedRefreshTimeout?

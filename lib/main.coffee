@@ -60,6 +60,8 @@ module.exports =
       'narrow:close': => @getUi(skipProtected: true)?.close()
       'narrow:next-item': => @getUi()?.confirmItemForDirection('next')
       'narrow:previous-item': => @getUi()?.confirmItemForDirection('previous')
+      'narrow:next-query-history': => @getUi()?.setQueryFromHistroy('next')
+      'narrow:previous-query-history': => @getUi()?.setQueryFromHistroy('previous')
       'narrow:reopen': => @reopen()
       'narrow:query-current-word': => @getUi()?.queryCurrentWord()
 
