@@ -1,6 +1,6 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{Point, Range, BufferedProcess, Emitter} = require 'atom'
+{Point, Range, BufferedProcess} = require 'atom'
 
 LineEndingRegExp = /\n|\r\n/
 RegExpForOutPutLine = /^(.*?):(\d+):(\d+):(.*)$/
@@ -58,7 +58,6 @@ runCommand = (options) ->
 module.exports =
 class Searcher
   constructor: (@searchOptions) ->
-    @emitter = new Emitter
     @runningProcesses = []
 
   setCommand: (@command) ->
@@ -85,8 +84,6 @@ class Searcher
 
   cancel: ->
     while bufferedProcess = @runningProcesses.shift()
-      cwd = bufferedProcess.options.cwd
-      searching = bufferedProcess.args.slice(-1)[0]
       bufferedProcess?.kill()
 
   getArgs: ->

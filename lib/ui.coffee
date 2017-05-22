@@ -919,8 +919,8 @@ class Ui
       @moveToBeginningOfSelectedItem()
 
   moveToSearchedWordOrBeginningOfSelectedItem: ->
-    if @provider.searchRegex?
-      @moveToSearchedWordAtSelectedItem(@provider.searchRegex)
+    if @provider.searchOptions.searchRegex?
+      @moveToSearchedWordAtSelectedItem(@provider.searchOptions.searchRegex)
     else
       @moveToBeginningOfSelectedItem()
 

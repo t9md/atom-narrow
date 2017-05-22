@@ -13,10 +13,6 @@ class Scan extends ProviderBase
   supportCacheItems: true
   useFirstQueryAsSearchTerm: true
 
-  initialize: ->
-    @initializeSearchOptions() unless @reopened
-    @searchOptions = new SearchOptions()
-
   scanEditor: (regExp) ->
     items = []
     regExp = cloneRegExp(regExp)
@@ -30,10 +26,10 @@ class Scan extends ProviderBase
     items
 
   getItems: ->
-    # console.log "got request"
     @updateSearchState()
-    if @searchRegex?
-      items = @scanEditor(@searchRegex)
+    {searchRegex} = @searchOptions
+    if searchRegex?
+      items = @scanEditor(searchRegex)
     else
       items = @editor.buffer.getLines().map (text, row) ->
         point = new Point(row, 0)
