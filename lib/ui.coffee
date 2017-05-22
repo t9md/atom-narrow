@@ -156,6 +156,7 @@ class Ui
         @withIgnoreChange => @setQuery(text)
         @refreshWithDelay force: true, 100, =>
           @moveToSearchedWordOrBeginningOfSelectedItem()
+          @scrollToColumnZero() unless @isActive()
           @flashCursorLine()
 
   clearHistroy: ->
@@ -216,7 +217,13 @@ class Ui
       @withIgnoreChange => @setQuery(word)
       @refresh(force: true).then =>
         @moveToSearchedWordOrBeginningOfSelectedItem()
+        @scrollToColumnZero() unless @isActive()
         @flashCursorLine()
+
+  scrollToColumnZero: ->
+    point = @editor.getCursorBufferPosition()
+    point.column = 0
+    @editor.scrollToBufferPosition(point, center: true)
 
   setModifiedState: (state) ->
     return if state is @modifiedState
