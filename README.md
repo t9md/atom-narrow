@@ -190,8 +190,12 @@ Explanation of my keymap.
 
 - `cmd-f`: To focus to narrow-editor AND focus-back to original-editor
 - `cmd-i`: To focus to narrow-editor's prompt AND focus-back to original-editor
-- `enter`: start `narrow:search-by-current-word` from `vim-mode-plus`'s `normal-mode`
-  - Just `enter` start search cursor-word.
+- `cmd-e`:
+  - When workspace has no `narrow-edior` on workspace: start `narrow:search-by-current-word`.
+  - When workspace has at least one `narrow-edior`: `query-current-word`( by default keymap).
+    - Replace active `narrow-edior`'s query with cursor-word.
+- `cmd-[`: `narrow:previous-query-history` Recall previous history
+- `cmd-]`: `narrow:next-query-history`, Recall next history
 - `ctrl-g`: Close `narrow-editor` from wherever.
 - `tab`, `shift-tab`: to move to next/previous item.
 - `;`: confirm current-item without closing `narrow-editor`, I can close `narrow-editor` by `ctrl-g`.
@@ -199,6 +203,12 @@ Explanation of my keymap.
 ```coffeescript
 # From outside of narrow-editor
 # -------------------------
+
+# `cmd-e` start `search-by-current-word` only when workspace does NOT have `narrow-editor`.
+# NOTE: When workspace.has-narrow, `cmd-e` is mapped to `query-current-word` by default.
+'atom-workspace:not(.has-narrow) atom-text-editor.vim-mode-plus:not(.insert-mode)':
+  'cmd-e': 'narrow:search-by-current-word'
+
 'atom-text-editor.vim-mode-plus:not(.insert-mode)':
   # For frequent uses, assign shorter keymap(non-2-step keymap).
   'ctrl-z': 'narrow:reopen'
@@ -215,7 +225,6 @@ Explanation of my keymap.
   'space l': 'narrow:scan'
   'cmd-l': 'narrow:scan-by-current-word'
 
-  'cmd-e': 'narrow:search-by-current-word'
   'space s': 'narrow:search'
 
   'space G': 'narrow:git-diff-all'
