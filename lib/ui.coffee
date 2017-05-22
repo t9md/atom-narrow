@@ -26,6 +26,7 @@ Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
 ItemIndicator = require './item-indicator'
+queryHistory = require './query-history'
 SelectFiles = null
 
 module.exports =
@@ -143,6 +144,21 @@ class Ui
       'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
       'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
       'narrow-ui:delete-to-end-of-search-term': => @deleteToEndOfSearchTerm()
+      'narrow-ui:set-next-query': => @setQueryFromHistroy('next')
+      'narrow-ui:set-previous-query': => @setQueryFromHistroy('previous')
+
+  setQueryFromHistroy: (direction, retry) ->
+    if text = queryHistory.get(@provider.name, direction)
+      if text is @getQuery() and not retry
+        @setQueryFromHistroy(direction, true)
+      else
+        @setQuery(text)
+
+  resetHistory: ->
+    queryHistory.reset(@provider.name)
+
+  saveQueryHistory: (text) ->
+    queryHistory.save(@provider.name, text)
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
@@ -189,6 +205,7 @@ class Ui
 
   queryCurrentWord: ->
     if word = getCurrentWord(atom.workspace.getActiveTextEditor()).trim()
+      @saveQueryHistory(word)
       @withIgnoreChange => @setQuery(word)
       @refresh(force: true).then =>
         @moveToSearchedWordOrBeginningOfSelectedItem()
@@ -259,6 +276,7 @@ class Ui
       @supportCacheItems
       @supportFilePathOnlyItemsUpdate
       @useFirstQueryAsSearchTerm
+      @reopened
     } = @provider
 
     # Initial state asignment: start
@@ -350,6 +368,7 @@ class Ui
 
     @grammar.activate()
     @setQuery(@query)
+    @saveQueryHistory(@query) unless @reopened
     @controlBar.show()
     @moveToPrompt()
 
@@ -441,6 +460,8 @@ class Ui
     return if @destroyed
 
     @destroyed = true
+    @saveQueryHistory(@getQuery())
+    @resetHistory()
 
     # NOTE: Prevent delayed-refresh on destroyed editor.
     @cancelDelayedRefresh()
@@ -634,6 +655,7 @@ class Ui
     )
 
     @lastQuery = @getQuery()
+
     if @useFirstQueryAsSearchTerm
       if @lastSearchTerm isnt (searchTerm = @getSearchTermFromQuery())
         @lastSearchTerm = searchTerm

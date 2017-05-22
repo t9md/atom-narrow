@@ -51,6 +51,7 @@
 
 'atom-text-editor.narrow.narrow-editor:not(.read-only)[data-grammar="source narrow"]':
   'escape': 'narrow-ui:stop-insert'
+  'ctrl-u': 'narrow-ui:delete-to-end-of-search-term'
 
 'atom-text-editor.narrow.narrow-editor.read-only[data-grammar="source narrow"]:not(.vim-mode-plus)':
   'k': 'core:move-up'
