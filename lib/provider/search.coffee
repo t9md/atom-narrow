@@ -1,7 +1,6 @@
 ProviderBase = require './provider-base'
 {getProjectPaths} = require '../utils'
 Searcher = require '../searcher'
-SearchOptions = require '../search-options'
 path = require 'path'
 _ = require 'underscore-plus'
 
@@ -23,8 +22,6 @@ class Search extends ProviderBase
     @projects ?= getProjectPaths(if @options.currentProject then @editor)
 
   initialize: ->
-    @initializeSearchOptions() unless @reopened
-    @searchOptions = new SearchOptions()
     @searcher = new Searcher(@searchOptions)
 
   searchFilePath: (filePath) ->
@@ -68,11 +65,10 @@ class Search extends ProviderBase
   getItems: (filePath) ->
     @searcher.cancel()
     @updateSearchState()
-    @searchOptions.set({@searchUseRegex, @searchRegex, @searchTerm})
     @searcher.setCommand(@getConfig('searcher'))
     @ui.grammar.update()
 
-    if @searchRegex?
+    if @searchOptions.searchRegex?
       if filePath
         @searchFilePath(filePath)
       else

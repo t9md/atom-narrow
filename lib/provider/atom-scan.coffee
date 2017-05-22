@@ -12,15 +12,11 @@ class AtomScan extends ProviderBase
   useFirstQueryAsSearchTerm: true
   supportFilePathOnlyItemsUpdate: true
 
-  initialize: ->
-    @initializeSearchOptions() unless @reopened
-    @searchOptions = new SearchOptions()
-
   # Not used but keep it since I'm planning to introduce per file refresh on modification
   scanFilePath: (filePath) ->
     items = []
     atom.workspace.open(filePath, activateItem: false).then (editor) =>
-      editor.scan @searchRegex, ({range}) ->
+      editor.scan @searchOptions.searchRegex, ({range}) ->
         items.push({
           filePath: filePath
           text: editor.lineTextForBufferRow(range.start.row)
@@ -30,7 +26,7 @@ class AtomScan extends ProviderBase
       items
 
   scanWorkspace: ->
-    @scanPromise = atom.workspace.scan @searchRegex, (result) =>
+    @scanPromise = atom.workspace.scan @searchOptions.searchRegex, (result) =>
       if result?.matches?.length
         {filePath, matches} = result
         @updateItems matches.map (match) ->
@@ -68,7 +64,7 @@ class AtomScan extends ProviderBase
 
   getItems: (filePath) ->
     @updateSearchState()
-    if @searchRegex?
+    if @searchOptions.searchRegex?
       @search().then (@items) =>
         @items
     else

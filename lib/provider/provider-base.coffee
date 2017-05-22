@@ -16,6 +16,7 @@ _ = require 'underscore-plus'
 Ui = require '../ui'
 settings = require '../settings'
 FilterSpec = require '../filter-spec'
+SearchOptions = require '../search-options'
 
 module.exports =
 class ProviderBase
@@ -51,15 +52,9 @@ class ProviderBase
   editor: null
 
   # used by scan, search, atom-scan
-  searchWholeWord: null
-  searchWholeWordChangedManually: false
-  searchIgnoreCase: null
-  searchIgnoreCaseChangedManually: false
-  searchUseRegex: null
-  searchUseRegexChangedManually: false
   showSearchOption: false
+
   queryWordBoundaryOnByCurrentWordInvocation: false
-  initialSearchRegex: null
   useFirstQueryAsSearchTerm: false
 
   @getConfig: (name) ->
@@ -88,13 +83,16 @@ class ProviderBase
   initialize: ->
     # to override
 
-  initializeSearchOptions: ->
+  initializeSearchOptions: (restoredState) ->
     editor = atom.workspace.getActiveTextEditor()
+    initialState = restoredState ? {}
+
     if @options.queryCurrentWord and editor.getSelectedBufferRange().isEmpty()
-      @searchWholeWord = true
+      initialState.searchWholeWord ?= true
     else
-      @searchWholeWord = @getConfig('searchWholeWord')
-    @searchUseRegex = @getConfig('searchUseRegex')
+      initialState.searchWholeWord ?= @getConfig('searchWholeWord')
+    initialState.searchUseRegex ?= @getConfig('searchUseRegex')
+    @searchOptions = new SearchOptions(this, initialState)
 
   # Event is object contains {newEditor, oldEditor}
   onBindEditor: (event) ->
@@ -133,13 +131,7 @@ class ProviderBase
 
   getState: ->
     {
-      @searchWholeWord
-      @searchWholeWordChangedManually
-      @searchIgnoreCase
-      @searchIgnoreCaseChangedManually
-      @searchUseRegex
-      @searchUseRegexChangedManually
-      @searchTerm
+      searchOptionState: @searchOptions?.getState()
     }
 
   saveState: ->
@@ -154,11 +146,16 @@ class ProviderBase
   constructor: (editor, @options={}, @restoredState=null) ->
     if @restoredState?
       @reopened = true
+      {searchOptionState} = @restoredState
+      delete @restoredState.searchOptionState
       @mergeState(this, @restoredState.provider)
 
     @name = @constructor.name
     @dashName = _.dasherize(@name)
     @subscriptions = new CompositeDisposable
+
+    if @showSearchOption
+      @initializeSearchOptions(searchOptionState)
 
     if isNarrowEditor(editor)
       # Invoked from another Ui( narrow-editor ).
@@ -301,51 +298,18 @@ class ProviderBase
       editor.save()
 
   toggleSearchWholeWord: ->
-    @searchWholeWordChangedManually = true
-    @searchWholeWord = not @searchWholeWord
+    @searchOptions.toggle('searchWholeWord')
 
   toggleSearchIgnoreCase: ->
-    @searchIgnoreCaseChangedManually = true
-    @searchIgnoreCase = not @searchIgnoreCase
+    @searchOptions.toggle('searchIgnoreCase')
 
   toggleSearchUseRegex: ->
-    @searchUseRegexChangedManually = true
-    @searchUseRegex = not @searchUseRegex
+    @searchOptions.toggle('searchUseRegex')
 
   # Helpers
   # -------------------------
   getFirstCharacterPointOfRow: (row) ->
     getFirstCharacterPositionForBufferRow(@editor, row)
-
-  getIgnoreCaseValueForSearchTerm: (term) ->
-    sensitivity = @getConfig('caseSensitivityForSearchTerm')
-    (sensitivity is 'insensitive') or (sensitivity is 'smartcase' and not /[A-Z]/.test(term))
-
-  getRegExpForSearchTerm: (term, {searchWholeWord, searchIgnoreCase, searchUseRegex}) ->
-    if searchUseRegex
-      source = term
-      try
-        new RegExp(source, '')
-      catch error
-        return null
-    else
-      source = _.escapeRegExp(term)
-
-    if searchWholeWord
-      startBoundary = /^\w/.test(term)
-      endBoundary = /\w$/.test(term)
-      if not startBoundary and not endBoundary
-        # Go strict
-        source = "\\b" + source + "\\b"
-      else
-        # Relaxed if I can set end or start boundary
-        startBoundaryString = if startBoundary then "\\b" else ''
-        endBoundaryString = if endBoundary then "\\b" else ''
-        source = startBoundaryString + source + endBoundaryString
-
-    flags = 'g'
-    flags += 'i' if searchIgnoreCase
-    new RegExp(source, flags)
 
   getFilterSpec: (filterQuery) ->
     if filterQuery
@@ -354,30 +318,13 @@ class ProviderBase
         sensitivity: @getConfig('caseSensitivityForNarrowQuery')
 
   updateSearchState: ->
-    @searchTerm = @ui.getSearchTermFromQuery()
+    @searchOptions.setSearchTerm(@ui.getSearchTermFromQuery())
 
-    if @searchTerm
-      # Auto relax \b restriction, enable @searchWholeWord only when \w was included.
-      if @searchWholeWord and not @searchWholeWordChangedManually
-        @searchWholeWord = /\w/.test(@searchTerm)
-
-      unless @searchIgnoreCaseChangedManually
-        @searchIgnoreCase = @getIgnoreCaseValueForSearchTerm(@searchTerm)
-
-      options = {@searchWholeWord, @searchIgnoreCase, @searchUseRegex}
-      @searchRegex = @getRegExpForSearchTerm(@searchTerm, options)
-
-      @initialSearchRegex ?= @searchRegex
-
-      grammarCanHighlight = not @searchUseRegex or (@searchTerm is _.escapeRegExp(@searchTerm))
-      if grammarCanHighlight
-        @ui.grammar.setSearchRegex(@searchRegex)
-      else
-        @ui.grammar.setSearchRegex(null)
+    if @searchOptions.grammarCanHighlight
+      @ui.grammar.setSearchRegex(@searchOptions.searchRegex)
     else
-      @searchRegex = null
-      @ui.grammar.setSearchRegex(@searchRegex)
+      @ui.grammar.setSearchRegex(null)
 
-    @ui.highlighter.setRegExp(@searchRegex)
-    states = {@searchRegex, @searchWholeWord, @searchIgnoreCase, @searchTerm, @searchUseRegex}
+    @ui.highlighter.setRegExp(@searchOptions.searchRegex)
+    states = @searchOptions.pick(['searchRegex', 'searchWholeWord', 'searchIgnoreCase', 'searchTerm', 'searchUseRegex'])
     @ui.controlBar.updateElements(states)
