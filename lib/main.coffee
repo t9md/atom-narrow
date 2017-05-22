@@ -9,8 +9,14 @@ ProviderBase = require "./provider/provider-base"
 module.exports =
   config: settings.config
   lastFocusedNarrowEditor: null
+  serialize: ->
+    {
+      queryHistory: Ui.queryHistory.serialize()
+    }
 
-  activate: ->
+  activate: (restoredState) ->
+    Ui.queryHistory.deserialize(restoredState.queryHistory)
+
     @subscriptions = subs = new CompositeDisposable
     settings.removeDeprecated()
 

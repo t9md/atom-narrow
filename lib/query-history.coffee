@@ -3,9 +3,8 @@ _ = require 'underscore-plus'
 
 class History
   maxSize: 100
-  constructor: ->
+  constructor: (@entries=[]) ->
     @index = -1
-    @entries = []
 
   get: (direction) ->
     switch direction
@@ -31,6 +30,16 @@ class QueryHistory
   constructor: ->
     @historyByProviderName = {}
 
+  deserialize: (state) ->
+    for name, entries of state ? {}
+      @historyByProviderName[name] = new History(entries)
+
+  serialize: ->
+    result = {}
+    for name, history of @historyByProviderName
+      result[name] = history.entries
+    result
+
   save: (name, value) ->
     @historyByProviderName[name] ?= new History()
     @historyByProviderName[name].save(value)
@@ -40,5 +49,8 @@ class QueryHistory
 
   reset: (name) ->
     @historyByProviderName[name]?.reset()
+
+  clear: (name) ->
+    @historyByProviderName[name]?.clear()
 
 module.exports = new QueryHistory

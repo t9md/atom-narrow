@@ -58,6 +58,8 @@ class Ui
       numbers.push(ui.titleNumber)
     Math.max(numbers...) + 1
 
+  @queryHistory: queryHistory
+
   autoPreview: null
   autoPreviewOnQueryChange: null
 
@@ -144,8 +146,9 @@ class Ui
       'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
       'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
       'narrow-ui:delete-to-end-of-search-term': => @deleteToEndOfSearchTerm()
-      'narrow-ui:set-next-query': => @setQueryFromHistroy('next')
-      'narrow-ui:set-previous-query': => @setQueryFromHistroy('previous')
+      'narrow-ui:next-query-history': => @setQueryFromHistroy('next')
+      'narrow-ui:previous-query-history': => @setQueryFromQueryHistroy('previous')
+      'narrow-ui:clear-query-history': => @clearHistroy()
 
   setQueryFromHistroy: (direction, retry) ->
     if text = queryHistory.get(@provider.name, direction)
@@ -153,6 +156,9 @@ class Ui
         @setQueryFromHistroy(direction, true)
       else
         @setQuery(text)
+
+  clearHistroy: ->
+    queryHistory.clear(@provider.name)
 
   resetHistory: ->
     queryHistory.reset(@provider.name)
