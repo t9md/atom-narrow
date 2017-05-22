@@ -9,6 +9,9 @@
   'ctrl-cmd-f': 'narrow:focus'
   'ctrl-cmd-p': 'narrow:previous-item'
   'ctrl-cmd-n': 'narrow:next-item'
+  'cmd-[': 'narrow:previous-query-history'
+  'cmd-]': 'narrow:next-query-history'
+  'cmd-e': 'narrow:next-query-history'
 
 # Only on narrow-editor
 # ---------------------------
