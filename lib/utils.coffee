@@ -1,7 +1,6 @@
 path = require 'path'
 {Point} = require 'atom'
 _ = require 'underscore-plus'
-{inspect} = require 'util'
 
 getAdjacentPane = (basePane, which) ->
   return unless children = basePane.getParent().getChildren?()

@@ -1,5 +1,3 @@
-{inspect} = require 'util'
-p = (args...) -> console.log inspect(args...)
 _ = require 'underscore-plus'
 path = require 'path'
 {Point, Range, CompositeDisposable, Disposable, Emitter} = require 'atom'
