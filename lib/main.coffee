@@ -9,8 +9,14 @@ ProviderBase = require "./provider/provider-base"
 module.exports =
   config: settings.config
   lastFocusedNarrowEditor: null
+  serialize: ->
+    {
+      queryHistory: Ui.queryHistory.serialize()
+    }
 
-  activate: ->
+  activate: (restoredState) ->
+    Ui.queryHistory.deserialize(restoredState.queryHistory)
+
     @subscriptions = subs = new CompositeDisposable
     settings.removeDeprecated()
 
@@ -54,6 +60,8 @@ module.exports =
       'narrow:close': => @getUi(skipProtected: true)?.close()
       'narrow:next-item': => @getUi()?.confirmItemForDirection('next')
       'narrow:previous-item': => @getUi()?.confirmItemForDirection('previous')
+      'narrow:next-query-history': => @getUi()?.setQueryFromHistroy('next')
+      'narrow:previous-query-history': => @getUi()?.setQueryFromHistroy('previous')
       'narrow:reopen': => @reopen()
       'narrow:query-current-word': => @getUi()?.queryCurrentWord()
 

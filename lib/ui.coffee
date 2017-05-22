@@ -1,5 +1,3 @@
-{inspect} = require 'util'
-p = (args...) -> console.log inspect(args...)
 _ = require 'underscore-plus'
 path = require 'path'
 {Point, Range, CompositeDisposable, Disposable, Emitter} = require 'atom'
@@ -28,6 +26,7 @@ Highlighter = require './highlighter'
 ControlBar = require './control-bar'
 Items = require './items'
 ItemIndicator = require './item-indicator'
+queryHistory = require './query-history'
 SelectFiles = null
 
 module.exports =
@@ -58,6 +57,8 @@ class Ui
     @uiByEditor.forEach (ui) ->
       numbers.push(ui.titleNumber)
     Math.max(numbers...) + 1
+
+  @queryHistory: queryHistory
 
   autoPreview: null
   autoPreviewOnQueryChange: null
@@ -145,6 +146,26 @@ class Ui
       'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
       'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
       'narrow-ui:delete-to-end-of-search-term': => @deleteToEndOfSearchTerm()
+      'narrow-ui:clear-query-history': => @clearHistroy()
+
+  setQueryFromHistroy: (direction, retry) ->
+    if text = queryHistory.get(@provider.name, direction)
+      if text is @getQuery() and not retry
+        @setQueryFromHistroy(direction, true)
+      else
+        @withIgnoreChange => @setQuery(text)
+        @refreshWithDelay force: true, 100, =>
+          @moveToSearchedWordOrBeginningOfSelectedItem()
+          @flashCursorLine()
+
+  clearHistroy: ->
+    queryHistory.clear(@provider.name)
+
+  resetHistory: ->
+    queryHistory.reset(@provider.name)
+
+  saveQueryHistory: (text) ->
+    queryHistory.save(@provider.name, text)
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
@@ -191,6 +212,7 @@ class Ui
 
   queryCurrentWord: ->
     if word = getCurrentWord(atom.workspace.getActiveTextEditor()).trim()
+      @saveQueryHistory(word)
       @withIgnoreChange => @setQuery(word)
       @refresh(force: true).then =>
         @moveToSearchedWordOrBeginningOfSelectedItem()
@@ -261,6 +283,7 @@ class Ui
       @supportCacheItems
       @supportFilePathOnlyItemsUpdate
       @useFirstQueryAsSearchTerm
+      @reopened
     } = @provider
 
     # Initial state asignment: start
@@ -352,6 +375,7 @@ class Ui
 
     @grammar.activate()
     @setQuery(@query)
+    @saveQueryHistory(@query) unless @reopened
     @controlBar.show()
     @moveToPrompt()
 
@@ -443,6 +467,8 @@ class Ui
     return if @destroyed
 
     @destroyed = true
+    @saveQueryHistory(@getQuery())
+    @resetHistory()
 
     # NOTE: Prevent delayed-refresh on destroyed editor.
     @cancelDelayedRefresh()
@@ -636,6 +662,7 @@ class Ui
     )
 
     @lastQuery = @getQuery()
+
     if @useFirstQueryAsSearchTerm
       if @lastSearchTerm isnt (searchTerm = @getSearchTermFromQuery())
         @lastSearchTerm = searchTerm
@@ -757,26 +784,26 @@ class Ui
           destroyPromptSelection()
         else
           return if @lastQuery.trim() is @getQuery().trim()
-          @refreshWithDelay()
+          if @useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
+            delay = @provider.getConfig('refreshDelayOnSearchTermChange')
+          else
+            delay = if @boundToSingleFile then 0 else 100
+
+          @refreshWithDelay selectFirstItem: true, delay, =>
+            @preview() if @autoPreviewOnQueryChange and @isActive()
       else
         # Item area modified, direct editor
         @setModifiedState(true)
 
-  # Delayed-refresh on query-change event, dont use this for other purpose.
-  refreshWithDelay: ->
+  # Delayed-refresh
+  refreshWithDelay: (options, delay, onRefresh) ->
     @cancelDelayedRefresh()
-    if @useFirstQueryAsSearchTerm and @getSearchTermFromQuery() isnt @lastSearchTerm
-      delay = @provider.getConfig('refreshDelayOnSearchTermChange')
-    else
-      delay = if @boundToSingleFile then 0 else 100
 
-    refreshThenPreview = =>
+    refresh = =>
       @delayedRefreshTimeout = null
-      @refresh(selectFirstItem: true).then =>
-        if @autoPreviewOnQueryChange and @isActive()
-          @preview()
+      @refresh(options).then(onRefresh)
 
-    @delayedRefreshTimeout = setTimeout(refreshThenPreview, delay)
+    @delayedRefreshTimeout = setTimeout(refresh, delay)
 
   cancelDelayedRefresh: ->
     if @delayedRefreshTimeout?
