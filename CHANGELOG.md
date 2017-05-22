@@ -1,3 +1,12 @@
+# 0.43.0:
+- New: QueryHistory support
+  - History are maintained per provider and persists across Atom reload.
+  - Max 100 entries are kept.
+- New: Default keymap for following keymap to commands for `has-narrow` scope.
+  `cmd-[`: `narrow:previous-query-history`
+  `cmd-]`: `narrow:next-query-history`
+  `cmd-e`: `narrow:next-query-history` ( override default `cmd-e` but only when workspace have `narrow-editor`)
+
 # 0.42.0: BIG CHANGE.
 New: `narrow-ui:delete-to-end-of-search-term`.
   - If cursor is not at end of searchTerm, it delete text till end of searchTerm.
@@ -22,7 +31,7 @@ New, Breaking: Now `atom-scan`, `search` take searchTerm from first query of nar
   - Breaking: `space` contained searchTerm is currently NOT searchable( will find the way in future release ).
   - Breaking: `rememberUseRegex` for `search` and `atom-scan` was removed. (will find the way in future release ).
   - Breaking: Config `useRegex` is renamed to `searchUseRegex`. No auto-migration, sorry.
-New: Super useful `set-cursor-word-as-query`.
+New: Super useful `query-current-word`.
   - Replace `narrow-editor`'s query with cursor-word, and `narrow-editor` automatically refreshed.
   - You can invoke this command from inside or outside of `narrow-editor`.
 - Breaking: Remove not much useful(IMO) providers. #209
