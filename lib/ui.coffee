@@ -79,14 +79,15 @@ class Ui
   onDidMoveToPrompt: (fn) -> @emitter.on('did-move-to-prompt', fn)
   emitDidMoveToPrompt: -> @emitter.emit('did-move-to-prompt')
 
+  onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
+  emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
+
   onDidUpdateItems: (fn) -> @emitter.on('did-update-items', fn)
   emitDidUpdateItems: (event) -> @emitter.emit('did-update-items', event)
 
   onFinishUpdateItems: (fn) -> @emitter.on('finish-update-items', fn)
   emitFinishUpdateItems: -> @emitter.emit('finish-update-items')
 
-  onDidMoveToItemArea: (fn) -> @emitter.on('did-move-to-item-area', fn)
-  emitDidMoveToItemArea: -> @emitter.emit('did-move-to-item-area')
 
   onDidDestroy: (fn) -> @emitter.on('did-destroy', fn)
   emitDidDestroy: -> @emitter.emit('did-destroy')
@@ -309,9 +310,13 @@ class Ui
 
     @items.onDidChangeSelectedItem ({row}) => @itemIndicator.update({row})
 
-    if settings.get('autoShiftReadOnlyOnMoveToItemArea')
-      @disposables.add @onDidMoveToItemArea =>
+    @onDidMoveToItemArea =>
+      if settings.get('autoShiftReadOnlyOnMoveToItemArea')
         @setReadOnly(true)
+      @editorElement.classList.remove('prompt')
+
+    @onDidMoveToPrompt =>
+      @editorElement.classList.add('prompt')
 
     # Depends on ui.grammar and commands bound to @editorElement, so have to come last
     @controlBar = new ControlBar(this)
@@ -919,7 +924,7 @@ class Ui
       @moveToBeginningOfSelectedItem()
 
   moveToSearchedWordOrBeginningOfSelectedItem: ->
-    if @provider.searchOptions.searchRegex?
+    if @provider.searchOptions?.searchRegex?
       @moveToSearchedWordAtSelectedItem(@provider.searchOptions.searchRegex)
     else
       @moveToBeginningOfSelectedItem()
