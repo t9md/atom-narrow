@@ -326,5 +326,5 @@ class ProviderBase
       @ui.grammar.setSearchRegex(null)
 
     @ui.highlighter.setRegExp(@searchOptions.searchRegex)
-    states = @searchOptions.pick(['searchRegex', 'searchWholeWord', 'searchIgnoreCase', 'searchTerm', 'searchUseRegex'])
+    states = @searchOptions.pick('searchRegex', 'searchWholeWord', 'searchIgnoreCase', 'searchTerm', 'searchUseRegex')
     @ui.controlBar.updateElements(states)
