@@ -121,6 +121,9 @@ Available for following providers.
 - `narrow:next-item`: ( `ctrl-cmd-n` ) Move cursor to position of next-item.
 - `narrow:previous-item`: ( `ctrl-cmd-p` ) Move cursor to position of previous-item.
 - `narrow:reopen`: ( no default keymap ) Reopen closed narrow editor up to 10 recent closed.
+- `narrow:query-current-word`: ( `ctrl-cmd-e` ) Replace active `narrow-editor`'s query with cursor word.
+- `narrow:previous-query-history`: ( `ctrl-cmd-[` ) Replace active `narrow-editor`'s query with previous history entry.
+- `narrow:next-query-history`: ( `ctrl-cmd-]` ) Replace active `narrow-editor`'s query with next history entry.
 
 ##### Invoke narrow provide
 
@@ -233,6 +236,12 @@ Explanation of my keymap.
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode':
   'cmd-f': 'narrow:focus' # focus to narrow-editor
   'cmd-i': 'narrow:focus-prompt' # focus to prompt of narrow-editor
+
+  # Following three command have ctrl- prefixed by default to avoid conflicts.
+  # But I don' care conflict, prefer more accessible keymap.
+  'cmd-[': 'narrow:previous-query-history'
+  'cmd-]': 'narrow:next-query-history'
+  'cmd-e': 'narrow:query-current-word'
 
 # narrow-editor regardless of mode of vim
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':

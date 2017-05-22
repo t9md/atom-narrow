@@ -3,9 +3,9 @@
   - History are maintained per provider and persists across Atom reload.
   - Max 100 entries are kept.
 - New: Default keymap for following keymap to commands for `has-narrow` scope.
-  `cmd-[`: `narrow:previous-query-history`
-  `cmd-]`: `narrow:next-query-history`
-  `cmd-e`: `narrow:next-query-history` ( override default `cmd-e` but only when workspace have `narrow-editor`)
+  `ctrl-cmd-[`: `narrow:previous-query-history`
+  `ctrl-cmd-]`: `narrow:next-query-history`
+  `ctrl-cmd-e`: `narrow:next-query-history` ( override default `cmd-e` but only when workspace have `narrow-editor`)
 
 # 0.42.0: BIG CHANGE.
 New: `narrow-ui:delete-to-end-of-search-term`.
