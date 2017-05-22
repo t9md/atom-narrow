@@ -156,6 +156,7 @@ class Ui
         @withIgnoreChange => @setQuery(text)
         @refreshWithDelay force: true, 100, =>
           @moveToSearchedWordOrBeginningOfSelectedItem()
+          @scrollToColumnZero() unless @isActive()
           @flashCursorLine()
 
   clearHistroy: ->
@@ -216,7 +217,13 @@ class Ui
       @withIgnoreChange => @setQuery(word)
       @refresh(force: true).then =>
         @moveToSearchedWordOrBeginningOfSelectedItem()
+        @scrollToColumnZero() unless @isActive()
         @flashCursorLine()
+
+  scrollToColumnZero: ->
+    point = @editor.getCursorBufferPosition()
+    point.column = 0
+    @editor.scrollToBufferPosition(point, center: true)
 
   setModifiedState: (state) ->
     return if state is @modifiedState
@@ -879,23 +886,22 @@ class Ui
     if item?
       @items.selectItem(item)
       wasAtPrompt = @isAtPrompt()
-      @moveToSelectedItem(scrollToColumnZero: true)
+      @moveToSelectedItem()
+      @scrollToColumnZero()
       @emitDidMoveToItemArea() if wasAtPrompt
 
   isInSyncToProviderEditor: ->
     @boundToSingleFile or @items.getSelectedItem().filePath is @provider.editor.getPath()
 
-  moveToSelectedItem: ({scrollToColumnZero, ignoreCursorMove, column}={}) ->
+  moveToSelectedItem: ({ignoreCursorMove, column}={}) ->
     return if (row = @items.getRowForSelectedItem()) is -1
 
-    point = scrollPoint = [row, column ? @editor.getCursorBufferPosition().column]
-    scrollPoint = [row, 0] if scrollToColumnZero
-
+    point = [row, column ? @editor.getCursorBufferPosition().column]
     moveAndScroll = =>
       # Manually set cursor to center to avoid scrollTop drastically changes
       # when refresh and auto-sync.
       @editor.setCursorBufferPosition(point, autoscroll: false)
-      @editor.scrollToBufferPosition(scrollPoint, center: true)
+      @editor.scrollToBufferPosition(point, center: true)
 
     if ignoreCursorMove ? true
       @withIgnoreCursorMove(moveAndScroll)

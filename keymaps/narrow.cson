@@ -11,7 +11,7 @@
   'ctrl-cmd-n': 'narrow:next-item'
   'cmd-[': 'narrow:previous-query-history'
   'cmd-]': 'narrow:next-query-history'
-  'cmd-e': 'narrow:next-query-history'
+  'cmd-e': 'narrow:query-current-word'
 
 # Only on narrow-editor
 # ---------------------------
