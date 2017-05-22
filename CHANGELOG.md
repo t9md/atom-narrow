@@ -1,3 +1,42 @@
+# 0.42.0: WIP
+New: `narrow-ui:delete-to-beginning-of-query`.
+  - If cursor is not at end of searchTerm, it delete text till end of searchTerm.
+  - `ctrl-u` is mapped only on `narrow-editor.prompt`
+Fix: When `ag` searched with `regex` enabled, it couldn't find multiple match on single line.
+  - Remove `--nomultiline` from ag option. #206
+  - The cause was not yet cleared( I reported to the_silver_searcher repo ).
+  - With this option enabled, search result found strange position when pattern was regex.
+New, Breaking: Now `atom-scan`, `search` take searchTerm from first query of narrow-editor #205.
+  - As like `scan` provider have been already doing.
+  - Behavioral changes:
+    - searched items are incrementally rendered instead of collect-all-items-then-render-in-bulk.
+    - FilePaths appeared on `narrow-editor` is no longer ordered, just appeared in the order of finished.
+    - Previously running search task(external process/item rendering) is cancelled on new search request.
+  - New `refreshDelayOnSearchTermChange` control amount of delay to start search.
+    - `search` and `atom-scan`: Default `700`ms
+    - `scan`: default `10`ms
+  - Breaking: No longer read searchTerm from dedicated `mini-editor`.
+  - Breaking: Remove input-history feature( might come back in future )
+New: Super useful `set-cursor-word-as-query`.
+  - This command replace `narrow-editor`'s query with cursor-word.
+  - `narrow-editor` automatically refreshed when query replaced with new word.
+  - You can invoke this command from inside or outside of `narrow-editor`.
+- Breaking: Remove not much useful(IMO) providers. #209
+  - Removed following providers
+    - `bookmarks`, `linter`, `git-diff`
+  - Why? Just I want to reduce amount of code I need to maintain.
+  - I haven't used these providers from when I created, it's just exercise to test architecture of narrow( ui and provider ).
+  - Sorry who actively used these provider.
+- Breaking, Improve: Closing `narrow-editor` in normal way no longer activate provider's pane. #210
+  - In Previous release:
+    - There is no behavioral diff between `narrow:close` command and closing `narrow-editor`'s tab manually.
+  - From this release.
+    - Closing `narrow-editor` by mouse of normal `core:close` do nothing about active focus.
+    - Closing `narrow-editor` by `narrow:close` activate( focus to ) original editor after close.
+- Bug: When autoPreview was disabled, confirm didn't scroll to new cursor position.
+- Improve: Keep minimum 3 column width to reduce chance where item-text side-shifted on item filtered.
+  - Was 2 column width in previous release.
+
 # 0.41.1:
 - Fix: #204 mouse `click` on useRegex button now work properly.
 - Improve: Clicking `mini-editor` container for search input no longer close `min-editor`.

@@ -175,16 +175,10 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 ###### `config.cson`
 
-For `git-diff-all`, and `search`, I want to close manually by `ctrl-g`.
-So disable `closeOnConfirm`.
-
 ```
   narrow:
-    GitDiffAll:
-      closeOnConfirm: false
     Search:
-      closeOnConfirm: false
-      rememberIgnoreCaseForByCurrentWordSearch: true
+      startByDoubleClick: true
     SelectFiles:
       rememberQuery: true
     confirmOnUpdateRealFile: false
@@ -205,34 +199,31 @@ Explanation of my keymap.
 ```coffeescript
 # From outside of narrow-editor
 # -------------------------
-'atom-text-editor.vim-mode-plus.normal-mode':
+'atom-text-editor.vim-mode-plus:not(.insert-mode)':
   # For frequent uses, assign shorter keymap(non-2-step keymap).
   'ctrl-z': 'narrow:reopen'
 
-  'cmd-o': 'narrow:symbols-by-current-word' # quick preview function
-  'cmd-l': 'narrow:scan-by-current-word'
-  'enter': 'narrow:search-by-current-word'
-  'shift-cmd-g': 'narrow:search-by-current-word'
-
-  'shift-cmd-o': 'narrow:project-symbols-by-current-word'
-  'shift-cmd-r': 'narrow:project-symbols'
-
-  # assign consistently
   'space f': 'narrow:fold'
-  'space o': 'narrow:symbols'
+
+  'cmd-o': 'narrow:symbols-by-current-word'
+  'cmd-shift-o': 'narrow:project-symbols-by-current-word'
+
+  # Override default cmd-r and cmd-shift-r
+  'cmd-r': 'narrow:symbols'
+  'cmd-shift-r': 'narrow:project-symbols'
+
   'space l': 'narrow:scan'
-  'space L': 'narrow:scan-by-current-word'
+  'cmd-l': 'narrow:scan-by-current-word'
+
+  'cmd-e': 'narrow:search-by-current-word'
   'space s': 'narrow:search'
-  'space S': 'narrow:search-by-current-word'
-  'space a': 'narrow:atom-scan'
-  'space A': 'narrow:atom-scan-by-current-word'
+
   'space G': 'narrow:git-diff-all'
 
 # When workspace has narrow-editor
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode':
   'cmd-f': 'narrow:focus' # focus to narrow-editor
   'cmd-i': 'narrow:focus-prompt' # focus to prompt of narrow-editor
-  'ctrl-cmd-l': 'narrow:refresh' # manually refresh items
 
 # narrow-editor regardless of mode of vim
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
@@ -240,6 +231,11 @@ Explanation of my keymap.
   'cmd-i': 'narrow:focus-prompt' # cmd-i to return to calling editor.
   # Danger: apply change on narrow-editor to real file by `cmd-s`.
   'cmd-s': 'narrow-ui:update-real-file'
+
+'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode,
+  atom-workspace.has-narrow atom-text-editor.vim-mode-plus.visual-mode':
+    # cmd-e to set current word as query of active ui.
+    'cmd-e': 'narrow:query-current-word'
 
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
   # Danger: I use direct-edit very frequently, so intentionally recover `i` of vim-mode-plus.
