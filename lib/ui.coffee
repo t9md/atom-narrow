@@ -144,7 +144,7 @@ class Ui
       'narrow-ui:toggle-search-whole-word': @toggleSearchWholeWord
       'narrow-ui:toggle-search-ignore-case': @toggleSearchIgnoreCase
       'narrow-ui:toggle-search-use-regex': @toggleSearchUseRegex
-      'narrow-ui:delete-to-beginning-of-query': => @deleteToBeginningOfQuery()
+      'narrow-ui:delete-to-end-of-search-term': => @deleteToEndOfSearchTerm()
 
   withIgnoreCursorMove: (fn) ->
     @ignoreCursorMove = true
@@ -169,7 +169,7 @@ class Ui
     if @useFirstQueryAsSearchTerm
       @getQuery().split(/\s+/)[0]
 
-  deleteToBeginningOfQuery: ->
+  deleteToEndOfSearchTerm: ->
     if @isAtPrompt()
       if searchTerm = @getSearchTermFromQuery()
         if searchTerm.length

@@ -1,13 +1,15 @@
-# 0.42.0: WIP
-New: `narrow-ui:delete-to-beginning-of-query`.
+# 0.42.0: BIG CHANGE.
+New: `narrow-ui:delete-to-end-of-search-term`.
   - If cursor is not at end of searchTerm, it delete text till end of searchTerm.
-  - `ctrl-u` is mapped only on `narrow-editor.prompt`
+  - If cursor is already at end of searchTerm it delete to beginning of line.
+  - Keystroke `ctrl-u` is mapped only on `narrow-editor.prompt`
 Fix: When `ag` searched with `regex` enabled, it couldn't find multiple match on single line.
   - Remove `--nomultiline` from ag option. #206
-  - The cause was not yet cleared( I reported to the_silver_searcher repo ).
+  - The cause still not yet cleared( I reported to the_silver_searcher repo ).
   - With this option enabled, search result found strange position when pattern was regex.
 New, Breaking: Now `atom-scan`, `search` take searchTerm from first query of narrow-editor #205.
   - As like `scan` provider have been already doing.
+  - So you can modify searchTerm after start `narrow:search`.
   - Behavioral changes:
     - searched items are incrementally rendered instead of collect-all-items-then-render-in-bulk.
     - FilePaths appeared on `narrow-editor` is no longer ordered, just appeared in the order of finished.
@@ -17,16 +19,18 @@ New, Breaking: Now `atom-scan`, `search` take searchTerm from first query of nar
     - `scan`: default `10`ms
   - Breaking: No longer read searchTerm from dedicated `mini-editor`.
   - Breaking: Remove input-history feature( might come back in future )
+  - Breaking: `space` contained searchTerm is currently NOT searchable( will find the way in future release ).
+  - Breaking: `rememberUseRegex` for `search` and `atom-scan` was removed. (will find the way in future release ).
+  - Breaking: Config `useRegex` is renamed to `searchUseRegex`. No auto-migration, sorry.
 New: Super useful `set-cursor-word-as-query`.
-  - This command replace `narrow-editor`'s query with cursor-word.
-  - `narrow-editor` automatically refreshed when query replaced with new word.
+  - Replace `narrow-editor`'s query with cursor-word, and `narrow-editor` automatically refreshed.
   - You can invoke this command from inside or outside of `narrow-editor`.
 - Breaking: Remove not much useful(IMO) providers. #209
   - Removed following providers
     - `bookmarks`, `linter`, `git-diff`
   - Why? Just I want to reduce amount of code I need to maintain.
-  - I haven't used these providers from when I created, it's just exercise to test architecture of narrow( ui and provider ).
-  - Sorry who actively used these provider.
+  - I haven't used these providers since then I created, it's just exercise to test architecture of narrow( ui and provider ).
+  - Sorry in case someone like and uses these providers.
 - Breaking, Improve: Closing `narrow-editor` in normal way no longer activate provider's pane. #210
   - In Previous release:
     - There is no behavioral diff between `narrow:close` command and closing `narrow-editor`'s tab manually.

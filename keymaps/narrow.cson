@@ -63,7 +63,7 @@
     'shift-tab': 'narrow-ui:preview-previous-item'
 
 'atom-text-editor.narrow.narrow-editor.prompt.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
-  'ctrl-u': 'narrow-ui:delete-to-beginning-of-query'
+  'ctrl-u': 'narrow-ui:delete-to-end-of-search-term'
 
 # -------------------------
 # Vim-mode-plus user only

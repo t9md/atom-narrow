@@ -131,8 +131,6 @@ ScanAndSearchAndAtomScanConfig =
   revealOnStartCondition: 'on-input'
   searchWholeWord: false
   searchUseRegex: false
-  minimumLengthToStartRegexSearch: 3
-  rememberUseRegex: false
   refreshDelayOnSearchTermChange: 700
 
 newProviderConfigForScanAndSearchAndAtomScan = (other={}) ->
