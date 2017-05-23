@@ -1,3 +1,6 @@
+# 0.44.1:
+- Fix: Critical bug `search` finish rendering before all search task have not yet finished.
+  - In other word, not all items found are rendered on Ui. sorry!.
 # 0.44.0:
 - Improve: #213 `search`, `atom-scan` now aware of unsaved modification.
   - Refresh items without explicit save.
