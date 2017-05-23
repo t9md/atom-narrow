@@ -14,7 +14,7 @@ class Symbols extends ProviderBase
   boundToSingleFile: true
   showLineHeader: false
   queryWordBoundaryOnByCurrentWordInvocation: true
-  items: null
+  refreshOnDidSave: true
 
   onBindEditor: ({newEditor}) ->
     @items = null
