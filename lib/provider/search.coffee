@@ -44,7 +44,9 @@ class Search extends ProviderBase
       @updateItems(@scanItemsForBuffer(buffer, @searchOptions.searchRegex))
       modifiedBuffersScanned.push(buffer)
 
+    finished = 0
     onFinish = (project) =>
+      finished++
       dir = atom.project.getDirectoryForProjectPath(project)
       for buffer in modifiedBuffers when dir.contains(buffer.getPath())
         scanBuffer(buffer)
@@ -52,8 +54,9 @@ class Search extends ProviderBase
       if projects.length
         searchNextProject()
       else
-        scanBuffer(buffer) for buffer in modifiedBuffers
-        @finishUpdateItems()
+        if finished is @projects.length
+          scanBuffer(buffer) for buffer in modifiedBuffers
+          @finishUpdateItems()
 
     searchNextProject = =>
       @searcher.searchProject(projects.shift(), @updateItems, onFinish)
