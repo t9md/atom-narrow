@@ -11,19 +11,7 @@ class AtomScan extends ProviderBase
   supportCacheItems: true
   useFirstQueryAsSearchTerm: true
   supportFilePathOnlyItemsUpdate: true
-
-  # Not used but keep it since I'm planning to introduce per file refresh on modification
-  scanFilePath: (filePath) ->
-    items = []
-    atom.workspace.open(filePath, activateItem: false).then (editor) =>
-      editor.scan @searchOptions.searchRegex, ({range}) ->
-        items.push({
-          filePath: filePath
-          text: editor.lineTextForBufferRow(range.start.row)
-          point: range.start
-          range: range
-        })
-      items
+  refreshOnDidStopChanging: true
 
   scanWorkspace: ->
     @scanPromise = atom.workspace.scan @searchOptions.searchRegex, (result) =>
@@ -47,14 +35,16 @@ class AtomScan extends ProviderBase
       else
         console.log 'canceled'
 
-  search: (filePath) ->
+  search: (event) ->
     if @scanPromise?
       @scanPromise.cancel()
       @scanPromise = null
 
+    {filePath} = event
+
     if filePath?
       if atom.project.contains(filePath)
-        @scanFilePath(filePath).then (items) =>
+        @scanItemsForFilePath(filePath, @searchOptions.searchRegex).then (items) =>
           @finishUpdateItems(items)
       else
         # When non project file was saved. We have nothing todo, so just return old @items.
@@ -62,10 +52,9 @@ class AtomScan extends ProviderBase
     else
       @scanWorkspace()
 
-  getItems: (filePath) ->
+  getItems: (event) ->
     @updateSearchState()
     if @searchOptions.searchRegex?
-      @search().then (@items) =>
-        @items
+      @search(event)
     else
       @finishUpdateItems([])

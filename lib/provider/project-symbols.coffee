@@ -68,6 +68,7 @@ module.exports =
 class ProjectSymbols extends ProviderBase
   showLineHeader: false
   queryWordBoundaryOnByCurrentWordInvocation: true
+  refreshOnDidSave: true
 
   onBindEditor: ({newEditor}) ->
     # Refresh item.point in cachedItems for saved filePath.

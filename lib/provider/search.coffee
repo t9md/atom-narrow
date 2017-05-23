@@ -13,6 +13,7 @@ class Search extends ProviderBase
   supportCacheItems: true
   useFirstQueryAsSearchTerm: true
   supportFilePathOnlyItemsUpdate: true
+  refreshOnDidStopChanging: true
 
   getState: ->
     @mergeState(super, {@projects})
@@ -26,7 +27,8 @@ class Search extends ProviderBase
 
   searchFilePath: (filePath) ->
     if atom.project.contains(filePath)
-      @searcher.searchFilePath(filePath, @updateItems, @finishUpdateItems)
+      @scanItemsForFilePath(filePath, @searchOptions.searchRegex).then (items) =>
+        @finishUpdateItems(items)
     else
       # When non project file was saved. We have nothing todo, so just return old @items.
       @finishUpdateItems([])
@@ -62,15 +64,15 @@ class Search extends ProviderBase
     @searcher = null
     super
 
-  getItems: (filePath) ->
+  getItems: (event) ->
     @searcher.cancel()
     @updateSearchState()
     @searcher.setCommand(@getConfig('searcher'))
     @ui.grammar.update()
 
     if @searchOptions.searchRegex?
-      if filePath
-        @searchFilePath(filePath)
+      if event.filePath?
+        @searchFilePath(event.filePath)
       else
         @search()
     else

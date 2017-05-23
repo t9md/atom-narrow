@@ -291,6 +291,8 @@ class Ui
       @supportFilePathOnlyItemsUpdate
       @useFirstQueryAsSearchTerm
       @reopened
+      @refreshOnDidSave
+      @refreshOnDidStopChanging
     } = @provider
 
     # Initial state asignment: start
@@ -583,12 +585,12 @@ class Ui
     @queryForSelectFiles = ''
     @refresh()
 
-  requestItems: (event) ->
+  requestItems: (event={}) ->
     if @items.cachedItems?
       @emitDidUpdateItems(@items.cachedItems)
       @emitFinishUpdateItems()
     else
-      @provider.getItems(event.filePath)
+      @provider.getItems(event)
 
   # reducer
   filterItems: (state) =>
@@ -656,7 +658,7 @@ class Ui
       @refreshDisposables = null
 
   # Return promise
-  refresh: ({force, selectFirstItem, filePath}={}) ->
+  refresh: ({force, selectFirstItem, event}={}) ->
     @cancelRefresh()
     @refreshDisposables = new CompositeDisposable
     @filePathsForAllItems = []
@@ -675,7 +677,7 @@ class Ui
         @lastSearchTerm = searchTerm
         force = true
 
-    if @supportFilePathOnlyItemsUpdate and filePath?
+    if @supportFilePathOnlyItemsUpdate and event?.filePath?
       cachedNormalItems = @items.cachedItems?.filter(isNormalItem)
 
     if force
@@ -686,7 +688,7 @@ class Ui
     getItemPromise = new Promise (resolve) -> resolveGetItem = resolve
 
     state = @createStateToReduce()
-    Object.assign(state, {cachedNormalItems, spliceFilePath: filePath})
+    Object.assign(state, {cachedNormalItems, spliceFilePath: event?.filePath})
 
     @refreshDisposables.add @onDidUpdateItems (items) =>
       unless grammarUpdated
@@ -732,7 +734,7 @@ class Ui
     oldColumn = @editor.getCursorBufferPosition().column
 
     @items.reset()
-    @requestItems({filePath})
+    @requestItems(event)
 
     getItemPromise.then =>
       @emitDidRefresh()
@@ -1031,13 +1033,19 @@ class Ui
     if @boundToSingleFile
       unless isDefinedAndEqual(oldFilePath, newFilePath)
         @refresh(force: true)
-      @syncSubcriptions.add editor.onDidStopChanging =>
-        @refresh(force: true) unless @isActive()
-    else
+
+    if @refreshOnDidStopChanging
+      @syncSubcriptions.add editor.onDidStopChanging ({changes}) =>
+        unless @isActive()
+          event = {changes, filePath: editor.getPath()}
+          @refresh({force: true, event})
+
+    if @refreshOnDidSave
       @syncSubcriptions.add editor.onDidSave (event) =>
         unless @isActive()
+          event = {filePath: event.path}
           setTimeout =>
-            @refresh(force: true, filePath: event.path)
+            @refresh({force: true, event})
           , 0
 
   # vim-mode-plus integration

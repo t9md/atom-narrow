@@ -18,6 +18,7 @@ class Fold extends ProviderBase
   showLineHeader: false
   foldLevel: 2
   supportCacheItems: true
+  refreshOnDidStopChanging: true
 
   initialize: ->
     atom.commands.add @ui.editorElement,

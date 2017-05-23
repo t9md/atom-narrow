@@ -1,7 +1,7 @@
 WorkspaceOpenAcceptPaneOption = atom.workspace.getCenter?
 
 _ = require 'underscore-plus'
-{Point, CompositeDisposable} = require 'atom'
+{Point, CompositeDisposable, Range} = require 'atom'
 {
   saveEditorState
   isActiveEditor
@@ -12,6 +12,7 @@ _ = require 'underscore-plus'
   getFirstCharacterPositionForBufferRow
   isNarrowEditor
   getCurrentWord
+  cloneRegExp
 } = require '../utils'
 Ui = require '../ui'
 settings = require '../settings'
@@ -50,6 +51,8 @@ class ProviderBase
   supportReopen: true
   supportFilePathOnlyItemsUpdate: false
   editor: null
+  refreshOnDidStopChanging: false
+  refreshOnDidSave: false
 
   # used by scan, search, atom-scan
   showSearchOption: false
@@ -328,3 +331,20 @@ class ProviderBase
     @ui.highlighter.setRegExp(@searchOptions.searchRegex)
     states = @searchOptions.pick('searchRegex', 'searchWholeWord', 'searchIgnoreCase', 'searchTerm', 'searchUseRegex')
     @ui.controlBar.updateElements(states)
+
+  scanItemsForEditor: (editor, regExp) ->
+    items = []
+    filePath = editor.getPath()
+    regExp = cloneRegExp(regExp)
+    for lineText, row in editor.buffer.getLines()
+      regExp.lastIndex = 0
+      while match = regExp.exec(lineText)
+        range = new Range([row, match.index], [row, match.index + match[0].length])
+        items.push(text: lineText, point: range.start, range: range, filePath: filePath)
+        # Avoid infinite loop in zero length match when regExp is /^/
+        break unless match[0]
+    items
+
+  scanItemsForFilePath: (filePath, regExp) ->
+    atom.workspace.open(filePath, activateItem: false).then (editor) =>
+      return @scanItemsForEditor(editor, regExp)
