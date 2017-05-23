@@ -76,7 +76,7 @@ class Searcher
     exit = =>
       bufferedProcess
       _.remove(@runningProcesses, bufferedProcess)
-      onFinish()
+      onFinish(project)
 
     bufferedProcess = runCommand({command, args, stdout, stderr, exit, options})
     # bufferedProcess.__project = project
@@ -104,11 +104,6 @@ class Searcher
         args.push(['-H', '--no-heading', '--regexp']...)
         args.push(unescapeRegExpForRg(searchRegex.source))
     args
-
-  searchFilePath: (filePath, onItems, onFinish) ->
-    [project, filePath] = atom.project.relativizePath(filePath)
-    args = @getArgs().concat(filePath)
-    @search(@command, args, project, onItems, onFinish)
 
   searchProject: (project, onItems, onFinish) ->
     @search(@command, @getArgs(), project, onItems, onFinish)

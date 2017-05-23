@@ -5,7 +5,7 @@ settings = require '../lib/settings'
 
 # FIXME
 Search = require '../lib/provider/search'
-Search::search = Search::searchInOrder
+Search::searchInOrdered = true
 
 {
   startNarrow

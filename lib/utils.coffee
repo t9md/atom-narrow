@@ -150,23 +150,6 @@ getModifiedFilePathsInChanges = (changes) ->
   _.uniq(changes.map ({item}) -> item.filePath).filter (filePath) ->
     atom.project.isPathModified(filePath)
 
-ensureNoModifiedFileForChanges = (changes) ->
-  message = ''
-  modifiedFilePaths = getModifiedFilePathsInChanges(changes)
-  success = modifiedFilePaths.length is 0
-  unless success
-    modifiedFilePathsAsString = modifiedFilePaths.map((filePath) -> " - `#{filePath}`").join("\n")
-    message = """
-      Cancelled `update-real-file`.
-      You are trying to update file which have **unsaved modification**.
-      But this provider is not aware of unsaved change.
-      To use `update-real-file`, you need to save these files.
-
-      #{modifiedFilePathsAsString}
-      """
-
-  return {success, message}
-
 # detect conflicting change
 ensureNoConflictForChanges = (changes) ->
   message = []
@@ -286,7 +269,6 @@ module.exports = {
   addToolTips
 
   ensureNoConflictForChanges
-  ensureNoModifiedFileForChanges
   isNormalItem
   compareByPoint
   findEqualLocationItem

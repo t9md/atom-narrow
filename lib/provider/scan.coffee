@@ -17,7 +17,7 @@ class Scan extends ProviderBase
     @updateSearchState()
     {searchRegex} = @searchOptions
     if searchRegex?
-      items = @scanItemsForEditor(@editor, searchRegex)
+      items = @scanItemsForBuffer(@editor.buffer, searchRegex)
     else
       items = @editor.buffer.getLines().map (text, row) ->
         point = new Point(row, 0)

@@ -9,7 +9,6 @@ path = require 'path'
   setBufferRow
   paneForItem
   isDefinedAndEqual
-  ensureNoModifiedFileForChanges
   ensureNoConflictForChanges
   isNormalItem
   findEqualLocationItem
@@ -88,7 +87,6 @@ class Ui
 
   onFinishUpdateItems: (fn) -> @emitter.on('finish-update-items', fn)
   emitFinishUpdateItems: -> @emitter.emit('finish-update-items')
-
 
   onDidDestroy: (fn) -> @emitter.on('did-destroy', fn)
   emitDidDestroy: -> @emitter.emit('did-destroy')
@@ -1093,12 +1091,6 @@ class Ui
         changes.push({newText: line, item})
 
     return unless changes.length
-
-    unless @boundToSingleFile
-      {success, message} = ensureNoModifiedFileForChanges(changes)
-      unless success
-        atom.notifications.addWarning(message, dismissable: true)
-        return
 
     {success, message} = ensureNoConflictForChanges(changes)
     unless success

@@ -332,11 +332,11 @@ class ProviderBase
     states = @searchOptions.pick('searchRegex', 'searchWholeWord', 'searchIgnoreCase', 'searchTerm', 'searchUseRegex')
     @ui.controlBar.updateElements(states)
 
-  scanItemsForEditor: (editor, regExp) ->
+  scanItemsForBuffer: (buffer, regExp) ->
     items = []
-    filePath = editor.getPath()
+    filePath = buffer.getPath()
     regExp = cloneRegExp(regExp)
-    for lineText, row in editor.buffer.getLines()
+    for lineText, row in buffer.getLines()
       regExp.lastIndex = 0
       while match = regExp.exec(lineText)
         range = new Range([row, match.index], [row, match.index + match[0].length])
@@ -347,4 +347,4 @@ class ProviderBase
 
   scanItemsForFilePath: (filePath, regExp) ->
     atom.workspace.open(filePath, activateItem: false).then (editor) =>
-      return @scanItemsForEditor(editor, regExp)
+      return @scanItemsForBuffer(editor.buffer, regExp)
