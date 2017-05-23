@@ -1,3 +1,12 @@
+# 0.44.0:
+- Improve: #213 `search`, `atom-scan` now aware of unsaved modification.
+  - Refresh items without explicit save.
+    - Old: items are refreshed on save( `editor.onDidSave` ).
+    - New: items are refreshed on modified( `editor.onDidStopChanging` ).
+  - Can direct-edit( `update-real-file` ) for files which have unsaved modification.
+    - Old: direct-edit warn and cancelled when trying to change files which have unsaved modification.
+    - New: direct-edit can change files which have unsaved modification.
+
 # 0.43.0:
 - New: QueryHistory support
   - History are maintained per provider and persists across Atom reload.
