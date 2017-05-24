@@ -18,7 +18,6 @@ module.exports =
     Ui.queryHistory.deserialize(restoredState.queryHistory)
 
     @subscriptions = subs = new CompositeDisposable
-    settings.removeDeprecated()
 
     subs.add(@observeStopChangingActivePaneItem())
     subs.add(@registerCommands())
@@ -162,4 +161,5 @@ module.exports =
 
   provideNarrow: ->
     ProviderBase: ProviderBase
+    settings: settings
     narrow: @narrow.bind(this)

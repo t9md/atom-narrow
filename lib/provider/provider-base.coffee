@@ -32,15 +32,12 @@ class ProviderBase
       @start(name, options, state)
 
   @start: (name, options={}, state) ->
-    klass = @providersByName[name] ?= @loadProvider(name, options.providerPath)
+    klass = @providersByName[name] ?= require("./#{name}")
     editor = atom.workspace.getActiveTextEditor()
     new klass(editor, options, state).start()
 
-  @loadProvider: (name, providerPath) ->
-    if providerPath
-      require(providerPath)
-    else
-      require("./#{name}")
+  @registerProvider: (name, klass) ->
+    @providersByName[name] = klass
 
   @saveState: (provider) ->
     @destroyedProviderStates.unshift(provider.saveState())
