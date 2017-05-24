@@ -495,7 +495,7 @@ class Ui
 
   close: ->
     @provider.restoreEditorStateIfNecessary()
-    @destroy()
+    @getPane().destroyItem(@editor, true)
 
   resetQuery: ->
     @setQuery() # clear query
