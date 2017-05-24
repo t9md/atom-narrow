@@ -22,6 +22,7 @@ SearchOptions = require '../search-options'
 module.exports =
 class ProviderBase
   @destroyedProviderStates: []
+  @providersByName: {}
   @reopenableMax: 10
   reopened: false
 
@@ -30,10 +31,16 @@ class ProviderBase
       {name, options, state} = stateAtDestroyed
       @start(name, options, state)
 
-  @start: (name, options, state) ->
-    klass = require("./#{name}")
+  @start: (name, options={}, state) ->
+    klass = @providersByName[name] ?= @loadProvider(name, options.providerPath)
     editor = atom.workspace.getActiveTextEditor()
     new klass(editor, options, state).start()
+
+  @loadProvider: (name, providerPath) ->
+    if providerPath
+      require(providerPath)
+    else
+      require("./#{name}")
 
   @saveState: (provider) ->
     @destroyedProviderStates.unshift(provider.saveState())

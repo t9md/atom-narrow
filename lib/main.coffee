@@ -159,3 +159,7 @@ module.exports =
       'vim-mode-plus-user:narrow:search': => @narrow('search', query: confirmSearch())
       'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', query: confirmSearch())
       'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', query: confirmSearch(), currentProject: true)
+
+  provideNarrow: ->
+    ProviderBase: ProviderBase
+    narrow: @narrow.bind(this)

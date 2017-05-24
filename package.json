@@ -47,6 +47,14 @@
       }
     }
   },
+  "providedServices": {
+    "narrow": {
+      "description": "narrow",
+      "versions": {
+        "1.0.0": "provideNarrow"
+      }
+    }
+  },
   "dependencies": {
     "fs-plus": "^2.9.3",
     "underscore-plus": "^1.6.6"
