@@ -1,3 +1,11 @@
+# 0.44.2:
+- Fix: Critical: items for modified files are not shown on ui on `search`
+  - Modified files was updated only when modified after ui opened.
+- Fix: Critical: when project include modified file, `atom-scan` throw exception.
+  - This is old bug, NOT related to recently introduced modified-file-aware enhancement.
+- Fix: Result in no-focus on `narrow:close` if active paneItem was changed after ui open(except preview).
+  - Introduced from v0.42.0.
+
 # 0.44.1:
 - Fix: Critical bug `search` finish rendering before all search task have not yet finished.
   - In other word, not all items found are rendered on Ui. sorry!.
