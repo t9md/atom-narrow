@@ -18,11 +18,12 @@ class AtomScan extends ProviderBase
       if result?.matches?.length
         {filePath, matches} = result
         @updateItems matches.map (match) ->
+          range = Range.fromObject(match.range)
           {
             filePath: filePath
             text: match.lineText
-            point: Point.fromObject(match.range[0])
-            range: Range.fromObject(match.range)
+            point: range.start
+            range: range
           }
 
     @scanPromise.then (message) =>
