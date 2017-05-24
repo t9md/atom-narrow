@@ -14,7 +14,7 @@ class Search extends ProviderBase
   useFirstQueryAsSearchTerm: true
   supportFilePathOnlyItemsUpdate: true
   refreshOnDidStopChanging: true
-  searchInOrdered: false # This is set to true in spec to test easily
+  searchInOrdered: false # FIXME: This is set to true in spec to test easily
 
   getState: ->
     @mergeState(super, {@projects})
@@ -36,7 +36,7 @@ class Search extends ProviderBase
 
   search: ->
     projects = @projects.slice()
-    modifiedBuffers = atom.project.getBuffers().filter (buffer) -> buffer.isModified()
+    modifiedBuffers = atom.project.getBuffers().filter (buffer) -> buffer.getPath()? and buffer.isModified()
     modifiedBuffersScanned = []
 
     scanBuffer = (buffer) =>
@@ -47,8 +47,7 @@ class Search extends ProviderBase
     finished = 0
     onFinish = (project) =>
       finished++
-      dir = atom.project.getDirectoryForProjectPath(project)
-      for buffer in modifiedBuffers when dir.contains(buffer.getPath())
+      for buffer in modifiedBuffers when path.dirname(buffer.getPath()).startsWith(project)
         scanBuffer(buffer)
 
       if projects.length
@@ -59,15 +58,18 @@ class Search extends ProviderBase
           @finishUpdateItems()
 
     searchNextProject = =>
-      @searcher.searchProject(projects.shift(), @updateItems, onFinish)
+      @searcher.searchProject(projects.shift(), @updateItemsIfNotModified, onFinish)
 
     if @searchInOrdered
       searchNextProject()
     else
       searchNextProject() while projects.length
 
-  updateItems: (items) ->
+  updateItemsIfNotModified: (items) =>
     items = items.filter (item) -> not atom.project.isPathModified(item.filePath)
+    @updateItems(items)
+
+  updateItems: (items) =>
     if @searchInOrdered
       items = _.sortBy(items, (item) -> item.filePath)
     super(items)
