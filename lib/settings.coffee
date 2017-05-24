@@ -70,10 +70,13 @@ searchFamilyConfigs =
   AtomScan: {}
 
 otherProviderConfigs =
-  Symbols: revealOnStartCondition: 'on-input'
+  Symbols:
+    revealOnStartCondition: 'on-input'
   GitDiffAll: {}
-  Fold: revealOnStartCondition: 'on-input'
-  ProjectSymbols: revealOnStartCondition: 'on-input'
+  Fold:
+    revealOnStartCondition: 'on-input'
+  ProjectSymbols:
+    revealOnStartCondition: 'on-input'
   SelectFiles:
     autoPreview: false
     autoPreviewOnQueryChange: false
@@ -119,6 +122,8 @@ complimentField = (config, injectTitle=false) ->
 # -------------------------
 class Settings
   constructor: (@scope, @config) ->
+    @loaded = false
+    @providerConfigOrder = 101
     complimentField(@config)
 
   get: (param) ->
@@ -141,11 +146,12 @@ class Settings
 
   registerProviderConfig: (object, otherTemplate) ->
     for key in Object.keys(object)
-      object[key] = @createProviderConfig(otherTemplate, object[key])
-
-    # HACK: An very first load timing, atom.config have no `narrow` config.
-    config = atom.config.get('narrow') ? @config
-    Object.assign(config, object)
+      schema = @createProviderConfig(otherTemplate, object[key])
+      schema.order = @providerConfigOrder++
+      if @loaded
+        atom.config.setSchema("#{@scope}.#{key}", schema)
+      else
+        @config[key] = schema
 
   createProviderConfig: (configs...) ->
     config = Object.assign({}, ProviderConfigTemplate, configs...)
@@ -183,5 +189,6 @@ class Settings
 settings = new Settings('narrow', globalSettings)
 settings.registerProviderConfig(searchFamilyConfigs, SearchFaimilyConfigTemplate)
 settings.registerProviderConfig(otherProviderConfigs)
+settings.loaded = true
 
 module.exports = settings

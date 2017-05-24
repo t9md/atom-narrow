@@ -21,6 +21,7 @@ SearchOptions = require '../search-options'
 
 module.exports =
 class ProviderBase
+  # @configScope: 'narrow'
   @destroyedProviderStates: []
   @providersByName: {}
   @reopenableMax: 10
@@ -32,12 +33,17 @@ class ProviderBase
       @start(name, options, state)
 
   @start: (name, options={}, state) ->
-    klass = @providersByName[name] ?= require("./#{name}")
+    klass = @providersByName[name] ?= require("./#{_.dasherize(name)}")
     editor = atom.workspace.getActiveTextEditor()
     new klass(editor, options, state).start()
 
-  @registerProvider: (name, klass) ->
-    @providersByName[name] = klass
+  @registerProvider: (klass) ->
+    console.log klass
+    if klass.config?
+      config = {}
+      config[klass.name] = klass.config
+      settings.registerProviderConfig(config)
+    @providersByName[klass.name] = klass
 
   @saveState: (provider) ->
     @destroyedProviderStates.unshift(provider.saveState())
@@ -65,7 +71,11 @@ class ProviderBase
   useFirstQueryAsSearchTerm: false
 
   @getConfig: (name) ->
+    # if @configScope is 'narrow'
+    #   value = settings.get("#{@name}.#{name}")
+    # else
     value = settings.get("#{@name}.#{name}")
+
     if value is 'inherit'
       settings.get(name)
     else
@@ -143,7 +153,7 @@ class ProviderBase
 
   saveState: ->
     {
-      name: @dashName
+      name: @name
       options: {query: @ui.lastQuery}
       state:
         provider: @getState()

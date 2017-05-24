@@ -38,7 +38,7 @@ module.exports =
 
     if not Ui.getSize()
       if settings.get('Search.startByDoubleClick')
-        @narrow('search', queryCurrentWord: true, focus: false)
+        @narrow('Search', queryCurrentWord: true, focus: false)
         suppressEvent(event)
     else
       if settings.get('queryCurrentWordByDoubleClick') and not @isControlBarElementClick(event)
@@ -66,29 +66,29 @@ module.exports =
 
       # Providers
       # -------------------------
-      'narrow:symbols': => @narrow('symbols')
-      'narrow:symbols-by-current-word': => @narrow('symbols', queryCurrentWord: true)
+      'narrow:symbols': => @narrow('Symbols')
+      'narrow:symbols-by-current-word': => @narrow('Symbols', queryCurrentWord: true)
 
-      'narrow:project-symbols': => @narrow('project-symbols')
-      'narrow:project-symbols-by-current-word': => @narrow('project-symbols', queryCurrentWord: true)
+      'narrow:project-symbols': => @narrow('ProjectSymbols')
+      'narrow:project-symbols-by-current-word': => @narrow('ProjectSymbols', queryCurrentWord: true)
 
-      'narrow:git-diff-all': => @narrow('git-diff-all')
+      'narrow:git-diff-all': => @narrow('GitDiffAll')
 
-      'narrow:fold': => @narrow('fold')
-      'narrow:fold-by-current-word': => @narrow('fold', queryCurrentWord: true)
+      'narrow:fold': => @narrow('Fold')
+      'narrow:fold-by-current-word': => @narrow('Fold', queryCurrentWord: true)
 
-      'narrow:scan': => @narrow('scan')
-      'narrow:scan-by-current-word': => @narrow('scan', queryCurrentWord: true)
+      'narrow:scan': => @narrow('Scan')
+      'narrow:scan-by-current-word': => @narrow('Scan', queryCurrentWord: true)
 
       # search family
-      'narrow:search': => @narrow('search')
-      'narrow:search-by-current-word': => @narrow('search', queryCurrentWord: true)
-      'narrow:search-by-current-word-without-focus': => @narrow('search', queryCurrentWord: true, focus: false)
-      'narrow:search-current-project': => @narrow('search', currentProject: true)
-      'narrow:search-current-project-by-current-word': => @narrow('search', currentProject: true, queryCurrentWord: true)
+      'narrow:search': => @narrow('Search')
+      'narrow:search-by-current-word': => @narrow('Search', queryCurrentWord: true)
+      'narrow:search-by-current-word-without-focus': => @narrow('Search', queryCurrentWord: true, focus: false)
+      'narrow:search-current-project': => @narrow('Search', currentProject: true)
+      'narrow:search-current-project-by-current-word': => @narrow('Search', currentProject: true, queryCurrentWord: true)
 
-      'narrow:atom-scan': => @narrow('atom-scan')
-      'narrow:atom-scan-by-current-word': => @narrow('atom-scan', queryCurrentWord: true)
+      'narrow:atom-scan': => @narrow('AtomScan')
+      'narrow:atom-scan-by-current-word': => @narrow('AtomScan', queryCurrentWord: true)
 
       'narrow:toggle-search-start-by-double-click': -> settings.toggle('Search.startByDoubleClick')
 
@@ -154,10 +154,10 @@ module.exports =
       return text
 
     @subscriptions.add atom.commands.add 'atom-text-editor.vim-mode-plus-search',
-      'vim-mode-plus-user:narrow:scan': =>  @narrow('scan', query: confirmSearch())
-      'vim-mode-plus-user:narrow:search': => @narrow('search', query: confirmSearch())
-      'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', query: confirmSearch())
-      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', query: confirmSearch(), currentProject: true)
+      'vim-mode-plus-user:narrow:scan': =>  @narrow('Scan', query: confirmSearch())
+      'vim-mode-plus-user:narrow:search': => @narrow('Search', query: confirmSearch())
+      'vim-mode-plus-user:narrow:atom-scan': => @narrow('AtomScan', query: confirmSearch())
+      'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('Search', query: confirmSearch(), currentProject: true)
 
   provideNarrow: ->
     ProviderBase: ProviderBase
