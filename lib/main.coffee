@@ -37,7 +37,7 @@ module.exports =
     return unless event.detail is 2 # handle double click only
 
     if not Ui.getSize()
-      if settings.get('search.startByDoubleClick')
+      if settings.get('Search.startByDoubleClick')
         @narrow('search', queryCurrentWord: true, focus: false)
         suppressEvent(event)
     else
@@ -91,7 +91,7 @@ module.exports =
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', queryCurrentWord: true)
 
-      'narrow:toggle-search-start-by-double-click': -> settings.toggle('search.startByDoubleClick')
+      'narrow:toggle-search-start-by-double-click': -> settings.toggle('Search.startByDoubleClick')
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
@@ -160,7 +160,10 @@ module.exports =
       'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', query: confirmSearch())
       'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', query: confirmSearch(), currentProject: true)
 
+  registerProvider: (name, klassOrFilePath) ->
+    ProviderBase.registerProvider(name, klassOrFilePath)
+
   provideNarrow: ->
     ProviderBase: ProviderBase
-    registerProvider: (args...) -> ProviderBase.registerProvider(args...)
+    registerProvider: @registerProvider.bind(this)
     narrow: @narrow.bind(this)
