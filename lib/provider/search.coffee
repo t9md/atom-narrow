@@ -8,6 +8,8 @@ module.exports =
 class Search extends ProviderBase
   supportDirectEdit: true
   showColumnOnLineHeader: true
+  showProjectHeader: true
+  showFileHeader: true
   itemHaveRange: true
   showSearchOption: true
   supportCacheItems: true
@@ -47,7 +49,9 @@ class Search extends ProviderBase
     finished = 0
     onFinish = (project) =>
       finished++
-      for buffer in modifiedBuffers when path.dirname(buffer.getPath()).startsWith(project)
+      # compare with dir separator appended to avoid partial match like 'atom' also matches atom-keymaps'.
+      projectPathWithDirectorySeparator = project + path.sep
+      for buffer in modifiedBuffers when buffer.getPath().startsWith(projectPathWithDirectorySeparator)
         scanBuffer(buffer)
 
       if projects.length

@@ -281,6 +281,8 @@ class Ui
     {
       @showSearchOption
       @showLineHeader
+      @showProjectHeader
+      @showFileHeader
       @showColumnOnLineHeader
       @boundToSingleFile
       @itemHaveRange
@@ -614,6 +616,8 @@ class Ui
       hasCachedItems: @items.cachedItems?
       showLineHeader: @showLineHeader
       showColumn: @showColumnOnLineHeader
+      showProjectHeader: @showProjectHeader
+      showFileHeader: @showFileHeader
       maxRow: @provider.editor.getLastBufferRow() if @boundToSingleFile
       boundToSingleFile: @boundToSingleFile
       projectHeadersInserted: {}

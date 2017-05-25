@@ -122,7 +122,6 @@ complimentField = (config, injectTitle=false) ->
 # -------------------------
 class Settings
   constructor: (@scope, @config) ->
-    @loaded = false
     @providerConfigOrder = 101
     complimentField(@config)
 
@@ -146,20 +145,15 @@ class Settings
 
   registerProviderConfig: (object, otherTemplate) ->
     for key in Object.keys(object)
-      schema = @createProviderConfig(otherTemplate, object[key])
-      schema.order = @providerConfigOrder++
-      if @loaded
-        atom.config.setSchema("#{@scope}.#{key}", schema)
-      else
-        @config[key] = schema
+      @config[key] =
+        type: 'object'
+        collapsed: true
+        properties: @createProviderConfig(otherTemplate, object[key])
+        order: @providerConfigOrder++
 
   createProviderConfig: (configs...) ->
     config = Object.assign({}, ProviderConfigTemplate, configs...)
-    return {
-      type: 'object'
-      collapsed: true
-      properties: complimentField(config, true)
-    }
+    complimentField(config, true)
 
   removeDeprecated: ->
     paramsToDelete = []
@@ -189,6 +183,5 @@ class Settings
 settings = new Settings('narrow', globalSettings)
 settings.registerProviderConfig(searchFamilyConfigs, SearchFaimilyConfigTemplate)
 settings.registerProviderConfig(otherProviderConfigs)
-settings.loaded = true
 
 module.exports = settings

@@ -37,7 +37,7 @@ describe "narrow", ->
       startNarrow(providerName, options).then (_narrow) ->
         {provider, ui, ensure} = narrow = _narrow
 
-  waitsForStartScan = (options) -> waitsForStartNarrow('Scan', options)
+  waitsForStartScan = (options) -> waitsForStartNarrow('scan', options)
 
   beforeEach ->
     # `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
@@ -101,7 +101,7 @@ describe "narrow", ->
 
     describe "directionToOpen settings", ->
       ensurePaneLayoutAfterStart = (fn) ->
-        waitsForPromise -> startNarrow('Scan').then ({ui}) -> ensurePaneLayout(fn(ui))
+        waitsForPromise -> startNarrow('scan').then ({ui}) -> ensurePaneLayout(fn(ui))
 
       describe "from one pane", ->
         beforeEach ->
@@ -248,7 +248,7 @@ describe "narrow", ->
       editor.setText("1\n2\n3\n4\n5\n6\n7\n8\n9\na\nb")
       editor.setCursorBufferPosition([0, 0])
       for n in [0..10]
-        waitsForPromise -> startNarrow('Scan').then (n) -> narrows.push(n)
+        waitsForPromise -> startNarrow('scan').then (n) -> narrows.push(n)
 
     it "reopen closed narrow editor up to 10 recent", ->
       waitsForReopen = ->
@@ -729,7 +729,7 @@ describe "narrow", ->
       it "set current-word as initial query", ->
         waitsForPromise ->
           editor.setCursorBufferPosition([0, 0])
-          startNarrow('Scan', queryCurrentWord: true).then (narrow) ->
+          startNarrow('scan', queryCurrentWord: true).then (narrow) ->
             narrow.ensure
               text: """
                 apple
@@ -741,7 +741,7 @@ describe "narrow", ->
 
         waitsForPromise ->
           editor.setCursorBufferPosition([1, 0])
-          startNarrow('Scan', queryCurrentWord: true).then (narrow) ->
+          startNarrow('scan', queryCurrentWord: true).then (narrow) ->
             narrow.ensure
               text: """
                 grape
@@ -753,7 +753,7 @@ describe "narrow", ->
 
         waitsForPromise ->
           editor.setCursorBufferPosition([2, 0])
-          startNarrow('Scan', queryCurrentWord: true).then (narrow) ->
+          startNarrow('scan', queryCurrentWord: true).then (narrow) ->
             narrow.ensure
               text: """
                 lemmon
@@ -784,7 +784,7 @@ describe "narrow", ->
 
     describe "basic behavior", ->
       beforeEach ->
-        waitsForStartNarrow('Search', query: 'apple')
+        waitsForStartNarrow('search', query: 'apple')
 
       it "preview on cursor move with skipping header", ->
         jasmine.useRealClock()
@@ -1039,17 +1039,17 @@ describe "narrow", ->
             phpEditor.setCursorBufferPosition([1, 0])
 
       it "[atom-scan]", ->
-        waitsForStartNarrow('AtomScan', queryCurrentWord: true)
+        waitsForStartNarrow('atom-scan', queryCurrentWord: true)
         runs -> ensureFindPHPVar()
 
       it "search with ag", ->
         settings.set('Search.searcher', 'ag')
-        waitsForStartNarrow('Search', queryCurrentWord: true)
+        waitsForStartNarrow('search', queryCurrentWord: true)
         runs -> ensureFindPHPVar()
 
       it "search with rg", ->
         settings.set('Search.searcher', 'rg')
-        waitsForStartNarrow('Search', queryCurrentWord: true)
+        waitsForStartNarrow('search', queryCurrentWord: true)
         runs -> ensureFindPHPVar()
 
     describe "search regex special char include search term", ->
@@ -1091,17 +1091,17 @@ describe "narrow", ->
             selectedItemText: 'path: project1/p1-f1'
 
         it "[atom-scan]", ->
-          waitsForStartNarrow('AtomScan', {query})
+          waitsForStartNarrow('atom-scan', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:ag]", ->
           settings.set('Search.searcher', 'ag')
-          waitsForStartNarrow('Search', {query})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:rg]", ->
           settings.set('Search.searcher', 'rg')
-          waitsForStartNarrow('Search', {query})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
       describe "search a/b/c", ->
@@ -1113,17 +1113,17 @@ describe "narrow", ->
             selectedItemText: 'path: a/b/c'
 
         it "[atom-scan]", ->
-          waitsForStartNarrow('AtomScan', {query})
+          waitsForStartNarrow('atom-scan', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:ag]", ->
           settings.set('Search.searcher', 'ag')
-          waitsForStartNarrow('Search', {query})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:rg]", ->
           settings.set('Search.searcher', 'rg')
-          waitsForStartNarrow('Search', {query})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
       describe "search a/b/c", ->
@@ -1135,15 +1135,15 @@ describe "narrow", ->
             selectedItemText: 'path: a\\/b\\/c'
 
         it "[atom-scan]", ->
-          waitsForStartNarrow('AtomScan', {query})
+          waitsForStartNarrow('atom-scan', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:ag]", ->
           settings.set('Search.searcher', 'ag')
-          waitsForStartNarrow('Search', {query})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)
 
         it "[search:rg]", ->
           settings.set('Search.searcher', 'rg')
-          waitsForStartNarrow('Search', {query})
+          waitsForStartNarrow('search', {query})
           runs -> ensure(ensureOptions)

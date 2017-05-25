@@ -23,6 +23,8 @@ getItemsForFilePath = (repo, filePath) ->
 module.exports =
 class GitDiffAll extends ProviderBase
   refreshOnDidSave: true
+  showProjectHeader: true
+  showFileHeader: true
 
   getItems: ->
     promises = []

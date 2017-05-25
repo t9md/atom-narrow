@@ -6,6 +6,8 @@ module.exports =
 class AtomScan extends ProviderBase
   supportDirectEdit: true
   showColumnOnLineHeader: true
+  showProjectHeader: true
+  showFileHeader: true
   itemHaveRange: true
   showSearchOption: true
   supportCacheItems: true

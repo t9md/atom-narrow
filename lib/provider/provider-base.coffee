@@ -21,9 +21,10 @@ SearchOptions = require '../search-options'
 
 module.exports =
 class ProviderBase
-  # @configScope: 'narrow'
+  @configScope: 'narrow'
   @destroyedProviderStates: []
   @providersByName: {}
+  @providerPathsByName: {}
   @reopenableMax: 10
   reopened: false
 
@@ -33,17 +34,22 @@ class ProviderBase
       @start(name, options, state)
 
   @start: (name, options={}, state) ->
-    klass = @providersByName[name] ?= require("./#{_.dasherize(name)}")
+    klass = @providersByName[name] ?= @loadProvider(name)
     editor = atom.workspace.getActiveTextEditor()
     new klass(editor, options, state).start()
 
-  @registerProvider: (klass) ->
-    console.log klass
-    if klass.config?
-      config = {}
-      config[klass.name] = klass.config
-      settings.registerProviderConfig(config)
-    @providersByName[klass.name] = klass
+  @loadProvider: (name) ->
+    filePath = @providerPathsByName[name] ? "./#{_.dasherize(name)}"
+    require(filePath)
+
+  @registerProvider: (name, klassOrFilePath) ->
+    switch typeof(klassOrFilePath)
+      when 'string'
+        @providerPathsByName[name] = klassOrFilePath
+      when 'function'
+        @providersByName[name] = klassOrFilePath
+      else
+        throw new Error("provider must be filePath or function")
 
   @saveState: (provider) ->
     @destroyedProviderStates.unshift(provider.saveState())
@@ -53,6 +59,8 @@ class ProviderBase
   boundToSingleFile: false
 
   showLineHeader: true
+  showProjectHeader: false
+  showFileHeader: false
   showColumnOnLineHeader: false
   itemHaveRange: false
 
@@ -71,10 +79,10 @@ class ProviderBase
   useFirstQueryAsSearchTerm: false
 
   @getConfig: (name) ->
-    # if @configScope is 'narrow'
-    #   value = settings.get("#{@name}.#{name}")
-    # else
-    value = settings.get("#{@name}.#{name}")
+    if @configScope is 'narrow'
+      value = settings.get("#{@name}.#{name}")
+    else
+      value = atom.config.get("#{@configScope}.#{name}")
 
     if value is 'inherit'
       settings.get(name)
@@ -153,7 +161,7 @@ class ProviderBase
 
   saveState: ->
     {
-      name: @name
+      name: @dashName
       options: {query: @ui.lastQuery}
       state:
         provider: @getState()
