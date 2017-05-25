@@ -18,7 +18,6 @@ module.exports =
     Ui.queryHistory.deserialize(restoredState.queryHistory)
 
     @subscriptions = subs = new CompositeDisposable
-    settings.removeDeprecated()
 
     subs.add(@observeStopChangingActivePaneItem())
     subs.add(@registerCommands())
@@ -38,7 +37,7 @@ module.exports =
     return unless event.detail is 2 # handle double click only
 
     if not Ui.getSize()
-      if settings.get('Search.startByDoubleClick')
+      if settings.get('search.startByDoubleClick')
         @narrow('search', queryCurrentWord: true, focus: false)
         suppressEvent(event)
     else
@@ -54,6 +53,7 @@ module.exports =
   registerCommands: ->
     atom.commands.add 'atom-text-editor',
       # Shared commands
+      'narrow:activate-package': -> # HACK activate via atom.command.dispatch with the mechanism of activationCommands
       'narrow:focus': => @getUi()?.toggleFocus()
       'narrow:focus-prompt': => @getUi()?.focusPrompt()
       'narrow:refresh': => @getUi()?.refreshManually()
@@ -91,7 +91,7 @@ module.exports =
       'narrow:atom-scan': => @narrow('atom-scan')
       'narrow:atom-scan-by-current-word': => @narrow('atom-scan', queryCurrentWord: true)
 
-      'narrow:toggle-search-start-by-double-click': -> settings.toggle('Search.startByDoubleClick')
+      'narrow:toggle-search-start-by-double-click': -> settings.toggle('search.startByDoubleClick')
 
   observeStopChangingActivePaneItem: ->
     atom.workspace.onDidStopChangingActivePaneItem (item) =>
@@ -159,3 +159,8 @@ module.exports =
       'vim-mode-plus-user:narrow:search': => @narrow('search', query: confirmSearch())
       'vim-mode-plus-user:narrow:atom-scan': => @narrow('atom-scan', query: confirmSearch())
       'vim-mode-plus-user:narrow:search-current-project': =>  @narrow('search', query: confirmSearch(), currentProject: true)
+
+  provideNarrow: ->
+    ProviderBase: ProviderBase
+    registerProvider: (args...) -> ProviderBase.registerProvider(args...)
+    narrow: @narrow.bind(this)

@@ -1,5 +1,94 @@
 _ = require 'underscore-plus'
 
+# Config definitions
+# -------------------------
+inheritGlobalEnum = (name) ->
+  default: 'inherit'
+  enum: ['inherit', globalSettings[name].enum...]
+
+globalSettings =
+  autoShiftReadOnlyOnMoveToItemArea:
+    default: true
+    description: "When cursor moved to item area automatically change to read-only mode"
+  directionToOpen:
+    default: 'right'
+    enum: [
+      'right'
+      'right:never-use-previous-adjacent-pane'
+      'right:always-new-pane'
+      'down'
+      'down:never-use-previous-adjacent-pane'
+      'down:always-new-pane'
+    ]
+    description: "Where to open narrow-editor when open by split pane."
+  caseSensitivityForNarrowQuery:
+    default: 'smartcase'
+    enum: ['smartcase', 'sensitive', 'insensitive']
+    description: "Case sensitivity of your query in narrow-editor"
+  confirmOnUpdateRealFile: true
+  queryCurrentWordByDoubleClick: true
+
+ProviderConfigTemplate =
+  directionToOpen: inheritGlobalEnum('directionToOpen')
+  caseSensitivityForNarrowQuery: inheritGlobalEnum('caseSensitivityForNarrowQuery')
+  revealOnStartCondition:
+    default: 'always'
+    enum: ['always', 'never', 'on-input']
+  focusOnStartCondition:
+    default: 'always'
+    description: "Condition when focus to narrow-editor on start"
+    enum: ['always', 'never', 'no-input']
+  negateNarrowQueryByEndingExclamation: false
+  autoPreview: true
+  autoPreviewOnQueryChange: true
+  closeOnConfirm: true
+
+SearchFaimilyConfigTemplate =
+  caseSensitivityForSearchTerm:
+    default: 'smartcase'
+    enum: ['smartcase', 'sensitive', 'insensitive']
+  revealOnStartCondition: 'on-input'
+  searchWholeWord: false
+  searchUseRegex: false
+  refreshDelayOnSearchTermChange: 700
+
+searchFamilyConfigs =
+  Scan: refreshDelayOnSearchTermChange: 10
+  Search:
+    searcher:
+      default: 'ag'
+      enum: ['ag', 'rg']
+      description: """
+        Choose `ag`( The silver searcher) or `rg`( ripgrep )
+        """
+    startByDoubleClick:
+      default: false
+      description: """
+        [Experimental]: start by dounble click.
+        You can toggle this value by command `narrow:toggle-search-start-by-double-click`
+        """
+  AtomScan: {}
+
+otherProviderConfigs =
+  Symbols:
+    revealOnStartCondition: 'on-input'
+  GitDiffAll: {}
+  Fold:
+    revealOnStartCondition: 'on-input'
+  ProjectSymbols:
+    revealOnStartCondition: 'on-input'
+  SelectFiles:
+    autoPreview: false
+    autoPreviewOnQueryChange: false
+    negateNarrowQueryByEndingExclamation: true
+    closeOnConfirm: true
+    revealOnStartCondition: 'never'
+    rememberQuery:
+      default: false
+      description: "Remember query per provider basis and apply it at startup"
+
+# Utils
+# -------------------------
 inferType = (value) ->
   switch
     when Number.isInteger(value) then 'integer'
@@ -29,8 +118,12 @@ complimentField = (config, injectTitle=false) ->
 
   return config
 
+# Main
+# -------------------------
 class Settings
   constructor: (@scope, @config) ->
+    @providerConfigOrder = 101
+    complimentField(@config)
 
   get: (param) ->
     atom.config.get("#{@scope}.#{param}")
@@ -49,6 +142,18 @@ class Settings
 
   observe: (param, fn) ->
     atom.config.observe "#{@scope}.#{param}", fn
+
+  registerProviderConfig: (object, otherTemplate) ->
+    for key in Object.keys(object)
+      @config[key] =
+        type: 'object'
+        collapsed: true
+        properties: @createProviderConfig(otherTemplate, object[key])
+        order: @providerConfigOrder++
+
+  createProviderConfig: (configs...) ->
+    config = Object.assign({}, ProviderConfigTemplate, configs...)
+    complimentField(config, true)
 
   removeDeprecated: ->
     paramsToDelete = []
@@ -75,99 +180,8 @@ class Settings
       content.push "- `#{param}`"
     atom.notifications.addWarning content.join("\n"), dismissable: true
 
-globalSettings =
-  autoShiftReadOnlyOnMoveToItemArea:
-    default: true
-    description: "When cursor moved to item area automatically change to read-only mode"
-  directionToOpen:
-    default: 'right'
-    enum: [
-      'right'
-      'right:never-use-previous-adjacent-pane'
-      'right:always-new-pane'
-      'down'
-      'down:never-use-previous-adjacent-pane'
-      'down:always-new-pane'
-    ]
-    description: "Where to open narrow-editor when open by split pane."
-  caseSensitivityForNarrowQuery:
-    default: 'smartcase'
-    enum: ['smartcase', 'sensitive', 'insensitive']
-    description: "Case sensitivity of your query in narrow-editor"
-  confirmOnUpdateRealFile: true
-  queryCurrentWordByDoubleClick: true
+settings = new Settings('narrow', globalSettings)
+settings.registerProviderConfig(searchFamilyConfigs, SearchFaimilyConfigTemplate)
+settings.registerProviderConfig(otherProviderConfigs)
 
-inheritGlobalEnum = (name) ->
-  default: 'inherit'
-  enum: ['inherit', globalSettings[name].enum...]
-
-ProviderConfig =
-  directionToOpen: inheritGlobalEnum('directionToOpen')
-  caseSensitivityForNarrowQuery: inheritGlobalEnum('caseSensitivityForNarrowQuery')
-  revealOnStartCondition:
-    default: 'always'
-    enum: ['always', 'never', 'on-input']
-  focusOnStartCondition:
-    default: 'always'
-    description: "Condition when focus to narrow-editor on start"
-    enum: ['always', 'never', 'no-input']
-  negateNarrowQueryByEndingExclamation: false
-  autoPreview: true
-  autoPreviewOnQueryChange: true
-  closeOnConfirm: true
-
-newProviderConfig = (other={}) ->
-  properties = Object.assign({}, ProviderConfig, other)
-  return {
-    type: 'object'
-    collapsed: true
-    properties: complimentField(properties, true)
-  }
-
-ScanAndSearchAndAtomScanConfig =
-  caseSensitivityForSearchTerm:
-    default: 'smartcase'
-    enum: ['smartcase', 'sensitive', 'insensitive']
-  revealOnStartCondition: 'on-input'
-  searchWholeWord: false
-  searchUseRegex: false
-  refreshDelayOnSearchTermChange: 700
-
-newProviderConfigForScanAndSearchAndAtomScan = (other={}) ->
-  newProviderConfig(Object.assign({}, ScanAndSearchAndAtomScanConfig, other))
-
-providerSettings =
-  Scan: newProviderConfigForScanAndSearchAndAtomScan(
-    refreshDelayOnSearchTermChange: 10
-  )
-  Search: newProviderConfigForScanAndSearchAndAtomScan(
-    searcher:
-      default: 'ag'
-      enum: ['ag', 'rg']
-      description: """
-        Choose `ag`( The silver searcher) or `rg`( ripgrep )
-        """
-    startByDoubleClick:
-      default: false
-      description: """
-        [Experimental]: start by dounble click.
-        You can toggle this value by command `narrow:toggle-search-start-by-double-click`
-        """
-  )
-  AtomScan: newProviderConfigForScanAndSearchAndAtomScan()
-  Symbols: newProviderConfig(revealOnStartCondition: 'on-input')
-  GitDiffAll: newProviderConfig()
-  Fold: newProviderConfig(revealOnStartCondition: 'on-input')
-  ProjectSymbols: newProviderConfig(revealOnStartCondition: 'on-input')
-  SelectFiles: newProviderConfig(
-    autoPreview: false
-    autoPreviewOnQueryChange: false
-    negateNarrowQueryByEndingExclamation: true
-    closeOnConfirm: true
-    revealOnStartCondition: 'never'
-    rememberQuery:
-      default: false
-      description: "Remember query per provider basis and apply it at startup"
-  )
-
-module.exports = new Settings('narrow', Object.assign(complimentField(globalSettings), providerSettings))
+module.exports = settings

@@ -21,7 +21,10 @@ SearchOptions = require '../search-options'
 
 module.exports =
 class ProviderBase
+  @configScope: 'narrow'
   @destroyedProviderStates: []
+  @providersByName: {}
+  @providerPathsByName: {}
   @reopenableMax: 10
   reopened: false
 
@@ -30,10 +33,23 @@ class ProviderBase
       {name, options, state} = stateAtDestroyed
       @start(name, options, state)
 
-  @start: (name, options, state) ->
-    klass = require("./#{name}")
+  @start: (name, options={}, state) ->
+    klass = @providersByName[name] ?= @loadProvider(name)
     editor = atom.workspace.getActiveTextEditor()
     new klass(editor, options, state).start()
+
+  @loadProvider: (name) ->
+    filePath = @providerPathsByName[name] ? "./#{_.dasherize(name)}"
+    require(filePath)
+
+  @registerProvider: (name, klassOrFilePath) ->
+    switch typeof(klassOrFilePath)
+      when 'string'
+        @providerPathsByName[name] = klassOrFilePath
+      when 'function'
+        @providersByName[name] = klassOrFilePath
+      else
+        throw new Error("provider must be filePath or function")
 
   @saveState: (provider) ->
     @destroyedProviderStates.unshift(provider.saveState())
@@ -43,6 +59,8 @@ class ProviderBase
   boundToSingleFile: false
 
   showLineHeader: true
+  showProjectHeader: false
+  showFileHeader: false
   showColumnOnLineHeader: false
   itemHaveRange: false
 
@@ -61,7 +79,11 @@ class ProviderBase
   useFirstQueryAsSearchTerm: false
 
   @getConfig: (name) ->
-    value = settings.get("#{@name}.#{name}")
+    if @configScope is 'narrow'
+      value = settings.get("#{@name}.#{name}")
+    else
+      value = atom.config.get("#{@configScope}.#{name}")
+
     if value is 'inherit'
       settings.get(name)
     else

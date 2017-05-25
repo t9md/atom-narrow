@@ -74,7 +74,6 @@ class Searcher
 
     bufferedProcess = null
     exit = =>
-      bufferedProcess
       _.remove(@runningProcesses, bufferedProcess)
       onFinish(project)
 

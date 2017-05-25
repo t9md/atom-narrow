@@ -12,6 +12,8 @@ TagGenerator = requireFrom('symbols-view', 'tag-generator')
 module.exports =
 class Symbols extends ProviderBase
   boundToSingleFile: true
+  showProjectHeader: true
+  showFileHeader: true
   showLineHeader: false
   queryWordBoundaryOnByCurrentWordInvocation: true
   refreshOnDidSave: true

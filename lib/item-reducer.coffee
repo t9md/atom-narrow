@@ -81,7 +81,13 @@ spliceItemsForFilePath = (state) ->
 insertHeader = (state) ->
   return null if state.boundToSingleFile
 
-  {projectHeadersInserted, fileHeadersInserted} = state
+  {
+    projectHeadersInserted,
+    fileHeadersInserted
+    showProjectHeader
+    showFileHeader
+  } = state
+  return null if (not showProjectHeader) and (not showFileHeader)
 
   items = []
   for item in state.items
@@ -97,11 +103,12 @@ insertHeader = (state) ->
       items.push({header, projectName, skip: true})
       projectHeadersInserted[projectName] = true
 
-    filePath = item.filePath
-    if filePath not of fileHeadersInserted
-      header = "## " + atom.project.relativize(filePath)
-      items.push({header, projectName, filePath, skip: true})
-      fileHeadersInserted[filePath] = true
+    if showFileHeader
+      filePath = item.filePath
+      if filePath not of fileHeadersInserted
+        header = "## " + atom.project.relativize(filePath)
+        items.push({header, projectName, filePath, skip: true})
+        fileHeadersInserted[filePath] = true
 
     items.push(item)
 

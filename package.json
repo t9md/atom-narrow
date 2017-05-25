@@ -28,7 +28,8 @@
       "narrow:search-current-project-by-current-word",
       "narrow:symbols",
       "narrow:symbols-by-current-word",
-      "narrow:toggle-search-start-by-double-click"
+      "narrow:toggle-search-start-by-double-click",
+      "narrow:activate-package"
     ],
     "atom-text-editor.vim-mode-plus-search": [
       "vim-mode-plus-user:narrow:scan",
@@ -44,6 +45,14 @@
     "vim-mode-plus": {
       "versions": {
         "^0.1.0": "consumeVim"
+      }
+    }
+  },
+  "providedServices": {
+    "narrow": {
+      "description": "narrow",
+      "versions": {
+        "1.0.0": "provideNarrow"
       }
     }
   },
