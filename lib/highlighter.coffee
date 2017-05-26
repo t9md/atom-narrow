@@ -25,7 +25,10 @@ class Highlighter
       @decorationLayerForUi = editor.decorateMarkerLayer(@markerLayerForUi, decorationOptions)
 
     for line, row in editor.buffer.getLines() when isNormalItem(item = @ui.items.getItemForRow(row))
-      {start, end} = item.range.translate([0, item._lineHeader.length])
+      if item._lineHeader?.length
+        {start, end} = item.range.translate([0, item._lineHeader.length])
+      else
+        {start, end} = item.range
       range = [[row, start.column], [row, end.column]]
       @markerLayerForUi.markBufferRange(range, invalidate: 'inside')
 

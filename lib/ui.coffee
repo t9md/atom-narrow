@@ -315,14 +315,15 @@ class Ui
 
     @reducers = [
       itemReducer.spliceItemsForFilePath
-      itemReducer.injectLineHeader
+      itemReducer.injectLineHeader if @showLineHeader
       itemReducer.collectAllItems
       itemReducer.filterFilePath
       @filterItems
-      itemReducer.insertHeader
+      itemReducer.insertProjectHeader if @showProjectHeader
+      itemReducer.insertFileHeader if @showFileHeader
       @addItems
       @renderItems
-    ]
+    ].filter((reducer) -> reducer?)
 
     # Setup narrow-editor
     # -------------------------
@@ -614,10 +615,7 @@ class Ui
     {
       reduced: false
       hasCachedItems: @items.cachedItems?
-      showLineHeader: @showLineHeader
       showColumn: @showColumnOnLineHeader
-      showProjectHeader: @showProjectHeader
-      showFileHeader: @showFileHeader
       maxRow: @provider.editor.getLastBufferRow() if @boundToSingleFile
       boundToSingleFile: @boundToSingleFile
       projectHeadersInserted: {}

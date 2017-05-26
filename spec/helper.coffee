@@ -53,7 +53,7 @@ isProjectHeaderItem = (item) ->
   item.header? and item.projectName and not item.filePath?
 
 isFileHeaderItem = (item) ->
-  item.header? and item.projectName and item.filePath?
+  item.header? and item.filePath?
 
 addCustomMatchers = (spec) ->
   spec.addMatchers

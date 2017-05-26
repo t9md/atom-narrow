@@ -40,6 +40,9 @@ replaceOrAppendItemsForFilePath = (filePath, oldItems, newItems) ->
   oldItems.splice(indexToInsert, amountOfRemove, newItems...)
   oldItems
 
+getProjectNameForFilePath = (filePath) ->
+  path.basename(atom.project.relativizePath(filePath)[0])
+
 # Reducer
 # -------------------------
 # Purpose of reducer is build final items through different filter.
@@ -52,7 +55,7 @@ toRow = (item) -> item.point.row
 toColumn = (item) -> item.point.column
 
 injectLineHeader = (state) ->
-  return null if state.hasCachedItems or not state.showLineHeader
+  return null if state.hasCachedItems
 
   normalItems = state.items.filter(isNormalItem)
   maxRow = state.maxRow ? normalItems.map(toRow).reduce(byMax, 0)
@@ -78,41 +81,44 @@ spliceItemsForFilePath = (state) ->
   else
     null
 
-insertHeader = (state) ->
-  return null if state.boundToSingleFile
-
-  {
-    projectHeadersInserted,
-    fileHeadersInserted
-    showProjectHeader
-    showFileHeader
-  } = state
-  return null if (not showProjectHeader) and (not showFileHeader)
-
+insertProjectHeader = (state) ->
+  {projectHeadersInserted} = state
   items = []
   for item in state.items
+    if item.skip
+      item.push(item)
+      continue
+
     if item.projectName
       projectName = item.projectName
     else
-      projectPath = atom.project.relativizePath(item.filePath)[0]
-      projectName = path.basename(projectPath)
-      item.projectName = projectName
+      projectName = getProjectNameForFilePath(item.filePath)
 
     if projectName not of projectHeadersInserted
       header = "# #{projectName}"
       items.push({header, projectName, skip: true})
       projectHeadersInserted[projectName] = true
 
-    if showFileHeader
-      filePath = item.filePath
-      if filePath not of fileHeadersInserted
-        header = "## " + atom.project.relativize(filePath)
-        items.push({header, projectName, filePath, skip: true})
-        fileHeadersInserted[filePath] = true
-
     items.push(item)
 
-  return {projectHeadersInserted, fileHeadersInserted, items}
+  return {projectHeadersInserted, items}
+
+insertFileHeader = (state) ->
+  {fileHeadersInserted} = state
+  items = []
+  for item in state.items
+    if item.skip
+      items.push(item)
+      continue
+
+    filePath = item.filePath
+    if filePath not of fileHeadersInserted
+      header = "## " + atom.project.relativize(filePath)
+      items.push({header, filePath, skip: true})
+      fileHeadersInserted[filePath] = true
+    items.push(item)
+
+  return {fileHeadersInserted, items}
 
 collectAllItems = (state) ->
   {allItems: state.allItems.concat(state.items)}
@@ -138,7 +144,8 @@ filterFilePath = (state) ->
 
 module.exports = {
   injectLineHeader
-  insertHeader
+  insertProjectHeader
+  insertFileHeader
   spliceItemsForFilePath
   collectAllItems
   filterFilePath
