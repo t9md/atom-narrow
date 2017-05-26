@@ -162,7 +162,8 @@ class ProviderBase
   saveState: ->
     {
       name: @dashName
-      options: {query: @ui.lastQuery}
+      options:
+        query: @ui.lastQuery
       state:
         provider: @getState()
         ui: @ui.getState()
@@ -171,8 +172,8 @@ class ProviderBase
   constructor: (editor, @options={}, @restoredState=null) ->
     if @restoredState?
       @reopened = true
-      {searchOptionState} = @restoredState
-      delete @restoredState.searchOptionState
+      {searchOptionState} = @restoredState.provider
+      delete @restoredState.provider.searchOptionState
       @mergeState(this, @restoredState.provider)
 
     @name = @constructor.name
