@@ -1,3 +1,8 @@
+# 0.45.0:
+- Fix: Search option state now correctly restored on `narrow:reopen`.
+- New, Experiment: Add service for external custom provider.
+  - Super experimental, immature state. Will be changed in future.
+
 # 0.44.2:
 - Fix: Critical: items for modified files are not shown on ui on `search`
   - Modified files was updated only when modified after ui opened.
