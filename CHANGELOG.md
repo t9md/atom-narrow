@@ -1,3 +1,7 @@
+# 0.45.1:
+- Fix: `symbols` incorrectly showed file and project header.
+- Fix: `project-symbols` did not showed file and project header where it should show.
+
 # 0.45.0:
 - Fix: Search option state now correctly restored on `narrow:reopen`.
 - New, Experiment: Add service for external custom provider.

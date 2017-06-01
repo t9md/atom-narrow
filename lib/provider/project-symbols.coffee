@@ -67,6 +67,8 @@ itemForTag = (tag) ->
 module.exports =
 class ProjectSymbols extends ProviderBase
   showLineHeader: false
+  showProjectHeader: true
+  showFileHeader: true
   queryWordBoundaryOnByCurrentWordInvocation: true
   refreshOnDidSave: true
 
