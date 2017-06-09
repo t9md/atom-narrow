@@ -2,7 +2,11 @@
 decaffeinate\
   --keep-commonjs\
   --prefer-const\
+  --loose-for-of\
+  --loose-for-expressions\
+  --loose-includes\
   --loose-default-params $1
+  --allow-invalid-constructors $1
 
 # decaffeinate [OPTIONS] PATH [PATH …]
 # decaffeinate [OPTIONS] < INPUT
