@@ -5,7 +5,7 @@ decaffeinate\
   --loose-for-of\
   --loose-for-expressions\
   --loose-includes\
-  --loose-default-params $1
+  --loose-default-params\
   --allow-invalid-constructors $1
 
 # decaffeinate [OPTIONS] PATH [PATH …]
