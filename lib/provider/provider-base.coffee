@@ -172,16 +172,13 @@ class ProviderBase
   constructor: (editor, @options={}, @restoredState=null) ->
     if @restoredState?
       @reopened = true
-      {searchOptionState} = @restoredState.provider
+      {@searchOptionState} = @restoredState.provider
       delete @restoredState.provider.searchOptionState
       @mergeState(this, @restoredState.provider)
 
     @name = @constructor.name
     @dashName = _.dasherize(@name)
     @subscriptions = new CompositeDisposable
-
-    if @showSearchOption
-      @initializeSearchOptions(searchOptionState)
 
     if isNarrowEditor(editor)
       # Invoked from another Ui( narrow-editor ).
@@ -198,6 +195,9 @@ class ProviderBase
     checkReady = Promise.resolve(@checkReady())
     checkReady.then (ready) =>
       if ready
+        if @showSearchOption
+          @initializeSearchOptions(@searchOptionState)
+
         @ui = new Ui(this, {@query}, @restoredState?.ui)
         @initialize()
         @ui.open(pending: @options.pending, focus: @options.focus).then =>
