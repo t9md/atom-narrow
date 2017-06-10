@@ -3,10 +3,6 @@ fs = require 'fs-plus'
 path = require 'path'
 settings = require '../lib/settings'
 
-# FIXME
-Search = require '../lib/provider/search'
-Search::searchInOrdered = true
-
 {
   startNarrow
   reopen
