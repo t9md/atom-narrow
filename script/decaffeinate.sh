@@ -1,7 +1,7 @@
 #!/bin/bash
-  # --keep-commonjs\
   # --safe-import-function-identifiers AtomScan\
 decaffeinate\
+  --keep-commonjs\
   --prefer-const\
   --loose-for-of\
   --loose-for-expressions\
