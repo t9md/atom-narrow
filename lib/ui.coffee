@@ -11,7 +11,6 @@ path = require 'path'
   isDefinedAndEqual
   ensureNoConflictForChanges
   isNormalItem
-  findEqualLocationItem
   cloneRegExp
   suppressEvent
   startMeasureMemory
