@@ -260,15 +260,17 @@ function setActiveTextEditor(editor) {
 }
 
 function setActiveTextEditorWithWaits(editor) {
-  runs(() => {
-    let disposable
-    disposable = atom.workspace.onDidStopChangingActivePaneItem(item => {
-      // This guard is necessary(only in spec), to ignore `undefined` item are passed.
-      if (item === editor) disposable.dispose()
-    })
-    setActiveTextEditor(editor)
-    waitsFor(() => disposable.disposed)
+  setActiveTextEditor(editor)
+  let resolve, disposable
+  promise = new Promise(_resolve => (resolve = _resolve))
+  disposable = atom.workspace.onDidStopChangingActivePaneItem(item => {
+    // This guard is necessary(only in spec), to ignore `undefined` item are passed.
+    if (item === editor) {
+      disposable.dispose()
+      resolve()
+    }
   })
+  return promise
 }
 
 function unindent(strings, ...values) {

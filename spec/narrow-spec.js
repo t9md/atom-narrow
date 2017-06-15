@@ -31,25 +31,17 @@ const runCommand = dispatchEditorCommand
 const $ = unindent
 
 const appleGrapeLemmonText = $`
-apple
-grape
-lemmon
-`
+  apple
+  grape
+  lemmon
+  `
+
 // Main
 // -------------------------
 describe("narrow", () => {
-  let editor, editorElement, provider, ui, ensure, narrow
+  let editor, provider, ui, ensure, narrow
 
-  const waitsForStartNarrow = (providerName, options) =>
-    waitsForPromise(() =>
-      startNarrow(providerName, options).then(
-        _narrow => ({provider, ui, ensure} = narrow = _narrow)
-      )
-    )
-
-  const waitsForStartScan = options => waitsForStartNarrow("scan", options)
-
-  beforeEach(() => {
+  beforeEach(async () => {
     // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
     // So set it to `true` again here to test with default value.
     atom.config.set("core.destroyEmptyPanes", true)
@@ -57,17 +49,15 @@ describe("narrow", () => {
     const activationPromise = atom.packages.activatePackage("narrow")
     atom.workspace.open().then(_editor => {
       editor = _editor
-      editorElement = editor.element
-
       // HACK: Activate command by toggle setting command, it's most side-effect-less.
       atom.commands.dispatch(editor.element, "narrow:activate-package")
     })
 
-    return activationPromise
+    await activationPromise
   })
 
   describe("confirm family", () => {
-    beforeEach(async function() {
+    beforeEach(async () => {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
       narrow = await startNarrow("scan")
@@ -82,7 +72,7 @@ describe("narrow", () => {
     })
 
     describe("closeOnConfirm settings", () => {
-      it("land to confirmed item and close narrow-editor", async function() {
+      it("land to confirmed item and close narrow-editor", async () => {
         settings.set("Scan.closeOnConfirm", true)
         runCommand("core:confirm")
         await emitterEventPromise(narrow.ui.emitter, "did-destroy")
@@ -90,7 +80,7 @@ describe("narrow", () => {
         expect(Ui.getSize()).toBe(0)
       })
 
-      it("land to confirmed item and keep open narrow-editor", async function() {
+      it("land to confirmed item and keep open narrow-editor", async () => {
         settings.set("Scan.closeOnConfirm", false)
         runCommand("core:confirm")
         await emitterEventPromise(narrow.ui.emitter, "did-confirm")
@@ -100,7 +90,7 @@ describe("narrow", () => {
     })
 
     describe("confirm-keep-open command", () => {
-      it("land to confirmed item and keep open narrow-editor even if closeOnConfirm was true", async function() {
+      it("land to confirmed item and keep open narrow-editor even if closeOnConfirm was true", async () => {
         settings.set("Scan.closeOnConfirm", true)
         runCommand("narrow-ui:confirm-keep-open")
         await emitterEventPromise(narrow.ui.emitter, "did-confirm")
@@ -117,28 +107,21 @@ describe("narrow", () => {
     })
 
     describe("directionToOpen settings", () => {
-      const ensurePaneLayoutAfterStart = fn =>
-        waitsForPromise(() => startNarrow("scan").then(({ui}) => ensurePaneLayout(fn(ui))))
-
       describe("from one pane", () => {
-        beforeEach(async function() {
+        beforeEach(() => {
           ensurePaneLayout([editor])
         })
 
-        describe("right", () => {
-          it("open on right pane", async function() {
-            settings.set("directionToOpen", "right")
-            const {ui} = await startNarrow("scan")
-            ensurePaneLayout({horizontal: [[editor], [ui.editor]]})
-          })
+        it("open on right pane", async () => {
+          settings.set("directionToOpen", "right")
+          const {ui} = await startNarrow("scan")
+          ensurePaneLayout({horizontal: [[editor], [ui.editor]]})
         })
 
-        describe("down", () => {
-          it("open on down pane", async function() {
-            settings.set("directionToOpen", "down")
-            const {ui} = await startNarrow("scan")
-            ensurePaneLayout({vertical: [[editor], [ui.editor]]})
-          })
+        it("open on down pane", async () => {
+          settings.set("directionToOpen", "down")
+          const {ui} = await startNarrow("scan")
+          ensurePaneLayout({vertical: [[editor], [ui.editor]]})
         })
       })
 
@@ -149,15 +132,15 @@ describe("narrow", () => {
         })
 
         describe("horizontal split", () => {
-          beforeEach(() => {
-            return atom.workspace.open(null, {split: "right"}).then(_editor => {
+          beforeEach(() =>
+            atom.workspace.open(null, {split: "right"}).then(_editor => {
               editor2 = _editor
               ensurePaneLayout({horizontal: [[editor], [editor2]]})
             })
-          })
+          )
 
           describe("initially left-pane active", () => {
-            it("open on existing right pane", async function() {
+            it("open on existing right pane", async () => {
               paneForItem(editor).activate()
               ensureEditorIsActive(editor)
               const {ui} = await startNarrow("scan")
@@ -166,7 +149,7 @@ describe("narrow", () => {
           })
 
           describe("initially right-pane active", () => {
-            it("open on previous adjacent pane", async function() {
+            it("open on previous adjacent pane", async () => {
               ensureEditorIsActive(editor2)
               const {ui} = await startNarrow("scan")
               ensurePaneLayout({horizontal: [[editor, ui.editor], [editor2]]})
@@ -176,30 +159,28 @@ describe("narrow", () => {
 
         describe("vertical split", () => {
           beforeEach(() =>
-            waitsForPromise(() =>
-              atom.workspace.open(null, {split: "down"}).then(_editor => {
-                editor2 = _editor
-                ensurePaneLayout({vertical: [[editor], [editor2]]})
-              })
-            )
+            atom.workspace.open(null, {split: "down"}).then(_editor => {
+              editor2 = _editor
+              ensurePaneLayout({vertical: [[editor], [editor2]]})
+            })
           )
 
-          describe("initially ip-pane active", () =>
-            it("open on existing down pane", () => {
+          describe("initially ip-pane active", () => {
+            it("open on existing down pane", async () => {
               paneForItem(editor).activate()
               ensureEditorIsActive(editor)
-              ensurePaneLayoutAfterStart(ui => ({
-                vertical: [[editor], [editor2, ui.editor]],
-              }))
-            }))
+              const {ui} = await startNarrow("scan")
+              ensurePaneLayout({vertical: [[editor], [editor2, ui.editor]]})
+            })
+          })
 
-          describe("initially iown pane active", () =>
-            it("open on previous adjacent pane", () => {
+          describe("initially iown pane active", () => {
+            it("open on previous adjacent pane", async () => {
               ensureEditorIsActive(editor2)
-              ensurePaneLayoutAfterStart(ui => ({
-                vertical: [[editor, ui.editor], [editor2]],
-              }))
-            }))
+              const {ui} = await startNarrow("scan")
+              ensurePaneLayout({vertical: [[editor, ui.editor], [editor2]]})
+            })
+          })
         })
       })
     })
@@ -209,15 +190,15 @@ describe("narrow", () => {
     beforeEach(() => {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
-      waitsForStartScan()
     })
 
-    it("toggle focus between provider.editor and ui.editor", () => {
-      ensureEditorIsActive(ui.editor)
+    it("toggle focus between provider.editor and ui.editor", async () => {
+      narrow = await startNarrow("scan")
+      ensureEditorIsActive(narrow.ui.editor)
       runCommand("narrow:focus")
       ensureEditorIsActive(editor)
       runCommand("narrow:focus")
-      ensureEditorIsActive(ui.editor)
+      ensureEditorIsActive(narrow.ui.editor)
       runCommand("narrow:focus")
       ensureEditorIsActive(editor)
     })
@@ -227,10 +208,10 @@ describe("narrow", () => {
     beforeEach(() => {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
-      waitsForStartScan()
     })
 
-    it("toggle focus between provider.editor and ui.editor", () => {
+    it("toggle focus between provider.editor and ui.editor", async () => {
+      const {ensure, ui} = await startNarrow("scan")
       ui.editor.setCursorBufferPosition([1, 0])
 
       ensureEditorIsActive(ui.editor)
@@ -256,10 +237,10 @@ describe("narrow", () => {
     beforeEach(() => {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
-      waitsForStartScan()
     })
 
-    it("close narrow-editor from outside of narrow-editor", () => {
+    it("close narrow-editor from outside of narrow-editor", async () => {
+      await startNarrow("scan")
       expect(atom.workspace.getTextEditors()).toHaveLength(2)
       setActiveTextEditor(editor)
       ensureEditorIsActive(editor)
@@ -268,26 +249,25 @@ describe("narrow", () => {
       expect(atom.workspace.getTextEditors()).toHaveLength(1)
     })
 
-    it("continue close until no narrow-editor is exists", () => {
-      waitsForStartScan()
-      waitsForStartScan()
-      waitsForStartScan()
+    it("continue close until no narrow-editor is exists", async () => {
+      await startNarrow("scan")
+      await startNarrow("scan")
+      await startNarrow("scan")
+      await startNarrow("scan")
 
-      runs(() => {
-        expect(Ui.getSize()).toBe(4)
-        setActiveTextEditor(editor)
-        ensureEditorIsActive(editor)
+      expect(Ui.getSize()).toBe(4)
+      setActiveTextEditor(editor)
+      ensureEditorIsActive(editor)
+
+      const closeAndEnsureSize = size => {
         runCommand("narrow:close")
-        expect(Ui.getSize()).toBe(3)
-        runCommand("narrow:close")
-        expect(Ui.getSize()).toBe(2)
-        runCommand("narrow:close")
-        expect(Ui.getSize()).toBe(1)
-        runCommand("narrow:close")
-        expect(Ui.getSize()).toBe(0)
-        runCommand("narrow:close")
-        expect(Ui.getSize()).toBe(0)
-      })
+        expect(Ui.getSize()).toBe(size)
+      }
+      closeAndEnsureSize(3)
+      closeAndEnsureSize(2)
+      closeAndEnsureSize(1)
+      closeAndEnsureSize(0)
+      closeAndEnsureSize(0)
     })
   })
 
@@ -295,35 +275,33 @@ describe("narrow", () => {
     beforeEach(() => {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
-      waitsForStartScan()
     })
 
-    it("redraw items when item area was mutated", () => {
+    it("redraw items when item area was mutated", async () => {
+      const {ensure, ui} = await startNarrow("scan")
       const originalText = ui.editor.getText()
 
-      narrow.waitsForRefresh(() => {
-        const range = [[1, 0], ui.editor.getEofBufferPosition()]
-        ui.editor.setTextInBufferRange(range, "abc\ndef\n")
-        ensure({text: "\nabc\ndef\n"})
-      })
+      const eof = ui.editor.getEofBufferPosition()
+      ui.editor.setTextInBufferRange([[1, 0], eof], "abc\ndef\n")
+      ensure({text: "\nabc\ndef\n"})
 
-      narrow.waitsForRefresh(() => runCommand("narrow:refresh"))
-
-      runs(() => ensure({text: originalText}))
+      runCommand("narrow:refresh")
+      await emitterEventPromise(ui.emitter, "did-refresh")
+      ensure({text: originalText})
     })
   })
 
+  /// FIXME:
   describe("reopen", () => {
     let narrows
-    beforeEach(() => {
+    beforeEach(async () => {
+      narrows = []
       editor.setText("1\n2\n3\n4\n5\n6\n7\n8\n9\na\nb")
       editor.setCursorBufferPosition([0, 0])
-      waitsForPromise(() => {
-        const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        return Promise.all(nums.map(() => startNarrow("scan"))).then(_narrows => {
-          narrows = _narrows
-        })
-      })
+      for (let i = 0; i <= 10; i++) {
+        const narrow = await startNarrow("scan")
+        narrows.push(narrow)
+      }
     })
 
     it("reopen closed narrow editor up to 10 recent", () => {
@@ -392,55 +370,52 @@ describe("narrow", () => {
   })
 
   describe("narrow:next-item, narrow:previous-item", () => {
-    const nextItem = () => runs(() => narrow.waitsForConfirm(() => runCommand("narrow:next-item")))
-    const previousItem = () =>
-      runs(() => narrow.waitsForConfirm(() => runCommand("narrow:previous-item")))
+    const confirmCommand = command => {
+      runCommand("narrow:" + command)
+      emitterEventPromise(narrow.ui.emitter, "did-confirm")
+    }
 
     describe("basic behavior", () => {
-      beforeEach(() => {
+      beforeEach(async () => {
         editor.setText(appleGrapeLemmonText)
         editor.setCursorBufferPosition([0, 0])
-        waitsForStartScan()
-
-        runs(() =>
-          ensure("p", {
-            text: $`
-              p
-              1:  2: apple
-              1:  3: apple
-              2:  4: grape
-              `,
-          })
-        )
+        narrow = await startNarrow("scan")
+        narrow.ensure("p", {
+          text: $`
+            p
+            1:  2: apple
+            1:  3: apple
+            2:  4: grape
+            `,
+        })
       })
 
-      it("move to next/previous item with wrap", () => {
+      it("move to next/previous item with wrap", async () => {
         setActiveTextEditor(editor)
         ensureEditorIsActive(editor)
         ensureEditor(editor, {cursor: [0, 0]})
 
-        const _ensureEditor = options => runs(() => ensureEditor(editor, options))
+        await confirmCommand("next-item")
+        ensureEditor(editor, {cursor: [0, 1]})
+        await confirmCommand("next-item")
+        ensureEditor(editor, {cursor: [0, 2]})
 
-        nextItem()
-        _ensureEditor({cursor: [0, 1]})
-        nextItem()
-        _ensureEditor({cursor: [0, 2]})
-        nextItem()
-        _ensureEditor({cursor: [1, 3]})
-        nextItem()
-        _ensureEditor({cursor: [0, 1]})
+        await confirmCommand("next-item")
+        ensureEditor(editor, {cursor: [1, 3]})
+        await confirmCommand("next-item")
+        ensureEditor(editor, {cursor: [0, 1]})
 
-        previousItem()
-        _ensureEditor({cursor: [1, 3]})
-        previousItem()
-        _ensureEditor({cursor: [0, 2]})
-        previousItem()
-        _ensureEditor({cursor: [0, 1]})
+        await confirmCommand("previous-item")
+        ensureEditor(editor, {cursor: [1, 3]})
+        await confirmCommand("previous-item")
+        ensureEditor(editor, {cursor: [0, 2]})
+        await confirmCommand("previous-item")
+        ensureEditor(editor, {cursor: [0, 1]})
       })
     })
 
     describe("when cursor position is contained in item.range", () => {
-      beforeEach(() => {
+      beforeEach(async () => {
         editor.setText($`
           line 1
             line 2
@@ -448,97 +423,64 @@ describe("narrow", () => {
             line 4
           `)
         editor.setCursorBufferPosition([0, 0])
-
-        waitsForStartScan()
-
-        runs(() =>
-          ensure("line", {
-            text: $`
-              line
-              1:  1: line 1
-              2:  3:   line 2
-              3:  1: line 3
-              4:  3:   line 4
-              `,
-          })
-        )
+        narrow = await startNarrow("scan")
+        narrow.ensure("line", {
+          text: $`
+            line
+            1:  1: line 1
+            2:  3:   line 2
+            3:  1: line 3
+            4:  3:   line 4
+            `,
+        })
       })
 
-      it("move to next/previous", () => {
+      it("move to next/previous", async () => {
         jasmine.useRealClock()
 
-        setActiveTextEditorWithWaits(editor)
+        await setActiveTextEditorWithWaits(editor)
 
         const r1 = [[0, 0], [0, 3]] // `line` range of "line 1"
         const r2 = [[1, 2], [1, 6]] // `line` range of "  line 2"
         const r3 = [[2, 0], [2, 3]] // `line` range of "line 3"
         const r4 = [[3, 2], [3, 6]] // `line` range of "  line 4"
 
-        const setCursor = point => runs(() => editor.setCursorBufferPosition(point))
-        const ensureCursor = point => runs(() => ensureEditor(editor, {cursor: point}))
+        const ensureCommand = async (command, start, last) => {
+          editor.setCursorBufferPosition(start)
+          await confirmCommand(command)
+          ensureEditor(editor, {cursor: last})
+        }
 
-        setCursor(r1[0])
-        nextItem()
-        ensureCursor([1, 2])
-        setCursor(r1[1])
-        nextItem()
-        ensureCursor([1, 2])
-        setCursor(r1[0])
-        previousItem()
-        ensureCursor([3, 2])
-        setCursor(r1[1])
-        previousItem()
-        ensureCursor([3, 2])
-
-        setCursor(r2[0])
-        nextItem()
-        ensureCursor([2, 0])
-        setCursor(r2[1])
-        nextItem()
-        ensureCursor([2, 0])
-        setCursor(r2[0])
-        previousItem()
-        ensureCursor([0, 0])
-        setCursor(r2[1])
-        previousItem()
-        ensureCursor([0, 0])
-
-        setCursor(r3[0])
-        nextItem()
-        ensureCursor([3, 2])
-        setCursor(r3[1])
-        nextItem()
-        ensureCursor([3, 2])
-        setCursor(r3[0])
-        previousItem()
-        ensureCursor([1, 2])
-        setCursor(r3[1])
-        previousItem()
-        ensureCursor([1, 2])
-
-        setCursor(r4[0])
-        nextItem()
-        ensureCursor([0, 0])
-        setCursor(r4[1])
-        nextItem()
-        ensureCursor([0, 0])
-        setCursor(r4[0])
-        previousItem()
-        ensureCursor([2, 0])
-        setCursor(r4[1])
-        previousItem()
-        ensureCursor([2, 0])
+        // prettier-ignore
+        await ensureCommand("next-item",     r1[0], [1, 2])
+        await ensureCommand("next-item", r1[1], [1, 2])
+        await ensureCommand("previous-item", r1[0], [3, 2])
+        await ensureCommand("previous-item", r1[1], [3, 2])
+        await ensureCommand("next-item", r2[0], [2, 0])
+        await ensureCommand("next-item", r2[1], [2, 0])
+        await ensureCommand("previous-item", r2[0], [0, 0])
+        await ensureCommand("previous-item", r2[1], [0, 0])
+        await ensureCommand("next-item", r3[0], [3, 2])
+        await ensureCommand("next-item", r3[1], [3, 2])
+        await ensureCommand("previous-item", r3[0], [1, 2])
+        await ensureCommand("previous-item", r3[1], [1, 2])
+        await ensureCommand("next-item", r4[0], [0, 0])
+        await ensureCommand("next-item", r4[1], [0, 0])
+        await ensureCommand("previous-item", r4[0], [2, 0])
+        await ensureCommand("previous-item", r4[1], [2, 0])
       })
     })
   })
 
   describe("auto reveal on start behavior( revealOnStartCondition )", () => {
-    let [points, pointsA] = Array.from([])
+    let points, pointsA
+
     const getEnsureStartState = startOptions => (point, options) => {
-      runs(() => editor.setCursorBufferPosition(point))
-      waitsForStartScan(startOptions)
-      runs(() => ensure(options))
-      runs(() => ui.destroy())
+      editor.setCursorBufferPosition(point)
+      return startNarrow("scan", startOptions).then(narrow => {
+        narrow.ensure(options)
+        narrow.ui.destroy()
+      })
     }
 
     beforeEach(() => {
@@ -566,9 +508,11 @@ describe("narrow", () => {
     })
 
     describe("revealOnStartCondition = on-input( default )", () => {
-      beforeEach(() => settings.set("Scan.revealOnStartCondition", "on-input"))
+      beforeEach(() => {
+        settings.set("Scan.revealOnStartCondition", "on-input")
+      })
 
-      it("auto reveal when initial query was provided", () => {
+      it("auto reveal when initial query was provided", async () => {
         const text = $`
           line
           1:  1: line 1
@@ -577,29 +521,13 @@ describe("narrow", () => {
           4:  3:   line 4
           `
         const ensureStartState = getEnsureStartState({queryCurrentWord: true})
-        ensureStartState(points[0], {
-          cursor: pointsA[0],
-          text,
-          selectedItemText: "line 1",
-        })
-        ensureStartState(points[1], {
-          cursor: pointsA[1],
-          text,
-          selectedItemText: "  line 2",
-        })
-        ensureStartState(points[2], {
-          cursor: pointsA[2],
-          text,
-          selectedItemText: "line 3",
-        })
-        ensureStartState(points[3], {
-          cursor: pointsA[3],
-          text,
-          selectedItemText: "  line 4",
-        })
+        await ensureStartState(points[0], {cursor: pointsA[0], text, selectedItemText: "line 1"})
+        await ensureStartState(points[1], {cursor: pointsA[1], text, selectedItemText: "  line 2"})
+        await ensureStartState(points[2], {cursor: pointsA[2], text, selectedItemText: "line 3"})
+        await ensureStartState(points[3], {cursor: pointsA[3], text, selectedItemText: "  line 4"})
       })
 
-      it("NOT auto reveal when no query was provided", () => {
+      it("NOT auto reveal when no query was provided", async () => {
         const text = $`
 
           1:  1: line 1
@@ -609,14 +537,18 @@ describe("narrow", () => {
           `
         const ensureStartState = getEnsureStartState()
         const options = {selectedItemText: "line 1", cursor: [0, 0], text}
-        points.map(point => ensureStartState(point, options))
+        for (const point of points) {
+          await ensureStartState(point, options)
+        }
       })
     })
 
     describe("revealOnStartCondition = never", () => {
-      beforeEach(() => settings.set("Scan.revealOnStartCondition", "never"))
+      beforeEach(() => {
+        settings.set("Scan.revealOnStartCondition", "never")
+      })
 
-      it("NOT auto reveal when initial query was provided", () => {
+      it("NOT auto reveal when initial query was provided", async () => {
         const text = $`
           line
           1:  1: line 1
@@ -626,58 +558,48 @@ describe("narrow", () => {
           `
         const ensureStartState = getEnsureStartState({queryCurrentWord: true})
         const options = {selectedItemText: "line 1", cursor: [0, 4], text}
-        points.map(point => ensureStartState(point, options))
+        for (const point of points) {
+          await ensureStartState(point, options)
+        }
       })
 
-      it("NOT auto reveal when no query was provided", () => {
+      it("NOT auto reveal when no query was provided", async () => {
         const text = $`
 
-1:  1: line 1
-2:  1:   line 2
-3:  1: line 3
-4:  1:   line 4
-`
+          1:  1: line 1
+          2:  1:   line 2
+          3:  1: line 3
+          4:  1:   line 4
+          `
         const ensureStartState = getEnsureStartState()
         const options = {selectedItemText: "line 1", cursor: [0, 0], text}
-        points.map(point => ensureStartState(point, options))
+        for (const point of points) {
+          await ensureStartState(point, options)
+        }
       })
     })
 
     describe("revealOnStartCondition = always", () => {
-      beforeEach(() => settings.set("Scan.revealOnStartCondition", "always"))
-
-      it("auto reveal when initial query was provided", () => {
-        const text = $`
-line
-1:  1: line 1
-2:  3:   line 2
-3:  1: line 3
-4:  3:   line 4
-`
-        const ensureStartState = getEnsureStartState({queryCurrentWord: true})
-        ensureStartState(points[0], {
-          cursor: pointsA[0],
-          text,
-          selectedItemText: "line 1",
-        })
-        ensureStartState(points[1], {
-          cursor: pointsA[1],
-          text,
-          selectedItemText: "  line 2",
-        })
-        ensureStartState(points[2], {
-          cursor: pointsA[2],
-          text,
-          selectedItemText: "line 3",
-        })
-        ensureStartState(points[3], {
-          cursor: pointsA[3],
-          text,
-          selectedItemText: "  line 4",
-        })
+      beforeEach(() => {
+        settings.set("Scan.revealOnStartCondition", "always")
       })
 
-      it("auto reveal when initial query was provided when multiple match on same line", () => {
+      it("auto reveal when initial query was provided", async () => {
+        const text = $`
+          line
+          1:  1: line 1
+          2:  3:   line 2
+          3:  1: line 3
+          4:  3:   line 4
+          `
+        const ensureStartState = getEnsureStartState({queryCurrentWord: true})
+        await ensureStartState(points[0], {cursor: pointsA[0], text, selectedItemText: "line 1"})
+        await ensureStartState(points[1], {cursor: pointsA[1], text, selectedItemText: "  line 2"})
+        await ensureStartState(points[2], {cursor: pointsA[2], text, selectedItemText: "line 3"})
+        await ensureStartState(points[3], {cursor: pointsA[3], text, selectedItemText: "  line 4"})
+      })
+
+      it("auto reveal when initial query was provided when multiple match on same line", async () => {
         const lineText = "line line line line"
         editor.setText(lineText)
 
@@ -697,16 +619,14 @@ line
           [3, 10 + headerLength],
           [4, 15 + headerLength],
         ]
-        points.map((point, i) =>
-          ensureStartState(point, {
-            cursor: pointsA[i],
-            text,
-            selectedItemText: lineText,
-          })
-        )
+
+        const selectedItemText = lineText
+        for (let i = 0; i < points.length; i++) {
+          await ensureStartState(points[i], {cursor: pointsA[i], text, selectedItemText})
+        }
       })
 
-      it("auto reveal for based on current line of bound-editor", () => {
+      it("auto reveal for based on current line of bound-editor", async () => {
         const text = $`
 
           1:  1: line 1
@@ -715,75 +635,90 @@ line
           4:  1:   line 4
           `
         const ensureStartState = getEnsureStartState()
-        ensureStartState([0, 0], {
-          cursor: [1, 7],
-          text,
-          selectedItemText: "line 1",
-        })
-        ensureStartState([1, 2], {
-          cursor: [2, 7],
-          text,
-          selectedItemText: "  line 2",
-        })
-        ensureStartState([2, 0], {
-          cursor: [3, 7],
-          text,
-          selectedItemText: "line 3",
-        })
-        ensureStartState([3, 2], {
-          cursor: [4, 7],
-          text,
-          selectedItemText: "  line 4",
-        })
+        await ensureStartState([0, 0], {cursor: [1, 7], text, selectedItemText: "line 1"})
+        await ensureStartState([1, 2], {cursor: [2, 7], text, selectedItemText: "  line 2"})
+        await ensureStartState([2, 0], {cursor: [3, 7], text, selectedItemText: "line 3"})
+        await ensureStartState([3, 2], {cursor: [4, 7], text, selectedItemText: "  line 4"})
       })
     })
   })
 
   describe("narrow-editor auto-sync selected-item to active editor", () => {
-    let [editor2] = Array.from([])
+    let narrow, editor2
 
-    beforeEach(() => {
-      runs(() => {
-        editor.setText($`
-          line 1
+    beforeEach(async () => {
+      editor.setText($`
+        line 1
 
-          line 3
+        line 3
 
-          line 5
+        line 5
 
-          line 7
+        line 7
 
-          line 9
+        line 9
 
+        `)
+      editor.setCursorBufferPosition([0, 0])
+
+      await atom.workspace.open().then(_editor => {
+        editor2 = _editor
+        editor2.setText($`
+
+          line 2
+
+          line 4
+
+          line 6
+
+          line 8
+
+          line 10
           `)
-        editor.setCursorBufferPosition([0, 0])
+        editor2.setCursorBufferPosition([0, 0])
       })
 
-      waitsForPromise(() =>
-        atom.workspace.open().then(_editor => {
-          editor2 = _editor
-          editor2.setText($`
+      narrow = await startNarrow("scan")
+      ensureEditorIsActive(narrow.ui.editor)
+      expect(narrow.provider.editor).toBe(editor2)
+      narrow.ensure("line", {
+        text: $`
+          line
+           2:  1: line 2
+           4:  1: line 4
+           6:  1: line 6
+           8:  1: line 8
+          10:  1: line 10
+          `,
+      })
+    })
 
-            line 2
+    describe("re-bound to active text-editor", () =>
+      it("provider.editor is bound to active text-editor and auto-refreshed", async () => {
+        const {provider, ensure} = narrow
 
-            line 4
+        jasmine.useRealClock()
 
-            line 6
+        await setActiveTextEditorWithWaits(editor)
 
-            line 8
-
-            line 10
-            `)
-          editor2.setCursorBufferPosition([0, 0])
+        ensureEditorIsActive(editor)
+        expect(provider.editor).toBe(editor)
+        ensure({
+          text: $`
+            line
+             1:  1: line 1
+             3:  1: line 3
+             5:  1: line 5
+             7:  1: line 7
+             9:  1: line 9
+            `,
         })
-      )
 
-      waitsForStartScan()
+        await setActiveTextEditorWithWaits(editor2)
 
-      runs(() => {
-        ensureEditorIsActive(ui.editor)
+        ensureEditorIsActive(editor2)
         expect(provider.editor).toBe(editor2)
-        ensure("line", {
+        ensure({
           text: $`
             line
              2:  1: line 2
@@ -793,104 +728,53 @@ line
             10:  1: line 10
             `,
         })
-      })
-    })
-
-    describe("re-bound to active text-editor", () =>
-      it("provider.editor is bound to active text-editor and auto-refreshed", () => {
-        jasmine.useRealClock()
-
-        setActiveTextEditorWithWaits(editor)
-
-        runs(() => {
-          ensureEditorIsActive(editor)
-          expect(provider.editor).toBe(editor)
-          ensure({
-            text: $`
-              line
-               1:  1: line 1
-               3:  1: line 3
-               5:  1: line 5
-               7:  1: line 7
-               9:  1: line 9
-              `,
-          })
-        })
-
-        setActiveTextEditorWithWaits(editor2)
-
-        runs(() => {
-          ensureEditorIsActive(editor2)
-          expect(provider.editor).toBe(editor2)
-          ensure({
-            text: $`
-              line
-               2:  1: line 2
-               4:  1: line 4
-               6:  1: line 6
-               8:  1: line 8
-              10:  1: line 10
-              `,
-          })
-        })
       }))
 
     describe("auto-sync selected-item to acitive-editor's cursor position", () =>
-      it("provider.editor is bound to active text-editor and auto-refreshed", () => {
+      // prettier-ignore
+      it("provider.editor is bound to active text-editor and auto-refreshed", async () => {
+        const {ui, provider, ensure} = narrow
+        const setCursor = (editor, point) => editor.setCursorBufferPosition(point)
+
         jasmine.useRealClock()
-        setActiveTextEditorWithWaits(editor)
+        await setActiveTextEditorWithWaits(editor)
 
-        runs(() => {
-          ensureEditorIsActive(editor)
-          expect(provider.editor).toBe(editor)
+        ensureEditorIsActive(editor)
+        expect(provider.editor).toBe(editor)
 
-          const setCursor = point => editor.setCursorBufferPosition(point)
+        setCursor(editor, [0, 0]); ensure({selectedItemText: "line 1"})
+        setCursor(editor, [1, 0]); ensure({selectedItemText: "line 1"})
+        setCursor(editor, [2, 0]); ensure({selectedItemText: "line 3"})
+        setCursor(editor, [3, 0]); ensure({selectedItemText: "line 3"})
+        setCursor(editor, [4, 0]); ensure({selectedItemText: "line 5"})
+        editor.moveToBottom()
+        ensureEditor(editor, {cursor: [9, 0]})
+        ensure({selectedItemText: "line 9"})
 
-          setCursor([0, 0])
-          ensure({selectedItemText: "line 1"})
-          setCursor([1, 0])
-          ensure({selectedItemText: "line 1"})
-          setCursor([2, 0])
-          ensure({selectedItemText: "line 3"})
-          setCursor([3, 0])
-          ensure({selectedItemText: "line 3"})
-          setCursor([4, 0])
-          ensure({selectedItemText: "line 5"})
-          editor.moveToBottom()
-          ensureEditor(editor, {cursor: [9, 0]})
-          ensure({selectedItemText: "line 9"})
-        })
+        await setActiveTextEditorWithWaits(editor2)
 
-        setActiveTextEditorWithWaits(editor2)
+        expect(provider.editor).toBe(editor2)
+        ensure({selectedItemText: "line 2"})
+        setCursor(editor2, [1, 0]); ensure({selectedItemText: "line 2"})
+        setCursor(editor2, [3, 0]); ensure({selectedItemText: "line 4"})
+        setCursor(editor2, [5, 0]); ensure({selectedItemText: "line 6"})
+        setCursor(editor2, [7, 0]); ensure({selectedItemText: "line 8"})
 
-        runs(() => {
-          const setCursor = point => editor2.setCursorBufferPosition(point)
-
-          expect(provider.editor).toBe(editor2)
-          ensure({selectedItemText: "line 2"})
-          setCursor([1, 0])
-          ensure({selectedItemText: "line 2"})
-          setCursor([3, 0])
-          ensure({selectedItemText: "line 4"})
-          setCursor([5, 0])
-          ensure({selectedItemText: "line 6"})
-          setCursor([7, 0])
-          ensure({selectedItemText: "line 8"})
-
-          editor2.moveToTop()
-          ensureEditor(editor2, {cursor: [0, 0]})
-          ensure({selectedItemText: "line 2"})
-        })
+        editor2.moveToTop()
+        ensureEditor(editor2, {cursor: [0, 0]})
+        ensure({selectedItemText: "line 2"})
       }))
   })
 
   describe("scan", () => {
     describe("with empty query", () => {
       const confirm = () => narrow.waitsForDestroy(() => runCommand("core:confirm"))
-      beforeEach(() => {
+
+      beforeEach(async () => {
         editor.setText(appleGrapeLemmonText)
         editor.setCursorBufferPosition([0, 0])
-        waitsForStartScan()
+        narrow = await startNarrow("scan")
+        ensure = narrow.ensure
       })
 
       it("add css class to narrowEditorElement", () =>
@@ -936,6 +820,7 @@ line
         })
       })
 
+      // FIXME
       it("land to confirmed item", () => {
         runs(() =>
           ensure("l", {
@@ -976,58 +861,47 @@ line
         editor.setText(appleGrapeLemmonText)
       })
 
-      it("set current-word as initial query", () => {
-        waitsForPromise(() => {
-          editor.setCursorBufferPosition([0, 0])
-          return startNarrow("scan", {queryCurrentWord: true}).then(narrow => {
-            narrow.ensure({
-              text: $`
-                apple
-                1:  1: apple
-                `,
-              selectedItemRow: 1,
-              itemsCount: 1,
-            })
-            runs(() => narrow.ui.destroy())
-          })
+      const ensureScan = async (point, option) => {
+        editor.setCursorBufferPosition(point)
+        const narrow = await startNarrow("scan", {queryCurrentWord: true})
+        narrow.ensure(option)
+        narrow.ui.destroy()
+      }
+
+      it("set current-word as initial query", async () => {
+        await ensureScan([0, 0], {
+          text: $`
+            apple
+            1:  1: apple
+            `,
+          selectedItemRow: 1,
+          itemsCount: 1,
         })
 
-        waitsForPromise(() => {
-          editor.setCursorBufferPosition([1, 0])
-          return startNarrow("scan", {queryCurrentWord: true}).then(narrow => {
-            narrow.ensure({
-              text: $`
-                grape
-                2:  1: grape
-                `,
-              selectedItemRow: 1,
-              itemsCount: 1,
-            })
-            runs(() => narrow.ui.destroy())
-          })
+        await ensureScan([1, 0], {
+          text: $`
+            grape
+            2:  1: grape
+            `,
+          selectedItemRow: 1,
+          itemsCount: 1,
         })
 
-        waitsForPromise(() => {
-          editor.setCursorBufferPosition([2, 0])
-          return startNarrow("scan", {queryCurrentWord: true}).then(narrow => {
-            narrow.ensure({
-              text: $`
-                lemmon
-                3:  1: lemmon
-                `,
-              selectedItemRow: 1,
-              itemsCount: 1,
-            })
-            runs(() => narrow.ui.destroy())
-          })
+        await ensureScan([2, 0], {
+          text: $`
+            lemmon
+            3:  1: lemmon
+            `,
+          selectedItemRow: 1,
+          itemsCount: 1,
         })
       })
     })
   })
 
   describe("search", () => {
-    let [p1, p1f1, p1f2, p1f3] = Array.from([])
-    let [p2, p2f1, p2f2, p2f3] = Array.from([])
+    let p1, p1f1, p1f2, p1f3
+    let p2, p2f1, p2f2, p2f3
     beforeEach(() =>
       runs(() => {
         p1 = atom.project.resolvePath("project1")
@@ -1047,12 +921,19 @@ line
     )
 
     describe("basic behavior", () => {
-      beforeEach(() => waitsForStartNarrow("search", {query: "apple"}))
+      const previewCommand = command => {
+        runCommand(command)
+        return emitterEventPromise(narrow.ui.emitter, "did-preview")
+      }
 
-      it("preview on cursor move with skipping header", () => {
+      beforeEach(async () => {
+        narrow = await startNarrow("search", {query: "apple"})
+        ui = narrow.ui
+        ensure = narrow.ensure
+      })
+
+      it("preview on cursor move with skipping header", async () => {
         jasmine.useRealClock()
-        const moveUpWithPreview = () => narrow.waitsForPreview(() => runCommand("core:move-up"))
-        const moveDownWithPreview = () => narrow.waitsForPreview(() => runCommand("core:move-down"))
 
         ensure({
           text: $`
@@ -1072,94 +953,55 @@ line
           selectedItemText: "p1-f1: apple",
         })
 
-        runs(() => {
-          runCommand("core:move-up")
-          ensure({
-            selectedItemText: "p1-f1: apple",
-            cursor: [0, 5],
-          })
-        })
+        runCommand("core:move-up")
+        ensure({selectedItemText: "p1-f1: apple", cursor: [0, 5]})
 
-        runs(() => moveDownWithPreview())
+        await previewCommand("core:move-down")
+        ensure({selectedItemText: "p1-f1: apple", cursor: [3, 14], filePathForProviderPane: p1f1})
 
-        runs(() =>
-          ensure({
-            selectedItemText: "p1-f1: apple",
-            cursor: [3, 14],
-            filePathForProviderPane: p1f1,
-          })
-        )
+        await previewCommand("core:move-down")
+        ensure({selectedItemText: "p1-f2: apple", cursor: [5, 14], filePathForProviderPane: p1f2})
+        ensureEditorIsActive(ui.editor)
 
-        runs(() => moveDownWithPreview())
+        await previewCommand("core:move-down")
+        ensure({selectedItemText: "p2-f1: apple", cursor: [8, 14], filePathForProviderPane: p2f1})
 
-        runs(() => {
-          ensure({
-            selectedItemText: "p1-f2: apple",
-            cursor: [5, 14],
-            filePathForProviderPane: p1f2,
-          })
-          ensureEditorIsActive(ui.editor)
-        })
-
-        runs(() => moveDownWithPreview())
-
-        runs(() =>
-          ensure({
-            selectedItemText: "p2-f1: apple",
-            cursor: [8, 14],
-            filePathForProviderPane: p2f1,
-          })
-        )
-
-        runs(() => moveDownWithPreview())
-
-        runs(() =>
-          ensure({
-            selectedItemText: "p2-f2: apple",
-            cursor: [10, 14],
-            filePathForProviderPane: p2f2,
-          })
-        )
+        await previewCommand("core:move-down")
+        ensure({selectedItemText: "p2-f2: apple", cursor: [10, 14], filePathForProviderPane: p2f2})
       })
 
-      it("preview on query change by default( autoPreviewOnQueryChange )", () => {
+      it("preview on query change by default( autoPreviewOnQueryChange )", async () => {
         jasmine.useRealClock()
 
-        runs(() =>
-          narrow.waitsForPreview(() => {
-            ui.moveToPrompt()
-            ui.editor.insertText(" f2")
-          })
-        )
-        runs(() =>
-          ensure({
-            text: $`
-              apple f2
-              # project1
-              ## p1-f2
-              1:  8: p1-f2: apple
-              # project2
-              ## p2-f2
-              1:  8: p2-f2: apple
-              `,
-            selectedItemText: "p1-f2: apple",
-            filePathForProviderPane: p1f2,
-          })
-        )
+        narrow.ui.moveToPrompt()
+        narrow.ui.editor.insertText(" f2")
+        await emitterEventPromise(narrow.ui.emitter, "did-preview")
+        ensure({
+          text: $`
+            apple f2
+            # project1
+            ## p1-f2
+            1:  8: p1-f2: apple
+            # project2
+            ## p2-f2
+            1:  8: p2-f2: apple
+            `,
+          selectedItemText: "p1-f2: apple",
+          filePathForProviderPane: p1f2,
+        })
 
-        runs(() => narrow.waitsForPreview(() => ui.editor.insertText(" p2")))
-        runs(() =>
-          ensure({
-            text: $`
-              apple f2 p2
-              # project2
-              ## p2-f2
-              1:  8: p2-f2: apple
-              `,
-            selectedItemText: "p2-f2: apple",
-            filePathForProviderPane: p2f2,
-          })
-        )
+        ui.editor.insertText(" p2")
+        await emitterEventPromise(narrow.ui.emitter, "did-preview")
+        ensure({
+          text: $`
+            apple f2 p2
+            # project2
+            ## p2-f2
+            1:  8: p2-f2: apple
+            `,
+          selectedItemText: "p2-f2: apple",
+          filePathForProviderPane: p2f2,
+        })
       })
 
       it("can filter files by selet-files provider", () => {
@@ -1302,11 +1144,11 @@ line
       })
     })
 
-    describe("searchCurrentWord with variable-includes-special-char language, PHP", () => {
-      const ensureFindPHPVar = () => {
-        ensureEditorIsActive(ui.editor)
-        expect(ui.excludedFiles).toEqual([])
-        ensure({
+    describe("searchCurrentWord with variable-includes-special-char language, PHP", async () => {
+      const ensureFindPHPVar = narrow => {
+        ensureEditorIsActive(narrow.ui.editor)
+        expect(narrow.ui.excludedFiles).toEqual([])
+        narrow.ensure({
           text: $`
             $file
             # project1
@@ -1320,38 +1162,34 @@ line
           selectedItemText: '$file = "p1-f3.php";',
         })
       }
+      const ensureSearch = provider =>
+        startNarrow(provider, {queryCurrentWord: true}).then(ensureFindPHPVar)
 
-      beforeEach(() => {
-        waitsForPromise(() => atom.packages.activatePackage("language-php"))
-
-        waitsForPromise(() =>
-          atom.workspace.open(p1f3).then(phpEditor =>
-            // place cursor on `$file`
-            phpEditor.setCursorBufferPosition([1, 0])
-          )
-        )
+      beforeEach(async () => {
+        await atom.packages.activatePackage("language-php")
+        const editor = await atom.workspace.open(p1f3)
+        editor.setCursorBufferPosition([1, 0])
       })
 
-      it("[atom-scan]", () => {
-        waitsForStartNarrow("atom-scan", {queryCurrentWord: true})
-        runs(() => ensureFindPHPVar())
+      it("[atom-scan]", async () => {
+        await ensureSearch("atom-scan")
       })
 
-      it("search with ag", () => {
+      it("search with ag", async () => {
         settings.set("Search.searcher", "ag")
-        waitsForStartNarrow("search", {queryCurrentWord: true})
-        runs(() => ensureFindPHPVar())
+        await ensureSearch("search")
       })
 
-      it("search with rg", () => {
+      it("search with rg", async () => {
         settings.set("Search.searcher", "rg")
-        waitsForStartNarrow("search", {queryCurrentWord: true})
-        runs(() => ensureFindPHPVar())
+        await ensureSearch("search")
       })
     })
 
     describe("search regex special char include search term", () => {
-      let [query, ensureOptions] = Array.from([])
+      const getEnsureSearch = ensureOptions => (provider, options) =>
+        startNarrow(provider, options).then(narrow => narrow.ensure(ensureOptions))
+
       const resultText = {
         "project1/p1-f": $`
           project1/p1-f
@@ -1378,92 +1216,74 @@ line
           4:  7: path: a\\/b\\/c
           `,
       }
-      beforeEach(() => {
-        let ref
-        ;([query, ensureOptions] = Array.from((ref = []))), ref
-      }) // null reset
 
       describe("search project1/p1-f", () => {
-        beforeEach(() => {
-          query = "project1/p1-f"
-          ensureOptions = {
-            text: resultText[query],
-            cursor: [3, 13],
-            selectedItemText: "path: project1/p1-f1",
-          }
+        let query = "project1/p1-f"
+        const ensureSearch = getEnsureSearch({
+          text: resultText[query],
+          cursor: [3, 13],
+          selectedItemText: "path: project1/p1-f1",
         })
 
-        it("[atom-scan]", () => {
-          waitsForStartNarrow("atom-scan", {query})
-          runs(() => ensure(ensureOptions))
+        it("[atom-scan]", async () => {
+          await ensureSearch("atom-scan", {query})
         })
 
-        it("[search:ag]", () => {
+        it("[search:ag]", async () => {
           settings.set("Search.searcher", "ag")
-          waitsForStartNarrow("search", {query})
-          runs(() => ensure(ensureOptions))
+          await ensureSearch("search", {query})
         })
 
-        it("[search:rg]", () => {
+        it("[search:rg]", async () => {
           settings.set("Search.searcher", "rg")
-          waitsForStartNarrow("search", {query})
-          runs(() => ensure(ensureOptions))
+          await ensureSearch("search", {query})
         })
       })
 
       describe("search a/b/c", () => {
-        beforeEach(() => {
-          query = "a/b/c"
-          ensureOptions = {
-            text: resultText[query],
-            cursor: [3, 13],
-            selectedItemText: "path: a/b/c",
-          }
+        let query = "a/b/c"
+        const ensureSearch = getEnsureSearch({
+          text: resultText[query],
+          cursor: [3, 13],
+          selectedItemText: "path: a/b/c",
         })
 
-        it("[atom-scan]", () => {
-          waitsForStartNarrow("atom-scan", {query})
-          runs(() => ensure(ensureOptions))
+        it("[atom-scan]", async () => {
+          await ensureSearch("atom-scan", {query})
         })
 
-        it("[search:ag]", () => {
+        it("[search:ag]", async () => {
           settings.set("Search.searcher", "ag")
-          waitsForStartNarrow("search", {query})
-          runs(() => ensure(ensureOptions))
+          await ensureSearch("search", {query})
         })
 
-        it("[search:rg]", () => {
+        it("[search:rg]", async () => {
           settings.set("Search.searcher", "rg")
-          waitsForStartNarrow("search", {query})
-          runs(() => ensure(ensureOptions))
+          await ensureSearch("search", {query})
         })
       })
 
       describe("search a/b/c", () => {
-        beforeEach(() => {
-          query = "a\\/b\\/c"
-          ensureOptions = {
-            text: resultText[query],
-            cursor: [3, 13],
-            selectedItemText: "path: a\\/b\\/c",
-          }
+        let query = "a\\/b\\/c"
+        const ensureSearch = getEnsureSearch({
+          text: resultText[query],
+          cursor: [3, 13],
+          selectedItemText: "path: a\\/b\\/c",
+        })
+        const startAndEnsure = provider => startNarrow(provider, {query}).then(ensureSearch)
+
+        it("[atom-scan]", async () => {
+          await ensureSearch("atom-scan", {query})
         })
 
-        it("[atom-scan]", () => {
-          waitsForStartNarrow("atom-scan", {query})
-          runs(() => ensure(ensureOptions))
-        })
-
-        it("[search:ag]", () => {
+        it("[search:ag]", async () => {
           settings.set("Search.searcher", "ag")
-          waitsForStartNarrow("search", {query})
-          runs(() => ensure(ensureOptions))
+          await ensureSearch("search", {query})
         })
 
-        it("[search:rg]", () => {
+        it("[search:rg]", async () => {
           settings.set("Search.searcher", "rg")
-          waitsForStartNarrow("search", {query})
-          runs(() => ensure(ensureOptions))
+          await ensureSearch("search", {query})
         })
       })
     })
