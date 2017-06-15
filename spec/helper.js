@@ -275,7 +275,7 @@ function unindent(strings, ...values) {
   let result = ""
   let i = 0
   for (let rawString of strings.raw) {
-    result += rawString.replace(/\\{2}/g, '\\') + (values.length ? values.shift() : "")
+    result += rawString.replace(/\\{2}/g, "\\") + (values.length ? values.shift() : "")
   }
 
   const lines = result.split(/\n/)

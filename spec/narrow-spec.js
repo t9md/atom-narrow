@@ -1,7 +1,17 @@
+/** @babel */
 const Ui = require("../lib/ui")
 const fs = require("fs-plus")
 const path = require("path")
 const settings = require("../lib/settings")
+const {
+  it,
+  fit,
+  ffit,
+  fffit,
+  emitterEventPromise,
+  beforeEach,
+  afterEach,
+} = require("./async-spec-helpers")
 
 const {
   startNarrow,
@@ -15,7 +25,7 @@ const {
   paneForItem,
   setActiveTextEditor,
   setActiveTextEditorWithWaits,
-  unindent
+  unindent,
 } = require("./helper")
 const runCommand = dispatchEditorCommand
 const $ = unindent
@@ -44,66 +54,60 @@ describe("narrow", () => {
     // So set it to `true` again here to test with default value.
     atom.config.set("core.destroyEmptyPanes", true)
 
-    waitsForPromise(() => {
-      const activationPromise = atom.packages.activatePackage("narrow")
-      atom.workspace.open().then(_editor => {
-        editor = _editor
-        editorElement = editor.element
+    const activationPromise = atom.packages.activatePackage("narrow")
+    atom.workspace.open().then(_editor => {
+      editor = _editor
+      editorElement = editor.element
 
-        // HACK: Activate command by toggle setting command, it's most side-effect-less.
-        atom.commands.dispatch(editor.element, "narrow:activate-package")
-      })
-
-      return activationPromise
+      // HACK: Activate command by toggle setting command, it's most side-effect-less.
+      atom.commands.dispatch(editor.element, "narrow:activate-package")
     })
+
+    return activationPromise
   })
 
   describe("confirm family", () => {
-    beforeEach(() => {
+    beforeEach(async function() {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
-      waitsForStartScan()
-      runs(() =>
-        ensure("l", {
-          text: $`
-            l
-            1:  4: apple
-            3:  1: lemmon
-            `,
-          selectedItemRow: 1,
-        })
-      )
+      narrow = await startNarrow("scan")
+      narrow.ensure("l", {
+        text: $`
+          l
+          1:  4: apple
+          3:  1: lemmon
+          `,
+        selectedItemRow: 1,
+      })
     })
 
     describe("closeOnConfirm settings", () => {
-      it("land to confirmed item and close narrow-editor", () => {
+      it("land to confirmed item and close narrow-editor", async function() {
         settings.set("Scan.closeOnConfirm", true)
-        narrow.waitsForDestroy(() => runCommand("core:confirm"))
-        runs(() => {
-          ensureEditor(editor, {cursor: [0, 3]})
-          expect(Ui.getSize()).toBe(0)
-        })
+        runCommand("core:confirm")
+        await emitterEventPromise(narrow.ui.emitter, "did-destroy")
+        ensureEditor(editor, {cursor: [0, 3]})
+        expect(Ui.getSize()).toBe(0)
       })
 
-      it("land to confirmed item and keep open narrow-editor", () => {
+      it("land to confirmed item and keep open narrow-editor", async function() {
         settings.set("Scan.closeOnConfirm", false)
-        narrow.waitsForConfirm(() => runCommand("core:confirm"))
-        runs(() => {
-          ensureEditor(editor, {cursor: [0, 3]})
-          expect(Ui.getSize()).toBe(1)
-        })
+        runCommand("core:confirm")
+        await emitterEventPromise(narrow.ui.emitter, "did-confirm")
+        ensureEditor(editor, {cursor: [0, 3]})
+        expect(Ui.getSize()).toBe(1)
       })
     })
 
-    describe("confirm-keep-open command", () =>
-      it("land to confirmed item and keep open narrow-editor even if closeOnConfirm was true", () => {
+    describe("confirm-keep-open command", () => {
+      it("land to confirmed item and keep open narrow-editor even if closeOnConfirm was true", async function() {
         settings.set("Scan.closeOnConfirm", true)
-        narrow.waitsForConfirm(() => runCommand("narrow-ui:confirm-keep-open"))
-        runs(() => {
-          ensureEditor(editor, {cursor: [0, 3]})
-          expect(Ui.getSize()).toBe(1)
-        })
-      }))
+        runCommand("narrow-ui:confirm-keep-open")
+        await emitterEventPromise(narrow.ui.emitter, "did-confirm")
+        ensureEditor(editor, {cursor: [0, 3]})
+        expect(Ui.getSize()).toBe(1)
+      })
+    })
   })
 
   describe("narrow-editor open/close", () => {
@@ -117,55 +121,57 @@ describe("narrow", () => {
         waitsForPromise(() => startNarrow("scan").then(({ui}) => ensurePaneLayout(fn(ui))))
 
       describe("from one pane", () => {
-        beforeEach(() => ensurePaneLayout([editor]))
+        beforeEach(async function() {
+          ensurePaneLayout([editor])
+        })
 
-        describe("right", () =>
-          it("open on right pane", () => {
+        describe("right", () => {
+          it("open on right pane", async function() {
             settings.set("directionToOpen", "right")
-            ensurePaneLayoutAfterStart(ui => ({
-              horizontal: [[editor], [ui.editor]],
-            }))
-          }))
+            const {ui} = await startNarrow("scan")
+            ensurePaneLayout({horizontal: [[editor], [ui.editor]]})
+          })
+        })
 
-        describe("down", () =>
-          it("open on down pane", () => {
+        describe("down", () => {
+          it("open on down pane", async function() {
             settings.set("directionToOpen", "down")
-            ensurePaneLayoutAfterStart(ui => ({
-              vertical: [[editor], [ui.editor]],
-            }))
-          }))
+            const {ui} = await startNarrow("scan")
+            ensurePaneLayout({vertical: [[editor], [ui.editor]]})
+          })
+        })
       })
 
       describe("from two pane", () => {
-        let [editor2] = Array.from([])
-        beforeEach(() => settings.set("directionToOpen", "right"))
+        let editor2
+        beforeEach(() => {
+          settings.set("directionToOpen", "right")
+        })
 
         describe("horizontal split", () => {
-          beforeEach(() =>
-            waitsForPromise(() =>
-              atom.workspace.open(null, {split: "right"}).then(_editor => {
-                editor2 = _editor
-                ensurePaneLayout({horizontal: [[editor], [editor2]]})
-              })
-            )
-          )
+          beforeEach(() => {
+            return atom.workspace.open(null, {split: "right"}).then(_editor => {
+              editor2 = _editor
+              ensurePaneLayout({horizontal: [[editor], [editor2]]})
+            })
+          })
 
-          describe("initially left-pane active", () =>
-            it("open on existing right pane", () => {
+          describe("initially left-pane active", () => {
+            it("open on existing right pane", async function() {
               paneForItem(editor).activate()
               ensureEditorIsActive(editor)
-              ensurePaneLayoutAfterStart(ui => ({
-                horizontal: [[editor], [editor2, ui.editor]],
-              }))
-            }))
+              const {ui} = await startNarrow("scan")
+              ensurePaneLayout({horizontal: [[editor], [editor2, ui.editor]]})
+            })
+          })
 
-          describe("initially right-pane active", () =>
-            it("open on previous adjacent pane", () => {
+          describe("initially right-pane active", () => {
+            it("open on previous adjacent pane", async function() {
               ensureEditorIsActive(editor2)
-              ensurePaneLayoutAfterStart(ui => ({
-                horizontal: [[editor, ui.editor], [editor2]],
-              }))
-            }))
+              const {ui} = await startNarrow("scan")
+              ensurePaneLayout({horizontal: [[editor, ui.editor], [editor2]]})
+            })
+          })
         })
 
         describe("vertical split", () => {
