@@ -51,11 +51,7 @@ function validateOptions(options, validOptions, message) {
 function ensureEditor(editor, options) {
   let value
   const ensureEditorOptionsOrdered = ["cursor", "text", "active", "alive"]
-  validateOptions(
-    options,
-    ensureEditorOptionsOrdered,
-    "invalid options ensureEditor"
-  )
+  validateOptions(options, ensureEditorOptionsOrdered, "invalid options ensureEditor")
   for (const name of ensureEditorOptionsOrdered) {
     const value = options[name]
     if (value == null) continue
@@ -275,6 +271,23 @@ function setActiveTextEditorWithWaits(editor) {
   })
 }
 
+function unindent(strings, ...values) {
+  let result = ""
+  let i = 0
+  for (let rawString of strings.raw) {
+    result += rawString.replace(/\\{2}/g, '\\') + (values.length ? values.shift() : "")
+  }
+
+  const lines = result.split(/\n/)
+  lines.shift()
+  lines.pop()
+
+  const minIndent = lines.reduce((minIndent, line) => {
+    return !line.match(/\S/) ? minIndent : Math.min(line.match(/ */)[0].length, minIndent)
+  }, Infinity)
+  return lines.map(line => line.slice(minIndent)).join("\n")
+}
+
 module.exports = {
   startNarrow,
   dispatchCommand,
@@ -288,4 +301,5 @@ module.exports = {
   setActiveTextEditorWithWaits,
   getNarrowForUi,
   reopen,
+  unindent,
 }
