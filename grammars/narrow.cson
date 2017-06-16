@@ -1,0 +1,24 @@
+name: "Narrow"
+scopeName: "source.narrow"
+fileTypes: []
+patterns: [
+  {
+    begin: "^##",
+    end: "$",
+    name: "markup.heading.heading-2.narrow",
+  },
+  {
+    begin: "^#",
+    end: "$",
+    name: "markup.heading.heading-1.narrow",
+  },
+  {
+    match: "^\\s*(\\d+(?:: *\\d+)?:)",
+    name: "location.narrow",
+    captures: {
+      "1": {
+        name: "constant.numeric.line-header.narrow",
+      },
+    },
+  },
+]
