@@ -30,7 +30,7 @@ atom-text-editor .narrow-ui-item-indicator-protected {
 
 atom-text-editor {
   .line.narrow-line-marker {
-    box-shadow:0 -7px 0 -6px @row-marker-color inset;
+    box-shadow: 0 -7px 0 -6px @row-marker-color inset;
   }
 }
 
@@ -38,8 +38,12 @@ atom-text-editor {
 // =========================
 .flash-animation (@name, @color) {
   @keyframes @name {
-    from { background-color: @color; }
-    to { background-color: transparent; }
+    from {
+      background-color: @color;
+    }
+    to {
+      background-color: transparent;
+    }
   }
 }
 .flash (@name; @duration) {
@@ -69,19 +73,19 @@ atom-text-editor {
 
 atom-text-editor {
   .narrow-search-term {
-    color: @syntax-color-function
+    color: @syntax-color-function !important;
   }
   .narrow-filter-match {
-    color: @syntax-color-keyword
+    color: @syntax-color-keyword;
   }
   .line.narrow-cursor-line-flash-short {
-    .flash(narrow-editor-cursor-line-flash-short, 0.5s)
+    .flash(narrow-editor-cursor-line-flash-short, 0.5s);
   }
   .line.narrow-cursor-line-flash-medium {
-    .flash(narrow-editor-cursor-line-flash-medium, 1.0s)
+    .flash(narrow-editor-cursor-line-flash-medium, 1.0s);
   }
   .line.narrow-cursor-line-flash-long {
-    .flash(narrow-editor-cursor-line-flash-long, 2.0s)
+    .flash(narrow-editor-cursor-line-flash-long, 2.0s);
   }
   .narrow-match {
     .region {
