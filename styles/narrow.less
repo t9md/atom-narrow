@@ -72,15 +72,19 @@ atom-text-editor {
 .flash-animation(narrow-editor-cursor-line-flash-long, @flash-color);
 
 atom-text-editor {
-  .narrow-search-term {
+  .narrow-syntax-search-term {
     color: @syntax-color-function !important;
   }
-  .narrow-include-filter {
+  .narrow-syntax-include-filter {
     color: @syntax-color-keyword;
   }
-  .narrow-exclude-filter {
+  .narrow-syntax-exclude-filter {
     color: @syntax-color-removed;
   }
+  .narrow-syntax-header {
+    color: @syntax-color-variable;
+  }
+
   .line.narrow-cursor-line-flash-short {
     .flash(narrow-editor-cursor-line-flash-short, 0.5s);
   }
