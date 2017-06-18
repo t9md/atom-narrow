@@ -75,8 +75,11 @@ atom-text-editor {
   .narrow-search-term {
     color: @syntax-color-function !important;
   }
-  .narrow-filter-match {
+  .narrow-include-filter {
     color: @syntax-color-keyword;
+  }
+  .narrow-exclude-filter {
+    color: @syntax-color-removed;
   }
   .line.narrow-cursor-line-flash-short {
     .flash(narrow-editor-cursor-line-flash-short, 0.5s);
