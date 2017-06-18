@@ -64,8 +64,8 @@ describe("narrow", () => {
       narrow.ensure("l", {
         text: $`
           l
-          1:  4: apple
-          3:  1: lemmon
+          apple
+          lemmon
           `,
         selectedItemRow: 1,
       })
@@ -311,17 +311,17 @@ describe("narrow", () => {
         runs(() => expect(atom.workspace.getActiveTextEditor().getText()).toBe(text))
 
       runs(() => {
-        narrows[0].ensure("1", {text: "1\n 1:  1: 1"})
-        narrows[1].ensure("2", {text: "2\n 2:  1: 2"})
-        narrows[2].ensure("3", {text: "3\n 3:  1: 3"})
-        narrows[3].ensure("4", {text: "4\n 4:  1: 4"})
-        narrows[4].ensure("5", {text: "5\n 5:  1: 5"})
-        narrows[5].ensure("6", {text: "6\n 6:  1: 6"})
-        narrows[6].ensure("7", {text: "7\n 7:  1: 7"})
-        narrows[7].ensure("8", {text: "8\n 8:  1: 8"})
-        narrows[8].ensure("9", {text: "9\n 9:  1: 9"})
-        narrows[9].ensure("a", {text: "a\n10:  1: a"})
-        narrows[10].ensure("b", {text: "b\n11:  1: b"})
+        narrows[0].ensure("1", {text: "1\n1"})
+        narrows[1].ensure("2", {text: "2\n2"})
+        narrows[2].ensure("3", {text: "3\n3"})
+        narrows[3].ensure("4", {text: "4\n4"})
+        narrows[4].ensure("5", {text: "5\n5"})
+        narrows[5].ensure("6", {text: "6\n6"})
+        narrows[6].ensure("7", {text: "7\n7"})
+        narrows[7].ensure("8", {text: "8\n8"})
+        narrows[8].ensure("9", {text: "9\n9"})
+        narrows[9].ensure("a", {text: "a\na"})
+        narrows[10].ensure("b", {text: "b\nb"})
       })
 
       ensureUiSize(11)
@@ -335,34 +335,34 @@ describe("narrow", () => {
       ensureUiSize(0)
 
       waitsForReopen()
-      ensureText("b\n11:  1: b")
+      ensureText("b\nb")
       ensureUiSize(1)
       waitsForReopen()
-      ensureText("a\n10:  1: a")
+      ensureText("a\na")
       ensureUiSize(2)
       waitsForReopen()
-      ensureText("9\n 9:  1: 9")
+      ensureText("9\n9")
       ensureUiSize(3)
       waitsForReopen()
-      ensureText("8\n 8:  1: 8")
+      ensureText("8\n8")
       ensureUiSize(4)
       waitsForReopen()
-      ensureText("7\n 7:  1: 7")
+      ensureText("7\n7")
       ensureUiSize(5)
       waitsForReopen()
-      ensureText("6\n 6:  1: 6")
+      ensureText("6\n6")
       ensureUiSize(6)
       waitsForReopen()
-      ensureText("5\n 5:  1: 5")
+      ensureText("5\n5")
       ensureUiSize(7)
       waitsForReopen()
-      ensureText("4\n 4:  1: 4")
+      ensureText("4\n4")
       ensureUiSize(8)
       waitsForReopen()
-      ensureText("3\n 3:  1: 3")
+      ensureText("3\n3")
       ensureUiSize(9)
       waitsForReopen()
-      ensureText("2\n 2:  1: 2")
+      ensureText("2\n2")
       ensureUiSize(10)
       runs(() => expect(reopen()).toBeFalsy())
       ensureUiSize(10)
@@ -383,9 +383,9 @@ describe("narrow", () => {
         narrow.ensure("p", {
           text: $`
             p
-            1:  2: apple
-            1:  3: apple
-            2:  4: grape
+            apple
+            apple
+            grape
             `,
         })
       })
@@ -427,10 +427,10 @@ describe("narrow", () => {
         narrow.ensure("line", {
           text: $`
             line
-            1:  1: line 1
-            2:  3:   line 2
-            3:  1: line 3
-            4:  3:   line 4
+            line 1
+              line 2
+            line 3
+              line 4
             `,
         })
       })
@@ -447,25 +447,24 @@ describe("narrow", () => {
 
         const ensureCommand = async (command, start, last) => {
           editor.setCursorBufferPosition(start)
-          await confirmCommand(command)
+          await confirmCommand(command.trim())
           ensureEditor(editor, {cursor: last})
         }
 
-        // prettier-ignore
-        await ensureCommand("next-item",     r1[0], [1, 2])
-        await ensureCommand("next-item", r1[1], [1, 2])
+        await ensureCommand("next-item    ", r1[0], [1, 2])
+        await ensureCommand("next-item    ", r1[1], [1, 2])
         await ensureCommand("previous-item", r1[0], [3, 2])
         await ensureCommand("previous-item", r1[1], [3, 2])
-        await ensureCommand("next-item", r2[0], [2, 0])
-        await ensureCommand("next-item", r2[1], [2, 0])
+        await ensureCommand("next-item    ", r2[0], [2, 0])
+        await ensureCommand("next-item    ", r2[1], [2, 0])
         await ensureCommand("previous-item", r2[0], [0, 0])
         await ensureCommand("previous-item", r2[1], [0, 0])
-        await ensureCommand("next-item", r3[0], [3, 2])
-        await ensureCommand("next-item", r3[1], [3, 2])
+        await ensureCommand("next-item    ", r3[0], [3, 2])
+        await ensureCommand("next-item    ", r3[1], [3, 2])
         await ensureCommand("previous-item", r3[0], [1, 2])
         await ensureCommand("previous-item", r3[1], [1, 2])
-        await ensureCommand("next-item", r4[0], [0, 0])
-        await ensureCommand("next-item", r4[1], [0, 0])
+        await ensureCommand("next-item    ", r4[0], [0, 0])
+        await ensureCommand("next-item    ", r4[1], [0, 0])
         await ensureCommand("previous-item", r4[0], [2, 0])
         await ensureCommand("previous-item", r4[1], [2, 0])
       })
@@ -484,18 +483,18 @@ describe("narrow", () => {
     }
 
     beforeEach(() => {
-      const headerLength = "1:  1: ".length
       points = [
         [0, 0], // `line` start of "line 1"
         [1, 2], // `line` start of "  line 2"
         [2, 0], // `line` start of "line 3"
         [3, 2], // `line` start of "  line 4"
       ]
+      // prettier-ignore
       pointsA = [
-        [1, 0 + headerLength],
-        [2, 2 + headerLength],
-        [3, 0 + headerLength],
-        [4, 2 + headerLength],
+        [1, 0],
+        [2, 2],
+        [3, 0],
+        [4, 2],
       ]
 
       editor.setText($`
@@ -515,10 +514,10 @@ describe("narrow", () => {
       it("auto reveal when initial query was provided", async () => {
         const text = $`
           line
-          1:  1: line 1
-          2:  3:   line 2
-          3:  1: line 3
-          4:  3:   line 4
+          line 1
+            line 2
+          line 3
+            line 4
           `
         const ensureStartState = getEnsureStartState({queryCurrentWord: true})
         await ensureStartState(points[0], {cursor: pointsA[0], text, selectedItemText: "line 1"})
@@ -530,10 +529,10 @@ describe("narrow", () => {
       it("NOT auto reveal when no query was provided", async () => {
         const text = $`
 
-          1:  1: line 1
-          2:  1:   line 2
-          3:  1: line 3
-          4:  1:   line 4
+          line 1
+            line 2
+          line 3
+            line 4
           `
         const ensureStartState = getEnsureStartState()
         const options = {selectedItemText: "line 1", cursor: [0, 0], text}
@@ -551,10 +550,10 @@ describe("narrow", () => {
       it("NOT auto reveal when initial query was provided", async () => {
         const text = $`
           line
-          1:  1: line 1
-          2:  3:   line 2
-          3:  1: line 3
-          4:  3:   line 4
+          line 1
+            line 2
+          line 3
+            line 4
           `
         const ensureStartState = getEnsureStartState({queryCurrentWord: true})
         const options = {selectedItemText: "line 1", cursor: [0, 4], text}
@@ -566,10 +565,10 @@ describe("narrow", () => {
       it("NOT auto reveal when no query was provided", async () => {
         const text = $`
 
-          1:  1: line 1
-          2:  1:   line 2
-          3:  1: line 3
-          4:  1:   line 4
+          line 1
+            line 2
+          line 3
+            line 4
           `
         const ensureStartState = getEnsureStartState()
         const options = {selectedItemText: "line 1", cursor: [0, 0], text}
@@ -587,10 +586,10 @@ describe("narrow", () => {
       it("auto reveal when initial query was provided", async () => {
         const text = $`
           line
-          1:  1: line 1
-          2:  3:   line 2
-          3:  1: line 3
-          4:  3:   line 4
+          line 1
+            line 2
+          line 3
+            line 4
           `
         const ensureStartState = getEnsureStartState({queryCurrentWord: true})
         await ensureStartState(points[0], {cursor: pointsA[0], text, selectedItemText: "line 1"})
@@ -605,20 +604,14 @@ describe("narrow", () => {
 
         const text = $`
           line
-          1:  1: line line line line
-          1:  6: line line line line
-          1: 11: line line line line
-          1: 16: line line line line
+          line line line line
+          line line line line
+          line line line line
+          line line line line
           `
         const ensureStartState = getEnsureStartState({queryCurrentWord: true})
-        const headerLength = "1: 16: ".length
         points = [[0, 0], [0, 5], [0, 10], [0, 15]]
-        pointsA = [
-          [1, 0 + headerLength],
-          [2, 5 + headerLength],
-          [3, 10 + headerLength],
-          [4, 15 + headerLength],
-        ]
+        pointsA = [[1, 0], [2, 5], [3, 10], [4, 15]]
 
         const selectedItemText = lineText
         for (let i = 0; i < points.length; i++) {
@@ -629,16 +622,16 @@ describe("narrow", () => {
       it("auto reveal for based on current line of bound-editor", async () => {
         const text = $`
 
-          1:  1: line 1
-          2:  1:   line 2
-          3:  1: line 3
-          4:  1:   line 4
+          line 1
+            line 2
+          line 3
+            line 4
           `
         const ensureStartState = getEnsureStartState()
-        await ensureStartState([0, 0], {cursor: [1, 7], text, selectedItemText: "line 1"})
-        await ensureStartState([1, 2], {cursor: [2, 7], text, selectedItemText: "  line 2"})
-        await ensureStartState([2, 0], {cursor: [3, 7], text, selectedItemText: "line 3"})
-        await ensureStartState([3, 2], {cursor: [4, 7], text, selectedItemText: "  line 4"})
+        await ensureStartState([0, 0], {cursor: [1, 0], text, selectedItemText: "line 1"})
+        await ensureStartState([1, 2], {cursor: [2, 0], text, selectedItemText: "  line 2"})
+        await ensureStartState([2, 0], {cursor: [3, 0], text, selectedItemText: "line 3"})
+        await ensureStartState([3, 2], {cursor: [4, 0], text, selectedItemText: "  line 4"})
       })
     })
   })
@@ -684,11 +677,11 @@ describe("narrow", () => {
       narrow.ensure("line", {
         text: $`
           line
-           2:  1: line 2
-           4:  1: line 4
-           6:  1: line 6
-           8:  1: line 8
-          10:  1: line 10
+          line 2
+          line 4
+          line 6
+          line 8
+          line 10
           `,
       })
     })
@@ -706,11 +699,11 @@ describe("narrow", () => {
         ensure({
           text: $`
             line
-             1:  1: line 1
-             3:  1: line 3
-             5:  1: line 5
-             7:  1: line 7
-             9:  1: line 9
+            line 1
+            line 3
+            line 5
+            line 7
+            line 9
             `,
         })
 
@@ -721,11 +714,11 @@ describe("narrow", () => {
         ensure({
           text: $`
             line
-             2:  1: line 2
-             4:  1: line 4
-             6:  1: line 6
-             8:  1: line 8
-            10:  1: line 10
+            line 2
+            line 4
+            line 6
+            line 8
+            line 10
             `,
         })
       }))
@@ -784,9 +777,9 @@ describe("narrow", () => {
         ensure({
           text: $`
 
-            1:  1: apple
-            2:  1: grape
-            3:  1: lemmon
+            apple
+            grape
+            lemmon
             `,
         }))
 
@@ -794,7 +787,7 @@ describe("narrow", () => {
         ensure("app", {
           text: $`
             app
-            1:  1: apple
+            apple
             `,
           selectedItemRow: 1,
           itemsCount: 1,
@@ -803,7 +796,7 @@ describe("narrow", () => {
         ensure("r", {
           text: $`
             r
-            2:  2: grape
+            grape
             `,
           selectedItemRow: 1,
           itemsCount: 1,
@@ -812,8 +805,8 @@ describe("narrow", () => {
         ensure("l", {
           text: $`
             l
-            1:  4: apple
-            3:  1: lemmon
+            apple
+            lemmon
             `,
           selectedItemRow: 1,
           itemsCount: 2,
@@ -826,8 +819,8 @@ describe("narrow", () => {
           ensure("l", {
             text: $`
               l
-              1:  4: apple
-              3:  1: lemmon
+              apple
+              lemmon
               `,
             selectedItemRow: 1,
           })
@@ -844,7 +837,7 @@ describe("narrow", () => {
           ensure("mm", {
             text: $`
               mm
-              3:  3: lemmon
+              lemmon
               `,
             selectedItemRow: 1,
           })
@@ -872,7 +865,7 @@ describe("narrow", () => {
         await ensureScan([0, 0], {
           text: $`
             apple
-            1:  1: apple
+            apple
             `,
           selectedItemRow: 1,
           itemsCount: 1,
@@ -881,7 +874,7 @@ describe("narrow", () => {
         await ensureScan([1, 0], {
           text: $`
             grape
-            2:  1: grape
+            grape
             `,
           selectedItemRow: 1,
           itemsCount: 1,
@@ -890,7 +883,7 @@ describe("narrow", () => {
         await ensureScan([2, 0], {
           text: $`
             lemmon
-            3:  1: lemmon
+            lemmon
             `,
           selectedItemRow: 1,
           itemsCount: 1,
@@ -940,16 +933,16 @@ describe("narrow", () => {
             apple
             # project1
             ## p1-f1
-            1:  8: p1-f1: apple
+            p1-f1: apple
             ## p1-f2
-            1:  8: p1-f2: apple
+            p1-f2: apple
             # project2
             ## p2-f1
-            1:  8: p2-f1: apple
+            p2-f1: apple
             ## p2-f2
-            1:  8: p2-f2: apple
+            p2-f2: apple
             `,
-          cursor: [3, 14],
+          cursor: [3, 7],
           selectedItemText: "p1-f1: apple",
         })
 
@@ -957,17 +950,17 @@ describe("narrow", () => {
         ensure({selectedItemText: "p1-f1: apple", cursor: [0, 5]})
 
         await previewCommand("core:move-down")
-        ensure({selectedItemText: "p1-f1: apple", cursor: [3, 14], filePathForProviderPane: p1f1})
+        ensure({selectedItemText: "p1-f1: apple", cursor: [3, 7], filePathForProviderPane: p1f1})
 
         await previewCommand("core:move-down")
-        ensure({selectedItemText: "p1-f2: apple", cursor: [5, 14], filePathForProviderPane: p1f2})
+        ensure({selectedItemText: "p1-f2: apple", cursor: [5, 7], filePathForProviderPane: p1f2})
         ensureEditorIsActive(ui.editor)
 
         await previewCommand("core:move-down")
-        ensure({selectedItemText: "p2-f1: apple", cursor: [8, 14], filePathForProviderPane: p2f1})
+        ensure({selectedItemText: "p2-f1: apple", cursor: [8, 7], filePathForProviderPane: p2f1})
 
         await previewCommand("core:move-down")
-        ensure({selectedItemText: "p2-f2: apple", cursor: [10, 14], filePathForProviderPane: p2f2})
+        ensure({selectedItemText: "p2-f2: apple", cursor: [10, 7], filePathForProviderPane: p2f2})
       })
 
       it("preview on query change by default( autoPreviewOnQueryChange )", async () => {
@@ -981,10 +974,10 @@ describe("narrow", () => {
             apple f2
             # project1
             ## p1-f2
-            1:  8: p1-f2: apple
+            p1-f2: apple
             # project2
             ## p2-f2
-            1:  8: p2-f2: apple
+            p2-f2: apple
             `,
           selectedItemText: "p1-f2: apple",
           filePathForProviderPane: p1f2,
@@ -997,7 +990,7 @@ describe("narrow", () => {
             apple f2 p2
             # project2
             ## p2-f2
-            1:  8: p2-f2: apple
+            p2-f2: apple
             `,
           selectedItemText: "p2-f2: apple",
           filePathForProviderPane: p2f2,
@@ -1014,16 +1007,16 @@ describe("narrow", () => {
               apple
               # project1
               ## p1-f1
-              1:  8: p1-f1: apple
+              p1-f1: apple
               ## p1-f2
-              1:  8: p1-f2: apple
+              p1-f2: apple
               # project2
               ## p2-f1
-              1:  8: p2-f1: apple
+              p2-f1: apple
               ## p2-f2
-              1:  8: p2-f2: apple
+              p2-f2: apple
               `,
-            cursor: [3, 14],
+            cursor: [3, 7],
             selectedItemText: "p1-f1: apple",
           })
         )
@@ -1076,12 +1069,12 @@ describe("narrow", () => {
               apple
               # project1
               ## p1-f2
-              1:  8: p1-f2: apple
+              p1-f2: apple
               # project2
               ## p2-f2
-              1:  8: p2-f2: apple
+              p2-f2: apple
               `,
-            cursor: [3, 14],
+            cursor: [3, 7],
             selectedItemText: "p1-f2: apple",
           })
         })
@@ -1128,16 +1121,16 @@ describe("narrow", () => {
               apple
               # project1
               ## p1-f1
-              1:  8: p1-f1: apple
+              p1-f1: apple
               ## p1-f2
-              1:  8: p1-f2: apple
+              p1-f2: apple
               # project2
               ## p2-f1
-              1:  8: p2-f1: apple
+              p2-f1: apple
               ## p2-f2
-              1:  8: p2-f2: apple
+              p2-f2: apple
               `,
-            cursor: [5, 14],
+            cursor: [5, 7],
             selectedItemText: "p1-f2: apple",
           })
         })
@@ -1153,12 +1146,12 @@ describe("narrow", () => {
             $file
             # project1
             ## p1-f3.php
-            2:  1: $file = "p1-f3.php";
+            $file = "p1-f3.php";
             # project2
             ## p2-f3.php
-            2:  1: $file = "p2-f3.php";
+            $file = "p2-f3.php";
             `,
-          cursor: [3, 7],
+          cursor: [3, 0],
           selectedItemText: '$file = "p1-f3.php";',
         })
       }
@@ -1195,25 +1188,25 @@ describe("narrow", () => {
           project1/p1-f
           # project1
           ## p1-f1
-          2:  7: path: project1/p1-f1
+          path: project1/p1-f1
           ## p1-f2
-          2:  7: path: project1/p1-f2
+          path: project1/p1-f2
           `,
         "a/b/c": $`
           a/b/c
           # project1
           ## p1-f1
-          3:  7: path: a/b/c
+          path: a/b/c
           ## p1-f2
-          3:  7: path: a/b/c
+          path: a/b/c
           `,
         "a\\/b\\/c": $`\
           a\\/b\\/c
           # project1
           ## p1-f1
-          4:  7: path: a\\/b\\/c
+          path: a\\/b\\/c
           ## p1-f2
-          4:  7: path: a\\/b\\/c
+          path: a\\/b\\/c
           `,
       }
 
@@ -1221,7 +1214,7 @@ describe("narrow", () => {
         let query = "project1/p1-f"
         const ensureSearch = getEnsureSearch({
           text: resultText[query],
-          cursor: [3, 13],
+          cursor: [3, 6],
           selectedItemText: "path: project1/p1-f1",
         })
 
@@ -1244,7 +1237,7 @@ describe("narrow", () => {
         let query = "a/b/c"
         const ensureSearch = getEnsureSearch({
           text: resultText[query],
-          cursor: [3, 13],
+          cursor: [3, 6],
           selectedItemText: "path: a/b/c",
         })
 
@@ -1267,7 +1260,7 @@ describe("narrow", () => {
         let query = "a\\/b\\/c"
         const ensureSearch = getEnsureSearch({
           text: resultText[query],
-          cursor: [3, 13],
+          cursor: [3, 6],
           selectedItemText: "path: a\\/b\\/c",
         })
         const startAndEnsure = provider => startNarrow(provider, {query}).then(ensureSearch)
