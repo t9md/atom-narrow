@@ -1,6 +1,21 @@
+# 0.46.0: Atom v1.19.0-beta0 and above only release.
+- Support: Engine `^1.19.0-beta0`.
+- Internal: All code are converted from CoffeeScript to JavaScript #218, #219, #220
+- Improve: Use decoration to highlight narrow-editor.
+  - Atom v1.19.0 and above allow foreground color change by decoration type `text`.
+  - Now when multiple matches found on single line, item in narrow-editor highlight matched part only.
+  - e.g. scan `foo`, for text `foo foo`. (NOTE: `()` surrounded means highlighted)
+    - Old: 1st-item = `(foo) (foo)`, 2nd-item = `(foo) (foo)` <- can not distinguish visually
+    - New: 1st-item = `(foo) foo`, 2nd-item = `foo (foo)` <- can see matched part.
+  - All highlight is done by decoration, no longer use grammar info to highlight narrow-editor.
+- Breaking: #224 Now no longer display line/column info by default.
+  - Affected provider: `scan`, `search`, `atom-scan`, `git-diff-all`, `project-symbols`
+- Fix: #226 `search` no longer show items for the file not belonging to any project.
+  - This was incorrectly shown if files are modified.
+
 # 0.45.1:
 - Fix: `symbols` incorrectly showed file and project header.
-- Fix: `project-symbols` did not showed file and project header where it should show.
+- Fix: `project-symbols` did not show file and project header where it should show.
 
 # 0.45.0:
 - Fix: Search option state now correctly restored on `narrow:reopen`.
