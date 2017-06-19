@@ -1,4 +1,4 @@
-# 0.46.0: Atom v1.19.0-beta0 and above only release.
+# 0.46.0: Available from Atom v1.19.0-beta0 and above
 - Support: Engine `^1.19.0-beta0`.
 - Internal: All code are converted from CoffeeScript to JavaScript #218, #219, #220
 - Improve: Use decoration to highlight narrow-editor.
