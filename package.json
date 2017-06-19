@@ -39,7 +39,7 @@
     ]
   },
   "engines": {
-    "atom": ">=0.174.0 <2.0.0"
+    "atom": "^1.19.0-beta0"
   },
   "consumedServices": {
     "vim-mode-plus": {
