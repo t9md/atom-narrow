@@ -57,6 +57,7 @@
     }
   },
   "dependencies": {
+    "etch": "^0.12.4",
     "fs-plus": "^2.9.3",
     "underscore-plus": "^1.6.6"
   },
