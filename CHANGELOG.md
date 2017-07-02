@@ -1,3 +1,7 @@
+# 0.46.1:
+- FIX: #227 `narrow:search-current-project-by-current-word` did not work correctly.
+  - Always threw `Uncaught TypeError: dir.contains is not a function`. but no longer.
+
 # 0.46.0: Available from Atom v1.19.0-beta0 and above
 - Support: Engine `^1.19.0-beta0`.
 - Internal: All code are converted from CoffeeScript to JavaScript #218, #219, #220
