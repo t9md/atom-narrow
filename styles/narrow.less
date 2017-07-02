@@ -139,7 +139,11 @@ atom-text-editor.narrow-editor {
     display: inline-block;
   }
   span {
+    padding: 0 @component-padding/3;
     display: inline-block;
+  }
+  a {
+    padding: 0 @component-padding/3;
   }
   .base {
     .selected::before {
@@ -152,6 +156,7 @@ atom-text-editor.narrow-editor {
       color: @text-color-success;
     }
     .auto-preview {
+      padding-left: 0;
       .octicon(eye, 1.0em);
     }
     .item-count {
