@@ -1,4 +1,5 @@
 /** @babel */
+
 const Ui = require("../lib/ui")
 const fs = require("fs-plus")
 const path = require("path")
@@ -17,7 +18,6 @@ const {
   startNarrow,
   reopen,
   getNarrowForUi,
-  ensureCursorPosition,
   ensureEditor,
   ensurePaneLayout,
   ensureEditorIsActive,
@@ -39,7 +39,7 @@ const appleGrapeLemmonText = $`
 // Main
 // -------------------------
 describe("narrow", () => {
-  let editor, provider, ui, ensure, narrow
+  let editor
 
   beforeEach(async () => {
     // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
@@ -57,11 +57,12 @@ describe("narrow", () => {
   })
 
   describe("confirm family", () => {
+    let narrow
     beforeEach(async () => {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
       narrow = await startNarrow("scan")
-      narrow.ensure("l", {
+      await narrow.ensure("l", {
         text: $`
           l
           apple
@@ -126,12 +127,12 @@ describe("narrow", () => {
       })
 
       describe("from two pane", () => {
-        let editor2
         beforeEach(() => {
           settings.set("directionToOpen", "right")
         })
 
         describe("horizontal split", () => {
+          let editor2
           beforeEach(() =>
             atom.workspace.open(null, {split: "right"}).then(_editor => {
               editor2 = _editor
@@ -158,6 +159,8 @@ describe("narrow", () => {
         })
 
         describe("vertical split", () => {
+          let editor2
+
           beforeEach(() =>
             atom.workspace.open(null, {split: "down"}).then(_editor => {
               editor2 = _editor
@@ -193,7 +196,7 @@ describe("narrow", () => {
     })
 
     it("toggle focus between provider.editor and ui.editor", async () => {
-      narrow = await startNarrow("scan")
+      const narrow = await startNarrow("scan")
       ensureEditorIsActive(narrow.ui.editor)
       runCommand("narrow:focus")
       ensureEditorIsActive(editor)
@@ -215,21 +218,21 @@ describe("narrow", () => {
       ui.editor.setCursorBufferPosition([1, 0])
 
       ensureEditorIsActive(ui.editor)
-      ensure({cursor: [1, 0], selectedItemRow: 1})
+      await ensure({cursor: [1, 0], selectedItemRow: 1})
 
       runCommand("narrow:focus-prompt")
       ensureEditorIsActive(ui.editor)
-      ensure({cursor: [0, 0], selectedItemRow: 1})
+      await ensure({cursor: [0, 0], selectedItemRow: 1})
 
       // focus provider.editor
       runCommand("narrow:focus-prompt")
       ensureEditorIsActive(editor)
-      ensure({cursor: [0, 0], selectedItemRow: 1})
+      await ensure({cursor: [0, 0], selectedItemRow: 1})
 
       // focus narrow-editor
       runCommand("narrow:focus-prompt")
       ensureEditorIsActive(ui.editor)
-      ensure({cursor: [0, 0], selectedItemRow: 1})
+      await ensure({cursor: [0, 0], selectedItemRow: 1})
     })
   })
 
@@ -283,104 +286,73 @@ describe("narrow", () => {
 
       const eof = ui.editor.getEofBufferPosition()
       ui.editor.setTextInBufferRange([[1, 0], eof], "abc\ndef\n")
-      ensure({text: "\nabc\ndef\n"})
+      await ensure({text: "\nabc\ndef\n"})
 
       runCommand("narrow:refresh")
       await emitterEventPromise(ui.emitter, "did-refresh")
-      ensure({text: originalText})
+      await ensure({text: originalText})
     })
   })
 
-  /// FIXME:
   describe("reopen", () => {
-    let narrows
-    beforeEach(async () => {
-      narrows = []
+    // prettier-ignore
+    it("reopen closed narrow editor up to 10 recent", async () => {
+      const ensureUiSize = size => expect(Ui.getSize()).toBe(size)
+      const ensureText = text => expect(atom.workspace.getActiveTextEditor().getText()).toBe(text)
+      const narrows = []
+
       editor.setText("1\n2\n3\n4\n5\n6\n7\n8\n9\na\nb")
       editor.setCursorBufferPosition([0, 0])
       for (let i = 0; i <= 10; i++) {
-        const narrow = await startNarrow("scan")
-        narrows.push(narrow)
+        narrows.push(await startNarrow("scan"))
       }
-    })
-
-    it("reopen closed narrow editor up to 10 recent", () => {
-      const waitsForReopen = () => waitsForPromise(() => reopen())
-      const ensureUiSize = size => runs(() => expect(Ui.getSize()).toBe(size))
-      const ensureText = text =>
-        runs(() => expect(atom.workspace.getActiveTextEditor().getText()).toBe(text))
-
-      runs(() => {
-        narrows[0].ensure("1", {text: "1\n1"})
-        narrows[1].ensure("2", {text: "2\n2"})
-        narrows[2].ensure("3", {text: "3\n3"})
-        narrows[3].ensure("4", {text: "4\n4"})
-        narrows[4].ensure("5", {text: "5\n5"})
-        narrows[5].ensure("6", {text: "6\n6"})
-        narrows[6].ensure("7", {text: "7\n7"})
-        narrows[7].ensure("8", {text: "8\n8"})
-        narrows[8].ensure("9", {text: "9\n9"})
-        narrows[9].ensure("a", {text: "a\na"})
-        narrows[10].ensure("b", {text: "b\nb"})
-      })
 
       ensureUiSize(11)
-
-      runs(() => {
-        for ({ui} of narrows) {
-          ui.destroy()
-        }
-      })
-
+      await narrows[0].ensure("1", {text: "1\n1"})
+      await narrows[1].ensure("2", {text: "2\n2"})
+      await narrows[2].ensure("3", {text: "3\n3"})
+      await narrows[3].ensure("4", {text: "4\n4"})
+      await narrows[4].ensure("5", {text: "5\n5"})
+      await narrows[5].ensure("6", {text: "6\n6"})
+      await narrows[6].ensure("7", {text: "7\n7"})
+      await narrows[7].ensure("8", {text: "8\n8"})
+      await narrows[8].ensure("9", {text: "9\n9"})
+      await narrows[9].ensure("a", {text: "a\na"})
+      await narrows[10].ensure("b", {text: "b\nb"})
+      for ({ui} of narrows) ui.destroy()
       ensureUiSize(0)
+      await reopen(); ensureText("b\nb"); ensureUiSize(1);
+      await reopen(); ensureText("a\na"); ensureUiSize(2);
+      await reopen(); ensureText("9\n9"); ensureUiSize(3);
+      await reopen(); ensureText("8\n8"); ensureUiSize(4);
+      await reopen(); ensureText("7\n7"); ensureUiSize(5);
+      await reopen(); ensureText("6\n6"); ensureUiSize(6);
+      await reopen(); ensureText("5\n5"); ensureUiSize(7);
+      await reopen(); ensureText("4\n4"); ensureUiSize(8);
+      await reopen(); ensureText("3\n3"); ensureUiSize(9);
+      await reopen(); ensureText("2\n2"); ensureUiSize(10);
 
-      waitsForReopen()
-      ensureText("b\nb")
-      ensureUiSize(1)
-      waitsForReopen()
-      ensureText("a\na")
-      ensureUiSize(2)
-      waitsForReopen()
-      ensureText("9\n9")
-      ensureUiSize(3)
-      waitsForReopen()
-      ensureText("8\n8")
-      ensureUiSize(4)
-      waitsForReopen()
-      ensureText("7\n7")
-      ensureUiSize(5)
-      waitsForReopen()
-      ensureText("6\n6")
-      ensureUiSize(6)
-      waitsForReopen()
-      ensureText("5\n5")
-      ensureUiSize(7)
-      waitsForReopen()
-      ensureText("4\n4")
-      ensureUiSize(8)
-      waitsForReopen()
-      ensureText("3\n3")
-      ensureUiSize(9)
-      waitsForReopen()
-      ensureText("2\n2")
-      ensureUiSize(10)
-      runs(() => expect(reopen()).toBeFalsy())
+      expect(reopen()).toBeFalsy()
       ensureUiSize(10)
     })
   })
 
   describe("narrow:next-item, narrow:previous-item", () => {
-    const confirmCommand = command => {
-      runCommand("narrow:" + command)
-      emitterEventPromise(narrow.ui.emitter, "did-confirm")
-    }
-
     describe("basic behavior", () => {
-      beforeEach(async () => {
+      beforeEach(() => {
         editor.setText(appleGrapeLemmonText)
         editor.setCursorBufferPosition([0, 0])
-        narrow = await startNarrow("scan")
-        narrow.ensure("p", {
+      })
+
+      // prettier-ignore
+      it("move to next/previous item with wrap", async () => {
+        const confirmCommand = (narrow, command) => {
+          runCommand("narrow:" + command)
+          return emitterEventPromise(narrow.ui.emitter, "did-confirm")
+        }
+
+        const narrow = await startNarrow("scan")
+        await narrow.ensure("p", {
           text: $`
             p
             apple
@@ -388,33 +360,26 @@ describe("narrow", () => {
             grape
             `,
         })
-      })
+        const confirm = confirmCommand.bind(null, narrow)
 
-      it("move to next/previous item with wrap", async () => {
         setActiveTextEditor(editor)
         ensureEditorIsActive(editor)
         ensureEditor(editor, {cursor: [0, 0]})
 
-        await confirmCommand("next-item")
-        ensureEditor(editor, {cursor: [0, 1]})
-        await confirmCommand("next-item")
-        ensureEditor(editor, {cursor: [0, 2]})
+        await confirm("next-item"); ensureEditor(editor, {cursor: [0, 1]})
+        await confirm("next-item"); ensureEditor(editor, {cursor: [0, 2]})
 
-        await confirmCommand("next-item")
-        ensureEditor(editor, {cursor: [1, 3]})
-        await confirmCommand("next-item")
-        ensureEditor(editor, {cursor: [0, 1]})
+        await confirm("next-item"); ensureEditor(editor, {cursor: [1, 3]})
+        await confirm("next-item"); ensureEditor(editor, {cursor: [0, 1]})
 
-        await confirmCommand("previous-item")
-        ensureEditor(editor, {cursor: [1, 3]})
-        await confirmCommand("previous-item")
-        ensureEditor(editor, {cursor: [0, 2]})
-        await confirmCommand("previous-item")
-        ensureEditor(editor, {cursor: [0, 1]})
+        await confirm("previous-item"); ensureEditor(editor, {cursor: [1, 3]})
+        await confirm("previous-item"); ensureEditor(editor, {cursor: [0, 2]})
+        await confirm("previous-item"); ensureEditor(editor, {cursor: [0, 1]})
       })
     })
 
     describe("when cursor position is contained in item.range", () => {
+      let narrow
       beforeEach(async () => {
         editor.setText($`
           line 1
@@ -424,7 +389,7 @@ describe("narrow", () => {
           `)
         editor.setCursorBufferPosition([0, 0])
         narrow = await startNarrow("scan")
-        narrow.ensure("line", {
+        await narrow.ensure("line", {
           text: $`
             line
             line 1
@@ -447,7 +412,8 @@ describe("narrow", () => {
 
         const ensureCommand = async (command, start, last) => {
           editor.setCursorBufferPosition(start)
-          await confirmCommand(command.trim())
+          runCommand("narrow:" + command.trim())
+          await emitterEventPromise(narrow.ui.emitter, "did-confirm")
           ensureEditor(editor, {cursor: last})
         }
 
@@ -474,12 +440,11 @@ describe("narrow", () => {
   describe("auto reveal on start behavior( revealOnStartCondition )", () => {
     let points, pointsA
 
-    const getEnsureStartState = startOptions => (point, options) => {
+    const getEnsureStartState = startOptions => async (point, options) => {
       editor.setCursorBufferPosition(point)
-      return startNarrow("scan", startOptions).then(narrow => {
-        narrow.ensure(options)
-        narrow.ui.destroy()
-      })
+      const narrow = await startNarrow("scan", startOptions)
+      await narrow.ensure(options)
+      narrow.ui.destroy()
     }
 
     beforeEach(() => {
@@ -674,7 +639,7 @@ describe("narrow", () => {
       narrow = await startNarrow("scan")
       ensureEditorIsActive(narrow.ui.editor)
       expect(narrow.provider.editor).toBe(editor2)
-      narrow.ensure("line", {
+      await narrow.ensure("line", {
         text: $`
           line
           line 2
@@ -696,7 +661,7 @@ describe("narrow", () => {
 
         ensureEditorIsActive(editor)
         expect(provider.editor).toBe(editor)
-        ensure({
+        await ensure({
           text: $`
             line
             line 1
@@ -711,7 +676,7 @@ describe("narrow", () => {
 
         ensureEditorIsActive(editor2)
         expect(provider.editor).toBe(editor2)
-        ensure({
+        await ensure({
           text: $`
             line
             line 2
@@ -735,46 +700,45 @@ describe("narrow", () => {
         ensureEditorIsActive(editor)
         expect(provider.editor).toBe(editor)
 
-        setCursor(editor, [0, 0]); ensure({selectedItemText: "line 1"})
-        setCursor(editor, [1, 0]); ensure({selectedItemText: "line 1"})
-        setCursor(editor, [2, 0]); ensure({selectedItemText: "line 3"})
-        setCursor(editor, [3, 0]); ensure({selectedItemText: "line 3"})
-        setCursor(editor, [4, 0]); ensure({selectedItemText: "line 5"})
+        setCursor(editor, [0, 0]); await ensure({selectedItemText: "line 1"})
+        setCursor(editor, [1, 0]); await ensure({selectedItemText: "line 1"})
+        setCursor(editor, [2, 0]); await ensure({selectedItemText: "line 3"})
+        setCursor(editor, [3, 0]); await ensure({selectedItemText: "line 3"})
+        setCursor(editor, [4, 0]); await ensure({selectedItemText: "line 5"})
         editor.moveToBottom()
         ensureEditor(editor, {cursor: [9, 0]})
-        ensure({selectedItemText: "line 9"})
+        await ensure({selectedItemText: "line 9"})
 
         await setActiveTextEditorWithWaits(editor2)
 
         expect(provider.editor).toBe(editor2)
-        ensure({selectedItemText: "line 2"})
-        setCursor(editor2, [1, 0]); ensure({selectedItemText: "line 2"})
-        setCursor(editor2, [3, 0]); ensure({selectedItemText: "line 4"})
-        setCursor(editor2, [5, 0]); ensure({selectedItemText: "line 6"})
-        setCursor(editor2, [7, 0]); ensure({selectedItemText: "line 8"})
+        await ensure({selectedItemText: "line 2"})
+        setCursor(editor2, [1, 0]); await ensure({selectedItemText: "line 2"})
+        setCursor(editor2, [3, 0]); await ensure({selectedItemText: "line 4"})
+        setCursor(editor2, [5, 0]); await ensure({selectedItemText: "line 6"})
+        setCursor(editor2, [7, 0]); await ensure({selectedItemText: "line 8"})
 
         editor2.moveToTop()
         ensureEditor(editor2, {cursor: [0, 0]})
-        ensure({selectedItemText: "line 2"})
+        await ensure({selectedItemText: "line 2"})
       }))
   })
 
   describe("scan", () => {
     describe("with empty query", () => {
-      const confirm = () => narrow.waitsForDestroy(() => runCommand("core:confirm"))
+      let narrow
 
       beforeEach(async () => {
         editor.setText(appleGrapeLemmonText)
         editor.setCursorBufferPosition([0, 0])
         narrow = await startNarrow("scan")
-        ensure = narrow.ensure
       })
 
-      it("add css class to narrowEditorElement", () =>
-        ensure({classListContains: ["narrow", "narrow-editor", "scan"]}))
+      it("add css class to narrowEditorElement", async () =>
+        await narrow.ensure({classListContains: ["narrow", "narrow-editor", "scan"]}))
 
-      it("initial state is whole buffer lines", () =>
-        ensure({
+      it("initial state is whole buffer lines", async () =>
+        await narrow.ensure({
           text: $`
 
             apple
@@ -783,8 +747,8 @@ describe("narrow", () => {
             `,
         }))
 
-      it("can filter by query", () => {
-        ensure("app", {
+      it("can filter by query", async () => {
+        await narrow.ensure("app", {
           text: $`
             app
             apple
@@ -793,7 +757,7 @@ describe("narrow", () => {
           itemsCount: 1,
         })
 
-        ensure("r", {
+        await narrow.ensure("r", {
           text: $`
             r
             grape
@@ -802,7 +766,7 @@ describe("narrow", () => {
           itemsCount: 1,
         })
 
-        ensure("l", {
+        await narrow.ensure("l", {
           text: $`
             l
             apple
@@ -813,39 +777,33 @@ describe("narrow", () => {
         })
       })
 
-      // FIXME
-      it("land to confirmed item", () => {
-        runs(() =>
-          ensure("l", {
-            text: $`
-              l
-              apple
-              lemmon
-              `,
-            selectedItemRow: 1,
-          })
-        )
-
-        runs(() => {
-          confirm()
-          runs(() => ensureEditor(editor, {cursor: [0, 3]}))
+      it("land to confirmed item", async () => {
+        await narrow.ensure("l", {
+          text: $`
+            l
+            apple
+            lemmon
+            `,
+          selectedItemRow: 1,
         })
+
+        runCommand("core:confirm")
+        await emitterEventPromise(narrow.ui.emitter, "did-destroy")
+        ensureEditor(editor, {cursor: [0, 3]})
       })
 
-      it("land to confirmed item", () => {
-        runs(() =>
-          ensure("mm", {
-            text: $`
-              mm
-              lemmon
-              `,
-            selectedItemRow: 1,
-          })
-        )
-        runs(() => {
-          confirm()
-          runs(() => ensureEditor(editor, {cursor: [2, 2]}))
+      it("land to confirmed item", async () => {
+        await narrow.ensure("mm", {
+          text: $`
+            mm
+            lemmon
+            `,
+          selectedItemRow: 1,
         })
+
+        runCommand("core:confirm")
+        await emitterEventPromise(narrow.ui.emitter, "did-destroy")
+        ensureEditor(editor, {cursor: [2, 2]})
       })
     })
 
@@ -857,7 +815,7 @@ describe("narrow", () => {
       const ensureScan = async (point, option) => {
         editor.setCursorBufferPosition(point)
         const narrow = await startNarrow("scan", {queryCurrentWord: true})
-        narrow.ensure(option)
+        await narrow.ensure(option)
         narrow.ui.destroy()
       }
 
@@ -919,6 +877,7 @@ describe("narrow", () => {
         return emitterEventPromise(narrow.ui.emitter, "did-preview")
       }
 
+      let narrow, ui, ensure
       beforeEach(async () => {
         narrow = await startNarrow("search", {query: "apple"})
         ui = narrow.ui
@@ -928,7 +887,7 @@ describe("narrow", () => {
       it("preview on cursor move with skipping header", async () => {
         jasmine.useRealClock()
 
-        ensure({
+        await ensure({
           text: $`
             apple
             # project1
@@ -947,20 +906,36 @@ describe("narrow", () => {
         })
 
         runCommand("core:move-up")
-        ensure({selectedItemText: "p1-f1: apple", cursor: [0, 5]})
+        await ensure({selectedItemText: "p1-f1: apple", cursor: [0, 5]})
 
         await previewCommand("core:move-down")
-        ensure({selectedItemText: "p1-f1: apple", cursor: [3, 7], filePathForProviderPane: p1f1})
+        await ensure({
+          selectedItemText: "p1-f1: apple",
+          cursor: [3, 7],
+          filePathForProviderPane: p1f1,
+        })
 
         await previewCommand("core:move-down")
-        ensure({selectedItemText: "p1-f2: apple", cursor: [5, 7], filePathForProviderPane: p1f2})
+        await ensure({
+          selectedItemText: "p1-f2: apple",
+          cursor: [5, 7],
+          filePathForProviderPane: p1f2,
+        })
         ensureEditorIsActive(ui.editor)
 
         await previewCommand("core:move-down")
-        ensure({selectedItemText: "p2-f1: apple", cursor: [8, 7], filePathForProviderPane: p2f1})
+        await ensure({
+          selectedItemText: "p2-f1: apple",
+          cursor: [8, 7],
+          filePathForProviderPane: p2f1,
+        })
 
         await previewCommand("core:move-down")
-        ensure({selectedItemText: "p2-f2: apple", cursor: [10, 7], filePathForProviderPane: p2f2})
+        await ensure({
+          selectedItemText: "p2-f2: apple",
+          cursor: [10, 7],
+          filePathForProviderPane: p2f2,
+        })
       })
 
       it("preview on query change by default( autoPreviewOnQueryChange )", async () => {
@@ -969,7 +944,7 @@ describe("narrow", () => {
         narrow.ui.moveToPrompt()
         narrow.ui.editor.insertText(" f2")
         await emitterEventPromise(narrow.ui.emitter, "did-preview")
-        ensure({
+        await ensure({
           text: $`
             apple f2
             # project1
@@ -985,7 +960,7 @@ describe("narrow", () => {
 
         ui.editor.insertText(" p2")
         await emitterEventPromise(narrow.ui.emitter, "did-preview")
-        ensure({
+        await ensure({
           text: $`
             apple f2 p2
             # project2
@@ -997,35 +972,30 @@ describe("narrow", () => {
         })
       })
 
-      it("can filter files by selet-files provider", () => {
+      it("can filter files by selet-files provider", async () => {
         jasmine.useRealClock()
-        let selectFiles = null
+        await ensure({
+          text: $`
+            apple
+            # project1
+            ## p1-f1
+            p1-f1: apple
+            ## p1-f2
+            p1-f2: apple
+            # project2
+            ## p2-f1
+            p2-f1: apple
+            ## p2-f2
+            p2-f2: apple
+            `,
+          cursor: [3, 7],
+          selectedItemText: "p1-f1: apple",
+        })
 
-        runs(() =>
-          ensure({
-            text: $`
-              apple
-              # project1
-              ## p1-f1
-              p1-f1: apple
-              ## p1-f2
-              p1-f2: apple
-              # project2
-              ## p2-f1
-              p2-f1: apple
-              ## p2-f2
-              p2-f2: apple
-              `,
-            cursor: [3, 7],
-            selectedItemText: "p1-f1: apple",
-          })
-        )
-
-        waitsForPromise(() => ui.selectFiles().then(_ui => (selectFiles = getNarrowForUi(_ui))))
-
-        runs(() =>
-          // Start select-files provider from search result ui.
-          selectFiles.ensure({
+        // Section1
+        {
+          const selectFiles = getNarrowForUi(await ui.selectFiles())
+          await selectFiles.ensure({
             text: $`
 
               project1/p1-f1
@@ -1034,37 +1004,33 @@ describe("narrow", () => {
               project2/p2-f2
               `,
           })
-        )
 
-        runs(() =>
-          // select f1
-          selectFiles.ensure("f1", {
+          await selectFiles.ensure("f1", {
             text: $`
               f1
               project1/p1-f1
               project2/p2-f1
               `,
           })
-        )
 
-        runs(() =>
-          // then negate by ending `!`
-          selectFiles.ensure("f1!", {
+          await selectFiles.ensure("f1!", {
             text: $`
               f1!
               project1/p1-f2
               project2/p2-f2
               `,
           })
-        )
 
-        runs(() => selectFiles.waitsForDestroy(() => runCommand("core:confirm")))
+          ensureEditorIsActive(selectFiles.ui.editor)
 
-        runs(() => {
+          const promise = emitterEventPromise(selectFiles.ui.emitter, "did-destroy")
+          runCommand("core:confirm")
+          await promise
+
           // Ensure f1 matching files are excluded and not listed in narrow-editor.
           ensureEditorIsActive(ui.editor)
           expect(ui.excludedFiles).toEqual([])
-          ensure({
+          await ensure({
             text: $`
               apple
               # project1
@@ -1077,27 +1043,25 @@ describe("narrow", () => {
             cursor: [3, 7],
             selectedItemText: "p1-f2: apple",
           })
-        })
+        }
 
-        waitsForPromise(() => ui.selectFiles().then(_ui => (selectFiles = getNarrowForUi(_ui))))
+        // Section2
+        {
+          const selectFiles = getNarrowForUi(await ui.selectFiles())
 
-        runs(() =>
           // selectFiles query are remembered until closing narrow-editor.
-          selectFiles.ensure({
+          await selectFiles.ensure({
             text: $`
-              f1!
-              project1/p1-f2
-              project2/p2-f2
-              `,
+            f1!
+            project1/p1-f2
+            project2/p2-f2
+            `,
           })
-        )
 
-        runs(() =>
           // clear the file filter query
-          selectFiles.waitsForRefresh(() => selectFiles.ui.editor.deleteToBeginningOfLine())
-        )
+          selectFiles.ui.editor.deleteToBeginningOfLine()
+          await emitterEventPromise(selectFiles.ui.emitter, "did-refresh")
 
-        runs(() =>
           // now all files are listable.
           selectFiles.ensure({
             text: $`
@@ -1108,11 +1072,11 @@ describe("narrow", () => {
               project2/p2-f2
               `,
           })
-        )
 
-        runs(() => selectFiles.waitsForDestroy(() => runCommand("core:confirm")))
+          const promise = emitterEventPromise(selectFiles.ui.emitter, "did-destroy")
+          runCommand("core:confirm")
+          await promise
 
-        runs(() => {
           // ensure items for all files are listed and previously selected items are preserveed.
           ensureEditorIsActive(ui.editor)
           expect(ui.excludedFiles).toEqual([])
@@ -1133,7 +1097,7 @@ describe("narrow", () => {
             cursor: [5, 7],
             selectedItemText: "p1-f2: apple",
           })
-        })
+        }
       })
     })
 

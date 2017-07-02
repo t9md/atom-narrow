@@ -1,7 +1,10 @@
+/** @babel */
 const _ = require("underscore-plus")
 const {inspect} = require("util")
 const Ui = require("../lib/ui")
 const ProviderBase = require("../lib/provider/provider-base")
+
+const {emitterEventPromise} = require("./async-spec-helpers")
 
 function startNarrow(providerName, options) {
   return ProviderBase.start(providerName, options).then(getNarrowForUi)
@@ -12,20 +15,11 @@ function reopen() {
 }
 
 function getNarrowForUi(ui) {
-  const {provider} = ui
-  const props = {provider, ui}
-  const ensureer = new Ensureer(ui, provider)
-  const propNames = [
-    "ensure",
-    "waitsForRefresh",
-    "waitsForConfirm",
-    "waitsForDestroy",
-    "waitsForPreview",
-  ]
-  for (let propName of propNames) {
-    props[propName] = ensureer[propName]
+  return {
+    ui: ui,
+    provider: ui.provider,
+    ensure: new Ensureer(ui, ui.provider).ensure,
   }
-  return props
 }
 
 function dispatchCommand(target, commandName) {
@@ -35,10 +29,6 @@ function dispatchCommand(target, commandName) {
 function dispatchEditorCommand(commandName, editor = null) {
   if (!editor) editor = atom.workspace.getActiveTextEditor()
   atom.commands.dispatch(editor.element, commandName)
-}
-
-function ensureCursorPosition(editor, position) {
-  expect(editor.getCursorBufferPosition()).toEqual(position)
 }
 
 function validateOptions(options, validOptions, message) {
@@ -94,10 +84,6 @@ const ensureOptionsOrdered = [
 // let ensureOptionsOrdered = undefined
 class Ensureer {
   constructor(ui, provider) {
-    this.waitsForDestroy = this.waitsForDestroy.bind(this)
-    this.waitsForRefresh = this.waitsForRefresh.bind(this)
-    this.waitsForConfirm = this.waitsForConfirm.bind(this)
-    this.waitsForPreview = this.waitsForPreview.bind(this)
     this.ensure = this.ensure.bind(this)
 
     this.ui = ui
@@ -107,31 +93,7 @@ class Ensureer {
     this.editorElement = this.ui.editorElement
   }
 
-  waitsForDestroy(fn) {
-    const disposable = this.ui.onDidDestroy(() => disposable.dispose())
-    fn()
-    waitsFor(() => disposable.disposed)
-  }
-
-  waitsForRefresh(fn) {
-    const disposable = this.ui.onDidRefresh(() => disposable.dispose())
-    fn()
-    waitsFor(() => disposable.disposed)
-  }
-
-  waitsForConfirm(fn) {
-    const disposable = this.ui.onDidConfirm(() => disposable.dispose())
-    fn()
-    waitsFor(() => disposable.disposed)
-  }
-
-  waitsForPreview(fn) {
-    const disposable = this.ui.onDidPreview(() => disposable.dispose())
-    fn()
-    waitsFor(() => disposable.disposed)
-  }
-
-  ensure(...args) {
+  async ensure(...args) {
     let options, query
     if (args.length === 1) {
       ;[options] = args
@@ -151,17 +113,12 @@ class Ensureer {
     }
 
     if (query) {
-      runs(() => {
-        this.waitsForRefresh(() => {
-          this.ui.setQuery(query)
-          if (this.ui.autoPreviewOnQueryChange) advanceClock(200)
-          this.ui.moveToPrompt()
-        })
-      })
-      runs(() => ensureOptions())
-    } else {
-      ensureOptions()
+      this.ui.setQuery(query)
+      if (this.ui.autoPreviewOnQueryChange) advanceClock(200)
+      this.ui.moveToPrompt()
+      await emitterEventPromise(this.ui.emitter, "did-refresh")
     }
+    ensureOptions()
   }
 
   ensureItemsCount(count) {
@@ -293,7 +250,6 @@ function unindent(strings, ...values) {
 module.exports = {
   startNarrow,
   dispatchCommand,
-  ensureCursorPosition,
   ensureEditor,
   ensurePaneLayout,
   ensureEditorIsActive,
