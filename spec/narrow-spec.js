@@ -1,4 +1,4 @@
-/** @babel */
+'use babel'
 
 const Ui = require("../lib/ui")
 const fs = require("fs-plus")

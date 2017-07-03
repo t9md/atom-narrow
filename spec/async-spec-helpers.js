@@ -1,4 +1,4 @@
-/** @babel */
+'use babel'
 // Borrowed from Atom core's spec.
 
 export function beforeEach (fn) {

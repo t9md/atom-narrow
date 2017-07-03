@@ -1,4 +1,4 @@
-/** @babel */
+'use babel'
 const _ = require("underscore-plus")
 const {inspect} = require("util")
 const Ui = require("../lib/ui")
