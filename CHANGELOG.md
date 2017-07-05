@@ -1,3 +1,9 @@
+# 0.47.1: WIP
+- Fix: `select-files` sometimes failed to open when it fail to determine pane to open.
+  - Now no longer fail by explicitly specifying which pane to open( it's same pane of original UI ).
+- Improve, Experiment: Keep narrow-editor highlight( decoration ) for more intuitive direct-edit.
+  - By keeping highlight, newly replaced text still be highlighted.
+
 # 0.47.0:
 - New: #230 `narrow:git-diff-all` now aware of unsaved modification.
   - Refresh items without explicit save.
