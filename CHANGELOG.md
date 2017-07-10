@@ -14,6 +14,7 @@
   - Refresh items without explicit save.
     - Old: items are refreshed on save( `editor.onDidSave` ).
     - New: items are refreshed on modified( `editor.onDidStopChanging` ).
+
 # 0.46.1:
 - FIX: #227 `narrow:search-current-project-by-current-word` did not work correctly.
   - Always threw `Uncaught TypeError: dir.contains is not a function`. but no longer.
