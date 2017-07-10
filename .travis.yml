@@ -18,3 +18,8 @@ before_install:
   - brew update
   - brew install ag
   - brew install rg
+
+env:
+  matrix:
+    - ATOM_CHANNEL=stable
+    - ATOM_CHANNEL=beta
