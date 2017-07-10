@@ -1,6 +1,13 @@
-# 0.47.1: WIP
+# 0.48.0:
 - Fix: `select-files` sometimes failed to open when it fail to determine pane to open.
-  - Now no longer fail by explicitly specifying which pane to open( it's same pane of original UI ).
+  - Now no longer fail to open by explicitly specifying which pane to open( it's same pane of original UI ).
+- Internal: Avoid overuse of ProviderBase.
+  - Avoid usage as proxy to utility methods, now explicitly import utility method by each file.
+- Breaking: Provider `atom-scan` no longer support direct edit.
+  - `atom-scan` use `workspace.scan` method internally, and it item truncate matched lineText to fit screen width.
+  - Since `narrow:update-real-file` works by replacing whole line, this `workspace.scan`'s truncation doesn't work fit well.
+- Why I suppoted this feature for this provider is just because of my lack of understanding of this caveat.
+
 
 # 0.47.0:
 - New: #230 `narrow:git-diff-all` now aware of unsaved modification.
