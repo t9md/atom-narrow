@@ -1,7 +1,7 @@
 WorkspaceOpenAcceptPaneOption = atom.workspace.getCenter?
 
 _ = require 'underscore-plus'
-{Point, CompositeDisposable, Range} = require 'atom'
+{Point, CompositeDisposable, Range, TextBuffer} = require 'atom'
 {
   saveEditorState
   isActiveEditor
@@ -311,17 +311,18 @@ class ProviderBase
         @applyChanges(filePath, changes)
 
   applyChanges: (filePath, changes) ->
-    atom.workspace.open(filePath, activateItem: false).then (editor) ->
-      editor.transact ->
+    buffer = new TextBuffer({filePath})
+    buffer.load({clearHistory: true, internal: true}).then (buffer) ->
+      buffer.transact ->
         for {newText, item} in changes
-          range = editor.bufferRangeForBufferRow(item.point.row)
-          editor.setTextInBufferRange(range, newText)
-
+          range = buffer.rangeForRow(item.point.row)
+          buffer.setTextInRange(range, newText)
           # Sync item's text state
           # To allow re-edit if not saved and non-boundToSingleFile provider
           item.text = newText
 
-      editor.save()
+      buffer.save() # this code for is Atom-v1.18, so buffer.save is done synchronously.
+      buffer.destroy()
 
   toggleSearchWholeWord: ->
     @searchOptions.toggle('searchWholeWord')

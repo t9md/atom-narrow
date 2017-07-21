@@ -1,8 +1,9 @@
 _ = require 'underscore-plus'
+{Point, TextBuffer} = require "atom"
 ProviderBase = require './provider-base'
 path = require 'path'
 fs = require 'fs-plus'
-{itemForGitDiff} = require '../utils'
+{limitNumber} = require '../utils'
 
 # Borrowed and modified from fuzzy-finder's git-diff-view.coffee
 eachModifiedFilePaths = (fn) ->
@@ -13,12 +14,21 @@ eachModifiedFilePaths = (fn) ->
       if fs.isFileSync(filePath)
         fn(repo, filePath)
 
+itemForGitDiff = (diff, {buffer, filePath}) ->
+  row = limitNumber(diff.newStart - 1, min: 0)
+  lineText = buffer.lineForRow(row)
+  {
+    point: new Point(row, lineText.match(/\s*/)[0].length)
+    text: lineText
+    filePath: filePath
+  }
+
 getItemsForFilePath = (repo, filePath) ->
-  atom.workspace.open(filePath, activateItem: false).then (editor) ->
+  buffer = new TextBuffer({filePath})
+  buffer.load({clearHistory: true, internal: true}).then (buffer) ->
+    diffs = repo.getLineDiffs(filePath, buffer.getText()) ? []
     # When file was completely new file, getLineDiffs return null, so need guard.
-    diffs = repo.getLineDiffs(filePath, editor.getText()) ? []
-    diffs.map (diff) ->
-      itemForGitDiff(diff, {editor, filePath})
+    diffs.map (diff) -> itemForGitDiff(diff, {buffer, filePath})
 
 module.exports =
 class GitDiffAll extends ProviderBase

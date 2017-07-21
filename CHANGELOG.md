@@ -1,3 +1,8 @@
+# 0.45.2:
+- Fix: `git-diff-all` and incorrectly showed file and project header.
+- Fix: `git-diff-all` and `update-real-file` no longer add temporally opened editor into workspace. #232.
+  - This fix is backported from v0.48.1 which is targeting Atom-beta release.
+
 # 0.45.1:
 - Fix: `symbols` incorrectly showed file and project header.
 - Fix: `project-symbols` did not showed file and project header where it should show.

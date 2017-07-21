@@ -122,13 +122,6 @@ getFirstCharacterPositionForBufferRow = (editor, row) ->
   editor.scanInBufferRange /\S/, scanRange, (event) -> range = event.range
   range?.start ? new Point(row, 0)
 
-itemForGitDiff = (diff, {editor, filePath}) ->
-  row = limitNumber(diff.newStart - 1, min: 0)
-  {
-    point: getFirstCharacterPositionForBufferRow(editor, row)
-    text: editor.lineTextForBufferRow(row)
-    filePath: filePath
-  }
 
 isDefinedAndEqual = (a, b) ->
   a? and b? and a is b
@@ -263,7 +256,6 @@ module.exports = {
   paneForItem
   getVisibleEditors
   getFirstCharacterPositionForBufferRow
-  itemForGitDiff
   isDefinedAndEqual
   cloneRegExp
   addToolTips
