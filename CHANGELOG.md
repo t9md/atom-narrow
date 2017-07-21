@@ -1,3 +1,6 @@
+# 0.48.1:
+- Fix: `git-diff-all` and `update-real-file` no longer add temporally opened editor into workspace. #232.
+
 # 0.48.0:
 - Fix: `select-files` sometimes failed to open when it fail to determine pane to open.
   - Now no longer fail to open by explicitly specifying which pane to open( it's same pane of original UI ).
