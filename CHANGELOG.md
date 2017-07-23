@@ -1,4 +1,4 @@
-# 0.49.1:
+# 0.50.0:
 - Breaking: Rename command from `narrow-ui:confirm-open-here` to `narrow-ui:confirm-here`.
   - This is command introduced in v0.49.0 in a few hours ago. And have default keymap, so the impact should be not big I believe.
 - Improve: `narrow-ui:confirm-here` restore original editor's scrollTop when necessary.
