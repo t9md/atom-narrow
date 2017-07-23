@@ -1,5 +1,12 @@
+# 0.49.1:
+- Breaking: Rename command from `narrow-ui:confirm-open-here` to `narrow-ui:confirm-here`.
+  - This is command introduced in v0.49.0 in a few hours ago. And have default keymap, so the impact should be not big I believe.
+- Improve: `narrow-ui:confirm-here` restore original editor's scrollTop when necessary.
+  - Since user opened item in same pane of UI. The scrollTop change made while preview should be reverted.
+  - This was not issue before since confirmed item was always opened at original editor's pane.
+
 # 0.49.0:
-- New: `narrow-ui:open-at-here` which open file at same pane of UI.
+- New: `narrow-ui:confirm-open-here` which open file at same pane of UI.
   - `O` is mapped by default in `read-only` mode of UI.
 - Fix: unsaved-change-aware ability of `git-diff-all` was broken from v0.48.1. #234.
   - Because I blindly use `TextBuffer.load` which just load fileContent from disk, so unsaved modification was just ignored.

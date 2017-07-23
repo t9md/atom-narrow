@@ -149,6 +149,7 @@ No keymaps are provided
 
 - `core:confirm`: ( `enter` ) Close `narrow-editor`
 - `narrow-ui:confirm-keep-open`: keep open `narrow-editor`
+- `narrow-ui:open-here`: Open item at same pane of UI's pane.
 - `narrow-ui:preview-item`: Preview currently selected item manually( you don't need in most case ).
 - `narrow-ui:preview-next-item`: ( `tab` ) Preview next-item without moving cursor from `narrow-editor`'s query prompt.
 - `narrow-ui:preview-previous-item`: ( `shift-tab` ) Preview next-item without moving cursor from `narrow-editor`'s query prompt.

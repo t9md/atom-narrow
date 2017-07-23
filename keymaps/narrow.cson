@@ -42,7 +42,7 @@
     'enter': 'core:confirm'
     'q': 'core:close'
     'o': 'narrow-ui:confirm-keep-open'
-    'O': 'narrow-ui:confirm-open-here'
+    'O': 'narrow-ui:open-here'
     'r': 'narrow-ui:toggle-auto-preview'
     'i': 'narrow-ui:move-to-prompt'
     'a': 'narrow-ui:move-to-prompt'
