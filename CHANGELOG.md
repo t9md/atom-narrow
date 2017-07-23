@@ -1,3 +1,11 @@
+# 0.49.0:
+- New: `narrow-ui:open-at-here` which open file at same pane of UI.
+  - `O` is mapped by default in `read-only` mode of UI.
+- Fix: unsaved-change-aware ability of `git-diff-all` was broken from v0.48.1. #234.
+  - Because I blindly use `TextBuffer.load` which just load fileContent from disk, so unsaved modification was just ignored.
+- Fix: unsaved-change was incorrectly ignored on `update-real-file` from v0.48.1 #234.
+  - This is same reason of `git-diff-all` bug I mentioned above.
+
 # 0.48.1:
 - Fix: `git-diff-all` and `update-real-file` no longer add temporally opened editor into workspace. #232.
 
@@ -9,8 +17,7 @@
 - Breaking: Provider `atom-scan` no longer support direct edit.
   - `atom-scan` use `workspace.scan` method internally, and it item truncate matched lineText to fit screen width.
   - Since `narrow:update-real-file` works by replacing whole line, this `workspace.scan`'s truncation doesn't work fit well.
-- Why I suppoted this feature for this provider is just because of my lack of understanding of this caveat.
-
+  - Why I supported this feature for this provider is just because of my lack of understanding of this caveat.
 
 # 0.47.0:
 - New: #230 `narrow:git-diff-all` now aware of unsaved modification.
