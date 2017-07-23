@@ -311,8 +311,8 @@ class ProviderBase
         @applyChanges(filePath, changes)
 
   applyChanges: (filePath, changes) ->
-    buffer = new TextBuffer({filePath})
-    buffer.load({clearHistory: true, internal: true}).then (buffer) ->
+    existingBuffer = atom.project.findBufferForPath(filePath)
+    Promise.resolve(existingBuffer ? atom.project.buildBuffer(filePath)).then (buffer) ->
       buffer.transact ->
         for {newText, item} in changes
           range = buffer.rangeForRow(item.point.row)
@@ -322,7 +322,7 @@ class ProviderBase
           item.text = newText
 
       buffer.save() # this code for is Atom-v1.18, so buffer.save is done synchronously.
-      buffer.destroy()
+      buffer.destroy() unless existingBuffer?
 
   toggleSearchWholeWord: ->
     @searchOptions.toggle('searchWholeWord')

@@ -1,5 +1,5 @@
 _ = require 'underscore-plus'
-{Point, TextBuffer} = require "atom"
+{Point} = require "atom"
 ProviderBase = require './provider-base'
 path = require 'path'
 fs = require 'fs-plus'
@@ -24,11 +24,13 @@ itemForGitDiff = (diff, {buffer, filePath}) ->
   }
 
 getItemsForFilePath = (repo, filePath) ->
-  buffer = new TextBuffer({filePath})
-  buffer.load({clearHistory: true, internal: true}).then (buffer) ->
+  existingBuffer = atom.project.findBufferForPath(filePath)
+  Promise.resolve(existingBuffer ? atom.project.buildBuffer(filePath)).then (buffer) ->
     diffs = repo.getLineDiffs(filePath, buffer.getText()) ? []
     # When file was completely new file, getLineDiffs return null, so need guard.
-    diffs.map (diff) -> itemForGitDiff(diff, {buffer, filePath})
+    items = diffs.map (diff) -> itemForGitDiff(diff, {buffer, filePath})
+    buffer.destroy() unless existingBuffer?
+    return items
 
 module.exports =
 class GitDiffAll extends ProviderBase
