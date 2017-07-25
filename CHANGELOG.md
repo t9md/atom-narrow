@@ -1,7 +1,7 @@
-# 0.51.1:
+# 0.50.2:
 - Fix, Cosmetic: ControlBar regex button now correctly reflect useRegex state
 
-# 0.51.0:
+# 0.50.1:
 - Fix: `narrow-ui:open-here` now properly show original editor when active editor changed while previewing.
 
 # 0.50.0:
