@@ -1,7 +1,10 @@
+# 0.51.0:
+- Fix: `narrow-ui:open-here` now properly show original editor when active editor changed while previewing.
+
 # 0.50.0:
-- Breaking: Rename command from `narrow-ui:confirm-open-here` to `narrow-ui:confirm-here`.
+- Breaking: Rename command from `narrow-ui:confirm-open-here` to `narrow-ui:open-here`.
   - This is command introduced in v0.49.0 in a few hours ago. And have default keymap, so the impact should be not big I believe.
-- Improve: `narrow-ui:confirm-here` restore original editor's scrollTop when necessary.
+- Improve: `narrow-ui:open-here` restore original editor's scrollTop when necessary.
   - Since user opened item in same pane of UI. The scrollTop change made while preview should be reverted.
   - This was not issue before since confirmed item was always opened at original editor's pane.
 
