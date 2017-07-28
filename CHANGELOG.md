@@ -1,3 +1,9 @@
+# 0.50.3:
+- Fix: #236 refresh when query change from xxx to empty('').
+  - This is regression introduced in v0.50.x.
+  - When query get emptied, still last searched items are displayed where it should be cleared.
+- Improve: #237 Redraw control-bar when query including "\n" was inserted.
+
 # 0.50.2:
 - Fix, Cosmetic: ControlBar regex button now correctly reflect useRegex state
 
