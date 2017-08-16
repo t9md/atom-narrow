@@ -61,6 +61,12 @@
     "underscore-plus": "^1.6.6"
   },
   "devDependencies": {
-    "fs-extra": "^2.0.0"
+    "fs-extra": "^2.0.0",
+    "prettier": "^1.5.3"
+  },
+  "scripts": {
+    "test": "apm test",
+    "watch": "fswatch -0 spec lib | xargs -0 -n1 -I{} apm test",
+    "prettier": "prettier --write --no-semi --print-width=120 --no-bracket-spacing --trailing-comma=es5 'lib/**/*.js' 'spec/*.js'"
   }
 }

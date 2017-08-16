@@ -1,18 +1,10 @@
-'use babel'
+"use babel"
 
 const Ui = require("../lib/ui")
 const fs = require("fs-plus")
 const path = require("path")
 const settings = require("../lib/settings")
-const {
-  it,
-  fit,
-  ffit,
-  fffit,
-  emitterEventPromise,
-  beforeEach,
-  afterEach,
-} = require("./async-spec-helpers")
+const {it, fit, ffit, fffit, emitterEventPromise, beforeEach, afterEach} = require("./async-spec-helpers")
 
 const {
   startNarrow,
@@ -1119,8 +1111,7 @@ describe("narrow", () => {
           selectedItemText: '$file = "p1-f3.php";',
         })
       }
-      const ensureSearch = provider =>
-        startNarrow(provider, {queryCurrentWord: true}).then(ensureFindPHPVar)
+      const ensureSearch = provider => startNarrow(provider, {queryCurrentWord: true}).then(ensureFindPHPVar)
 
       beforeEach(async () => {
         await atom.packages.activatePackage("language-php")
