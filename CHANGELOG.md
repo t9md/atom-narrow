@@ -1,3 +1,7 @@
+# 0.50.4: WIP
+- Fix: narrow grammar is not properly set when package panel of narrow was initially opened on Atom launch #240
+  - This is because package's main is loaded earlier than activation timing when pkg panel was opened.
+
 # 0.50.3:
 - Fix: #236 refresh when query change from xxx to empty('').
   - This is regression introduced in v0.50.x.
