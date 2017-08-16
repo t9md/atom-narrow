@@ -1,4 +1,6 @@
 # 0.50.4:
+- Fix: Critical #239 fix Atom freeze issue.
+  - When `editor.scrollTop` was `false`( default ), Atom freeze because of infinite loop at `onDidChangeScrollTop` event.
 - Fix: narrow grammar is not properly set when package panel of narrow was initially opened on Atom launch #240
   - This is because package's main is loaded earlier than activation timing when pkg panel was opened.
 
