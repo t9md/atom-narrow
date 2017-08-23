@@ -179,13 +179,14 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 ###### `config.cson`
 
-```
+```coffeescript
   narrow:
     Search:
       startByDoubleClick: true
     SelectFiles:
       rememberQuery: true
     confirmOnUpdateRealFile: false
+    textToPrependOnTextTruncation: "!!" # shorter indicator when text was truncated.
 ```
 
 ###### `keymap.cson`
