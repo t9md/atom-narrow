@@ -1,4 +1,9 @@
 # 0.51.0:
+- Fix: [Critical] Guard infinite loop(Atom freeze) when moving to last line on `narrow-editor`. #239, #241.
+  - This issue happen when `editor.scrollPastEnd` is `false`(default).
+  - This is basically upstream Atom-core's bug to fire `onDidChangeScrollTop` event with same scrollTop value.
+    - Reported/fixed on Atom-core but not released yet.
+  - This time fix is to ignore event when called with same scrollTop value to avoid infinite loop.
 - Improve: Truncate long line on `narrow-editor` #243
   - This is to to avoid Atom hang when render very long line `narrow-editor`.
   - Typically happen when searching minified/uglified file.
