@@ -1,7 +1,17 @@
+# 0.51.0:
+- Improve: Truncate long line on `narrow-editor` #243
+  - This is to to avoid Atom hang when render very long line `narrow-editor`.
+  - Typically happen when searching minified/uglified file.
+  - New config:
+    - `textTruncationThreshold`( default `200` ):
+      - Truncate line exceeding this width.
+    - `textPrependToTruncatedText`( default `[truncated]` ):
+      - When text was truncated, Text `[truncated]` is pretended to original text for user easily notice truncation.
+
 # 0.50.5:
 - Fix: Critical #239 fix Atom freeze issue.
   - When `editor.scrollTop` was `false`( default ), Atom freeze because of infinite loop at `onDidChangeScrollTop` event.
-  
+
 # 0.50.4:
 - Fix: narrow grammar is not properly set when package panel of narrow was initially opened on Atom launch #240
   - This is because package's main is loaded earlier than activation timing when pkg panel was opened.

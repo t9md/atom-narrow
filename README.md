@@ -186,7 +186,7 @@ Start it from command-palette or set keymap in `keymap.cson`.
     SelectFiles:
       rememberQuery: true
     confirmOnUpdateRealFile: false
-    textToPrependOnTextTruncation: "!!" # shorter indicator when text was truncated.
+    textPrependToTruncatedText: "!!" # shorter indicator when text was truncated.
 ```
 
 ###### `keymap.cson`
