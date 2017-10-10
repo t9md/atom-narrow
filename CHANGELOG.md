@@ -1,4 +1,11 @@
 # 0.52.0:
+- New: project header and file header styles are now configurable
+  - Following global setting is used as template for file and project header.(`__HEADER__` is replaced with actual value).
+    - `projectHeaderTemplate`: default `__HEADER__`
+    - `fileHeaderTemplate`: default `__HEADER__`
+  - From this release project and file header add no `#` prefix. If you like older version's style, you can recall it by setting.
+    - `projectHeaderTemplate` to `# __HEADER__`
+    - `fileHeaderTemplate`: to `## __HEADER__`
 - Improve: Differentiate file-header color and project-header color on `narrow-editor`.
 - Improve: When `searcher`(`ag` or `rg`) command not found, notify error as notification dialog. @slavaGanzin #244
 
