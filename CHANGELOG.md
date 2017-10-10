@@ -1,3 +1,7 @@
+# 0.52.0:
+- Improve: Differentiate file-header color and project-header color on `narrow-editor`.
+- Improve: When `searcher`(`ag` or `rg`) command not found, notify error as notification dialog. @slavaGanzin #244
+
 # 0.51.0:
 - Fix: [Critical] Guard infinite loop(Atom freeze) when moving to last line on `narrow-editor`. #239, #241.
   - This issue happen when `editor.scrollPastEnd` is `false`(default).
