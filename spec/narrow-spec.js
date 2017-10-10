@@ -882,15 +882,15 @@ describe("narrow", () => {
         await ensure({
           text: $`
             apple
-            # project1
-            ## p1-f1
+            [project1]
+            p1-f1
             p1-f1: apple
-            ## p1-f2
+            p1-f2
             p1-f2: apple
-            # project2
-            ## p2-f1
+            [project2]
+            p2-f1
             p2-f1: apple
-            ## p2-f2
+            p2-f2
             p2-f2: apple
             `,
           cursor: [3, 7],
@@ -939,11 +939,11 @@ describe("narrow", () => {
         await ensure({
           text: $`
             apple f2
-            # project1
-            ## p1-f2
+            [project1]
+            p1-f2
             p1-f2: apple
-            # project2
-            ## p2-f2
+            [project2]
+            p2-f2
             p2-f2: apple
             `,
           selectedItemText: "p1-f2: apple",
@@ -955,8 +955,8 @@ describe("narrow", () => {
         await ensure({
           text: $`
             apple f2 p2
-            # project2
-            ## p2-f2
+            [project2]
+            p2-f2
             p2-f2: apple
             `,
           selectedItemText: "p2-f2: apple",
@@ -969,15 +969,15 @@ describe("narrow", () => {
         await ensure({
           text: $`
             apple
-            # project1
-            ## p1-f1
+            [project1]
+            p1-f1
             p1-f1: apple
-            ## p1-f2
+            p1-f2
             p1-f2: apple
-            # project2
-            ## p2-f1
+            [project2]
+            p2-f1
             p2-f1: apple
-            ## p2-f2
+            p2-f2
             p2-f2: apple
             `,
           cursor: [3, 7],
@@ -1025,11 +1025,11 @@ describe("narrow", () => {
           await ensure({
             text: $`
               apple
-              # project1
-              ## p1-f2
+              [project1]
+              p1-f2
               p1-f2: apple
-              # project2
-              ## p2-f2
+              [project2]
+              p2-f2
               p2-f2: apple
               `,
             cursor: [3, 7],
@@ -1075,15 +1075,15 @@ describe("narrow", () => {
           ensure({
             text: $`
               apple
-              # project1
-              ## p1-f1
+              [project1]
+              p1-f1
               p1-f1: apple
-              ## p1-f2
+              p1-f2
               p1-f2: apple
-              # project2
-              ## p2-f1
+              [project2]
+              p2-f1
               p2-f1: apple
-              ## p2-f2
+              p2-f2
               p2-f2: apple
               `,
             cursor: [5, 7],
@@ -1100,11 +1100,11 @@ describe("narrow", () => {
         narrow.ensure({
           text: $`
             $file
-            # project1
-            ## p1-f3.php
+            [project1]
+            p1-f3.php
             $file = "p1-f3.php";
-            # project2
-            ## p2-f3.php
+            [project2]
+            p2-f3.php
             $file = "p2-f3.php";
             `,
           cursor: [3, 0],
@@ -1141,26 +1141,26 @@ describe("narrow", () => {
       const resultText = {
         "project1/p1-f": $`
           project1/p1-f
-          # project1
-          ## p1-f1
+          [project1]
+          p1-f1
           path: project1/p1-f1
-          ## p1-f2
+          p1-f2
           path: project1/p1-f2
           `,
         "a/b/c": $`
           a/b/c
-          # project1
-          ## p1-f1
+          [project1]
+          p1-f1
           path: a/b/c
-          ## p1-f2
+          p1-f2
           path: a/b/c
           `,
         "a\\/b\\/c": $`\
           a\\/b\\/c
-          # project1
-          ## p1-f1
+          [project1]
+          p1-f1
           path: a\\/b\\/c
-          ## p1-f2
+          p1-f2
           path: a\\/b\\/c
           `,
       }
