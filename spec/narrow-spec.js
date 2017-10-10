@@ -847,6 +847,9 @@ describe("narrow", () => {
     let p2, p2f1, p2f2, p2f3
     beforeEach(() =>
       runs(() => {
+        settings.set("projectHeaderTemplate", "# __HEADER__")
+        settings.set("fileHeaderTemplate", "## __HEADER__")
+
         p1 = atom.project.resolvePath("project1")
         p1f1 = path.join(p1, "p1-f1")
         p1f2 = path.join(p1, "p1-f2")
