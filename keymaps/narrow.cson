@@ -1,8 +1,3 @@
-# -------------------------
-# For every user
-# -------------------------
-# On every editor
-# ---------------------------
 'atom-workspace.has-narrow atom-text-editor':
   'ctrl-g': 'narrow:close'
   'ctrl-cmd-i': 'narrow:focus-prompt'
@@ -13,10 +8,9 @@
   'ctrl-cmd-]': 'narrow:next-query-history'
   'ctrl-cmd-e': 'narrow:query-current-word'
 
-# Only on narrow-editor
+# On narrow-editor
 # ---------------------------
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
-  # 'tab': 'narrow-ui:move-to-prompt-or-selected-item'
   'f5': 'narrow:refresh'
   'ctrl-l': 'narrow:refresh'
 
@@ -25,60 +19,56 @@
   'alt-cmd-c': 'narrow-ui:toggle-search-ignore-case'
   'alt-cmd-/': 'narrow-ui:toggle-search-use-regex'
 
-'atom-text-editor.narrow.narrow-editor:not(.read-only):not(.autocomplete-active)[data-grammar="source narrow"]':
-  'enter': 'core:confirm'
-
-'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]:not(.vim-mode-plus)':
-  'ctrl-r': 'narrow-ui:toggle-auto-preview'
-
 # narrow-editor.fold
-# -------------------------
 'atom-text-editor.narrow.narrow-editor.fold[data-grammar="source narrow"]':
   'cmd-]': 'narrow-ui:fold:increase-fold-level'
   'cmd-[': 'narrow-ui:fold:decrease-fold-level'
 
-'atom-text-editor.narrow.narrow-editor.read-only[data-grammar="source narrow"],
-  atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
-    'enter': 'core:confirm'
-    'q': 'core:close'
-    'o': 'narrow-ui:confirm-keep-open'
-    'O': 'narrow-ui:open-here'
-    'r': 'narrow-ui:toggle-auto-preview'
-    'i': 'narrow-ui:move-to-prompt'
-    'a': 'narrow-ui:move-to-prompt'
-    'I': 'narrow-ui:start-insert'
-    'n': 'narrow-ui:move-to-next-file-item'
-    'p': 'narrow-ui:move-to-previous-file-item'
-    'backspace': 'narrow-ui:exclude-file'
-    'cmd-backspace': 'narrow-ui:select-files'
-    'ctrl-backspace': 'narrow-ui:clear-excluded-files'
-
+# vmp and non-vmp shared
+# -------------------------
 'atom-text-editor.narrow.narrow-editor:not(.read-only)[data-grammar="source narrow"]':
   'escape': 'narrow-ui:stop-insert'
-  'ctrl-u': 'narrow-ui:delete-to-end-of-search-term'
 
-'atom-text-editor.narrow.narrow-editor.read-only[data-grammar="source narrow"]:not(.vim-mode-plus)':
+'atom-text-editor.narrow.narrow-editor:not(.read-only):not(.autocomplete-active)[data-grammar="source narrow"]':
+  'enter': 'core:confirm'
+
+'atom-text-editor.narrow.narrow-editor.prompt:not(.read-only)[data-grammar="source narrow"]':
+  'ctrl-u': 'narrow-ui:delete-to-end-of-search-term'
+  'tab': 'narrow-ui:preview-next-item'
+  'shift-tab': 'narrow-ui:preview-previous-item'
+
+'atom-text-editor.narrow.narrow-editor.read-only[data-grammar="source narrow"]':
+  'enter': 'core:confirm'
+  'q': 'narrow:close'
+  'backspace': 'narrow-ui:exclude-file'
+  'cmd-backspace': 'narrow-ui:select-files'
+  'ctrl-backspace': 'narrow-ui:clear-excluded-files'
+
+# non-vmp
+# -------------------------
+'atom-text-editor.narrow.narrow-editor:not(.vim-mode-plus)[data-grammar="source narrow"]':
+  'ctrl-r': 'narrow-ui:toggle-auto-preview'
+
+'atom-text-editor.narrow.narrow-editor.read-only:not(.vim-mode-plus)[data-grammar="source narrow"]':
+  'o': 'narrow-ui:confirm-keep-open'
+  'O': 'narrow-ui:open-here'
+  'r': 'narrow-ui:toggle-auto-preview'
+  'i': 'narrow-ui:move-to-prompt'
+  'a': 'narrow-ui:move-to-prompt'
+  'I': 'narrow-ui:start-insert'
+  'n': 'narrow-ui:move-to-next-file-item'
+  'p': 'narrow-ui:move-to-previous-file-item'
+
   'k': 'core:move-up'
   'j': 'core:move-down'
 
-'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"],
- atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
-    # 'escape': 'narrow-ui:stop-insert'
-    'tab': 'narrow-ui:preview-next-item'
-    'shift-tab': 'narrow-ui:preview-previous-item'
-
-'atom-text-editor.narrow.narrow-editor.prompt.vim-mode-plus.insert-mode[data-grammar="source narrow"]':
-  'ctrl-u': 'narrow-ui:delete-to-end-of-search-term'
-
-# -------------------------
-# Vim-mode-plus user only
-# -------------------------
-'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
+# vmp
+# ---------------------------------------
+'atom-text-editor.narrow.narrow-editor.normal-mode.vim-mode-plus[data-grammar="source narrow"]':
   'k': 'vim-mode-plus:move-up-wrap'
   'j': 'vim-mode-plus:move-down-wrap'
 
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode:not(.has-occurrence)':
-  # Can move next/previos from out-side of narrow-editor if workspace has narrow-editor.
   'tab': 'narrow:next-item'
   'shift-tab': 'narrow:previous-item'
 
