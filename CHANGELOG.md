@@ -1,3 +1,6 @@
+# 0.53.1:
+- Fix: Now show  keymap removal notification only once.
+
 # 0.53.0: vim-mode-plus specific default keymaps are REMOVED
 - Breaking: Remove vim-mode-plus specific default keymap to avoid conflicts. #252
   - User can recover older version keymap manually, see [wiki](https://github.com/t9md/atom-narrow/wiki/ExampleKeymap#restore-vim-mode-plus-specific-default-keymap-defined-old-version).
