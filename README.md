@@ -12,7 +12,7 @@ More information on [wiki](https://github.com/t9md/atom-narrow/wiki)
 # What's this?
 
 - Provide narrowing UI like emacs-helm and unite/denite.vim.
-- But **not** aiming to become "can open anything from narrow-able UI" package.
+- **Not** aiming to become "can open anything from narrow-able UI" package.
 - Primal focus is on **code-navigation**.
 - Provider provide items( e.g. by `search` files in project ), you can filter items by query to narrow down further.
 - As you move cursor on active-editor, **current** item on narrow-ui is automatically synced.
@@ -147,6 +147,10 @@ No keymaps are provided
 
 ### Available in narrow-editor(narrow-ui)
 
+The `!vmp` followed by keymap means "which keymap is not available for vim-mode-plus user".  
+If you want use these keymap with `vim-mode-plus`, set it by yourself.  
+See [Wiki](https://github.com/t9md/atom-narrow/wiki/ExampleKeymap#restore-vim-mode-plus-specific-default-keymap-defined-old-version)  
+
 - `core:confirm`: ( `enter` ) Close `narrow-editor`
 - `narrow-ui:confirm-keep-open`: keep open `narrow-editor`
 - `narrow-ui:open-here`: Open item at same pane of UI's pane.
@@ -155,17 +159,18 @@ No keymaps are provided
 - `narrow-ui:preview-previous-item`: ( `shift-tab` ) Preview next-item without moving cursor from `narrow-editor`'s query prompt.
 - `narrow-ui:toggle-auto-preview`: ( `ctrl-r` for non-vim-mode-plus user) Disable/enable auto-preview for this `narrow-editor`.
 - `narrow-ui:move-to-prompt`: `ctrl-cmd-i`
-- `narrow-ui:start-insert`: `I`, `a`
 - `narrow-ui:stop-insert`: `escape`
 - `narrow-ui:update-real-file`: Apply changes made in `narrow-editor` to real-file.( edit in `narrow-editor` then save it to real file. )
 - `narrow-ui:protect`: No keymap by default, Protect narrow-editor from being destroyed by `narrow:close`( `ctrl-g` ).
 - `narrow-ui:exclude-file`: `backspace`, Exclude items which matches filePath of currently selected item's.
 - `narrow-ui:clear-excluded-files`: `ctrl-backspace`, Clear excluded files list.
 - `narrow-ui:select-files`: `cmd-backspace`, interactively select which filePath's items to appear on `narrow-editor`.
-- `narrow-ui:move-to-next-file-item`: `n`
-- `narrow-ui:move-to-previous-file-item`: `p`
 - `narrow-ui:toggle-search-whole-word`: `alt-cmd-w`
 - `narrow-ui:toggle-search-ignore-case`: `alt-cmd-c`
+- `narrow-ui:toggle-search-use-regex`: `alt-cmd-/`
+- `narrow-ui:start-insert`: `I`(`!vmp`), `a`(`!vmp`)
+- `narrow-ui:move-to-next-file-item`: `n`(`!vmp`)
+- `narrow-ui:move-to-previous-file-item`: `p`(`!vmp`)
 
 # Keymaps
 
@@ -186,7 +191,6 @@ Start it from command-palette or set keymap in `keymap.cson`.
     SelectFiles:
       rememberQuery: true
     confirmOnUpdateRealFile: false
-    textPrependToTruncatedText: "!!" # shorter indicator when text was truncated.
 ```
 
 ###### `keymap.cson`
@@ -258,12 +262,12 @@ Explanation of my keymap.
     'cmd-e': 'narrow:query-current-word'
 
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
-  # Danger: I use direct-edit very frequently, so intentionally recover `i` of vim-mode-plus.
-  'i': 'vim-mode-plus:activate-insert-mode'
   '-': 'narrow-ui:exclude-file'
   '=': 'narrow-ui:clear-excluded-files'
   's': 'narrow-ui:select-files'
-  "enter": 'core:confirm' # recover original enter for narrow-editor
+  ';': 'narrow-ui:confirm-keep-open'
+  'n': 'narrow-ui:move-to-next-file-item'
+  'p': 'narrow-ui:move-to-previous-file-item'
 ```
 
 # Recommended configuration for other packages.
