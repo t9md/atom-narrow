@@ -1,3 +1,10 @@
+# 0.53.0: vim-mode-plus specific default keymaps are REMOVED
+- Breaking: Remove vim-mode-plus specific default keymap to avoid conflicts. #252
+  - User can recover older version keymap manually, see [wiki](https://github.com/t9md/atom-narrow/wiki/ExampleKeymap#restore-vim-mode-plus-specific-default-keymap-defined-old-version).
+- Fix: When revealing on initial open, now flash selected item correctly(was broken so fixed).
+- Improve: When `select-files` confirmed, move to confirmed filePath item. #254
+  - So `select-files` can be used to move to specific filePath item quickly as long as filtering filePaths to show.
+
 # 0.52.0:
 - New: project header and file header styles are now configurable
   - Following global setting is used as template for file and project header.(`__HEADER__` is replaced with actual value).
