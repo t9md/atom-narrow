@@ -258,12 +258,9 @@ Explanation of my keymap.
 
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode,
   atom-workspace.has-narrow atom-text-editor.vim-mode-plus.visual-mode':
-    # cmd-e to set current word as query of active ui.
-    'cmd-e': 'narrow:query-current-word'
+    'cmd-e': 'narrow:query-current-word' # set current word as query of active ui.
 
 'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
-  '-': 'narrow-ui:exclude-file'
-  '=': 'narrow-ui:clear-excluded-files'
   's': 'narrow-ui:select-files'
   ';': 'narrow-ui:confirm-keep-open'
   'n': 'narrow-ui:move-to-next-file-item'
