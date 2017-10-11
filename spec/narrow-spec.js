@@ -987,6 +987,48 @@ describe("narrow", () => {
           selectedItemText: "p1-f1: apple",
         })
 
+        // Section0: Move to selected file.
+        {
+          const selectFiles = getNarrowForUi(await ui.selectFiles())
+          await selectFiles.ensure({
+            text: $`
+
+              project1/p1-f1
+              project1/p1-f2
+              project2/p2-f1
+              project2/p2-f2
+              `,
+          })
+
+          ensureEditorIsActive(selectFiles.ui.editor)
+          const promise = emitterEventPromise(selectFiles.ui.emitter, "did-destroy")
+          runCommand("core:move-down")
+          runCommand("core:move-down") // Move to file "project1/p1-f2"
+          runCommand("core:confirm")
+          await promise
+
+          // Ensure f1 matching files are excluded and not listed in narrow-editor.
+          ensureEditorIsActive(ui.editor)
+          expect(ui.excludedFiles).toEqual([])
+          await ensure({
+            text: $`
+              apple
+              # project1
+              ## p1-f1
+              p1-f1: apple
+              ## p1-f2
+              p1-f2: apple
+              # project2
+              ## p2-f1
+              p2-f1: apple
+              ## p2-f2
+              p2-f2: apple
+              `,
+            cursor: [5, 7],
+            selectedItemText: "p1-f2: apple",
+          })
+        }
+
         // Section1
         {
           const selectFiles = getNarrowForUi(await ui.selectFiles())
@@ -1089,8 +1131,8 @@ describe("narrow", () => {
               ## p2-f2
               p2-f2: apple
               `,
-            cursor: [5, 7],
-            selectedItemText: "p1-f2: apple",
+            cursor: [3, 7],
+            selectedItemText: "p1-f1: apple",
           })
         }
       })
