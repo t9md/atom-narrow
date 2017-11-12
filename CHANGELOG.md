@@ -1,3 +1,9 @@
+# 0.53.2:
+- Change in default: More distinguishable/color scheme safe default value for header appearance.
+  - `projectHeaderTemplate`: default `[__HEADER__]`, was just `__HEADER__`
+  - `fileHeaderTemplate`: default `# __HEADER__`, was just `__HEADER__`
+- Fix: No longer access `vimState.modeManager`, so no loger warned.
+
 # 0.53.1:
 - Fix: Now show  keymap removal notification only once.
 
