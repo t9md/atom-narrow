@@ -67,6 +67,8 @@
 'atom-text-editor.narrow.narrow-editor.normal-mode.vim-mode-plus[data-grammar="source narrow"]':
   'k': 'vim-mode-plus:move-up-wrap'
   'j': 'vim-mode-plus:move-down-wrap'
+  'o': 'narrow-ui:confirm-keep-open'
+  'O': 'narrow-ui:open-here'
 
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode:not(.has-occurrence)':
   'tab': 'narrow:next-item'
