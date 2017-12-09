@@ -1,3 +1,6 @@
+# 0.54.0:
+- New: Provider `fold` now save foldLevel to config. by @slavaGanzin
+
 # 0.53.2:
 - Change in default: More distinguishable/color scheme safe default value for header appearance.
   - `projectHeaderTemplate`: default `[__HEADER__]`, was just `__HEADER__`
