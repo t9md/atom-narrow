@@ -1,3 +1,6 @@
+# 0.54.1:
+- Fix: Remove leftover `console.log` for provider `fold`.
+
 # 0.54.0:
 - New: Provider `fold` now save foldLevel to config. by @slavaGanzin
 
