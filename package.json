@@ -62,7 +62,8 @@
     "underscore-plus": "^1.6.6"
   },
   "devDependencies": {
-    "fs-extra": "^2.0.0"
+    "fs-extra": "^2.0.0",
+    "prettier": "^1.9.1"
   },
   "scripts": {
     "test": "apm test",
