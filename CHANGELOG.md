@@ -1,8 +1,12 @@
+# 0.54.3:
+- Fix: `current-project-by-current` no longer throw exception. fixed by @jonboiser thanks!
+  - This is regression introduced in v0.54.2. Sorry
+  
 # 0.54.2:
 - Fix: Quick workaround for narrow grammar is not set in Atom-v1.24.0-beta0.
   - Not sure why calling `pane.activateItem` revert grammar from narrow to null-grammar.
   - To workaround this, set grammar after `pane.activateItem`.
-  
+
 # 0.54.1:
 - Fix: Remove leftover `console.log` for provider `fold`.
 
