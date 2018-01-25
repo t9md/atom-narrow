@@ -46,6 +46,11 @@
       "versions": {
         "^0.1.0": "consumeVim"
       }
+    },
+    "inline-git-diff": {
+      "versions": {
+        "^1.0.0": "consumeInlineGitDiff"
+      }
     }
   },
   "providedServices": {
