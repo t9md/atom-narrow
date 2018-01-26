@@ -1,10 +1,9 @@
 'use babel'
 
 const Ui = require('../lib/ui')
-const fs = require('fs-plus')
 const Path = require('path')
 const settings = require('../lib/settings')
-const {it, fit, ffit, fffit, emitterEventPromise, beforeEach, afterEach} = require('./async-spec-helpers')
+const {it, fit, ffit, fffit, emitterEventPromise, beforeEach, afterEach} = require('./async-spec-helpers') // eslint-disable-line
 
 const {
   startNarrow,
@@ -311,7 +310,7 @@ describe('narrow', () => {
       await narrows[8].ensure('9', {text: '9\n9'})
       await narrows[9].ensure('a', {text: 'a\na'})
       await narrows[10].ensure('b', {text: 'b\nb'})
-      for ({ui} of narrows) ui.destroy()
+      for (const {ui} of narrows) ui.destroy()
       ensureUiSize(0)
       await reopen(); ensureText('b\nb'); ensureUiSize(1)
       await reopen(); ensureText('a\na'); ensureUiSize(2)
@@ -683,7 +682,7 @@ describe('narrow', () => {
     describe("auto-sync selected-item to acitive-editor's cursor position", () =>
       // prettier-ignore
       it('provider.editor is bound to active text-editor and auto-refreshed', async () => {
-        const {ui, provider, ensure} = narrow
+        const {provider, ensure} = narrow
         const setCursor = (editor, point) => editor.setCursorBufferPosition(point)
 
         jasmine.useRealClock()
@@ -726,10 +725,11 @@ describe('narrow', () => {
         narrow = await startNarrow('scan')
       })
 
-      it('add css class to narrowEditorElement', async () =>
-        await narrow.ensure({classListContains: ['narrow', 'narrow-editor', 'scan']}))
+      it('add css class to narrowEditorElement', async () => {
+        await narrow.ensure({classListContains: ['narrow', 'narrow-editor', 'scan']})
+      })
 
-      it('initial state is whole buffer lines', async () =>
+      it('initial state is whole buffer lines', async () => {
         await narrow.ensure({
           text: $`
 
@@ -737,7 +737,8 @@ describe('narrow', () => {
             grape
             lemmon
             `
-        }))
+        })
+      })
 
       it('can filter by query', async () => {
         await narrow.ensure('app', {
@@ -844,8 +845,8 @@ describe('narrow', () => {
 
   describe('search', () => {
     let p1, p1f1, p1f2, p1f3
-    let p2, p2f1, p2f2, p2f3
-    beforeEach(() =>
+    let p2, p2f1, p2f2
+    beforeEach(() => {
       runs(() => {
         settings.set('projectHeaderTemplate', '# __HEADER__')
         settings.set('fileHeaderTemplate', '## __HEADER__')
@@ -857,14 +858,13 @@ describe('narrow', () => {
         p2 = atom.project.resolvePath('project2')
         p2f1 = Path.join(p2, 'p2-f1')
         p2f2 = Path.join(p2, 'p2-f2')
-        p2f3 = Path.join(p2, 'p2-f3.php')
 
         const fixturesDir = atom.project.getPaths()[0]
         atom.project.removePath(fixturesDir)
         atom.project.addPath(p1)
         atom.project.addPath(p2)
       })
-    )
+    })
 
     describe('basic behavior', () => {
       const previewCommand = command => {
@@ -1263,7 +1263,6 @@ describe('narrow', () => {
           cursor: [3, 6],
           selectedItemText: 'path: a\\/b\\/c'
         })
-        const startAndEnsure = provider => startNarrow(provider, {query}).then(ensureSearch)
 
         it('[atom-scan]', async () => {
           await ensureSearch('atom-scan', {query})

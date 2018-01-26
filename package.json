@@ -80,7 +80,12 @@
   "standard": {
     "parser": "babel-eslint",
     "globals": [
-      "atom"
+      "atom",
+      "describe",
+      "jasmine",
+      "expect",
+      "advanceClock",
+      "runs"
     ],
     "ignore": [
       "spec/fixtures/*"
