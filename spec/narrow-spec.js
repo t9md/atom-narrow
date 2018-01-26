@@ -2,7 +2,7 @@
 
 const Ui = require("../lib/ui")
 const fs = require("fs-plus")
-const path = require("path")
+const Path = require("path")
 const settings = require("../lib/settings")
 const {it, fit, ffit, fffit, emitterEventPromise, beforeEach, afterEach} = require("./async-spec-helpers")
 
@@ -851,13 +851,13 @@ describe("narrow", () => {
         settings.set("fileHeaderTemplate", "## __HEADER__")
 
         p1 = atom.project.resolvePath("project1")
-        p1f1 = path.join(p1, "p1-f1")
-        p1f2 = path.join(p1, "p1-f2")
-        p1f3 = path.join(p1, "p1-f3.php")
+        p1f1 = Path.join(p1, "p1-f1")
+        p1f2 = Path.join(p1, "p1-f2")
+        p1f3 = Path.join(p1, "p1-f3.php")
         p2 = atom.project.resolvePath("project2")
-        p2f1 = path.join(p2, "p2-f1")
-        p2f2 = path.join(p2, "p2-f2")
-        p2f3 = path.join(p2, "p2-f3.php")
+        p2f1 = Path.join(p2, "p2-f1")
+        p2f2 = Path.join(p2, "p2-f2")
+        p2f3 = Path.join(p2, "p2-f3.php")
 
         const fixturesDir = atom.project.getPaths()[0]
         atom.project.removePath(fixturesDir)
