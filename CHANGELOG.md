@@ -1,3 +1,11 @@
+# 0.55.0:
+- New: `git-diff-all` provider support `inline-git-diff`. #266
+  - Click new `octface` icon on controlBar to enable/disable `inline-git-diff`.
+  - If not installed, manually install or answer `Yes` for auto-install suggestion on click `octface` icon timing.
+- Internal:
+  - Apply `standard` linter/syntax #267
+  - Did some code rewriting for readability.
+
 # 0.54.4:
 - Fix: `fold` provider now collect fold only rather than collect all lines as fold in Atom-v1.24.0-beta
 
