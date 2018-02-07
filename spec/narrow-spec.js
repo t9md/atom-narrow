@@ -967,7 +967,7 @@ describe('narrow', () => {
         })
       })
 
-      it('can filter files by selet-files provider', async () => {
+      it('can filter files by select-files provider', async () => {
         jasmine.useRealClock()
         await ensure({
           text: $`

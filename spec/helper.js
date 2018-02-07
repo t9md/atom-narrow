@@ -120,11 +120,11 @@ class Ensureer {
   }
 
   ensureItemsCount (count) {
-    expect(this.items.getCount()).toBe(count)
+    expect(this.items.getNormalItemCount()).toBe(count)
   }
 
   ensureSelectedItemRow (row) {
-    expect(this.items.getRowForSelectedItem()).toBe(row)
+    expect(this.items.getSelectedItem()._row).toBe(row)
   }
 
   ensureSelectedItemText (text) {
@@ -165,7 +165,7 @@ class Ensureer {
 
   ensureColumnForSelectedItem (column) {
     const cursorPosition = this.editor.getCursorBufferPosition()
-    expect(this.items.getRowForSelectedItem()).toBe(cursorPosition.row)
+    expect(this.items.getSelectedItem()._row).toBe(cursorPosition.row)
     expect(cursorPosition.column).toBe(column)
   }
 
