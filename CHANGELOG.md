@@ -1,3 +1,10 @@
+# 0.56.0:
+- Internal: Cleanup, remove lots of unnecessary indirection in code which was remains in historical reason.
+- Support: Remove (I think) no longer necessary old warning of vmp specific keymap removal.
+- Fix: Inaccurate item choice on `narrow:next-item`, `narrow:previous-item`
+  - Which was caused by comparing point between different file.
+  - Points are comparable only on same file. Now no longer does this inappropriate comparison.
+
 # 0.55.0:
 - New: `git-diff-all` provider support `inline-git-diff`. #266
   - Click new `octface` icon on controlBar to enable/disable `inline-git-diff`.
