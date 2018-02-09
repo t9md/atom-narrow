@@ -1,5 +1,3 @@
-'use babel'
-
 const Ui = require('../lib/ui')
 const Path = require('path')
 const settings = require('../lib/settings')

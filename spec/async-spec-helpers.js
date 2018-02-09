@@ -1,7 +1,14 @@
-'use babel'
 // Borrowed from Atom core's spec.
 
-export function beforeEach (fn) {
+module.exports = {
+  beforeEach,
+  afterEach,
+  conditionPromise,
+  timeoutPromise,
+  emitterEventPromise
+}
+
+function beforeEach (fn) {
   global.beforeEach(function () {
     const result = fn()
     if (result instanceof Promise) {
@@ -10,7 +17,7 @@ export function beforeEach (fn) {
   })
 }
 
-export function afterEach (fn) {
+function afterEach (fn) {
   global.afterEach(function () {
     const result = fn()
     if (result instanceof Promise) {
@@ -19,7 +26,7 @@ export function afterEach (fn) {
   })
 }
 
-;['it', 'fit', 'ffit', 'fffit'].forEach(function (name) {
+for (const name of ['it', 'fit', 'ffit', 'fffit']) {
   module.exports[name] = function (description, fn) {
     global[name](description, function () {
       const result = fn()
@@ -28,9 +35,9 @@ export function afterEach (fn) {
       }
     })
   }
-})
+}
 
-export async function conditionPromise (condition) {
+async function conditionPromise (condition) {
   const startTime = Date.now()
 
   while (true) {
@@ -46,7 +53,7 @@ export async function conditionPromise (condition) {
   }
 }
 
-export function timeoutPromise (timeout) {
+function timeoutPromise (timeout) {
   return new Promise(function (resolve) {
     global.setTimeout(resolve, timeout)
   })
@@ -62,7 +69,7 @@ function waitsForPromise (fn) {
   })
 }
 
-export function emitterEventPromise (emitter, event, timeout = 15000) {
+function emitterEventPromise (emitter, event, timeout = 15000) {
   return new Promise((resolve, reject) => {
     const timeoutHandle = setTimeout(() => {
       reject(new Error(`Timed out waiting for '${event}' event`))

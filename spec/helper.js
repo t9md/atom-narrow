@@ -1,4 +1,3 @@
-'use babel'
 const _ = require('underscore-plus')
 const {inspect} = require('util')
 const Provider = require('../lib/provider/provider')

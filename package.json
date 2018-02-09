@@ -68,7 +68,6 @@
     "underscore-plus": "^1.6.6"
   },
   "devDependencies": {
-    "babel-eslint": "^7.2.3",
     "prettier": "^1.10.2",
     "standard": "^10.0.3"
   },
@@ -88,7 +87,6 @@
       "jasmine": true,
       "node": true
     },
-    "parser": "babel-eslint",
     "globals": [
       "atom"
     ],
