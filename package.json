@@ -82,14 +82,15 @@
     "lint": "standard lib/*.js lib/**/*.js spec/*.js"
   },
   "standard": {
+    "env": {
+      "atomtest": true,
+      "browser": true,
+      "jasmine": true,
+      "node": true
+    },
     "parser": "babel-eslint",
     "globals": [
-      "atom",
-      "describe",
-      "jasmine",
-      "expect",
-      "advanceClock",
-      "runs"
+      "atom"
     ],
     "ignore": [
       "spec/fixtures/*"

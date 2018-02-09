@@ -1,23 +1,25 @@
 'use babel'
 const _ = require('underscore-plus')
 const {inspect} = require('util')
-const ProviderBase = require('../lib/provider/provider-base')
+const Provider = require('../lib/provider/provider')
 
 const {emitterEventPromise} = require('./async-spec-helpers')
 
 function startNarrow (providerName, options) {
-  return ProviderBase.start(providerName, options).then(getNarrowForUi)
+  const Klass = require(`../lib/provider/${providerName}`)
+  return new Klass().start(options).then(getNarrowForProvider)
 }
 
 function reopen () {
-  return ProviderBase.reopen()
+  return Provider.reopen()
 }
 
-function getNarrowForUi (ui) {
+function getNarrowForProvider (provider) {
+  const ui = provider.ui
   return {
     ui: ui,
-    provider: ui.provider,
-    ensure: new Ensureer(ui, ui.provider).ensure
+    provider: provider,
+    ensure: new Ensureer(ui, provider).ensure
   }
 }
 
@@ -78,8 +80,6 @@ const ensureOptionsOrdered = [
   'searchItems',
   'columnForSelectedItem'
 ]
-// var Ensureer = (function() {
-// let ensureOptionsOrdered = undefined
 class Ensureer {
   constructor (ui, provider) {
     this.ensure = this.ensure.bind(this)
@@ -261,7 +261,7 @@ module.exports = {
   paneForItem,
   setActiveTextEditor,
   setActiveTextEditorWithWaits,
-  getNarrowForUi,
+  getNarrowForProvider,
   reopen,
   unindent
 }

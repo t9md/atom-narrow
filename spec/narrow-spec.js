@@ -8,7 +8,7 @@ const {it, fit, ffit, fffit, emitterEventPromise, beforeEach, afterEach} = requi
 const {
   startNarrow,
   reopen,
-  getNarrowForUi,
+  getNarrowForProvider,
   ensureEditor,
   ensurePaneLayout,
   ensureEditorIsActive,
@@ -989,7 +989,7 @@ describe('narrow', () => {
 
         // Section0: Move to selected file.
         {
-          const selectFiles = getNarrowForUi(await ui.selectFiles())
+          const selectFiles = getNarrowForProvider(await ui.selectFiles())
           await selectFiles.ensure({
             text: $`
 
@@ -1031,7 +1031,7 @@ describe('narrow', () => {
 
         // Section1
         {
-          const selectFiles = getNarrowForUi(await ui.selectFiles())
+          const selectFiles = getNarrowForProvider(await ui.selectFiles())
           await selectFiles.ensure({
             text: $`
 
@@ -1084,7 +1084,7 @@ describe('narrow', () => {
 
         // Section2
         {
-          const selectFiles = getNarrowForUi(await ui.selectFiles())
+          const selectFiles = getNarrowForProvider(await ui.selectFiles())
 
           // selectFiles query are remembered until closing narrow-editor.
           await selectFiles.ensure({
