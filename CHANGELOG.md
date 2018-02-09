@@ -1,3 +1,6 @@
+# 0.56.1:
+- Fix: Regression `toggle-inline-git-diff` button didn't work.
+
 # 0.56.0:
 - Internal: Cleanup, remove lots of unnecessary indirection in code which was remains in historical reason.
 - Support: Remove (I think) no longer necessary old warning of vmp specific keymap removal.
