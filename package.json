@@ -68,7 +68,6 @@
     "underscore-plus": "^1.6.6"
   },
   "devDependencies": {
-    "babel-eslint": "^7.2.3",
     "prettier": "^1.10.2",
     "standard": "^10.0.3"
   },
@@ -82,14 +81,14 @@
     "lint": "standard lib/*.js lib/**/*.js spec/*.js"
   },
   "standard": {
-    "parser": "babel-eslint",
+    "env": {
+      "atomtest": true,
+      "browser": true,
+      "jasmine": true,
+      "node": true
+    },
     "globals": [
-      "atom",
-      "describe",
-      "jasmine",
-      "expect",
-      "advanceClock",
-      "runs"
+      "atom"
     ],
     "ignore": [
       "spec/fixtures/*"

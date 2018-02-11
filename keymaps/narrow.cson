@@ -21,8 +21,8 @@
 
 # narrow-editor.fold
 'atom-text-editor.narrow.narrow-editor.fold[data-grammar="source narrow"]':
-  'cmd-]': 'narrow-ui:fold:increase-fold-level'
-  'cmd-[': 'narrow-ui:fold:decrease-fold-level'
+  'cmd-]': 'narrow-ui:fold-increase-level'
+  'cmd-[': 'narrow-ui:fold-decrease-level'
 
 # vmp and non-vmp shared
 # -------------------------
