@@ -120,6 +120,11 @@ atom-text-editor {
 }
 
 atom-text-editor.narrow-editor {
+  &.hide-cursor {
+    .cursor {
+      display: none
+    }
+  }
   // block-cursor on read-only mode
   &.read-only {
     &.is-focused {
