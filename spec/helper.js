@@ -150,7 +150,7 @@ class Ensureer {
       } else if (isFileHeaderItem(item)) {
         actualObject[projectName][relativizedFilePath(item)] = []
       } else {
-        const itemText = this.ui.itemEditor.getTextForItem(item)
+        const itemText = this.ui.narrowEditor.getTextForItem(item)
         actualObject[projectName][relativizedFilePath(item)].push(itemText)
       }
     }
