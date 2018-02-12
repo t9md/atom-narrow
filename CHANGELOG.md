@@ -1,3 +1,13 @@
+# 0.57.0:
+- Breaking, Plugin Support: Bump `narrow` service version from `1.0.0` to `2.0.0`
+  - `ProviderBase` is no longer provided.
+  - Use `Provider` but useage is differnt.
+- Architecture redesign: Narrow provider use composition rather than inherit. #272
+  - Each provider no longer inherit `ProviderBase`, instead it have `Provider` instance as prop and use it's functionality.
+- Refactoring:
+  - Extract narrow-able editor concern as `NarrowEditor` class.
+  - And more and more but I'm too lazy to put detail here.
+
 # 0.56.1:
 - Fix: Regression `toggle-inline-git-diff` button didn't work.
 
