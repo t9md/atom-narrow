@@ -4,7 +4,7 @@ const settings = require('../lib/settings')
 const {it, fit, ffit, fffit, emitterEventPromise, beforeEach, afterEach} = require('./async-spec-helpers') // eslint-disable-line
 
 const {
-  startNarrow,
+  // startNarrow,
   reopen,
   getNarrowForProvider,
   ensureEditor,
@@ -28,21 +28,23 @@ const appleGrapeLemmonText = $`
 // Main
 // -------------------------
 describe('narrow', () => {
-  let editor
+  let editor, service
+  function startNarrow (name, options) {
+    return service.narrow(name, options).then(getNarrowForProvider)
+  }
 
   beforeEach(async () => {
     // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
     // So set it to `true` again here to test with default value.
     atom.config.set('core.destroyEmptyPanes', true)
-
     const activationPromise = atom.packages.activatePackage('narrow')
     atom.workspace.open().then(_editor => {
       editor = _editor
       // HACK: Activate command by toggle setting command, it's most side-effect-less.
       atom.commands.dispatch(editor.element, 'narrow:activate-package')
     })
-
-    await activationPromise
+    const pkg = await activationPromise
+    service = pkg.mainModule.provideNarrow()
   })
 
   describe('confirm family', () => {

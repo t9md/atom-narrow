@@ -4,11 +4,6 @@ const Provider = require('../lib/provider/provider')
 
 const {emitterEventPromise} = require('./async-spec-helpers')
 
-function startNarrow (providerName, options) {
-  const Klass = require(`../lib/provider/${providerName}`)
-  return new Klass().start(options).then(getNarrowForProvider)
-}
-
 function reopen () {
   return Provider.reopen()
 }
@@ -251,7 +246,6 @@ function unindent (strings, ...values) {
 }
 
 module.exports = {
-  startNarrow,
   dispatchCommand,
   ensureEditor,
   ensurePaneLayout,
