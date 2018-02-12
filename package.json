@@ -11,6 +11,9 @@
   "repository": "https://github.com/t9md/atom-narrow",
   "license": "MIT",
   "activationCommands": {
+    "atom-workspace": [
+      "narrow:activate-package"
+    ],
     "atom-text-editor": [
       "narrow:atom-scan",
       "narrow:atom-scan-by-current-word",
@@ -28,8 +31,7 @@
       "narrow:search-current-project-by-current-word",
       "narrow:symbols",
       "narrow:symbols-by-current-word",
-      "narrow:toggle-search-start-by-double-click",
-      "narrow:activate-package"
+      "narrow:toggle-search-start-by-double-click"
     ],
     "atom-text-editor.vim-mode-plus-search": [
       "vim-mode-plus-user:narrow:scan",
@@ -57,7 +59,7 @@
     "narrow": {
       "description": "narrow",
       "versions": {
-        "1.0.0": "provideNarrow"
+        "2.0.0": "provideNarrow"
       }
     }
   },

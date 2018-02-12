@@ -37,12 +37,10 @@ describe('narrow', () => {
     // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
     // So set it to `true` again here to test with default value.
     atom.config.set('core.destroyEmptyPanes', true)
+    editor = await atom.workspace.open()
+    
     const activationPromise = atom.packages.activatePackage('narrow')
-    atom.workspace.open().then(_editor => {
-      editor = _editor
-      // HACK: Activate command by toggle setting command, it's most side-effect-less.
-      atom.commands.dispatch(editor.element, 'narrow:activate-package')
-    })
+    atom.commands.dispatch(atom.workspace.getElement(), 'narrow:activate-package')
     const pkg = await activationPromise
     service = pkg.mainModule.provideNarrow()
   })
