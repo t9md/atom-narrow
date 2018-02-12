@@ -1,7 +1,6 @@
 # narrow
 
 [![Build Status](https://travis-ci.org/t9md/atom-narrow.svg?branch=master)](https://travis-ci.org/t9md/atom-narrow)
-<!-- [![Join the chat at https://gitter.im/t9md/atom-narrow](https://badges.gitter.im/t9md/atom-narrow.svg)](https://gitter.im/t9md/atom-narrow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) -->
 
 narrow something.  
 Code navigation tool inspired by unite.vim, emacs-helm.  
@@ -186,8 +185,6 @@ Start it from command-palette or set keymap in `keymap.cson`.
 
 ```coffeescript
   narrow:
-    Search:
-      startByDoubleClick: true
     SelectFiles:
       rememberQuery: true
     confirmOnUpdateRealFile: false
@@ -219,24 +216,16 @@ Explanation of my keymap.
   'cmd-e': 'narrow:search-by-current-word'
 
 'atom-text-editor.vim-mode-plus:not(.insert-mode)':
-  # For frequent uses, assign shorter keymap(non-2-step keymap).
-  'ctrl-z': 'narrow:reopen'
-
-  'space f': 'narrow:fold'
-
-  'cmd-o': 'narrow:symbols-by-current-word'
+  'ctrl-z':      'narrow:reopen'
+  'space f':     'narrow:fold'
+  'cmd-o':       'narrow:symbols-by-current-word'
   'cmd-shift-o': 'narrow:project-symbols-by-current-word'
-
-  # Override default cmd-r and cmd-shift-r
-  'cmd-r': 'narrow:symbols'
-  'cmd-shift-r': 'narrow:project-symbols'
-
-  'space l': 'narrow:scan'
-  'cmd-l': 'narrow:scan-by-current-word'
-
-  'space s': 'narrow:search'
-
-  'space G': 'narrow:git-diff-all'
+  'cmd-r':       'narrow:symbols' # Override default cmd-r
+  'cmd-shift-r': 'narrow:project-symbols' # Override default cmd-shift-r
+  'space l':     'narrow:scan'
+  'cmd-l':       'narrow:scan-by-current-word'
+  'space s':     'narrow:search'
+  'space G':     'narrow:git-diff-all'
 
 # When workspace has narrow-editor
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode':
@@ -253,6 +242,7 @@ Explanation of my keymap.
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
   'cmd-f': 'narrow:focus'
   'cmd-i': 'narrow:focus-prompt' # cmd-i to return to calling editor.
+  
   # Danger: apply change on narrow-editor to real file by `cmd-s`.
   'cmd-s': 'narrow-ui:update-real-file'
 
@@ -260,7 +250,8 @@ Explanation of my keymap.
   atom-workspace.has-narrow atom-text-editor.vim-mode-plus.visual-mode':
     'cmd-e': 'narrow:query-current-word' # set current word as query of active ui.
 
-'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode[data-grammar="source narrow"]':
+'atom-text-editor.narrow.narrow-editor.vim-mode-plus.normal-mode':
+  'g g': 'narrow-ui:move-to-prompt'
   's': 'narrow-ui:select-files'
   ';': 'narrow-ui:confirm-keep-open'
   'n': 'narrow-ui:move-to-next-file-item'
