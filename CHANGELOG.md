@@ -5,7 +5,7 @@
 # 0.57.0:
 - Breaking, Plugin Support: Bump `narrow` service version from `1.0.0` to `2.0.0`
   - `ProviderBase` is no longer provided.
-  - Use `Provider` but useage is differnt.
+  - Use `Provider` but usage is different.
 - Architecture redesign: Narrow provider use composition rather than inherit. #272
   - Each provider no longer inherit `ProviderBase`, instead it have `Provider` instance as prop and use it's functionality.
 - Refactoring:
