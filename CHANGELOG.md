@@ -1,3 +1,7 @@
+# 0.57.1:
+- Fix: Regression where markerLayer for highlight `truncationIndicator` was not defined. #275
+  - No longer throw error where narrow-editor have `[truncated]` and scroll to there.
+
 # 0.57.0:
 - Breaking, Plugin Support: Bump `narrow` service version from `1.0.0` to `2.0.0`
   - `ProviderBase` is no longer provided.
