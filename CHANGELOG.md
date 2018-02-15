@@ -1,3 +1,24 @@
+# 0.58.0:
+- Fix: No longer throw exception when `core:move-up`/`core:move-down` command was executed with empty items #276
+- Improve: History #277
+  - Tune when history is saved for `atom-scan`, `search`, `scan` provider(added confirm timing).
+  - When recall history No longer move to item when cursor is at prompt of narrow editor.
+  - History feature itself is not new, was provided by default keymap which is available globally as long as workspace `has-narrow`.
+    - `ctrl-cmd-[`(`narrow:previous-query-history`)
+    - `ctrl-cmd-]`(`narrow:next-query-history`)
+  - For user who want to recall history from narrow-editor's prompt as like normal search-tool, define following keymap in `keymap.cson`.
+    - NOTE: This is vim-mode-plus user specific example
+    ```coffeescript
+    'atom-text-editor.narrow.narrow-editor.vim-mode-plus.insert-mode.prompt':
+      # with up/down arrow key
+      'up': 'narrow:previous-query-history'
+      'down': 'narrow:next-query-history'
+
+      # or ctrl-p, ctrl-n
+      'ctrl-p': 'narrow:previous-query-history'
+      'ctrl-n': 'narrow:next-query-history'
+    ```
+
 # 0.57.1:
 - Fix: Regression where markerLayer for highlight `truncationIndicator` was not defined. #275
   - No longer throw error where narrow-editor have `[truncated]` and scroll to there.
