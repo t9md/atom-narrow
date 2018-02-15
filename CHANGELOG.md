@@ -1,3 +1,6 @@
+# 0.59.0:
+- Improve, Experiment: Automatically append space at end of query on `move-to-prompt` to input next query immediately #278.
+
 # 0.58.0:
 - Fix: No longer throw exception when `core:move-up`/`core:move-down` command was executed with empty items #276
 - Improve: History #277
