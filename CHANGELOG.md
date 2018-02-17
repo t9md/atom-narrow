@@ -1,5 +1,14 @@
-# 0.59.1:
+# 0.60.0:
 - Fix: When non-narrow-editor was active, first click on narrow-editor didn't start auto-preview item, but no longer.
+- New: Config `drawItemAtUpperMiddleOnPreview` to scroll item to be displayed at upper-middle of viewport on preview.
+  - Default enabled for provider `fold`, `symbols` and `project-symbols`
+  - Intention? I use `symbols` by `cmd-o` shortcut to quickly refer function/method body. So my general workflow is
+    1. Encounter function/method, then preview it by `cmd-o`.
+    2. After reading function body close by `ctrl-g`.
+  - Before this change function sometimes shown at bottom of screen which require hand scroll to read function body.
+- Improve: Update `project-symbols`'s tag `kind`.
+  - old: `cfm`
+  - new: `cfmr`(now JavaScript's method is shown)
 
 # 0.59.0:
 - Improve, Experiment: Automatically append space at end of query on `move-to-prompt` to input next query immediately #278.
