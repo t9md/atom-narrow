@@ -1,3 +1,6 @@
+# 0.59.1:
+- Fix: When non-narrow-editor was active, first click on narrow-editor didn't start auto-preview item, but no longer.
+
 # 0.59.0:
 - Improve, Experiment: Automatically append space at end of query on `move-to-prompt` to input next query immediately #278.
 
