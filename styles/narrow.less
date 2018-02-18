@@ -26,11 +26,11 @@ atom-text-editor .narrow-ui-item-indicator-protected {
 
 // row-marker
 // =========================
-@row-marker-color: fadeout(lighten(@syntax-color-added, 0%), 20%);
+@row-marker-color: fadeout(lighten(@syntax-color-function, 0%), 20%);
 
 atom-text-editor {
   .line.narrow-line-marker {
-    box-shadow: 0 -7px 0 -6px @row-marker-color inset;
+    box-shadow: 0 -5px 0 -3px @row-marker-color inset;
   }
 }
 
@@ -56,10 +56,9 @@ atom-text-editor {
 .flash-animation(narrow-match-flash, @flash-color);
 
 @match-base: @syntax-result-marker-color;
-@match: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 0.4);
+@match: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 0.2);
 @match-border-current: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 1.0);
 
-@match-ui: hsla(hue(@match-base), saturation(@match-base), lightness(@match-base), 0.2);
 @flash-cursor-line-color: contrast(
   @syntax-background-color,
   darken(@syntax-selection-color, 3%),
