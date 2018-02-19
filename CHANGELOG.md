@@ -1,3 +1,8 @@
+# 0.60.1:
+- Fix: RegExp search for `search`, `atom-scan`, `scan` didn't work because of regression.
+  - After v0.57.0.
+- Style: Modify match color and line-marker color.
+
 # 0.60.0:
 - Fix: When non-narrow-editor was active, first click on narrow-editor didn't start auto-preview item, but no longer.
 - New: Config `drawItemAtUpperMiddleOnPreview` to scroll item to be displayed at upper-middle of viewport on preview.
