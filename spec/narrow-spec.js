@@ -95,6 +95,13 @@ describe('narrow', () => {
   })
 
   describe('narrow-editor open/close', () => {
+    function getBottomDockActiveItem () {
+      return atom.workspace.getBottomDock().getActivePaneItem()
+    }
+    function getCenterActiveItem () {
+      return atom.workspace.getCenter().getActivePaneItem()
+    }
+
     beforeEach(() => {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
@@ -103,16 +110,40 @@ describe('narrow', () => {
     describe('[bottom] open/close in bottom dock', () => {
       it('open narow-editor at dock and can close by `core:close`', async () => {
         const narrow = await startNarrow('scan')
-        const dockActiveItem = atom.workspace.getBottomDock().getActivePaneItem()
+        const dockActiveItem = getBottomDockActiveItem()
         expect(dockActiveItem).toBe(narrow.ui.editor)
         const destroyPromise = emitterEventPromise(narrow.ui.emitter, 'did-destroy')
         atom.commands.dispatch(dockActiveItem.element, 'core:close')
         await destroyPromise
         expect(narrow.ui.destroyed).toBe(true)
-        expect(atom.workspace.getBottomDock().getActivePaneItem()).toBe(undefined)
+        expect(getBottomDockActiveItem()).toBe(undefined)
       })
     })
 
+    describe('[bottom/center] narrow-ui:switch-ui-location command', () => {
+      it('open narow-editor at dock and can close by `core:close`', async () => {
+        const narrow = await startNarrow('scan')
+
+        const ensureLocation = (location, item) => {
+          expect(narrow.ui.narrowEditor.getLocation()).toBe(location)
+          ensureEditorIsActive(narrow.ui.editor)
+          expect(item).toBe(narrow.ui.editor)
+        }
+
+        ensureLocation('bottom', getBottomDockActiveItem())
+
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        ensureLocation('center', getCenterActiveItem())
+        expect(getBottomDockActiveItem()).toBe(undefined)
+
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        ensureLocation('bottom', getBottomDockActiveItem())
+
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        ensureLocation('center', getCenterActiveItem())
+        expect(getBottomDockActiveItem()).toBe(undefined)
+      })
+    })
     describe('[center location] directionToOpen settings', () => {
       beforeEach(() => {
         atom.config.set('narrow.locationToOpen', 'center')
