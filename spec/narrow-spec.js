@@ -100,7 +100,20 @@ describe('narrow', () => {
       editor.setCursorBufferPosition([0, 0])
     })
 
-    describe('directionToOpen settings', () => {
+    describe('[bottom] open/close in bottom dock', () => {
+      it('open narow-editor at dock and can close by `core:close`', async () => {
+        const narrow = await startNarrow('scan')
+        const dockActiveItem = atom.workspace.getBottomDock().getActivePaneItem()
+        expect(dockActiveItem).toBe(narrow.ui.editor)
+        const destroyPromise = emitterEventPromise(narrow.ui.emitter, 'did-destroy')
+        atom.commands.dispatch(dockActiveItem.element, 'core:close')
+        await destroyPromise
+        expect(narrow.ui.destroyed).toBe(true)
+        expect(atom.workspace.getBottomDock().getActivePaneItem()).toBe(undefined)
+      })
+    })
+
+    describe('[center location] directionToOpen settings', () => {
       beforeEach(() => {
         atom.config.set('narrow.locationToOpen', 'center')
       })
