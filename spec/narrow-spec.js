@@ -34,6 +34,12 @@ describe('narrow', () => {
   }
 
   beforeEach(async () => {
+    // FIXME: override default value to run test on 'center' location. This
+    // means no `bottom` location test is done in spec, but currently test-spec
+    // is written with assuming narrow-editor is always open in `center`
+    // workspace.
+    atom.config.set('narrow.locationToOpen', 'center')
+
     // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
     // So set it to `true` again here to test with default value.
     atom.config.set('core.destroyEmptyPanes', true)
