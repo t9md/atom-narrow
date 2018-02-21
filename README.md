@@ -170,6 +170,7 @@ See [Wiki](https://github.com/t9md/atom-narrow/wiki/ExampleKeymap#restore-vim-mo
 - `narrow-ui:start-insert`: `I`(`!vmp`), `a`(`!vmp`)
 - `narrow-ui:move-to-next-file-item`: `n`(`!vmp`)
 - `narrow-ui:move-to-previous-file-item`: `p`(`!vmp`)
+- `narrow-ui:switch-ui-location`: No keymap by default, Switch location where ui opened between `center` workspace and `bottom` dock.
 
 # Keymaps
 
@@ -256,6 +257,7 @@ Explanation of my keymap.
   ';': 'narrow-ui:confirm-keep-open'
   'n': 'narrow-ui:move-to-next-file-item'
   'p': 'narrow-ui:move-to-previous-file-item'
+  'cmd-t': 'narrow-ui:switch-ui-location'
 ```
 
 # Recommended configuration for other packages.
