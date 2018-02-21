@@ -104,7 +104,7 @@
 - Fix: No longer access `vimState.modeManager`, so no loger warned.
 
 # 0.53.1:
-- Fix: Now show  keymap removal notification only once.
+- Fix: Now show keymap removal notification only once.
 
 # 0.53.0: vim-mode-plus specific default keymaps are REMOVED
 - Breaking: Remove vim-mode-plus specific default keymap to avoid conflicts. #252
