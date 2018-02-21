@@ -170,6 +170,7 @@ See [Wiki](https://github.com/t9md/atom-narrow/wiki/ExampleKeymap#restore-vim-mo
 - `narrow-ui:start-insert`: `I`(`!vmp`), `a`(`!vmp`)
 - `narrow-ui:move-to-next-file-item`: `n`(`!vmp`)
 - `narrow-ui:move-to-previous-file-item`: `p`(`!vmp`)
+- `narrow-ui:switch-ui-location`: No keymap by default, Switch location where ui opened between `center` workspace and `bottom` dock.
 
 # Keymaps
 
@@ -242,7 +243,7 @@ Explanation of my keymap.
 'atom-text-editor.narrow.narrow-editor[data-grammar="source narrow"]':
   'cmd-f': 'narrow:focus'
   'cmd-i': 'narrow:focus-prompt' # cmd-i to return to calling editor.
-  
+
   # Danger: apply change on narrow-editor to real file by `cmd-s`.
   'cmd-s': 'narrow-ui:update-real-file'
 
@@ -256,6 +257,7 @@ Explanation of my keymap.
   ';': 'narrow-ui:confirm-keep-open'
   'n': 'narrow-ui:move-to-next-file-item'
   'p': 'narrow-ui:move-to-previous-file-item'
+  'cmd-t': 'narrow-ui:switch-ui-location'
 ```
 
 # Recommended configuration for other packages.
@@ -322,6 +324,16 @@ Why I'm not using others? reason is here.
 
 - `fold`: Since it similar to `symbols`.
 - `atom-scan`: it is provided for windows user who can't use `search`(need `ag` or `rg`).
+
+### Noticed I can close `narrow-editor` by normal `cmd-w`(`core:close`). Why I need `narrow:close`? What's the difference?
+
+The biggest difference is `narrow:close` restore editor state(scrollTop, fold, active pane item) if user did only `preview` from startup.
+
+- `narrow:close`: Close `narrow-editor` and **restore editor state** when it appropriate. Also can close `narrow-editor` regardless of current active-editor.
+- `core:close`: Just destroy `narrow-editor`.
+
+Use whichever you want accordingly.
+I normally use `narrow:close` and occasionally use `core:close` such like when I want to focus next-pane-item of `narrow-editor`(so don't want to restore focus to narrow initiated editor).
 
 ### How can I exclude particular file from `narrow:search`
 

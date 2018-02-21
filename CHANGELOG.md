@@ -1,3 +1,24 @@
+# 0.61.0: Dock-able narrow-editor [WIP]
+- New: `narrow-editor` can open in dock #283
+  - First: If you immediately revert to previous behavior, set global `locationToOpen` to `center`, that's it!!
+  - What's this?
+    - In previous version `narrow-editor`(=ui) is openable only in center workspace's pane.
+    - From this version `narrow-editor` is openable in both `center` workspace and `bottom` dock.
+    - Technically it's openable in other dock like `right`, `left` but I want start it from `bottom` only.
+  - User can move `narrow-editor` in between `center` and `bottom` by
+    - drag&drop
+    - Clicking provider name at controlBar(e.g. click `scan` on controlBar).
+    - Or invoking `narrow-ui:switch-ui-location`(no default keymap) command.
+  - New: `locationToOpen` global and per-provider config which define default location(`center` or `bottom`).
+    - This value is referred at very first invocation of narrow after atom launch.
+    - Following narrow invocation open ui at last opened location.
+    - Last location is kept per provider basis, not shared across providers.
+- Other improvement:
+  - Now flash cursor row if items count is greater than 2.(was 5 before but it was a bit strange threshold).
+  - Centering `narrow-editor`'s cursor row on startup to reduce chance for getting lost.
+  - No longer unnecessary restore editor state when `focusOnStartCondition` was `never` and cursor moved at narrow initiator editor after launch.
+  - Flash current row regardless of `focus` to `narrow-editor` on startup(flashed only on `focused` in previous version).
+
 # 0.60.3:
 - Fix: just fix release number bug in CHANGELOG.md.
 
@@ -104,7 +125,7 @@
 - Fix: No longer access `vimState.modeManager`, so no loger warned.
 
 # 0.53.1:
-- Fix: Now show  keymap removal notification only once.
+- Fix: Now show keymap removal notification only once.
 
 # 0.53.0: vim-mode-plus specific default keymaps are REMOVED
 - Breaking: Remove vim-mode-plus specific default keymap to avoid conflicts. #252

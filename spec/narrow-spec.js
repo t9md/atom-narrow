@@ -4,13 +4,13 @@ const settings = require('../lib/settings')
 const {it, fit, ffit, fffit, emitterEventPromise, beforeEach, afterEach} = require('./async-spec-helpers') // eslint-disable-line
 
 const {
-  // startNarrow,
   reopen,
   getNarrowForProvider,
   ensureEditor,
   ensurePaneLayout,
   ensureEditorIsActive,
   dispatchEditorCommand,
+  getActiveEditor,
   paneForItem,
   setActiveTextEditor,
   setActiveTextEditorWithWaits,
@@ -43,6 +43,10 @@ describe('narrow', () => {
     atom.commands.dispatch(atom.workspace.getElement(), 'narrow:activate-package')
     const pkg = await activationPromise
     service = pkg.mainModule.provideNarrow()
+  })
+
+  afterEach(() => {
+    Ui.reset()
   })
 
   describe('confirm family', () => {
@@ -91,12 +95,59 @@ describe('narrow', () => {
   })
 
   describe('narrow-editor open/close', () => {
+    function getBottomDockActiveItem () {
+      return atom.workspace.getBottomDock().getActivePaneItem()
+    }
+    function getCenterActiveItem () {
+      return atom.workspace.getCenter().getActivePaneItem()
+    }
+
     beforeEach(() => {
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
     })
 
-    describe('directionToOpen settings', () => {
+    describe('[bottom] open/close in bottom dock', () => {
+      it('open narow-editor at dock and can close by `core:close`', async () => {
+        const narrow = await startNarrow('scan')
+        const dockActiveItem = getBottomDockActiveItem()
+        expect(dockActiveItem).toBe(narrow.ui.editor)
+        const destroyPromise = emitterEventPromise(narrow.ui.emitter, 'did-destroy')
+        atom.commands.dispatch(dockActiveItem.element, 'core:close')
+        await destroyPromise
+        expect(narrow.ui.destroyed).toBe(true)
+        expect(getBottomDockActiveItem()).toBe(undefined)
+      })
+    })
+
+    describe('[bottom/center] narrow-ui:switch-ui-location command', () => {
+      it('open narow-editor at dock and can close by `core:close`', async () => {
+        const narrow = await startNarrow('scan')
+
+        const ensureLocation = (location, item) => {
+          expect(narrow.ui.narrowEditor.getLocation()).toBe(location)
+          ensureEditorIsActive(narrow.ui.editor)
+          expect(item).toBe(narrow.ui.editor)
+        }
+
+        ensureLocation('bottom', getBottomDockActiveItem())
+
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        ensureLocation('center', getCenterActiveItem())
+        expect(getBottomDockActiveItem()).toBe(undefined)
+
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        ensureLocation('bottom', getBottomDockActiveItem())
+
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        ensureLocation('center', getCenterActiveItem())
+        expect(getBottomDockActiveItem()).toBe(undefined)
+      })
+    })
+    describe('[center location] directionToOpen settings', () => {
+      beforeEach(() => {
+        atom.config.set('narrow.locationToOpen', 'center')
+      })
       describe('from one pane', () => {
         beforeEach(() => {
           ensurePaneLayout([editor])
@@ -284,10 +335,14 @@ describe('narrow', () => {
   })
 
   describe('reopen', () => {
+    beforeEach(() => {
+      jasmine.attachToDOM(atom.workspace.getElement())
+    })
+
     // prettier-ignore
     it('reopen closed narrow editor up to 10 recent', async () => {
       const ensureUiSize = size => expect(Ui.getSize()).toBe(size)
-      const ensureText = text => expect(atom.workspace.getActiveTextEditor().getText()).toBe(text)
+      const ensureText = text => expect(getActiveEditor().getText()).toBe(text)
       const narrows = []
 
       editor.setText('1\n2\n3\n4\n5\n6\n7\n8\n9\na\nb')
@@ -437,6 +492,8 @@ describe('narrow', () => {
     }
 
     beforeEach(() => {
+      jasmine.attachToDOM(atom.workspace.getElement())
+
       points = [
         [0, 0], // `line` start of "line 1"
         [1, 2], // `line` start of "  line 2"
@@ -804,6 +861,7 @@ describe('narrow', () => {
       })
 
       const ensureScan = async (point, option) => {
+        setActiveTextEditor(editor)
         editor.setCursorBufferPosition(point)
         const narrow = await startNarrow('scan', {queryCurrentWord: true})
         await narrow.ensure(option)
@@ -872,6 +930,7 @@ describe('narrow', () => {
 
       let narrow, ui, ensure
       beforeEach(async () => {
+        jasmine.attachToDOM(atom.workspace.getElement())
         narrow = await startNarrow('search', {query: 'apple'})
         ui = narrow.ui
         ensure = narrow.ensure
@@ -1178,6 +1237,10 @@ describe('narrow', () => {
     })
 
     describe('search regex special char include search term', () => {
+      beforeEach(() => {
+        jasmine.attachToDOM(atom.workspace.getElement())
+      })
+
       const getEnsureSearch = ensureOptions => (provider, options) =>
         startNarrow(provider, options).then(narrow => narrow.ensure(ensureOptions))
 
