@@ -4,13 +4,13 @@ const settings = require('../lib/settings')
 const {it, fit, ffit, fffit, emitterEventPromise, beforeEach, afterEach} = require('./async-spec-helpers') // eslint-disable-line
 
 const {
-  // startNarrow,
   reopen,
   getNarrowForProvider,
   ensureEditor,
   ensurePaneLayout,
   ensureEditorIsActive,
   dispatchEditorCommand,
+  getActiveEditor,
   paneForItem,
   setActiveTextEditor,
   setActiveTextEditorWithWaits,
@@ -34,12 +34,6 @@ describe('narrow', () => {
   }
 
   beforeEach(async () => {
-    // FIXME: override default value to run test on 'center' location. This
-    // means no `bottom` location test is done in spec, but currently test-spec
-    // is written with assuming narrow-editor is always open in `center`
-    // workspace.
-    atom.config.set('narrow.locationToOpen', 'center')
-
     // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
     // So set it to `true` again here to test with default value.
     atom.config.set('core.destroyEmptyPanes', true)
@@ -49,6 +43,10 @@ describe('narrow', () => {
     atom.commands.dispatch(atom.workspace.getElement(), 'narrow:activate-package')
     const pkg = await activationPromise
     service = pkg.mainModule.provideNarrow()
+  })
+
+  afterEach(() => {
+    Ui.reset()
   })
 
   describe('confirm family', () => {
@@ -103,6 +101,9 @@ describe('narrow', () => {
     })
 
     describe('directionToOpen settings', () => {
+      beforeEach(() => {
+        atom.config.set('narrow.locationToOpen', 'center')
+      })
       describe('from one pane', () => {
         beforeEach(() => {
           ensurePaneLayout([editor])
@@ -290,10 +291,14 @@ describe('narrow', () => {
   })
 
   describe('reopen', () => {
+    beforeEach(() => {
+      jasmine.attachToDOM(atom.workspace.getElement())
+    })
+
     // prettier-ignore
     it('reopen closed narrow editor up to 10 recent', async () => {
       const ensureUiSize = size => expect(Ui.getSize()).toBe(size)
-      const ensureText = text => expect(atom.workspace.getActiveTextEditor().getText()).toBe(text)
+      const ensureText = text => expect(getActiveEditor().getText()).toBe(text)
       const narrows = []
 
       editor.setText('1\n2\n3\n4\n5\n6\n7\n8\n9\na\nb')
@@ -812,6 +817,7 @@ describe('narrow', () => {
       })
 
       const ensureScan = async (point, option) => {
+        setActiveTextEditor(editor)
         editor.setCursorBufferPosition(point)
         const narrow = await startNarrow('scan', {queryCurrentWord: true})
         await narrow.ensure(option)

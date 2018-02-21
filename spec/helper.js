@@ -21,8 +21,20 @@ function dispatchCommand (target, commandName) {
   atom.commands.dispatch(target, commandName)
 }
 
-function dispatchEditorCommand (commandName, editor = null) {
-  if (!editor) editor = atom.workspace.getActiveTextEditor()
+function getActiveEditor () {
+  const item = atom.workspace
+    .getActivePaneContainer()
+    .getActivePane()
+    .getActiveItem()
+  if (atom.workspace.isTextEditor(item)) {
+    return item
+  }
+}
+
+function dispatchEditorCommand (commandName, editor = getActiveEditor()) {
+  if (!editor) {
+    throw new Error('dispatchCommand could not find editor to dispatch command: `commandName`')
+  }
   atom.commands.dispatch(editor.element, commandName)
 }
 
@@ -43,7 +55,7 @@ function ensureEditor (editor, options) {
     if (name === 'cursor') {
       expect(editor.getCursorBufferPosition()).toEqual(value)
     } else if (name === 'active') {
-      expect(atom.workspace.getActiveTextEditor() === editor).toBe(value)
+      expect(getActiveEditor() === editor).toBe(value)
     } else if (name === 'alive') {
       expect(editor.isAlive()).toBe(value)
     }
@@ -51,7 +63,7 @@ function ensureEditor (editor, options) {
 }
 
 function ensureEditorIsActive (editor) {
-  expect(atom.workspace.getActiveTextEditor()).toBe(editor)
+  expect(getActiveEditor()).toBe(editor)
 }
 
 function isProjectHeaderItem (item) {
@@ -251,6 +263,7 @@ module.exports = {
   ensurePaneLayout,
   ensureEditorIsActive,
   dispatchEditorCommand,
+  getActiveEditor,
   paneForItem,
   setActiveTextEditor,
   setActiveTextEditorWithWaits,
