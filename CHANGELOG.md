@@ -1,4 +1,7 @@
-# 0.60.1:
+# 0.60.3:
+- Fix: just fix release number bug in CHANGELOG.md.
+
+# 0.60.2:
 - Fix: When `narrow:scan` start without any input, don't preview first row item #281
   - This is regression introduced in v0.60.0.
   - Plus: No longer start auto-preview when prompt query was clicked.
