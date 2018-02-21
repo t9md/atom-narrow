@@ -1,4 +1,9 @@
 # 0.60.1:
+- Fix: When `narrow:scan` start without any input, don't preview first row item #281
+  - This is regression introduced in v0.60.0.
+  - Plus: No longer start auto-preview when prompt query was clicked.
+
+# 0.60.1:
 - Fix: RegExp search for `search`, `atom-scan`, `scan` didn't work because of regression.
   - After v0.57.0.
 - Style: Modify match color and line-marker color.
