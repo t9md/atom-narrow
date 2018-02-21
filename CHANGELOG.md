@@ -1,5 +1,5 @@
-# 0.61.0: Dock-able narrow-editor [WIP]
-- New: `narrow-editor` can open in dock #283
+# 0.61.0: Dock-able narrow-editor
+- New, Breaking: `narrow-editor` can open in dock #283
   - First: If you immediately revert to previous behavior, set global `locationToOpen` to `center`, that's it!!
   - What's this?
     - In previous version `narrow-editor`(=ui) is openable only in center workspace's pane.
