@@ -437,6 +437,8 @@ describe('narrow', () => {
     }
 
     beforeEach(() => {
+      jasmine.attachToDOM(atom.workspace.getElement())
+
       points = [
         [0, 0], // `line` start of "line 1"
         [1, 2], // `line` start of "  line 2"
@@ -872,6 +874,7 @@ describe('narrow', () => {
 
       let narrow, ui, ensure
       beforeEach(async () => {
+        jasmine.attachToDOM(atom.workspace.getElement())
         narrow = await startNarrow('search', {query: 'apple'})
         ui = narrow.ui
         ensure = narrow.ensure
@@ -1178,6 +1181,10 @@ describe('narrow', () => {
     })
 
     describe('search regex special char include search term', () => {
+      beforeEach(() => {
+        jasmine.attachToDOM(atom.workspace.getElement())
+      })
+
       const getEnsureSearch = ensureOptions => (provider, options) =>
         startNarrow(provider, options).then(narrow => narrow.ensure(ensureOptions))
 
