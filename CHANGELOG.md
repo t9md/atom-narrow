@@ -1,3 +1,8 @@
+# 0.62.0:
+- Improve: atom-scan now direct-editable again #284, #285
+  - From `v0.48.0`, `narrow:update-real-file` was disabled for safety(avoid dangerous/immature mutation happening).
+  - Now: By normalizing `atom-scan`'s item to well fit to direct-edit feature which does whole-line by line replace.
+
 # 0.61.0: Dock-able narrow-editor
 - New, Breaking: `narrow-editor` can open in dock #283
   - First: If you immediately revert to previous behavior, set global `locationToOpen` to `center`, that's it!!
