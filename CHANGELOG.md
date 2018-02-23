@@ -1,3 +1,6 @@
+# 0.62.1:
+- Improve: suppress cursor flash on `narrow-ui:switch-ui-location` when cursor is at query-prompt.
+
 # 0.62.0:
 - Improve: atom-scan now direct-editable again #284, #285
   - From `v0.48.0`, `narrow:update-real-file` was disabled for safety(avoid dangerous/immature mutation happening).
