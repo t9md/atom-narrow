@@ -247,6 +247,9 @@ Explanation of my keymap.
   # Danger: apply change on narrow-editor to real file by `cmd-s`.
   'cmd-s': 'narrow-ui:update-real-file'
 
+  # Move ui in between bottom dock and center workspace.
+  'cmd-t': 'narrow-ui:switch-ui-location'
+
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode,
   atom-workspace.has-narrow atom-text-editor.vim-mode-plus.visual-mode':
     'cmd-e': 'narrow:query-current-word' # set current word as query of active ui.
@@ -257,7 +260,6 @@ Explanation of my keymap.
   ';': 'narrow-ui:confirm-keep-open'
   'n': 'narrow-ui:move-to-next-file-item'
   'p': 'narrow-ui:move-to-previous-file-item'
-  'cmd-t': 'narrow-ui:switch-ui-location'
 ```
 
 # Recommended configuration for other packages.
