@@ -1,3 +1,9 @@
+# 0.63.0:
+- Improve: Refine startup preview timing to avoid multiple preview call which is unnecessary. #286
+- Breaking: Simplify how `getItems` should be implemented. #287
+  - Now removed requirement to call `Provider.prototype.finishUpdateItems` within `getItems`.
+  - Instead just return array of items, it's the message to finish item update.
+
 # 0.62.1:
 - Improve: suppress cursor flash on `narrow-ui:switch-ui-location` when cursor is at query-prompt.
 
