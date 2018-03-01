@@ -1,5 +1,5 @@
 # 0.64.0:
-- Rename: Rename command name. Need update your `keymap.cson`, Added Grim warning too.
+- Rename: Rename command name. Need update your `keymap.cson`, Warn deprecated when old command was used.
   - Old: `narrow-ui:switch-ui-location`
   - New: `narrow-ui:relocate`
 - New: `relocateUiByTabBarDoubleClick` config
