@@ -1,3 +1,11 @@
+# 0.64.0:
+- Rename: Rename command name. Need update your `keymap.cson`, Warn deprecated when old command was used.
+  - Old: `narrow-ui:switch-ui-location`
+  - New: `narrow-ui:relocate`
+- New: `relocateUiByTabBarDoubleClick` config
+  - Default `true`
+  - When you clicked tab-bar for ui, clicked ui is relocated(same effect as you invoke `narrow-ui:relocate`)
+
 # 0.63.0:
 - Improve: Refine startup preview timing to avoid multiple preview call which is unnecessary. #286
 - Breaking: Simplify how `getItems` should be implemented. #287
