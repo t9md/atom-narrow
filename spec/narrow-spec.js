@@ -120,7 +120,7 @@ describe('narrow', () => {
       })
     })
 
-    describe('[bottom/center] narrow-ui:switch-ui-location command', () => {
+    describe('[bottom/center] narrow-ui:relocate command', () => {
       it('open narow-editor at dock and can close by `core:close`', async () => {
         const narrow = await startNarrow('scan')
 
@@ -132,14 +132,14 @@ describe('narrow', () => {
 
         ensureLocation('bottom', getBottomDockActiveItem())
 
-        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:relocate')
         ensureLocation('center', getCenterActiveItem())
         expect(getBottomDockActiveItem()).toBe(undefined)
 
-        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:relocate')
         ensureLocation('bottom', getBottomDockActiveItem())
 
-        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:switch-ui-location')
+        atom.commands.dispatch(narrow.ui.editor.element, 'narrow-ui:relocate')
         ensureLocation('center', getCenterActiveItem())
         expect(getBottomDockActiveItem()).toBe(undefined)
       })

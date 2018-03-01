@@ -170,7 +170,7 @@ See [Wiki](https://github.com/t9md/atom-narrow/wiki/ExampleKeymap#restore-vim-mo
 - `narrow-ui:start-insert`: `I`(`!vmp`), `a`(`!vmp`)
 - `narrow-ui:move-to-next-file-item`: `n`(`!vmp`)
 - `narrow-ui:move-to-previous-file-item`: `p`(`!vmp`)
-- `narrow-ui:switch-ui-location`: No keymap by default, Switch location where ui opened between `center` workspace and `bottom` dock.
+- `narrow-ui:relocate`: No keymap by default, Switch location where ui opened between `center` workspace and `bottom` dock.
 
 # Keymaps
 
@@ -248,7 +248,7 @@ Explanation of my keymap.
   'cmd-s': 'narrow-ui:update-real-file'
 
   # Move ui in between bottom dock and center workspace.
-  'cmd-t': 'narrow-ui:switch-ui-location'
+  'cmd-t': 'narrow-ui:relocate'
 
 'atom-workspace.has-narrow atom-text-editor.vim-mode-plus.normal-mode,
   atom-workspace.has-narrow atom-text-editor.vim-mode-plus.visual-mode':
