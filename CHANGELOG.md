@@ -5,6 +5,9 @@
 - New: `relocateUiByTabBarDoubleClick` config
   - Default `true`
   - When you clicked tab-bar for ui, clicked ui is relocated(same effect as you invoke `narrow-ui:relocate`)
+- Fix: No longer throw exception when searchOptions change commands invoked from provider which doesn't have one(e.g. `symbols`, `fold`).
+  - So calling these commands from non search provider is safe now.
+    - `toggle-search-whole-word`, `toggle-search-ignore-case`, `toggle-search-use-regex`
 
 # 0.63.0:
 - Improve: Refine startup preview timing to avoid multiple preview call which is unnecessary. #286
