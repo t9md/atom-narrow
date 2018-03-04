@@ -144,7 +144,7 @@ describe('narrow', () => {
         expect(getBottomDockActiveItem()).toBe(undefined)
       })
     })
-    describe('[center location] directionToOpen settings', () => {
+    describe('[center location] split settings', () => {
       beforeEach(() => {
         atom.config.set('narrow.locationToOpen', 'center')
       })
@@ -154,13 +154,13 @@ describe('narrow', () => {
         })
 
         it('open on right pane', async () => {
-          settings.set('directionToOpen', 'right')
+          settings.set('split', 'right')
           const {ui} = await startNarrow('scan')
           ensurePaneLayout({horizontal: [[editor], [ui.editor]]})
         })
 
         it('open on down pane', async () => {
-          settings.set('directionToOpen', 'down')
+          settings.set('split', 'down')
           const {ui} = await startNarrow('scan')
           ensurePaneLayout({vertical: [[editor], [ui.editor]]})
         })
@@ -168,7 +168,7 @@ describe('narrow', () => {
 
       describe('from two pane', () => {
         beforeEach(() => {
-          settings.set('directionToOpen', 'right')
+          settings.set('split', 'right')
         })
 
         describe('horizontal split', () => {
