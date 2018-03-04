@@ -94,7 +94,6 @@ class Ensureer {
     this.provider = provider
     this.editor = this.ui.editor
     this.items = this.ui.items
-    this.editorElement = this.ui.editorElement
   }
 
   async ensure (...args) {
@@ -177,7 +176,7 @@ class Ensureer {
 
   ensureClassListContains (classList) {
     for (const className of classList) {
-      expect(this.editorElement.classList.contains(className)).toBe(true)
+      expect(this.editor.element.classList.contains(className)).toBe(true)
     }
   }
 
