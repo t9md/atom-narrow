@@ -6,6 +6,10 @@
   "keywords": [
     "unite.vim",
     "emacs-helm",
+    "ag",
+    "rg",
+    "grep",
+    "ripgrep",
     "helm-swoop"
   ],
   "repository": "https://github.com/t9md/atom-narrow",
