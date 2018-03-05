@@ -231,6 +231,7 @@ describe('narrow', () => {
 
   describe('narrow:focus', () => {
     beforeEach(() => {
+      jasmine.attachToDOM(atom.workspace.getElement())
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
     })
@@ -249,6 +250,7 @@ describe('narrow', () => {
 
   describe('narrow:focus-prompt', () => {
     beforeEach(() => {
+      jasmine.attachToDOM(atom.workspace.getElement())
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
     })
