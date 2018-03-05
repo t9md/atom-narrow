@@ -34,6 +34,7 @@ describe('narrow', () => {
   }
 
   beforeEach(async () => {
+    jasmine.attachToDOM(atom.workspace.getElement())
     // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
     // So set it to `true` again here to test with default value.
     atom.config.set('core.destroyEmptyPanes', true)
@@ -231,7 +232,6 @@ describe('narrow', () => {
 
   describe('narrow:focus', () => {
     beforeEach(() => {
-      jasmine.attachToDOM(atom.workspace.getElement())
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
     })
@@ -250,7 +250,6 @@ describe('narrow', () => {
 
   describe('narrow:focus-prompt', () => {
     beforeEach(() => {
-      jasmine.attachToDOM(atom.workspace.getElement())
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
     })
@@ -337,10 +336,6 @@ describe('narrow', () => {
   })
 
   describe('reopen', () => {
-    beforeEach(() => {
-      jasmine.attachToDOM(atom.workspace.getElement())
-    })
-
     // prettier-ignore
     it('reopen closed narrow editor up to 10 recent', async () => {
       const ensureUiSize = size => expect(Ui.getSize()).toBe(size)
@@ -494,8 +489,6 @@ describe('narrow', () => {
     }
 
     beforeEach(() => {
-      jasmine.attachToDOM(atom.workspace.getElement())
-
       points = [
         [0, 0], // `line` start of "line 1"
         [1, 2], // `line` start of "  line 2"
@@ -932,7 +925,6 @@ describe('narrow', () => {
 
       let narrow, ui, ensure
       beforeEach(async () => {
-        jasmine.attachToDOM(atom.workspace.getElement())
         narrow = await startNarrow('search', {query: 'apple'})
         ui = narrow.ui
         ensure = narrow.ensure
@@ -1239,10 +1231,6 @@ describe('narrow', () => {
     })
 
     describe('search regex special char include search term', () => {
-      beforeEach(() => {
-        jasmine.attachToDOM(atom.workspace.getElement())
-      })
-
       const getEnsureSearch = ensureOptions => (provider, options) =>
         startNarrow(provider, options).then(narrow => narrow.ensure(ensureOptions))
 
