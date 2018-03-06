@@ -693,7 +693,7 @@ describe('narrow', () => {
     })
 
     describe('re-bound to active text-editor', () =>
-      it('provider.editor is bound to active text-editor and auto-refreshed', async () => {
+      it('provider.editor is rebound to active text-editor and auto-refreshed', async () => {
         const {provider, ensure} = narrow
 
         jasmine.useRealClock()
