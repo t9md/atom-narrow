@@ -713,9 +713,10 @@ describe('narrow', () => {
             `
         })
 
-        await setActiveTextEditorWithWaits(editor2)
-
+        setActiveTextEditor(editor2)
         ensureEditorIsActive(editor2)
+        await emitterEventPromise(narrow.ui.emitter, 'did-refresh')
+
         expect(provider.editor).toBe(editor2)
         await ensure({
           text: $`
