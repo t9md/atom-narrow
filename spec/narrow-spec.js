@@ -34,6 +34,7 @@ describe('narrow', () => {
   }
 
   beforeEach(async () => {
+    jasmine.attachToDOM(atom.workspace.getElement())
     // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
     // So set it to `true` again here to test with default value.
     atom.config.set('core.destroyEmptyPanes', true)
@@ -47,6 +48,7 @@ describe('narrow', () => {
 
   afterEach(() => {
     Ui.reset()
+    Ui.forEach(ui => ui.destroy())
   })
 
   describe('confirm family', () => {
@@ -231,7 +233,6 @@ describe('narrow', () => {
 
   describe('narrow:focus', () => {
     beforeEach(() => {
-      jasmine.attachToDOM(atom.workspace.getElement())
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
     })
@@ -250,7 +251,6 @@ describe('narrow', () => {
 
   describe('narrow:focus-prompt', () => {
     beforeEach(() => {
-      jasmine.attachToDOM(atom.workspace.getElement())
       editor.setText(appleGrapeLemmonText)
       editor.setCursorBufferPosition([0, 0])
     })
@@ -337,10 +337,6 @@ describe('narrow', () => {
   })
 
   describe('reopen', () => {
-    beforeEach(() => {
-      jasmine.attachToDOM(atom.workspace.getElement())
-    })
-
     // prettier-ignore
     it('reopen closed narrow editor up to 10 recent', async () => {
       const ensureUiSize = size => expect(Ui.getSize()).toBe(size)
@@ -494,8 +490,6 @@ describe('narrow', () => {
     }
 
     beforeEach(() => {
-      jasmine.attachToDOM(atom.workspace.getElement())
-
       points = [
         [0, 0], // `line` start of "line 1"
         [1, 2], // `line` start of "  line 2"
@@ -667,23 +661,22 @@ describe('narrow', () => {
         `)
       editor.setCursorBufferPosition([0, 0])
 
-      await atom.workspace.open().then(_editor => {
-        editor2 = _editor
-        editor2.setText($`
+      editor2 = await atom.workspace.open()
+      editor2.setText($`
 
-          line 2
+        line 2
 
-          line 4
+        line 4
 
-          line 6
+        line 6
 
-          line 8
+        line 8
 
-          line 10
-          `)
-        editor2.setCursorBufferPosition([0, 0])
-      })
+        line 10
+        `)
+      editor2.setCursorBufferPosition([0, 0])
 
+      ensureEditorIsActive(editor2)
       narrow = await startNarrow('scan')
       ensureEditorIsActive(narrow.ui.editor)
       expect(narrow.provider.editor).toBe(editor2)
@@ -700,7 +693,7 @@ describe('narrow', () => {
     })
 
     describe('re-bound to active text-editor', () =>
-      it('provider.editor is bound to active text-editor and auto-refreshed', async () => {
+      it('provider.editor is rebound to active text-editor and auto-refreshed', async () => {
         const {provider, ensure} = narrow
 
         jasmine.useRealClock()
@@ -720,9 +713,10 @@ describe('narrow', () => {
             `
         })
 
-        await setActiveTextEditorWithWaits(editor2)
-
+        setActiveTextEditor(editor2)
         ensureEditorIsActive(editor2)
+        await emitterEventPromise(narrow.ui.emitter, 'did-refresh')
+
         expect(provider.editor).toBe(editor2)
         await ensure({
           text: $`
@@ -932,7 +926,6 @@ describe('narrow', () => {
 
       let narrow, ui, ensure
       beforeEach(async () => {
-        jasmine.attachToDOM(atom.workspace.getElement())
         narrow = await startNarrow('search', {query: 'apple'})
         ui = narrow.ui
         ensure = narrow.ensure
@@ -1239,10 +1232,6 @@ describe('narrow', () => {
     })
 
     describe('search regex special char include search term', () => {
-      beforeEach(() => {
-        jasmine.attachToDOM(atom.workspace.getElement())
-      })
-
       const getEnsureSearch = ensureOptions => (provider, options) =>
         startNarrow(provider, options).then(narrow => narrow.ensure(ensureOptions))
 
