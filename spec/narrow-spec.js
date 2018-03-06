@@ -677,6 +677,7 @@ describe('narrow', () => {
         editor2.setCursorBufferPosition([0, 0])
       })
 
+      ensureEditorIsActive(editor2)
       narrow = await startNarrow('scan')
       ensureEditorIsActive(narrow.ui.editor)
       expect(narrow.provider.editor).toBe(editor2)
