@@ -76,15 +76,18 @@
     "underscore-plus": "^1.6.6"
   },
   "devDependencies": {
+    "atom-mocha-test-runner": "^1.2.0",
+    "chai": "^4.1.2",
     "prettier": "^1.10.2",
+    "sinon": "^4.4.2",
     "standard": "^10.0.3"
   },
   "package-deps": [
     "inline-git-diff"
   ],
+  "atomTestRunner": "./test/runner",
   "scripts": {
-    "test": "apm test",
-    "watch": "fswatch -0 spec lib | xargs -0 -n1 -I{} apm test",
+    "watch": "fswatch -0 test lib | xargs -0 -n1 -I{} atom -t test",
     "prettier": "prettier --write --no-semi --print-width=120 --no-bracket-spacing --trailing-comma=es5 'lib/**/*.js' 'spec/*.js'",
     "lint": "standard lib/*.js lib/**/*.js spec/*.js"
   },

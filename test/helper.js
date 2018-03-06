@@ -1,8 +1,7 @@
 const _ = require('underscore-plus')
 const {inspect} = require('util')
 const Provider = require('../lib/provider/provider')
-
-const {emitterEventPromise} = require('./async-spec-helpers')
+const sinon = require('sinon')
 
 function reopen () {
   return Provider.reopen()
@@ -53,17 +52,17 @@ function ensureEditor (editor, options) {
     if (value == null) continue
 
     if (name === 'cursor') {
-      expect(editor.getCursorBufferPosition()).toEqual(value)
+      assert.equal(editor.getCursorBufferPosition().isEqual(value), true)
     } else if (name === 'active') {
-      expect(getActiveEditor() === editor).toBe(value)
+      assert.equal(getActiveEditor() === editor, value)
     } else if (name === 'alive') {
-      expect(editor.isAlive()).toBe(value)
+      assert.equal(editor.isAlive(), value)
     }
   }
 }
 
 function ensureEditorIsActive (editor) {
-  expect(getActiveEditor()).toBe(editor)
+  assert(getActiveEditor() === editor)
 }
 
 function isProjectHeaderItem (item) {
@@ -116,8 +115,12 @@ class Ensureer {
     }
 
     if (query) {
+      const clock = sinon.useFakeTimers()
       this.ui.setQuery(query)
-      if (this.ui.autoPreviewOnQueryChange) advanceClock(200)
+      if (this.ui.autoPreviewOnQueryChange) {
+        clock.tick(200)
+        clock.restore()
+      }
       this.ui.moveToPrompt()
       await emitterEventPromise(this.ui.emitter, 'did-refresh')
     }
@@ -125,23 +128,23 @@ class Ensureer {
   }
 
   ensureItemsCount (count) {
-    expect(this.items.getNormalItemCount()).toBe(count)
+    assert(this.items.getNormalItemCount() === count)
   }
 
   ensureSelectedItemRow (row) {
-    expect(this.items.getSelectedItem()._row).toBe(row)
+    assert(this.items.getSelectedItem()._row === row)
   }
 
   ensureSelectedItemText (text) {
-    expect(this.items.getSelectedItem().text).toBe(text)
+    assert(this.items.getSelectedItem().text === text)
   }
 
   ensureText (text) {
-    expect(this.editor.getText()).toBe(text)
+    assert(this.editor.getText() === text)
   }
 
   ensureQuery (text) {
-    expect(this.ui.getQuery()).toBe(text)
+    assert(this.ui.getQuery() === text)
   }
 
   ensureSearchItems (object) {
@@ -161,22 +164,22 @@ class Ensureer {
       }
     }
 
-    expect(actualObject).toEqual(object)
+    assert.deepEqual(actualObject, object)
   }
 
   ensureCursor (cursor) {
-    expect(this.editor.getCursorBufferPosition()).toEqual(cursor)
+    assert(this.editor.getCursorBufferPosition().isEqual(cursor))
   }
 
   ensureColumnForSelectedItem (column) {
     const cursorPosition = this.editor.getCursorBufferPosition()
-    expect(this.items.getSelectedItem()._row).toBe(cursorPosition.row)
-    expect(cursorPosition.column).toBe(column)
+    assert(this.items.getSelectedItem()._row === cursorPosition.row)
+    assert(cursorPosition.column === column)
   }
 
   ensureClassListContains (classList) {
     for (const className of classList) {
-      expect(this.editor.element.classList.contains(className)).toBe(true)
+      assert(this.editor.element.classList.contains(className))
     }
   }
 
@@ -185,7 +188,7 @@ class Ensureer {
       .getPane()
       .getActiveItem()
       .getPath()
-    expect(result).toBe(filePath)
+    assert(result === filePath)
   }
 }
 
@@ -200,7 +203,7 @@ function ensurePaneLayout (layout) {
     .getActivePane()
     .getContainer()
     .getRoot()
-  expect(paneLayoutFor(root)).toEqual(layout)
+  assert.deepEqual(paneLayoutFor(root), layout)
 }
 
 function paneLayoutFor (root) {
@@ -256,6 +259,18 @@ function unindent (strings, ...values) {
   return lines.map(line => line.slice(minIndent)).join('\n')
 }
 
+function emitterEventPromise (emitter, event, timeout = 15000) {
+  return new Promise((resolve, reject) => {
+    const timeoutHandle = setTimeout(() => {
+      reject(new Error(`Timed out waiting for '${event}' event`))
+    }, timeout)
+    emitter.once(event, () => {
+      clearTimeout(timeoutHandle)
+      resolve()
+    })
+  })
+}
+
 module.exports = {
   dispatchCommand,
   ensureEditor,
@@ -268,5 +283,6 @@ module.exports = {
   setActiveTextEditorWithWaits,
   getNarrowForProvider,
   reopen,
-  unindent
+  unindent,
+  emitterEventPromise
 }
