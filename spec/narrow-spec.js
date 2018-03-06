@@ -48,6 +48,7 @@ describe('narrow', () => {
 
   afterEach(() => {
     Ui.reset()
+    Ui.forEach(ui => ui.destroy())
   })
 
   describe('confirm family', () => {
@@ -660,22 +661,20 @@ describe('narrow', () => {
         `)
       editor.setCursorBufferPosition([0, 0])
 
-      await atom.workspace.open().then(_editor => {
-        editor2 = _editor
-        editor2.setText($`
+      editor2 = await atom.workspace.open()
+      editor2.setText($`
 
-          line 2
+        line 2
 
-          line 4
+        line 4
 
-          line 6
+        line 6
 
-          line 8
+        line 8
 
-          line 10
-          `)
-        editor2.setCursorBufferPosition([0, 0])
-      })
+        line 10
+        `)
+      editor2.setCursorBufferPosition([0, 0])
 
       ensureEditorIsActive(editor2)
       narrow = await startNarrow('scan')
