@@ -12,7 +12,10 @@ function getNarrowForProvider (provider) {
   return {
     ui: ui,
     provider: provider,
-    ensure: new Ensureer(ui, provider).ensure
+    ensure: new Ensureer(ui, provider).ensure,
+    promiseForUiEvent (eventName) {
+      return emitterEventPromise(ui.emitter, eventName)
+    }
   }
 }
 
@@ -61,9 +64,9 @@ function ensureEditor (editor, options) {
   }
 }
 
-function ensureEditorIsActive (editor) {
-  assert(getActiveEditor() === editor)
-}
+// function ensureEditorIsActive (editor) {
+//   assert(getActiveEditor() === editor)
+// }
 
 function isProjectHeaderItem (item) {
   return item.header && item.projectName && !item.filePath
@@ -279,7 +282,7 @@ module.exports = {
   dispatchCommand,
   ensureEditor,
   ensurePaneLayout,
-  ensureEditorIsActive,
+  // ensureEditorIsActive,
   dispatchEditorCommand,
   getActiveEditor,
   paneForItem,
