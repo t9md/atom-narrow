@@ -115,11 +115,12 @@ class Ensureer {
     }
 
     if (query) {
-      const clock = sinon.useFakeTimers()
+      // const clock = sinon.useFakeTimers()
       this.ui.setQuery(query)
       if (this.ui.autoPreviewOnQueryChange) {
-        clock.tick(200)
-        clock.restore()
+        // await emitterEventPromise(this.ui.emitter, 'did-preview')
+        // clock.tick(500)
+        // clock.restore()
       }
       this.ui.moveToPrompt()
       await emitterEventPromise(this.ui.emitter, 'did-refresh')
@@ -136,7 +137,10 @@ class Ensureer {
   }
 
   ensureSelectedItemText (text) {
-    assert(this.items.getSelectedItem().text === text)
+    assert(
+      this.items.getSelectedItem().text === text,
+      `Was ${this.items.getSelectedItem().text} where it should ${text}`
+    )
   }
 
   ensureText (text) {

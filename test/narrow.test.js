@@ -29,12 +29,13 @@ const appleGrapeLemmonText = $`
 // Main
 // -------------------------
 describe('narrow', () => {
-  let editor, service, workspaceElement
+  let editor, service, workspaceElement, clock
   function startNarrow (name, options) {
     return service.narrow(name, options).then(getNarrowForProvider)
   }
 
   beforeEach(async () => {
+    // clock = sinon.useFakeTimers()
     workspaceElement = atom.workspace.getElement()
     document.body.appendChild(workspaceElement)
     document.body.focus()
@@ -51,6 +52,7 @@ describe('narrow', () => {
   })
 
   afterEach(() => {
+    // clock.restore()
     atom.workspace.getTextEditors().forEach(editor => editor.destroy())
     workspaceElement.remove()
     Ui.reset()
@@ -119,13 +121,6 @@ describe('narrow', () => {
       it('open narow-editor at dock and can close by `core:close`', async () => {
         const narrow = await startNarrow('scan')
         const dockActiveItem = getBottomDockActiveItem()
-        console.log(
-          atom.workspace
-            .getBottomDock()
-            .getActivePane()
-            .getActiveItem()
-        )
-        console.log(dockActiveItem, narrow.ui.editor)
         assert(dockActiveItem === narrow.ui.editor)
         const destroyPromise = emitterEventPromise(narrow.ui.emitter, 'did-destroy')
         atom.commands.dispatch(dockActiveItem.element, 'core:close')
@@ -942,26 +937,29 @@ describe('narrow', () => {
         narrow = await startNarrow('search', {query: 'apple'})
         ui = narrow.ui
         ensure = narrow.ensure
+        await emitterEventPromise(narrow.ui.emitter, 'did-preview')
       })
 
       it('preview on cursor move with skipping header', async () => {
-        // jasmine.useRealClock()
-        sinon.useFakeTimers()
+        const runPreviewCommand = command => {
+          runCommand(command)
+          return emitterEventPromise(narrow.ui.emitter, 'did-preview')
+        }
 
         await ensure({
           text: $`
-              apple
-              # project1
-              ## p1-f1
-              p1-f1: apple
-              ## p1-f2
-              p1-f2: apple
-              # project2
-              ## p2-f1
-              p2-f1: apple
-              ## p2-f2
-              p2-f2: apple
-              `,
+            apple
+            # project1
+            ## p1-f1
+            p1-f1: apple
+            ## p1-f2
+            p1-f2: apple
+            # project2
+            ## p2-f1
+            p2-f1: apple
+            ## p2-f2
+            p2-f2: apple
+            `,
           cursor: [3, 7],
           selectedItemText: 'p1-f1: apple'
         })
@@ -969,15 +967,14 @@ describe('narrow', () => {
         runCommand('core:move-up')
         await ensure({selectedItemText: 'p1-f1: apple', cursor: [0, 5]})
 
-        await previewCommand('core:move-down')
+        await runPreviewCommand('core:move-down')
         await ensure({
           selectedItemText: 'p1-f1: apple',
           cursor: [3, 7],
           filePathForProviderPane: p1f1
         })
 
-        await previewCommand('core:move-down')
-        sinon.tick(500)
+        await runPreviewCommand('core:move-down')
         await ensure({
           selectedItemText: 'p1-f2: apple',
           cursor: [5, 7],
@@ -985,14 +982,14 @@ describe('narrow', () => {
         })
         ensureEditorIsActive(ui.editor)
 
-        await previewCommand('core:move-down')
+        await runPreviewCommand('core:move-down')
         await ensure({
           selectedItemText: 'p2-f1: apple',
           cursor: [8, 7],
           filePathForProviderPane: p2f1
         })
 
-        await previewCommand('core:move-down')
+        await runPreviewCommand('core:move-down')
         await ensure({
           selectedItemText: 'p2-f2: apple',
           cursor: [10, 7],
@@ -1001,21 +998,19 @@ describe('narrow', () => {
       })
 
       it('preview on query change by default( autoPreviewOnQueryChange )', async () => {
-        // jasmine.useRealClock()
-
         narrow.ui.moveToPrompt()
         narrow.ui.editor.insertText(' f2')
         await emitterEventPromise(narrow.ui.emitter, 'did-preview')
         await ensure({
           text: $`
-              apple f2
-              # project1
-              ## p1-f2
-              p1-f2: apple
-              # project2
-              ## p2-f2
-              p2-f2: apple
-              `,
+            apple f2
+            # project1
+            ## p1-f2
+            p1-f2: apple
+            # project2
+            ## p2-f2
+            p2-f2: apple
+            `,
           selectedItemText: 'p1-f2: apple',
           filePathForProviderPane: p1f2
         })
@@ -1102,19 +1097,19 @@ describe('narrow', () => {
           await selectFiles.ensure({
             text: $`
 
-                project1/p1-f1
-                project1/p1-f2
-                project2/p2-f1
-                project2/p2-f2
-                `
+              project1/p1-f1
+              project1/p1-f2
+              project2/p2-f1
+              project2/p2-f2
+              `
           })
 
           await selectFiles.ensure('f1', {
             text: $`
-                f1
-                project1/p1-f1
-                project2/p2-f1
-                `
+              f1
+              project1/p1-f1
+              project2/p2-f1
+              `
           })
 
           await selectFiles.ensure('f1!', {
@@ -1208,7 +1203,7 @@ describe('narrow', () => {
     describe('searchCurrentWord with variable-includes-special-char language, PHP', async () => {
       const ensureFindPHPVar = narrow => {
         ensureEditorIsActive(narrow.ui.editor)
-        assert.deepequal(narrow.ui.excludedFiles, [])
+        assert.deepEqual(narrow.ui.excludedFiles, [])
         narrow.ensure({
           text: $`
               $file
