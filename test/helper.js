@@ -81,6 +81,7 @@ const ensureOptionsOrdered = [
   'selectedItemRow',
   'selectedItemText',
   'text',
+  'textAndSelectedItemTextOneOf',
   'cursor',
   'classListContains',
   'filePathForProviderPane',
@@ -148,6 +149,16 @@ class Ensureer {
 
   ensureText (text) {
     assert(this.editor.getText() === text)
+  }
+
+  ensureTextAndSelectedItemTextOneOf (textAndSelectedItemText) {
+    let ok = 0
+    textAndSelectedItemText.forEach(({text, selectedItemText}) => {
+      if (this.editor.getText() === text && this.items.getSelectedItem().text === selectedItemText) {
+        ok++
+      }
+    })
+    assert(ok === 1)
   }
 
   ensureQuery (text) {

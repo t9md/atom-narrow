@@ -34,8 +34,14 @@ describe('narrow', () => {
   }
 
   beforeEach(async () => {
+    // workaround BUG in 1.25.0-beta2
+    atom.config.resetUserSettings({})
+
     // clock = sinon.useFakeTimers()
-    workspaceElement = atom.workspace.getElement()
+    workspaceElement = atom.views.getView(atom.workspace)
+    workspaceElement.display = 'flex'
+    workspaceElement.style.height = '100px'
+    workspaceElement.style.width = '250px'
     document.body.appendChild(workspaceElement)
     document.body.focus()
 
@@ -55,7 +61,7 @@ describe('narrow', () => {
     atom.workspace.getTextEditors().forEach(editor => editor.destroy())
     workspaceElement.remove()
     Ui.reset()
-    // Ui.forEach(ui => ui.destroy())
+    Ui.forEach(ui => ui.destroy())
   })
 
   describe('confirm family', () => {
@@ -1239,27 +1245,103 @@ describe('narrow', () => {
     })
 
     describe('search regex special char include search term', () => {
-      const getEnsureSearch = ensureOptions => (provider, options) =>
-        startNarrow(provider, options).then(narrow => narrow.ensure(ensureOptions))
+      const ensureByProvider = async (name, query, ensureOptions) => {
+        const narrow = await startNarrow(name, {query})
+        await narrow.ensure(ensureOptions)
+      }
 
-      const resultText = {
-        'project1/p1-f': $`
+      describe('search project1/p1-f', () => {
+        const query = 'project1/p1-f'
+
+        const textA = $`
           project1/p1-f
           # project1
           ## p1-f1
           path: project1/p1-f1
           ## p1-f2
           path: project1/p1-f2
-          `,
-        'a/b/c': $`
+          `
+
+        const textB = $`
+          project1/p1-f
+          # project1
+          ## p1-f2
+          path: project1/p1-f2
+          ## p1-f1
+          path: project1/p1-f1
+          `
+
+        const ensureOptions = {
+          textAndSelectedItemTextOneOf: [
+            {text: textA, selectedItemText: 'path: project1/p1-f1'},
+            {text: textB, selectedItemText: 'path: project1/p1-f2'}
+          ],
+          cursor: [3, 6]
+        }
+
+        it('[atom-scan]', async () => {
+          await ensureByProvider('atom-scan', query, ensureOptions)
+        })
+
+        it('[search:ag]', async () => {
+          settings.set('Search.searcher', 'ag')
+          await ensureByProvider('atom-scan', query, ensureOptions)
+        })
+
+        it('[search:rg]', async () => {
+          settings.set('Search.searcher', 'rg')
+          await ensureByProvider('atom-scan', query, ensureOptions)
+        })
+      })
+
+      describe('search a/b/c', () => {
+        const query = 'a/b/c'
+
+        const textA = $`
           a/b/c
           # project1
           ## p1-f1
           path: a/b/c
           ## p1-f2
           path: a/b/c
-          `,
-        'a\\/b\\/c': $`\
+          `
+
+        const textB = $`
+          a/b/c
+          # project1
+          ## p1-f2
+          path: a/b/c
+          ## p1-f1
+          path: a/b/c
+          `
+
+        const ensureOptions = {
+          textAndSelectedItemTextOneOf: [
+            {text: textA, selectedItemText: 'path: a/b/c'},
+            {text: textB, selectedItemText: 'path: a/b/c'}
+          ],
+          cursor: [3, 6]
+        }
+
+        it('[atom-scan]', async () => {
+          await ensureByProvider('atom-scan', query, ensureOptions)
+        })
+
+        it('[search:ag]', async () => {
+          settings.set('Search.searcher', 'ag')
+          await ensureByProvider('search', query, ensureOptions)
+        })
+
+        it('[search:rg]', async () => {
+          settings.set('Search.searcher', 'rg')
+          await ensureByProvider('search', query, ensureOptions)
+        })
+      })
+
+      describe('search a/b/c', () => {
+        let query = 'a\\/b\\/c'
+
+        const textA = $`
           a\\/b\\/c
           # project1
           ## p1-f1
@@ -1267,74 +1349,36 @@ describe('narrow', () => {
           ## p1-f2
           path: a\\/b\\/c
           `
-      }
 
-      describe('search project1/p1-f', () => {
-        let query = 'project1/p1-f'
-        const ensureSearch = getEnsureSearch({
-          text: resultText[query],
-          cursor: [3, 6],
-          selectedItemText: 'path: project1/p1-f1'
-        })
+        const textB = $`
+          a\\/b\\/c
+          # project1
+          ## p1-f2
+          path: a\\/b\\/c
+          ## p1-f1
+          path: a\\/b\\/c
+          `
+
+        const ensureOptions = {
+          textAndSelectedItemTextOneOf: [
+            {text: textA, selectedItemText: 'path: a\\/b\\/c'},
+            {text: textB, selectedItemText: 'path: a\\/b\\/c'}
+          ],
+          cursor: [3, 6]
+        }
 
         it('[atom-scan]', async () => {
-          await ensureSearch('atom-scan', {query})
+          await ensureByProvider('atom-scan', query, ensureOptions)
         })
 
         it('[search:ag]', async () => {
           settings.set('Search.searcher', 'ag')
-          await ensureSearch('search', {query})
+          await ensureByProvider('search', query, ensureOptions)
         })
 
         it('[search:rg]', async () => {
           settings.set('Search.searcher', 'rg')
-          await ensureSearch('search', {query})
-        })
-      })
-
-      describe('search a/b/c', () => {
-        let query = 'a/b/c'
-        const ensureSearch = getEnsureSearch({
-          text: resultText[query],
-          cursor: [3, 6],
-          selectedItemText: 'path: a/b/c'
-        })
-
-        it('[atom-scan]', async () => {
-          await ensureSearch('atom-scan', {query})
-        })
-
-        it('[search:ag]', async () => {
-          settings.set('Search.searcher', 'ag')
-          await ensureSearch('search', {query})
-        })
-
-        it('[search:rg]', async () => {
-          settings.set('Search.searcher', 'rg')
-          await ensureSearch('search', {query})
-        })
-      })
-
-      describe('search a/b/c', () => {
-        let query = 'a\\/b\\/c'
-        const ensureSearch = getEnsureSearch({
-          text: resultText[query],
-          cursor: [3, 6],
-          selectedItemText: 'path: a\\/b\\/c'
-        })
-
-        it('[atom-scan]', async () => {
-          await ensureSearch('atom-scan', {query})
-        })
-
-        it('[search:ag]', async () => {
-          settings.set('Search.searcher', 'ag')
-          await ensureSearch('search', {query})
-        })
-
-        it('[search:rg]', async () => {
-          settings.set('Search.searcher', 'rg')
-          await ensureSearch('search', {query})
+          await ensureByProvider('search', query, ensureOptions)
         })
       })
     })
