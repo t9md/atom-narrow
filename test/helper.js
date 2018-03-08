@@ -1,7 +1,6 @@
 const _ = require('underscore-plus')
 const {inspect} = require('util')
 const Provider = require('../lib/provider/provider')
-const sinon = require('sinon')
 
 function reopen () {
   return Provider.reopen()
@@ -119,7 +118,6 @@ class Ensureer {
     }
 
     if (query) {
-      // const clock = sinon.useFakeTimers()
       this.ui.setQuery(query)
       if (this.ui.autoPreviewOnQueryChange) {
         // await emitterEventPromise(this.ui.emitter, 'did-preview')

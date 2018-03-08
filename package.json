@@ -90,13 +90,13 @@
   "scripts": {
     "watch": "fswatch -0 test lib | xargs -0 -n1 -I{} atom -t test",
     "prettier": "prettier --write --no-semi --print-width=120 --no-bracket-spacing --trailing-comma=es5 'lib/**/*.js' 'spec/*.js'",
-    "lint": "standard lib/*.js lib/**/*.js spec/*.js"
+    "lint": "standard lib/*.js lib/**/*.js test/*.js"
   },
   "standard": {
     "env": {
       "atomtest": true,
       "browser": true,
-      "jasmine": true,
+      "mocha": true,
       "node": true
     },
     "globals": [
@@ -104,7 +104,7 @@
       "assert"
     ],
     "ignore": [
-      "spec/fixtures/*"
+      "test/fixtures/*"
     ]
   }
 }

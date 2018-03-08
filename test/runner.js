@@ -15,7 +15,7 @@ module.exports = createRunner(
     // }
   },
   mocha => {
-    global.atom = buildAtomEnvironment({
+    global.atom = global.buildAtomEnvironment({
       enablePersistence: false
     })
     // mocha.ui('tdd')

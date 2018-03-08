@@ -1,7 +1,6 @@
 const Ui = require('../lib/ui')
 const Path = require('path')
 const settings = require('../lib/settings')
-const sinon = require('sinon')
 
 const {
   reopen,
@@ -11,7 +10,7 @@ const {
   dispatchEditorCommand,
   getActiveEditor,
   paneForItem,
-  setActiveTextEditor,
+  // setActiveTextEditor,
   setActiveTextEditorWithWaits,
   unindent,
   emitterEventPromise
@@ -930,11 +929,6 @@ describe('narrow', () => {
     })
 
     describe('basic behavior', () => {
-      const previewCommand = command => {
-        runCommand(command)
-        return narrow.promiseForUiEvent('did-preview')
-      }
-
       let narrow, ui, ensure
       beforeEach(async () => {
         narrow = await startNarrow('search', {query: 'apple'})
