@@ -28,7 +28,7 @@ const appleGrapeLemmonText = $`
 // Main
 // -------------------------
 describe('narrow', () => {
-  let editor, service, workspaceElement, clock
+  let editor, service, workspaceElement
   function startNarrow (name, options) {
     return service.narrow(name, options).then(getNarrowForProvider)
   }
@@ -37,11 +37,7 @@ describe('narrow', () => {
     // workaround BUG in 1.25.0-beta2
     atom.config.resetUserSettings({})
 
-    // clock = sinon.useFakeTimers()
-    workspaceElement = atom.views.getView(atom.workspace)
-    workspaceElement.display = 'flex'
-    workspaceElement.style.height = '100px'
-    workspaceElement.style.width = '250px'
+    workspaceElement = atom.workspace.getElement()
     document.body.appendChild(workspaceElement)
     document.body.focus()
 
@@ -57,7 +53,6 @@ describe('narrow', () => {
   })
 
   afterEach(() => {
-    // clock.restore()
     atom.workspace.getTextEditors().forEach(editor => editor.destroy())
     workspaceElement.remove()
     Ui.reset()
@@ -500,6 +495,12 @@ describe('narrow', () => {
     const getEnsureStartState = startOptions => async (point, options) => {
       editor.setCursorBufferPosition(point)
       const narrow = await startNarrow('scan', startOptions)
+      console.log('ws contains', workspaceElement.contains(narrow.ui.editor.element))
+      console.log('ws offsetWidth', workspaceElement.offsetWidth)
+      console.log('te offsetWidth', narrow.ui.editor.element.offsetWidth)
+      // document.body.appendChild(narrow.ui.editor.element)
+      // console.log('te offsetWidth', narrow.ui.editor.element.offsetWidth)
+      // narrow.ui.editor.element.remove()
       await narrow.ensure(options)
       narrow.ui.destroy()
     }
@@ -747,7 +748,6 @@ describe('narrow', () => {
         const {provider, ensure} = narrow
         const setCursor = (editor, point) => editor.setCursorBufferPosition(point)
 
-        // jasmine.useRealClock()
         await setActiveTextEditorWithWaits(editor)
 
         assert(editor.element.hasFocus())
@@ -1033,7 +1033,6 @@ describe('narrow', () => {
       })
 
       it('can filter files by select-files provider', async () => {
-        // jasmine.useRealClock()
         await ensure({
           text: $`
               apple

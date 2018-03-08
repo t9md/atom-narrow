@@ -100,7 +100,8 @@
       "node": true
     },
     "globals": [
-      "atom"
+      "atom",
+      "assert"
     ],
     "ignore": [
       "spec/fixtures/*"
