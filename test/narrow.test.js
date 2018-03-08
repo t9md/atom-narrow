@@ -40,13 +40,10 @@ describe('narrow', () => {
     document.body.appendChild(workspaceElement)
     document.body.focus()
 
-    // `destroyEmptyPanes` is default true, but atom's spec-helper reset to `false`
-    // So set it to `true` again here to test with default value.
-    atom.config.set('core.destroyEmptyPanes', true)
     editor = await atom.workspace.open()
 
     const activationPromise = atom.packages.activatePackage('narrow')
-    atom.commands.dispatch(atom.workspace.getElement(), 'narrow:activate-package')
+    atom.commands.dispatch(workspaceElement, 'narrow:activate-package')
     const pkg = await activationPromise
     service = pkg.mainModule.provideNarrow()
   })

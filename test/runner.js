@@ -6,7 +6,8 @@ global.assert = require('chai').assert
 module.exports = createRunner(
   {
     globalAtom: false,
-    htmlTitle: `Narrow Package Tests - pid ${process.pid}`
+    htmlTitle: `Narrow Package Tests - pid ${process.pid}`,
+    htmlRemoveAtomStyle: false
   },
   mocha => {
     global.atom = global.buildAtomEnvironment({
