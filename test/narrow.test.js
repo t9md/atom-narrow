@@ -494,12 +494,6 @@ describe('narrow', () => {
     const getEnsureStartState = startOptions => async (point, options) => {
       editor.setCursorBufferPosition(point)
       const narrow = await startNarrow('scan', startOptions)
-      console.log('ws contains', workspaceElement.contains(narrow.ui.editor.element))
-      console.log('ws offsetWidth', workspaceElement.offsetWidth)
-      console.log('te offsetWidth', narrow.ui.editor.element.offsetWidth)
-      // document.body.appendChild(narrow.ui.editor.element)
-      // console.log('te offsetWidth', narrow.ui.editor.element.offsetWidth)
-      // narrow.ui.editor.element.remove()
       await narrow.ensure(options)
       narrow.ui.destroy()
     }
