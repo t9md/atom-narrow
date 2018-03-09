@@ -871,15 +871,15 @@ describe('narrow', () => {
       settings.set('projectHeaderTemplate', '# __HEADER__')
       settings.set('fileHeaderTemplate', '## __HEADER__')
 
-      p1 = Path.join(__dirname, 'fixtures', 'project1')
-      p2 = Path.join(__dirname, 'fixtures', 'project2')
+      const fixturesDir = Path.join(__dirname, 'fixtures')
+
+      p1 = Path.join(fixturesDir, 'project1')
+      p2 = Path.join(fixturesDir, 'project2')
       p1f1 = Path.join(p1, 'p1-f1')
       p1f2 = Path.join(p1, 'p1-f2')
       p1f3 = Path.join(p1, 'p1-f3.php')
       p2f1 = Path.join(p2, 'p2-f1')
       p2f2 = Path.join(p2, 'p2-f2')
-
-      const fixturesDir = Path.join(__dirname, 'fixtures')
 
       atom.project.removePath(fixturesDir)
       atom.project.addPath(p1)
@@ -887,11 +887,9 @@ describe('narrow', () => {
     })
 
     describe('basic behavior', () => {
-      let narrow, ui, ensure
+      let narrow
       beforeEach(async () => {
         narrow = await startNarrow('search', {query: 'apple'})
-        ui = narrow.ui
-        ensure = narrow.ensure
         await narrow.promiseForUiEvent('did-preview')
       })
 
@@ -901,7 +899,7 @@ describe('narrow', () => {
           return narrow.promiseForUiEvent('did-preview')
         }
 
-        await ensure({
+        await narrow.ensure({
           text: $`
             apple
             # project1
@@ -919,44 +917,35 @@ describe('narrow', () => {
           selectedItemText: 'p1-f1: apple'
         })
 
+        const providerPane = narrow.provider.getPane()
+
         dispatchActiveEditor('core:move-up')
-        await ensure({selectedItemText: 'p1-f1: apple', cursor: [0, 5]})
+        await narrow.ensure({selectedItemText: 'p1-f1: apple', cursor: [0, 5]})
 
         await runPreviewCommand('core:move-down')
-        await ensure({
-          selectedItemText: 'p1-f1: apple',
-          cursor: [3, 7],
-          filePathForProviderPane: p1f1
-        })
+        await narrow.ensure({selectedItemText: 'p1-f1: apple', cursor: [3, 7]})
+        assert(providerPane.getActiveItem().getPath() === p1f1)
 
         await runPreviewCommand('core:move-down')
-        await ensure({
-          selectedItemText: 'p1-f2: apple',
-          cursor: [5, 7],
-          filePathForProviderPane: p1f2
-        })
-        assert(ui.editor.element.hasFocus())
+        await narrow.ensure({selectedItemText: 'p1-f2: apple', cursor: [5, 7]})
+        assert(providerPane.getActiveItem().getPath() === p1f2)
+        assert(narrow.ui.editor.element.hasFocus())
 
         await runPreviewCommand('core:move-down')
-        await ensure({
-          selectedItemText: 'p2-f1: apple',
-          cursor: [8, 7],
-          filePathForProviderPane: p2f1
-        })
+        await narrow.ensure({selectedItemText: 'p2-f1: apple', cursor: [8, 7]})
+        assert(providerPane.getActiveItem().getPath() === p2f1)
 
         await runPreviewCommand('core:move-down')
-        await ensure({
-          selectedItemText: 'p2-f2: apple',
-          cursor: [10, 7],
-          filePathForProviderPane: p2f2
-        })
+        await narrow.ensure({selectedItemText: 'p2-f2: apple', cursor: [10, 7]})
+        assert(providerPane.getActiveItem().getPath() === p2f2)
       })
 
       it('preview on query change by default( autoPreviewOnQueryChange )', async () => {
         narrow.ui.moveToPrompt()
         narrow.ui.editor.insertText(' f2')
+        const providerPane = narrow.provider.getPane()
         await narrow.promiseForUiEvent('did-preview')
-        await ensure({
+        await narrow.ensure({
           text: $`
             apple f2
             # project1
@@ -966,46 +955,46 @@ describe('narrow', () => {
             ## p2-f2
             p2-f2: apple
             `,
-          selectedItemText: 'p1-f2: apple',
-          filePathForProviderPane: p1f2
+          selectedItemText: 'p1-f2: apple'
         })
+        assert(providerPane.getActiveItem().getPath() === p1f2)
 
-        ui.editor.insertText(' p2')
+        narrow.ui.editor.insertText(' p2')
         await narrow.promiseForUiEvent('did-preview')
-        await ensure({
+        await narrow.ensure({
           text: $`
-              apple f2 p2
-              # project2
-              ## p2-f2
-              p2-f2: apple
-              `,
-          selectedItemText: 'p2-f2: apple',
-          filePathForProviderPane: p2f2
+            apple f2 p2
+            # project2
+            ## p2-f2
+            p2-f2: apple
+            `,
+          selectedItemText: 'p2-f2: apple'
         })
+        assert(providerPane.getActiveItem().getPath() === p2f2)
       })
 
       it('can filter files by select-files provider', async () => {
-        await ensure({
+        await narrow.ensure({
           text: $`
-              apple
-              # project1
-              ## p1-f1
-              p1-f1: apple
-              ## p1-f2
-              p1-f2: apple
-              # project2
-              ## p2-f1
-              p2-f1: apple
-              ## p2-f2
-              p2-f2: apple
-              `,
+            apple
+            # project1
+            ## p1-f1
+            p1-f1: apple
+            ## p1-f2
+            p1-f2: apple
+            # project2
+            ## p2-f1
+            p2-f1: apple
+            ## p2-f2
+            p2-f2: apple
+            `,
           cursor: [3, 7],
           selectedItemText: 'p1-f1: apple'
         })
 
         // Section0: Move to selected file.
         {
-          const selectFiles = getNarrowForProvider(await ui.selectFiles())
+          const selectFiles = getNarrowForProvider(await narrow.ui.selectFiles())
           await selectFiles.ensure({
             text: $`
 
@@ -1024,9 +1013,9 @@ describe('narrow', () => {
           await promise
 
           // Ensure f1 matching files are excluded and not listed in narrow-editor.
-          assert(ui.editor.element.hasFocus())
-          assert.deepEqual(ui.excludedFiles, [])
-          await ensure({
+          assert(narrow.ui.editor.element.hasFocus())
+          assert.deepEqual(narrow.ui.excludedFiles, [])
+          await narrow.ensure({
             text: $`
               apple
               # project1
@@ -1047,7 +1036,7 @@ describe('narrow', () => {
 
         // Section1
         {
-          const selectFiles = getNarrowForProvider(await ui.selectFiles())
+          const selectFiles = getNarrowForProvider(await narrow.ui.selectFiles())
           await selectFiles.ensure({
             text: $`
 
@@ -1081,9 +1070,9 @@ describe('narrow', () => {
           await promise
 
           // Ensure f1 matching files are excluded and not listed in narrow-editor.
-          assert(ui.editor.element.hasFocus())
-          assert.deepEqual(ui.excludedFiles, [])
-          await ensure({
+          assert(narrow.ui.editor.element.hasFocus())
+          assert.deepEqual(narrow.ui.excludedFiles, [])
+          await narrow.ensure({
             text: $`
               apple
               # project1
@@ -1100,7 +1089,7 @@ describe('narrow', () => {
 
         // Section2
         {
-          const selectFiles = getNarrowForProvider(await ui.selectFiles())
+          const selectFiles = getNarrowForProvider(await narrow.ui.selectFiles())
 
           // selectFiles query are remembered until closing narrow-editor.
           await selectFiles.ensure({
@@ -1131,9 +1120,9 @@ describe('narrow', () => {
           await promise
 
           // ensure items for all files are listed and previously selected items are preserveed.
-          assert(ui.editor.element.hasFocus())
-          assert.deepEqual(ui.excludedFiles, [])
-          ensure({
+          assert(narrow.ui.editor.element.hasFocus())
+          assert.deepEqual(narrow.ui.excludedFiles, [])
+          await narrow.ensure({
             text: $`
               apple
               # project1
@@ -1155,10 +1144,11 @@ describe('narrow', () => {
     })
 
     describe('searchCurrentWord with variable-includes-special-char language, PHP', async () => {
-      const ensureFindPHPVar = narrow => {
+      const ensureSearch = async providerName => {
+        const narrow = await startNarrow(providerName, {queryCurrentWord: true})
         assert(narrow.ui.editor.element.hasFocus())
         assert.deepEqual(narrow.ui.excludedFiles, [])
-        narrow.ensure({
+        await narrow.ensure({
           text: $`
             $file
             # project1
@@ -1172,7 +1162,6 @@ describe('narrow', () => {
           selectedItemText: '$file = "p1-f3.php";'
         })
       }
-      const ensureSearch = provider => startNarrow(provider, {queryCurrentWord: true}).then(ensureFindPHPVar)
 
       beforeEach(async () => {
         await atom.packages.activatePackage('language-php')
@@ -1199,6 +1188,7 @@ describe('narrow', () => {
       const ensureByProvider = async (name, query, ensureOptions) => {
         const narrow = await startNarrow(name, {query})
         await narrow.ensure(ensureOptions)
+        narrow.ui.destroy()
       }
 
       describe('search project1/p1-f', () => {

@@ -170,14 +170,6 @@ class Ensureer {
       assert(this.editor.element.classList.contains(className))
     }
   }
-
-  ensureFilePathForProviderPane (filePath) {
-    const result = this.provider
-      .getPane()
-      .getActiveItem()
-      .getPath()
-    assert(result === filePath)
-  }
 }
 
 // example-usage
