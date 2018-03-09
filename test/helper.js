@@ -1,24 +1,16 @@
 const _ = require('underscore-plus')
 const {inspect} = require('util')
-const Provider = require('../lib/provider/provider')
-
-const {emitterEventPromise} = require('./async-spec-helpers')
-
-function reopen () {
-  return Provider.reopen()
-}
 
 function getNarrowForProvider (provider) {
   const ui = provider.ui
   return {
     ui: ui,
     provider: provider,
-    ensure: new Ensureer(ui, provider).ensure
+    ensure: new Ensureer(ui, provider).ensure,
+    promiseForUiEvent (eventName) {
+      return emitterEventPromise(ui.emitter, eventName)
+    }
   }
-}
-
-function dispatchCommand (target, commandName) {
-  atom.commands.dispatch(target, commandName)
 }
 
 function getActiveEditor () {
@@ -31,13 +23,6 @@ function getActiveEditor () {
   }
 }
 
-function dispatchEditorCommand (commandName, editor = getActiveEditor()) {
-  if (!editor) {
-    throw new Error('dispatchCommand could not find editor to dispatch command: `commandName`')
-  }
-  atom.commands.dispatch(editor.element, commandName)
-}
-
 function validateOptions (options, validOptions, message) {
   const invalidOptions = _.without(_.keys(options), ...validOptions)
   if (invalidOptions.length) {
@@ -45,40 +30,13 @@ function validateOptions (options, validOptions, message) {
   }
 }
 
-function ensureEditor (editor, options) {
-  const ensureEditorOptionsOrdered = ['cursor', 'text', 'active', 'alive']
-  validateOptions(options, ensureEditorOptionsOrdered, 'invalid options ensureEditor')
-  for (const name of ensureEditorOptionsOrdered) {
-    const value = options[name]
-    if (value == null) continue
-
-    if (name === 'cursor') {
-      expect(editor.getCursorBufferPosition()).toEqual(value)
-    } else if (name === 'active') {
-      expect(getActiveEditor() === editor).toBe(value)
-    } else if (name === 'alive') {
-      expect(editor.isAlive()).toBe(value)
-    }
-  }
-}
-
-function ensureEditorIsActive (editor) {
-  expect(getActiveEditor()).toBe(editor)
-}
-
-function isProjectHeaderItem (item) {
-  return item.header && item.projectName && !item.filePath
-}
-
-function isFileHeaderItem (item) {
-  return item.header && item.filePath
-}
-
 const ensureOptionsOrdered = [
   'itemsCount',
   'selectedItemRow',
   'selectedItemText',
   'text',
+  'itemTextSet',
+  'textAndSelectedItemTextOneOf',
   'cursor',
   'classListContains',
   'filePathForProviderPane',
@@ -86,6 +44,7 @@ const ensureOptionsOrdered = [
   'searchItems',
   'columnForSelectedItem'
 ]
+
 class Ensureer {
   constructor (ui, provider) {
     this.ensure = this.ensure.bind(this)
@@ -99,9 +58,10 @@ class Ensureer {
   async ensure (...args) {
     let options, query
     if (args.length === 1) {
-      ;[options] = args
+      options = args[0]
     } else if (args.length === 2) {
-      ;[query, options] = args
+      query = args[0]
+      options = args[1]
     }
 
     validateOptions(options, ensureOptionsOrdered, 'Invalid ensure option')
@@ -117,7 +77,6 @@ class Ensureer {
 
     if (query) {
       this.ui.setQuery(query)
-      if (this.ui.autoPreviewOnQueryChange) advanceClock(200)
       this.ui.moveToPrompt()
       await emitterEventPromise(this.ui.emitter, 'did-refresh')
     }
@@ -125,67 +84,79 @@ class Ensureer {
   }
 
   ensureItemsCount (count) {
-    expect(this.items.getNormalItemCount()).toBe(count)
+    assert(this.items.getNormalItemCount() === count)
   }
 
   ensureSelectedItemRow (row) {
-    expect(this.items.getSelectedItem()._row).toBe(row)
+    assert(this.items.getSelectedItem()._row === row)
   }
 
   ensureSelectedItemText (text) {
-    expect(this.items.getSelectedItem().text).toBe(text)
+    assert(
+      this.items.getSelectedItem().text === text,
+      `Was ${this.items.getSelectedItem().text} where it should ${text}`
+    )
   }
 
   ensureText (text) {
-    expect(this.editor.getText()).toBe(text)
+    assert(this.editor.getText() === text)
+  }
+
+  ensureItemTextSet (expected) {
+    const items = this.ui.items.items.slice(1) // skip query
+    const actual = new Set(items.map(item => item.text))
+    assert(equalSet(actual, expected))
+  }
+
+  ensureTextAndSelectedItemTextOneOf (textAndSelectedItemText) {
+    let ok = 0
+    textAndSelectedItemText.forEach(({text, selectedItemText}) => {
+      if (this.editor.getText() === text && this.items.getSelectedItem().text === selectedItemText) {
+        ok++
+      }
+    })
+    assert(ok === 1)
   }
 
   ensureQuery (text) {
-    expect(this.ui.getQuery()).toBe(text)
+    assert(this.ui.getQuery() === text)
   }
 
-  ensureSearchItems (object) {
+  ensureSearchItems (expected) {
     const relativizedFilePath = item => atom.project.relativize(item.filePath)
 
-    const actualObject = {}
+    const actual = {}
     let projectName = null
-    for (let item of this.ui.items.items.slice(1)) {
-      if (isProjectHeaderItem(item)) {
+    const items = this.ui.items.items.slice(1) // skip query
+    for (const item of items) {
+      if (item.headerType === 'project') {
         projectName = item.projectName
-        actualObject[projectName] = {}
-      } else if (isFileHeaderItem(item)) {
-        actualObject[projectName][relativizedFilePath(item)] = []
+        actual[projectName] = {}
+      } else if (item.headerType === 'file') {
+        actual[projectName][relativizedFilePath(item)] = []
       } else {
         const itemText = this.ui.narrowEditor.getTextForItem(item)
-        actualObject[projectName][relativizedFilePath(item)].push(itemText)
+        actual[projectName][relativizedFilePath(item)].push(itemText)
       }
     }
 
-    expect(actualObject).toEqual(object)
+    assert.deepEqual(actual, expected)
   }
 
   ensureCursor (cursor) {
-    expect(this.editor.getCursorBufferPosition()).toEqual(cursor)
+    assert(this.editor.getCursorBufferPosition().isEqual(cursor))
   }
 
   ensureColumnForSelectedItem (column) {
     const cursorPosition = this.editor.getCursorBufferPosition()
-    expect(this.items.getSelectedItem()._row).toBe(cursorPosition.row)
-    expect(cursorPosition.column).toBe(column)
+    assert(this.items.getSelectedItem()._row === cursorPosition.row)
+    assert(cursorPosition.column === column)
   }
 
   ensureClassListContains (classList) {
     for (const className of classList) {
-      expect(this.editor.element.classList.contains(className)).toBe(true)
+      assert(this.editor.element.classList.contains(className))
     }
-  }
-
-  ensureFilePathForProviderPane (filePath) {
-    const result = this.provider
-      .getPane()
-      .getActiveItem()
-      .getPath()
-    expect(result).toBe(filePath)
   }
 }
 
@@ -200,7 +171,7 @@ function ensurePaneLayout (layout) {
     .getActivePane()
     .getContainer()
     .getRoot()
-  expect(paneLayoutFor(root)).toEqual(layout)
+  assert.deepEqual(paneLayoutFor(root), layout)
 }
 
 function paneLayoutFor (root) {
@@ -214,18 +185,14 @@ function paneLayoutFor (root) {
   }
 }
 
-function paneForItem (item) {
-  return atom.workspace.paneForItem(item)
-}
-
-function setActiveTextEditor (editor) {
-  const pane = paneForItem(editor)
+function activateItem (item) {
+  const pane = atom.workspace.paneForItem(item)
   pane.activate()
-  pane.activateItem(editor)
+  pane.activateItem(item)
 }
 
 function setActiveTextEditorWithWaits (editor) {
-  setActiveTextEditor(editor)
+  activateItem(editor)
   let done
   const promise = new Promise(resolve => {
     done = resolve
@@ -256,17 +223,32 @@ function unindent (strings, ...values) {
   return lines.map(line => line.slice(minIndent)).join('\n')
 }
 
+function emitterEventPromise (emitter, event, timeout = 15000) {
+  return new Promise((resolve, reject) => {
+    const timeoutHandle = setTimeout(() => {
+      reject(new Error(`Timed out waiting for '${event}' event`))
+    }, timeout)
+    emitter.once(event, () => {
+      clearTimeout(timeoutHandle)
+      resolve()
+    })
+  })
+}
+
+function equalSet (setA, setB) {
+  if (setA.size !== setB.size) return false
+
+  for (const item of setA) {
+    if (!setB.has(item)) return false
+  }
+  return true
+}
+
 module.exports = {
-  dispatchCommand,
-  ensureEditor,
   ensurePaneLayout,
-  ensureEditorIsActive,
-  dispatchEditorCommand,
   getActiveEditor,
-  paneForItem,
-  setActiveTextEditor,
+  activateItem,
   setActiveTextEditorWithWaits,
   getNarrowForProvider,
-  reopen,
   unindent
 }
