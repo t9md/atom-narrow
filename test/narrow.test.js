@@ -107,9 +107,6 @@ describe('narrow', () => {
     function getBottomDockActiveItem () {
       return atom.workspace.getBottomDock().getActivePaneItem()
     }
-    function getCenterActiveItem () {
-      return atom.workspace.getCenter().getActivePaneItem()
-    }
 
     beforeEach(() => {
       editor.setText(APPLE_GRAPE_LEMMON_TEXT)
