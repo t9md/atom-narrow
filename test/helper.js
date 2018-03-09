@@ -58,9 +58,10 @@ class Ensureer {
   async ensure (...args) {
     let options, query
     if (args.length === 1) {
-      ;[options] = args
+      options = args[0]
     } else if (args.length === 2) {
-      ;[query, options] = args
+      query = args[0]
+      options = args[1]
     }
 
     validateOptions(options, ensureOptionsOrdered, 'Invalid ensure option')
@@ -76,11 +77,6 @@ class Ensureer {
 
     if (query) {
       this.ui.setQuery(query)
-      if (this.ui.autoPreviewOnQueryChange) {
-        // await emitterEventPromise(this.ui.emitter, 'did-preview')
-        // clock.tick(500)
-        // clock.restore()
-      }
       this.ui.moveToPrompt()
       await emitterEventPromise(this.ui.emitter, 'did-refresh')
     }
