@@ -8,14 +8,15 @@ const {
   ensurePaneLayout,
   getActiveEditor,
   setActiveTextEditorWithWaits,
-  unindent,
-  getEnsureFor
+  unindent
 } = require('./helper')
 const $ = unindent
 
 const dispatchActiveEditor = name => {
   atom.commands.dispatch(getActiveEditor().element, name)
 }
+
+const FIXTURES_DIR = Path.join(__dirname, 'fixtures')
 
 const APPLE_GRAPE_LEMMON_TEXT = $`
   apple
@@ -865,29 +866,27 @@ describe('narrow', () => {
   })
 
   describe('search', () => {
-    let p1, p1f1, p1f2, p1f3
-    let p2, p2f1, p2f2
     beforeEach(() => {
       settings.set('projectHeaderTemplate', '# __HEADER__')
       settings.set('fileHeaderTemplate', '## __HEADER__')
 
-      const fixturesDir = Path.join(__dirname, 'fixtures')
-
-      p1 = Path.join(fixturesDir, 'project1')
-      p2 = Path.join(fixturesDir, 'project2')
-      p1f1 = Path.join(p1, 'p1-f1')
-      p1f2 = Path.join(p1, 'p1-f2')
-      p1f3 = Path.join(p1, 'p1-f3.php')
-      p2f1 = Path.join(p2, 'p2-f1')
-      p2f2 = Path.join(p2, 'p2-f2')
-
-      atom.project.removePath(fixturesDir)
-      atom.project.addPath(p1)
-      atom.project.addPath(p2)
+      atom.project.removePath(FIXTURES_DIR)
+      atom.project.addPath(Path.join(FIXTURES_DIR, 'project1'))
+      atom.project.addPath(Path.join(FIXTURES_DIR, 'project2'))
     })
 
     describe('basic behavior', () => {
       let narrow
+      const searchItemsWithQueryApple = {
+        project1: {'p1-f1': ['p1-f1: apple'], 'p1-f2': ['p1-f2: apple']},
+        project2: {'p2-f1': ['p2-f1: apple'], 'p2-f2': ['p2-f2: apple']}
+      }
+      const fileSetByMatch = {
+        all: new Set(['project1/p1-f1', 'project1/p1-f2', 'project2/p2-f1', 'project2/p2-f2']),
+        f1: new Set(['project1/p1-f1', 'project2/p2-f1']),
+        f2: new Set(['project1/p1-f2', 'project2/p2-f2'])
+      }
+
       beforeEach(async () => {
         narrow = await startNarrow('search', {query: 'apple'})
         await narrow.promiseForUiEvent('did-preview')
@@ -900,44 +899,33 @@ describe('narrow', () => {
         }
 
         await narrow.ensure({
-          text: $`
-            apple
-            # project1
-            ## p1-f1
-            p1-f1: apple
-            ## p1-f2
-            p1-f2: apple
-            # project2
-            ## p2-f1
-            p2-f1: apple
-            ## p2-f2
-            p2-f2: apple
-            `,
+          query: 'apple',
+          searchItems: searchItemsWithQueryApple,
           cursor: [3, 7],
-          selectedItemText: 'p1-f1: apple'
+          selectedItemRow: 3
         })
 
         const providerPane = narrow.provider.getPane()
 
         dispatchActiveEditor('core:move-up')
-        await narrow.ensure({selectedItemText: 'p1-f1: apple', cursor: [0, 5]})
+        await narrow.ensure({selectedItemRow: 3, cursor: [0, 5]})
 
         await runPreviewCommand('core:move-down')
-        await narrow.ensure({selectedItemText: 'p1-f1: apple', cursor: [3, 7]})
-        assert(providerPane.getActiveItem().getPath() === p1f1)
+        await narrow.ensure({selectedItemRow: 3, cursor: [3, 7]})
+        assert(providerPane.getActiveItem().getPath() === narrow.ui.items.itemForRow(3).filePath)
 
         await runPreviewCommand('core:move-down')
-        await narrow.ensure({selectedItemText: 'p1-f2: apple', cursor: [5, 7]})
-        assert(providerPane.getActiveItem().getPath() === p1f2)
+        await narrow.ensure({selectedItemRow: 5, cursor: [5, 7]})
+        assert(providerPane.getActiveItem().getPath() === narrow.ui.items.itemForRow(5).filePath)
         assert(narrow.ui.editor.element.hasFocus())
 
         await runPreviewCommand('core:move-down')
-        await narrow.ensure({selectedItemText: 'p2-f1: apple', cursor: [8, 7]})
-        assert(providerPane.getActiveItem().getPath() === p2f1)
+        await narrow.ensure({selectedItemRow: 8, cursor: [8, 7]})
+        assert(providerPane.getActiveItem().getPath() === narrow.ui.items.itemForRow(8).filePath)
 
         await runPreviewCommand('core:move-down')
-        await narrow.ensure({selectedItemText: 'p2-f2: apple', cursor: [10, 7]})
-        assert(providerPane.getActiveItem().getPath() === p2f2)
+        await narrow.ensure({selectedItemRow: 10, cursor: [10, 7]})
+        assert(providerPane.getActiveItem().getPath() === narrow.ui.items.itemForRow(10).filePath)
       })
 
       it('preview on query change by default( autoPreviewOnQueryChange )', async () => {
@@ -946,63 +934,41 @@ describe('narrow', () => {
         const providerPane = narrow.provider.getPane()
         await narrow.promiseForUiEvent('did-preview')
         await narrow.ensure({
-          text: $`
-            apple f2
-            # project1
-            ## p1-f2
-            p1-f2: apple
-            # project2
-            ## p2-f2
-            p2-f2: apple
-            `,
-          selectedItemText: 'p1-f2: apple'
+          query: 'apple f2',
+          searchItems: {
+            project1: {'p1-f2': ['p1-f2: apple']},
+            project2: {'p2-f2': ['p2-f2: apple']}
+          },
+          selectedItemRow: 3
         })
-        assert(providerPane.getActiveItem().getPath() === p1f2)
+        assert(providerPane.getActiveItem().getPath() === narrow.ui.items.itemForRow(3).filePath)
 
         narrow.ui.editor.insertText(' p2')
         await narrow.promiseForUiEvent('did-preview')
         await narrow.ensure({
-          text: $`
-            apple f2 p2
-            # project2
-            ## p2-f2
-            p2-f2: apple
-            `,
-          selectedItemText: 'p2-f2: apple'
+          query: 'apple f2 p2',
+          searchItems: {
+            project2: {'p2-f2': ['p2-f2: apple']}
+          },
+          selectedItemRow: 3
         })
-        assert(providerPane.getActiveItem().getPath() === p2f2)
+        assert(providerPane.getActiveItem().getPath() === narrow.ui.items.itemForRow(3).filePath)
       })
 
       it('can filter files by select-files provider', async () => {
         await narrow.ensure({
-          text: $`
-            apple
-            # project1
-            ## p1-f1
-            p1-f1: apple
-            ## p1-f2
-            p1-f2: apple
-            # project2
-            ## p2-f1
-            p2-f1: apple
-            ## p2-f2
-            p2-f2: apple
-            `,
+          query: 'apple',
+          searchItems: searchItemsWithQueryApple,
           cursor: [3, 7],
-          selectedItemText: 'p1-f1: apple'
+          selectedItemRow: 3
         })
 
         // Section0: Move to selected file.
         {
           const selectFiles = getNarrowForProvider(await narrow.ui.selectFiles())
           await selectFiles.ensure({
-            text: $`
-
-              project1/p1-f1
-              project1/p1-f2
-              project2/p2-f1
-              project2/p2-f2
-              `
+            query: '',
+            itemTextSet: new Set(['project1/p1-f1', 'project1/p1-f2', 'project2/p2-f1', 'project2/p2-f2'])
           })
 
           assert(selectFiles.ui.editor.element.hasFocus())
@@ -1016,52 +982,19 @@ describe('narrow', () => {
           assert(narrow.ui.editor.element.hasFocus())
           assert.deepEqual(narrow.ui.excludedFiles, [])
           await narrow.ensure({
-            text: $`
-              apple
-              # project1
-              ## p1-f1
-              p1-f1: apple
-              ## p1-f2
-              p1-f2: apple
-              # project2
-              ## p2-f1
-              p2-f1: apple
-              ## p2-f2
-              p2-f2: apple
-              `,
+            searchItems: searchItemsWithQueryApple,
             cursor: [5, 7],
-            selectedItemText: 'p1-f2: apple'
+            selectedItemRow: 5
           })
         }
 
-        // Section1
+        // Section1: Exclude f1
         {
           const selectFiles = getNarrowForProvider(await narrow.ui.selectFiles())
-          await selectFiles.ensure({
-            text: $`
 
-              project1/p1-f1
-              project1/p1-f2
-              project2/p2-f1
-              project2/p2-f2
-              `
-          })
-
-          await selectFiles.ensure('f1', {
-            text: $`
-              f1
-              project1/p1-f1
-              project2/p2-f1
-              `
-          })
-
-          await selectFiles.ensure('f1!', {
-            text: $`
-              f1!
-              project1/p1-f2
-              project2/p2-f2
-              `
-          })
+          await selectFiles.ensure({query: '', itemTextSet: fileSetByMatch.all})
+          await selectFiles.ensure('f1', {query: 'f1', itemTextSet: fileSetByMatch.f1})
+          await selectFiles.ensure('f1!', {query: 'f1!', itemTextSet: fileSetByMatch.f2})
 
           assert(selectFiles.ui.editor.element.hasFocus())
 
@@ -1073,17 +1006,13 @@ describe('narrow', () => {
           assert(narrow.ui.editor.element.hasFocus())
           assert.deepEqual(narrow.ui.excludedFiles, [])
           await narrow.ensure({
-            text: $`
-              apple
-              # project1
-              ## p1-f2
-              p1-f2: apple
-              # project2
-              ## p2-f2
-              p2-f2: apple
-              `,
+            query: 'apple',
+            searchItems: {
+              project1: {'p1-f2': ['p1-f2: apple']},
+              project2: {'p2-f2': ['p2-f2: apple']}
+            },
             cursor: [3, 7],
-            selectedItemText: 'p1-f2: apple'
+            selectedItemRow: 3
           })
         }
 
@@ -1092,28 +1021,14 @@ describe('narrow', () => {
           const selectFiles = getNarrowForProvider(await narrow.ui.selectFiles())
 
           // selectFiles query are remembered until closing narrow-editor.
-          await selectFiles.ensure({
-            text: $`
-              f1!
-              project1/p1-f2
-              project2/p2-f2
-              `
-          })
+          await selectFiles.ensure({query: 'f1!', itemTextSet: fileSetByMatch.f2})
 
           // clear the file filter query
           selectFiles.ui.editor.deleteToBeginningOfLine()
           await selectFiles.promiseForUiEvent('did-refresh')
 
           // now all files are listable.
-          selectFiles.ensure({
-            text: $`
-
-              project1/p1-f1
-              project1/p1-f2
-              project2/p2-f1
-              project2/p2-f2
-              `
-          })
+          await selectFiles.ensure({query: '', itemTextSet: fileSetByMatch.all})
 
           const promise = selectFiles.promiseForUiEvent('did-destroy')
           dispatchActiveEditor('core:confirm')
@@ -1123,21 +1038,9 @@ describe('narrow', () => {
           assert(narrow.ui.editor.element.hasFocus())
           assert.deepEqual(narrow.ui.excludedFiles, [])
           await narrow.ensure({
-            text: $`
-              apple
-              # project1
-              ## p1-f1
-              p1-f1: apple
-              ## p1-f2
-              p1-f2: apple
-              # project2
-              ## p2-f1
-              p2-f1: apple
-              ## p2-f2
-              p2-f2: apple
-              `,
+            searchItems: searchItemsWithQueryApple,
             cursor: [3, 7],
-            selectedItemText: 'p1-f1: apple'
+            selectedItemRow: 3
           })
         }
       })
@@ -1148,24 +1051,39 @@ describe('narrow', () => {
         const narrow = await startNarrow(providerName, {queryCurrentWord: true})
         assert(narrow.ui.editor.element.hasFocus())
         assert.deepEqual(narrow.ui.excludedFiles, [])
+
+        const textA = $`
+          $file
+          # project1
+          ## p1-f3.php
+          $file = "p1-f3.php";
+          # project2
+          ## p2-f3.php
+          $file = "p2-f3.php";
+          `
+        const textB = $`
+          $file
+          # project2
+          ## p2-f3.php
+          $file = "p2-f3.php";
+          # project1
+          ## p1-f3.php
+          $file = "p1-f3.php";
+          `
+
         await narrow.ensure({
-          text: $`
-            $file
-            # project1
-            ## p1-f3.php
-            $file = "p1-f3.php";
-            # project2
-            ## p2-f3.php
-            $file = "p2-f3.php";
-            `,
-          cursor: [3, 0],
-          selectedItemText: '$file = "p1-f3.php";'
+          textAndSelectedItemTextOneOf: [
+            {text: textA, selectedItemText: '$file = "p1-f3.php";'},
+            {text: textB, selectedItemText: '$file = "p2-f3.php";'}
+          ],
+          cursor: [3, 0]
         })
       }
 
       beforeEach(async () => {
         await atom.packages.activatePackage('language-php')
-        const editor = await atom.workspace.open(p1f3)
+        const phpFilePath = Path.join(FIXTURES_DIR, 'project1', 'p1-f3.php')
+        const editor = await atom.workspace.open(phpFilePath)
         editor.setCursorBufferPosition([1, 0])
       })
 

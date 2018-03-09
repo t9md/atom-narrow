@@ -13,10 +13,6 @@ function getNarrowForProvider (provider) {
   }
 }
 
-function getEnsureFor (provider) {
-  return new Ensureer(provider.ui, provider).ensure
-}
-
 function getActiveEditor () {
   const item = atom.workspace
     .getActivePaneContainer()
@@ -34,23 +30,12 @@ function validateOptions (options, validOptions, message) {
   }
 }
 
-// function ensureEditorIsActive (editor) {
-//   assert(getActiveEditor() === editor)
-// }
-
-function isProjectHeaderItem (item) {
-  return item.header && item.projectName && !item.filePath
-}
-
-function isFileHeaderItem (item) {
-  return item.header && item.filePath
-}
-
 const ensureOptionsOrdered = [
   'itemsCount',
   'selectedItemRow',
   'selectedItemText',
   'text',
+  'itemTextSet',
   'textAndSelectedItemTextOneOf',
   'cursor',
   'classListContains',
@@ -121,6 +106,12 @@ class Ensureer {
     assert(this.editor.getText() === text)
   }
 
+  ensureItemTextSet (expected) {
+    const items = this.ui.items.items.slice(1) // skip query
+    const actual = new Set(items.map(item => item.text))
+    assert(equalSet(actual, expected))
+  }
+
   ensureTextAndSelectedItemTextOneOf (textAndSelectedItemText) {
     let ok = 0
     textAndSelectedItemText.forEach(({text, selectedItemText}) => {
@@ -135,24 +126,25 @@ class Ensureer {
     assert(this.ui.getQuery() === text)
   }
 
-  ensureSearchItems (object) {
+  ensureSearchItems (expected) {
     const relativizedFilePath = item => atom.project.relativize(item.filePath)
 
-    const actualObject = {}
+    const actual = {}
     let projectName = null
-    for (let item of this.ui.items.items.slice(1)) {
-      if (isProjectHeaderItem(item)) {
+    const items = this.ui.items.items.slice(1) // skip query
+    for (const item of items) {
+      if (item.headerType === 'project') {
         projectName = item.projectName
-        actualObject[projectName] = {}
-      } else if (isFileHeaderItem(item)) {
-        actualObject[projectName][relativizedFilePath(item)] = []
+        actual[projectName] = {}
+      } else if (item.headerType === 'file') {
+        actual[projectName][relativizedFilePath(item)] = []
       } else {
         const itemText = this.ui.narrowEditor.getTextForItem(item)
-        actualObject[projectName][relativizedFilePath(item)].push(itemText)
+        actual[projectName][relativizedFilePath(item)].push(itemText)
       }
     }
 
-    assert.deepEqual(actualObject, object)
+    assert.deepEqual(actual, expected)
   }
 
   ensureCursor (cursor) {
@@ -247,12 +239,20 @@ function emitterEventPromise (emitter, event, timeout = 15000) {
   })
 }
 
+function equalSet (setA, setB) {
+  if (setA.size !== setB.size) return false
+
+  for (const item of setA) {
+    if (!setB.has(item)) return false
+  }
+  return true
+}
+
 module.exports = {
   ensurePaneLayout,
   getActiveEditor,
   activateItem,
   setActiveTextEditorWithWaits,
   getNarrowForProvider,
-  unindent,
-  getEnsureFor
+  unindent
 }
