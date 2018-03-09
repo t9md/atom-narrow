@@ -1,10 +1,5 @@
 const _ = require('underscore-plus')
 const {inspect} = require('util')
-const Provider = require('../lib/provider/provider')
-
-function reopen () {
-  return Provider.reopen()
-}
 
 function getNarrowForProvider (provider) {
   const ui = provider.ui
@@ -18,8 +13,8 @@ function getNarrowForProvider (provider) {
   }
 }
 
-function dispatchCommand (target, commandName) {
-  atom.commands.dispatch(target, commandName)
+function getEnsureFor (provider) {
+  return new Ensureer(provider.ui, provider).ensure
 }
 
 function getActiveEditor () {
@@ -32,34 +27,10 @@ function getActiveEditor () {
   }
 }
 
-function dispatchEditorCommand (commandName, editor = getActiveEditor()) {
-  if (!editor) {
-    throw new Error('dispatchCommand could not find editor to dispatch command: `commandName`')
-  }
-  atom.commands.dispatch(editor.element, commandName)
-}
-
 function validateOptions (options, validOptions, message) {
   const invalidOptions = _.without(_.keys(options), ...validOptions)
   if (invalidOptions.length) {
     throw new Error(`${message}: ${inspect(invalidOptions)}`)
-  }
-}
-
-function ensureEditor (editor, options) {
-  const ensureEditorOptionsOrdered = ['cursor', 'text', 'active', 'alive']
-  validateOptions(options, ensureEditorOptionsOrdered, 'invalid options ensureEditor')
-  for (const name of ensureEditorOptionsOrdered) {
-    const value = options[name]
-    if (value == null) continue
-
-    if (name === 'cursor') {
-      assert.equal(editor.getCursorBufferPosition().isEqual(value), true)
-    } else if (name === 'active') {
-      assert.equal(getActiveEditor() === editor, value)
-    } else if (name === 'alive') {
-      assert.equal(editor.isAlive(), value)
-    }
   }
 }
 
@@ -88,6 +59,7 @@ const ensureOptionsOrdered = [
   'searchItems',
   'columnForSelectedItem'
 ]
+
 class Ensureer {
   constructor (ui, provider) {
     this.ensure = this.ensure.bind(this)
@@ -233,18 +205,14 @@ function paneLayoutFor (root) {
   }
 }
 
-function paneForItem (item) {
-  return atom.workspace.paneForItem(item)
-}
-
-function setActiveTextEditor (editor) {
-  const pane = paneForItem(editor)
+function activateItem (item) {
+  const pane = atom.workspace.paneForItem(item)
   pane.activate()
-  pane.activateItem(editor)
+  pane.activateItem(item)
 }
 
 function setActiveTextEditorWithWaits (editor) {
-  setActiveTextEditor(editor)
+  activateItem(editor)
   let done
   const promise = new Promise(resolve => {
     done = resolve
@@ -288,17 +256,11 @@ function emitterEventPromise (emitter, event, timeout = 15000) {
 }
 
 module.exports = {
-  dispatchCommand,
-  ensureEditor,
   ensurePaneLayout,
-  // ensureEditorIsActive,
-  dispatchEditorCommand,
   getActiveEditor,
-  paneForItem,
-  setActiveTextEditor,
+  activateItem,
   setActiveTextEditorWithWaits,
   getNarrowForProvider,
-  reopen,
   unindent,
-  emitterEventPromise
+  getEnsureFor
 }
