@@ -849,7 +849,6 @@ describe('narrow', () => {
       })
 
       const ensureScan = async (point, option) => {
-        // activateItem(editor)
         editor.element.focus()
         editor.setCursorBufferPosition(point)
         const narrow = await startNarrow('scan', {queryCurrentWord: true})
@@ -858,32 +857,9 @@ describe('narrow', () => {
       }
 
       it('set current-word as initial query', async () => {
-        await ensureScan([0, 0], {
-          text: $`
-            apple
-            apple
-            `,
-          selectedItemRow: 1,
-          itemsCount: 1
-        })
-
-        await ensureScan([1, 0], {
-          text: $`
-            grape
-            grape
-            `,
-          selectedItemRow: 1,
-          itemsCount: 1
-        })
-
-        await ensureScan([2, 0], {
-          text: $`
-            lemmon
-            lemmon
-            `,
-          selectedItemRow: 1,
-          itemsCount: 1
-        })
+        await ensureScan([0, 0], {text: 'apple\napple', selectedItemRow: 1, itemsCount: 1})
+        await ensureScan([1, 0], {text: 'grape\ngrape', selectedItemRow: 1, itemsCount: 1})
+        await ensureScan([2, 0], {text: 'lemmon\nlemmon', selectedItemRow: 1, itemsCount: 1})
       })
     })
   })
