@@ -68,7 +68,7 @@
     }
   },
   "dependencies": {
-    "atom-outlet": "^0.13.0",
+    "atom-outlet": "^0.13.1",
     "atom-package-deps": "^4.6.1",
     "fs-plus": "^3.0.2",
     "grim": "^2.0.2",
