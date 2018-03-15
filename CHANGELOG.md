@@ -1,3 +1,23 @@
+# 0.65.0:
+- New: Add `agExtraArgs` and `rgExtraArgs` setting for `Search` provider #295, #293.
+  - So that user can specify `--follow` options to let searcher search in symlink.
+- Breaking: Rename and simplify `directionToOpen`.
+  - Old `directionOpen` is split out to two new `split` and `useAdjacentPane` options.
+  - Old setting value is auto-migrated on pkg activation but following value have no compatible setting, so just ignored.
+    - `right:never-use-previous-adjacent-pane`
+    - `down:never-use-previous-adjacent-pane`
+- Fix: `Symbols` provider now correctly refresh items on rebound to different editor.
+- Experimental:
+  - Now narrow ui(or `narrow-editor`) is special editor which mixins some capabilities which I call `outlet`.
+  - In other word, narrow-editor is special editor created by `atom-outlet` library which I maintain separately.
+  - User do not have to aware of this fact.
+  - Features:
+    - Now be able to `relocate` even when `narrow-editor` is not focused.
+    - New: `narrow:toggle` can hide/show existing narrow on workspace.
+- Test: Switch test runner to `atom-mocha-test-runner`.
+- Other: Simplify searcher executable check.
+- Surface: Tweak search options button size in controlBar to be a bit smaller.
+
 # 0.64.0:
 - Rename: Rename command name. Need update your `keymap.cson`, Warn deprecated when old command was used.
   - Old: `narrow-ui:switch-ui-location`
