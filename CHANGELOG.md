@@ -1,3 +1,7 @@
+# 0.65.1:
+- Improve: No longer move cursor to EOL of prompt when refresh finished as long as cursor was originally at query line. #297
+- Fix: No longer use deprecated `undo: 'skip'` option when refreshing narrow-editor using `setTextInBufferRange`. #303
+
 # 0.65.0:
 - New: Add `agExtraArgs` and `rgExtraArgs` setting for `Search` provider #295, #293.
   - So that user can specify `--follow` options to let searcher search in symlink.
