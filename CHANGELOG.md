@@ -1,3 +1,6 @@
+# 0.65.2:
+- Fix: Make broken "Confirm on update real file" works again thanks to @heftyfunseeker #312
+
 # 0.65.1:
 - Improve: No longer move cursor to EOL of prompt when refresh finished as long as cursor was originally at query line. #297
 - Fix: No longer use deprecated `undo: 'skip'` option when refreshing narrow-editor using `setTextInBufferRange`. #303
